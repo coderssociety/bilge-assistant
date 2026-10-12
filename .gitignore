@@ -1,0 +1,8 @@
+.DS_Store
+*.xcodeproj/
+build/
+DerivedData/
+.build/
+.swiftpm/
+Config/Signing.local.xcconfig
+Bench/Output/

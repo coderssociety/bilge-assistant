@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Asistan</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Asistan, senin isteğinle uygulamaları kontrol etmek (müzik, notlar, sistem ayarları) için Apple Events kullanır.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Asistan, takvimindeki etkinlikleri okumak ve senin onayınla yenilerini eklemek için takvime erişir.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Asistan, uyandırma kelimesini ve komutlarını duymak için mikrofonu kullanır. Ses kaydı saklanmaz ve Mac'inden dışarı çıkmaz.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Asistan, anımsatıcılarını okumak ve senin onayınla yenilerini eklemek için anımsatıcılara erişir.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Asistan, Türkçe komutlarını cihaz üzerinde yazıya dökmek için konuşma tanımayı kullanır.</string>
+</dict>
+</plist>

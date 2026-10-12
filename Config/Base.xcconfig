@@ -1,0 +1,7 @@
+// Signing.local.xcconfig is gitignored. Put DEVELOPMENT_TEAM there after signing into Xcode
+// with an Apple ID; without a stable identity macOS re-asks for permissions on every build.
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+#include? "Signing.local.xcconfig"
