@@ -21,6 +21,11 @@ final class AudioPlayer {
 
     var isPlaying: Bool { outstandingBuffers > 0 }
 
+    var isMuted: Bool {
+        get { node.volume == 0 }
+        set { node.volume = newValue ? 0 : 1 }
+    }
+
     func enqueue(_ samples: [Float]) throws {
         guard !samples.isEmpty else { return }
         let buffer = try PCMBuffers.mono(samples, sampleRate: format.sampleRate)

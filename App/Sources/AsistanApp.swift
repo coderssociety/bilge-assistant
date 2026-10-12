@@ -11,6 +11,8 @@ struct AsistanApp: App {
             Task { @MainActor in exit(await ASRBenchmark.run(arguments: arguments)) }
         } else if arguments.contains(LLMBenchmark.flag) {
             Task { @MainActor in exit(await LLMBenchmark.run(arguments: arguments)) }
+        } else if arguments.contains(EndToEndBenchmark.flag) {
+            Task { @MainActor in exit(await EndToEndBenchmark.run()) }
         }
     }
 

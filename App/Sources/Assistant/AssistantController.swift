@@ -30,11 +30,11 @@ final class AssistantController {
     private let settings: AssistantSettings
     private let speech: SpeechOutput
     private let handler: any CommandHandling
-    private let microphone = MicrophoneCapture()
+    private let microphone: any AudioSource
     private var vad: VoiceActivityMonitor?
     private var recognizer: (any SpeechRecognizer)?
     private var flow: ConversationFlow
-    private var segmenter = SpeechSegmenter(configuration: .init(chunkDuration: VoiceActivityFrame.duration))
+    private var segmenter = SpeechSegmenter(configuration: .init(chunkDuration: VoiceActivityFrame.duration, minSilence: 0.6))
     private var segmentQueue: AsyncStream<SpeechSegmenter.Segment>.Continuation?
     private var listenTask: Task<Void, Never>?
     private var segmentTask: Task<Void, Never>?
@@ -42,10 +42,12 @@ final class AssistantController {
     private var turnTask: Task<Void, Never>?
     private var isAudioSuspended = false
 
-    init(settings: AssistantSettings, speech: SpeechOutput, handler: any CommandHandling) {
+    init(settings: AssistantSettings, speech: SpeechOutput, handler: any CommandHandling,
+         audioSource: (any AudioSource)? = nil) {
         self.settings = settings
         self.speech = speech
         self.handler = handler
+        microphone = audioSource ?? MicrophoneCapture()
         flow = ConversationFlow(matcher: settings.makeWakeMatcher())
     }
 
@@ -91,7 +93,7 @@ final class AssistantController {
     // MARK: - Listening loop
 
     private func run() async {
-        guard await MicrophoneCapture.requestPermission() else {
+        guard await microphone.requestPermission() else {
             fail("Mikrofon izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Mikrofon bölümünden izin ver.")
             listenTask = nil
             return

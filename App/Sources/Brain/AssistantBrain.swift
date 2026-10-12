@@ -42,6 +42,7 @@ final class AssistantBrain: CommandHandling {
 
     func prewarm() {
         guard unavailableReason == nil else { return }
+        router?.prewarm()
         conversationSession().prewarm()
     }
 

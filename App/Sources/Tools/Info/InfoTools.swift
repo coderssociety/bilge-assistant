@@ -13,9 +13,10 @@ struct DateTimeTool: AssistantTool {
     func emptyArguments() -> Arguments? { Arguments() }
 
     func call(arguments: Arguments) async throws -> String {
-        let text = Date.now.formatted(
-            .dateTime.day().month(.wide).year().weekday(.wide).hour().minute().locale(Locale(identifier: "tr_TR")))
-        return "Şu an \(text)."
+        let locale = Locale(identifier: "tr_TR")
+        let time = Date.now.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute().locale(locale))
+        let day = Date.now.formatted(.dateTime.day().month(.wide).year().weekday(.wide).locale(locale))
+        return "Saat \(time). Bugün \(day)."
     }
 }
 
@@ -32,7 +33,7 @@ struct CalculatorTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         do {
             let value = try ArithmeticEvaluator.evaluate(arguments.expression)
-            return "\(arguments.expression) = \(ArithmeticEvaluator.display(value))"
+            return "Sonuç \(ArithmeticEvaluator.display(value))."
         } catch {
             return ToolReply.failure("'\(arguments.expression)' hesaplanamadı.")
         }

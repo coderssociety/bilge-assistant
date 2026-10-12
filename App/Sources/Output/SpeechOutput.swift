@@ -20,6 +20,12 @@ final class SpeechOutput {
     }
 
     var isReady: Bool { manager != nil && style != nil }
+
+    /// Benchmarks synthesize and "play" in real time without making sound.
+    var isMuted: Bool {
+        get { player.isMuted }
+        set { player.isMuted = newValue }
+    }
     var isSpeaking: Bool { player.isPlaying }
 
     func prepare() async throws {

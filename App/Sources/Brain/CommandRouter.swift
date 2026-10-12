@@ -27,6 +27,7 @@ final class CommandRouter {
     private let decisionSchema: GenerationSchema
     private let routerInstructions: String
     private let options = GenerationOptions(samplingMode: .greedy, maximumResponseTokens: 200)
+    private var readySession: LanguageModelSession?
 
     init(tools: [any AssistantTool], model: SystemLanguageModel = .default) throws {
         self.model = model
@@ -40,10 +41,21 @@ final class CommandRouter {
         routerInstructions = RouterInstructions.router(tools: tools)
     }
 
+    /// Loads the model and processes the routing instructions ahead of time, so the next
+    /// command skips that work. Each command gets a fresh session; this one is used once.
+    func prewarm() {
+        guard readySession == nil else { return }
+        let session = LanguageModelSession(model: model, instructions: routerInstructions)
+        session.prewarm()
+        readySession = session
+    }
+
     func route(_ command: String, previous: PreviousTurn?) async throws -> Route {
         let resolved = TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(command))
         let prompt = Self.prompt(resolved, previous: previous)
-        let session = LanguageModelSession(model: model, instructions: routerInstructions)
+        let session = readySession ?? LanguageModelSession(model: model, instructions: routerInstructions)
+        readySession = nil
+        defer { prewarm() }
         let response = try await session.respond(to: prompt, schema: decisionSchema, options: options)
         let action = try response.content.value(String.self, forProperty: Self.actionProperty)
         Log.brain.info("Routed to \(action, privacy: .public)")
