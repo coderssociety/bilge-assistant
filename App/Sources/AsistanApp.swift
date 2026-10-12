@@ -9,6 +9,8 @@ struct AsistanApp: App {
         let arguments = CommandLine.arguments
         if arguments.contains(ASRBenchmark.flag) {
             Task { @MainActor in exit(await ASRBenchmark.run(arguments: arguments)) }
+        } else if arguments.contains(LLMBenchmark.flag) {
+            Task { @MainActor in exit(await LLMBenchmark.run(arguments: arguments)) }
         }
     }
 
@@ -37,17 +39,35 @@ enum WindowID {
 final class AppEnvironment {
     let settings: AssistantSettings
     let speech: SpeechOutput
+    let timers: TimerService
+    let brain: AssistantBrain
     let assistant: AssistantController
     let audioLab: AudioLabModel
 
     init() {
         let settings = AssistantSettings()
         let speech = SpeechOutput(voice: settings.voice, speed: settings.speechSpeed)
+        let announcer = Announcer()
+        let timers = TimerService { await announcer.target?.announce($0) }
+        let brain = AssistantBrain(tools: ToolRegistry(catalog: AppCatalog(), timers: timers).makeTools())
+        let assistant = AssistantController(settings: settings, speech: speech, handler: brain)
+        announcer.target = assistant
         self.settings = settings
         self.speech = speech
-        assistant = AssistantController(settings: settings, speech: speech, handler: EchoCommandHandler())
+        self.timers = timers
+        self.brain = brain
+        self.assistant = assistant
         audioLab = AudioLabModel(speech: speech)
-        let isBenchmark = CommandLine.arguments.contains(ASRBenchmark.flag)
-        if settings.listenOnLaunch, !isBenchmark { assistant.start() }
+        let isBenchmark = CommandLine.arguments.contains(where: { $0.hasPrefix("--bench") })
+        if !isBenchmark {
+            brain.prewarm()
+            if settings.listenOnLaunch { assistant.start() }
+        }
     }
+}
+
+/// Breaks the init-order cycle between services that announce and the controller that speaks.
+@MainActor
+private final class Announcer {
+    weak var target: AssistantController?
 }

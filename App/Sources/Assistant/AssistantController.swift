@@ -71,6 +71,23 @@ final class AssistantController {
         speech.stop()
     }
 
+    /// Speaks something the user did not just ask for (a timer going off), after any reply in progress.
+    func announce(_ text: String) async {
+        await turnTask?.value
+        isAudioSuspended = true
+        segmenter.reset()
+        status = .speaking
+        do {
+            try await speech.speak(text)
+        } catch {
+            Log.audio.error("Announcement failed: \(error.localizedDescription, privacy: .public)")
+        }
+        await vad?.reset()
+        segmenter.reset()
+        isAudioSuspended = false
+        status = isRunning ? (flow.isAwaitingSpeech ? .awake : .listening) : .off
+    }
+
     // MARK: - Listening loop
 
     private func run() async {
