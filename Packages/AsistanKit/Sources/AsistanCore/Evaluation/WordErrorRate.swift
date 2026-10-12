@@ -11,7 +11,7 @@ public struct WordErrorRate: Sendable, Equatable {
         let referenceWords = words(reference)
         let hypothesisWords = words(hypothesis)
         return WordErrorRate(
-            errors: editDistance(referenceWords, hypothesisWords),
+            errors: FuzzyText.levenshtein(referenceWords, hypothesisWords),
             referenceWordCount: referenceWords.count)
     }
 
@@ -25,20 +25,5 @@ public struct WordErrorRate: Sendable, Equatable {
         TurkishText.normalized(TurkishSpeechNormalizer.normalize(text))
             .split(separator: " ")
             .map(String.init)
-    }
-
-    private static func editDistance(_ lhs: [String], _ rhs: [String]) -> Int {
-        guard !lhs.isEmpty else { return rhs.count }
-        guard !rhs.isEmpty else { return lhs.count }
-        var previous = Array(0...rhs.count)
-        for (i, left) in lhs.enumerated() {
-            var current = [i + 1] + Array(repeating: 0, count: rhs.count)
-            for (j, right) in rhs.enumerated() {
-                let substitution = previous[j] + (left == right ? 0 : 1)
-                current[j + 1] = min(substitution, previous[j + 1] + 1, current[j] + 1)
-            }
-            previous = current
-        }
-        return previous[rhs.count]
     }
 }

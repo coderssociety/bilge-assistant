@@ -53,32 +53,12 @@ public struct WakePhraseMatcher: Sendable {
     }
 
     private func score(_ candidate: String) -> Double {
-        var best = Self.similarity(candidate, phraseKey)
+        var best = FuzzyText.similarity(candidate, phraseKey)
         let extra = candidate.count - phraseKey.count
         if (1...Self.maxSuffixLength).contains(extra) {
-            best = max(best, Self.similarity(String(candidate.prefix(phraseKey.count)), phraseKey))
+            best = max(best, FuzzyText.similarity(String(candidate.prefix(phraseKey.count)), phraseKey))
         }
         return best
-    }
-
-    static func similarity(_ lhs: String, _ rhs: String) -> Double {
-        let longest = max(lhs.count, rhs.count)
-        guard longest > 0 else { return 1 }
-        return 1 - Double(levenshtein(Array(lhs), Array(rhs))) / Double(longest)
-    }
-
-    private static func levenshtein(_ lhs: [Character], _ rhs: [Character]) -> Int {
-        guard !lhs.isEmpty else { return rhs.count }
-        guard !rhs.isEmpty else { return lhs.count }
-        var previous = Array(0...rhs.count)
-        for (i, left) in lhs.enumerated() {
-            var current = [i + 1] + Array(repeating: 0, count: rhs.count)
-            for (j, right) in rhs.enumerated() {
-                current[j + 1] = min(previous[j] + (left == right ? 0 : 1), previous[j + 1] + 1, current[j] + 1)
-            }
-            previous = current
-        }
-        return previous[rhs.count]
     }
 
     private static func trimLeadingPunctuation(_ text: String) -> String {

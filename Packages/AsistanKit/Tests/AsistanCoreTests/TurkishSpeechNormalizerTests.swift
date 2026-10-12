@@ -23,6 +23,8 @@ struct TurkishSpeechNormalizerTests {
         ("Sıcaklık 3,5 °C", "Sıcaklık üç virgül beş derece"),
         ("Toplam 1.250 TL", "Toplam bin iki yüz elli lira"),
         ("Fiyatı 99₺", "Fiyatı doksan dokuz lira"),
+        ("1 $ kaç lira", "bir dolar kaç lira"),
+        ("Bilet 40€", "Bilet kırk avro"),
         ("3 toplantın var", "üç toplantın var"),
         ("13.10.2026 tarihinde", "on üç ekim iki bin yirmi altı tarihinde"),
     ])

@@ -32,7 +32,7 @@ final class AssistantSettings {
         self.defaults = defaults
         wakePhrase = defaults.string(forKey: Key.wakePhrase) ?? AppIdentity.defaultWakePhrase
         wakeSensitivity = defaults.object(forKey: Key.wakeSensitivity) as? Double ?? 0.5
-        recognizer = defaults.string(forKey: Key.recognizer).flatMap(RecognizerEngine.init(rawValue:)) ?? .whisper
+        recognizer = defaults.string(forKey: Key.recognizer).flatMap(RecognizerEngine.init(rawValue:)) ?? .appleDictation
         voice = defaults.string(forKey: Key.voice).flatMap(Supertonic3Voice.init(rawValue:)) ?? .f1
         speechSpeed = defaults.object(forKey: Key.speechSpeed) as? Float ?? 1.05
         followUpEnabled = defaults.object(forKey: Key.followUpEnabled) as? Bool ?? true

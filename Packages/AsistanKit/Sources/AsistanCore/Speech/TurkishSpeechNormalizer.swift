@@ -12,6 +12,8 @@ public enum TurkishSpeechNormalizer {
         result = replace(#"%\s?(?=\d)"#, in: result) { _ in "yüzde " }
         result = replace(#"\s?°\s?C?\b|\s?°"#, in: result) { _ in " derece" }
         result = replace(#"\s?₺|\s?\bTL\b"#, in: result) { _ in " lira" }
+        result = replace(#"\s?\$"#, in: result) { _ in " dolar" }
+        result = replace(#"\s?€"#, in: result) { _ in " avro" }
         result = replace(#"\b\d{1,3}(?:\.\d{3})+\b"#, in: result) { $0[0]?.replacingOccurrences(of: ".", with: "") }
         result = replace(#"\b(\d+),(\d+)\b"# + suffix, in: result) { groups in
             guard let whole = groups[1].flatMap(Int.init), let fraction = groups[2] else { return nil }
