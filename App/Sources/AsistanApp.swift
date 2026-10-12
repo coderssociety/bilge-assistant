@@ -3,15 +3,25 @@ import SwiftUI
 
 @main
 struct AsistanApp: App {
-    @State private var audioLab = AudioLabModel(speech: SpeechOutput())
+    @State private var environment = AppEnvironment()
+
+    init() {
+        let arguments = CommandLine.arguments
+        if arguments.contains(ASRBenchmark.flag) {
+            Task { @MainActor in exit(await ASRBenchmark.run(arguments: arguments)) }
+        }
+    }
 
     var body: some Scene {
-        MenuBarExtra(AppIdentity.name, systemImage: "waveform.circle") {
-            MenuContent()
+        MenuBarExtra {
+            MenuBarContent(assistant: environment.assistant, settings: environment.settings)
+        } label: {
+            Image(systemName: environment.assistant.status.symbolName)
+                .accessibilityLabel(AppIdentity.name)
         }
 
         Window("Ses Laboratuvarı", id: WindowID.audioLab) {
-            AudioLabView(model: audioLab)
+            AudioLabView(model: environment.audioLab)
         }
         .windowResizability(.contentSize)
     }
@@ -21,16 +31,23 @@ enum WindowID {
     static let audioLab = "audio-lab"
 }
 
-private struct MenuContent: View {
-    @Environment(\.openWindow) private var openWindow
+/// Owns the long-lived services; one instance per app run.
+@MainActor
+@Observable
+final class AppEnvironment {
+    let settings: AssistantSettings
+    let speech: SpeechOutput
+    let assistant: AssistantController
+    let audioLab: AudioLabModel
 
-    var body: some View {
-        Button("Ses Laboratuvarı…") {
-            openWindow(id: WindowID.audioLab)
-            NSApplication.shared.activate()
-        }
-        Divider()
-        Button("Çıkış") { NSApplication.shared.terminate(nil) }
-            .keyboardShortcut("q")
+    init() {
+        let settings = AssistantSettings()
+        let speech = SpeechOutput(voice: settings.voice, speed: settings.speechSpeed)
+        self.settings = settings
+        self.speech = speech
+        assistant = AssistantController(settings: settings, speech: speech, handler: EchoCommandHandler())
+        audioLab = AudioLabModel(speech: speech)
+        let isBenchmark = CommandLine.arguments.contains(ASRBenchmark.flag)
+        if settings.listenOnLaunch, !isBenchmark { assistant.start() }
     }
 }

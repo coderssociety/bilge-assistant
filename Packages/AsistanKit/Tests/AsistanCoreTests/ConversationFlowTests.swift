@@ -1,0 +1,105 @@
+import Foundation
+import Testing
+@testable import AsistanCore
+
+@Suite("ConversationFlow")
+struct ConversationFlowTests {
+    let start = Date(timeIntervalSince1970: 1_000)
+
+    func makeFlow() -> ConversationFlow {
+        ConversationFlow(matcher: WakePhraseMatcher(phrase: "asistan"), commandTimeout: 6, followUpWindow: 5)
+    }
+
+    @Test("ignores speech without the wake phrase")
+    func ignoresStrangers() {
+        var flow = makeFlow()
+        #expect(flow.heard("bugün hava güzel", at: start) == .none)
+        #expect(flow.phase == .listeningForWake)
+    }
+
+    @Test("wake phrase with a command runs it immediately")
+    func wakeWithCommand() {
+        var flow = makeFlow()
+        #expect(flow.heard("Asistan, Safari'yi aç", at: start) == .runCommand("Safari'yi aç"))
+        #expect(flow.phase == .processing)
+    }
+
+    @Test("bare wake phrase waits for the command, then runs it")
+    func bareWake() {
+        var flow = makeFlow()
+        #expect(flow.heard("Asistan", at: start) == .acknowledgeWake)
+        #expect(flow.phase == .awaitingCommand(deadline: start.addingTimeInterval(6)))
+        #expect(flow.heard("saat kaç", at: start.addingTimeInterval(2)) == .runCommand("saat kaç"))
+    }
+
+    @Test("command wait times out back to idle")
+    func commandTimeout() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan", at: start)
+        #expect(flow.tick(at: start.addingTimeInterval(5)) == .none)
+        #expect(flow.tick(at: start.addingTimeInterval(6.1)) == .returnToIdle(timedOut: true))
+        #expect(flow.phase == .listeningForWake)
+    }
+
+    @Test("speech that has started is not cut by the deadline")
+    func speechExtendsDeadline() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan", at: start)
+        flow.speechStarted(at: start.addingTimeInterval(5.5))
+        #expect(flow.tick(at: start.addingTimeInterval(7)) == .none)
+        #expect(flow.heard("yarın sabah yedide beni uyandır", at: start.addingTimeInterval(8)) ==
+            .runCommand("yarın sabah yedide beni uyandır"))
+    }
+
+    @Test("cancel words end the exchange")
+    func cancel() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan", at: start)
+        #expect(flow.heard("Vazgeç.", at: start.addingTimeInterval(1)) == .returnToIdle(timedOut: false))
+        #expect(flow.phase == .listeningForWake)
+    }
+
+    @Test("speech while processing or responding is ignored")
+    func busyIgnoresSpeech() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan saat kaç", at: start)
+        #expect(flow.heard("asistan müziği aç", at: start) == .none)
+        flow.responseStarted()
+        #expect(flow.phase == .responding)
+        #expect(flow.heard("asistan müziği aç", at: start) == .none)
+    }
+
+    @Test("after a reply a follow-up needs no wake phrase until the window closes")
+    func followUp() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan saat kaç", at: start)
+        flow.responseStarted()
+        flow.responseFinished(at: start.addingTimeInterval(2), allowFollowUp: true)
+        #expect(flow.phase == .followUp(deadline: start.addingTimeInterval(7)))
+        #expect(flow.heard("peki yarın?", at: start.addingTimeInterval(3)) == .runCommand("peki yarın?"))
+    }
+
+    @Test("follow-up window closes silently")
+    func followUpExpires() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan saat kaç", at: start)
+        flow.responseFinished(at: start, allowFollowUp: true)
+        #expect(flow.tick(at: start.addingTimeInterval(6)) == .returnToIdle(timedOut: false))
+    }
+
+    @Test("a repeated wake phrase in follow-up is stripped from the command")
+    func followUpStripsWakePhrase() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan saat kaç", at: start)
+        flow.responseFinished(at: start, allowFollowUp: true)
+        #expect(flow.heard("Asistan, sesi kıs", at: start.addingTimeInterval(1)) == .runCommand("sesi kıs"))
+    }
+
+    @Test("without follow-up the flow returns to wake listening")
+    func noFollowUp() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan saat kaç", at: start)
+        flow.responseFinished(at: start, allowFollowUp: false)
+        #expect(flow.phase == .listeningForWake)
+    }
+}

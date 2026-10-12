@@ -23,11 +23,7 @@ final class AudioPlayer {
 
     func enqueue(_ samples: [Float]) throws {
         guard !samples.isEmpty else { return }
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count)),
-              let channel = buffer.floatChannelData?[0]
-        else { throw AudioError.invalidFormat }
-        samples.withUnsafeBufferPointer { channel.update(from: $0.baseAddress!, count: samples.count) }
-        buffer.frameLength = AVAudioFrameCount(samples.count)
+        let buffer = try PCMBuffers.mono(samples, sampleRate: format.sampleRate)
 
         if !engine.isRunning {
             engine.prepare()

@@ -1,0 +1,50 @@
+import AsistanCore
+import FluidAudio
+import Foundation
+import Observation
+
+/// User preferences, persisted in UserDefaults. Changes take effect the next time listening starts.
+@MainActor
+@Observable
+final class AssistantSettings {
+    private enum Key {
+        static let wakePhrase = "wakePhrase"
+        static let wakeSensitivity = "wakeSensitivity"
+        static let recognizer = "recognizer"
+        static let voice = "voice"
+        static let speechSpeed = "speechSpeed"
+        static let followUpEnabled = "followUpEnabled"
+        static let listenOnLaunch = "listenOnLaunch"
+    }
+
+    private let defaults: UserDefaults
+
+    var wakePhrase: String { didSet { defaults.set(wakePhrase, forKey: Key.wakePhrase) } }
+    /// 0...1 where higher accepts fuzzier matches (more triggers, more false alarms).
+    var wakeSensitivity: Double { didSet { defaults.set(wakeSensitivity, forKey: Key.wakeSensitivity) } }
+    var recognizer: RecognizerEngine { didSet { defaults.set(recognizer.rawValue, forKey: Key.recognizer) } }
+    var voice: Supertonic3Voice { didSet { defaults.set(voice.rawValue, forKey: Key.voice) } }
+    var speechSpeed: Float { didSet { defaults.set(speechSpeed, forKey: Key.speechSpeed) } }
+    var followUpEnabled: Bool { didSet { defaults.set(followUpEnabled, forKey: Key.followUpEnabled) } }
+    var listenOnLaunch: Bool { didSet { defaults.set(listenOnLaunch, forKey: Key.listenOnLaunch) } }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        wakePhrase = defaults.string(forKey: Key.wakePhrase) ?? AppIdentity.defaultWakePhrase
+        wakeSensitivity = defaults.object(forKey: Key.wakeSensitivity) as? Double ?? 0.5
+        recognizer = defaults.string(forKey: Key.recognizer).flatMap(RecognizerEngine.init(rawValue:)) ?? .whisper
+        voice = defaults.string(forKey: Key.voice).flatMap(Supertonic3Voice.init(rawValue:)) ?? .f1
+        speechSpeed = defaults.object(forKey: Key.speechSpeed) as? Float ?? 1.05
+        followUpEnabled = defaults.object(forKey: Key.followUpEnabled) as? Bool ?? true
+        listenOnLaunch = defaults.object(forKey: Key.listenOnLaunch) as? Bool ?? false
+    }
+
+    /// Maps the 0...1 sensitivity slider onto the matcher's similarity threshold (0.9 strict ... 0.65 loose).
+    var minimumWakeSimilarity: Double {
+        0.9 - 0.25 * min(max(wakeSensitivity, 0), 1)
+    }
+
+    func makeWakeMatcher() -> WakePhraseMatcher {
+        WakePhraseMatcher(phrase: wakePhrase, minimumSimilarity: minimumWakeSimilarity)
+    }
+}

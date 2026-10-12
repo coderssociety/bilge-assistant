@@ -26,7 +26,7 @@ final class AudioLabModel {
 
     private let microphone = MicrophoneCapture()
     private let speech: SpeechOutput
-    private var detector: VoiceActivityDetector?
+    private var detector: VoiceActivityMonitor?
     private var listenTask: Task<Void, Never>?
     private var speakTask: Task<Void, Never>?
 
@@ -76,7 +76,7 @@ final class AudioLabModel {
                 isListening = true
                 append("Dinleme başladı")
                 for await samples in stream {
-                    for update in try await detector.process(samples) { apply(update) }
+                    for frame in try await detector.process(samples) { apply(frame) }
                 }
             } catch {
                 report(error)
@@ -95,19 +95,19 @@ final class AudioLabModel {
         speechProbability = 0
     }
 
-    private func loadDetector() async throws -> VoiceActivityDetector {
+    private func loadDetector() async throws -> VoiceActivityMonitor {
         if let detector {
             await detector.reset()
             return detector
         }
         statusMessage = "Ses algılama modeli yükleniyor…"
-        let loaded = try await VoiceActivityDetector()
+        let loaded = try await VoiceActivityMonitor()
         detector = loaded
         statusMessage = nil
         return loaded
     }
 
-    private func apply(_ update: VoiceActivityUpdate) {
+    private func apply(_ update: VoiceActivityFrame) {
         speechProbability = update.probability
         switch update.event {
         case .speechStarted:
