@@ -14,6 +14,12 @@ struct MenuBarContent: View {
         if let reply = assistant.lastReply, !reply.isEmpty {
             Text("Yanıt: \(reply)").lineLimit(3)
         }
+        if let question = assistant.pendingConfirmation {
+            Divider()
+            Text(question).lineLimit(3)
+            Button("Evet, yap") { assistant.resolveConfirmation(.confirmed) }
+            Button("Hayır") { assistant.resolveConfirmation(.rejected) }
+        }
         Divider()
         Button(assistant.isRunning ? "Dinlemeyi kapat" : "Dinlemeyi aç") { assistant.toggle() }
             .keyboardShortcut("l")
@@ -41,6 +47,7 @@ extension AssistantController.Status {
         case .transcribing: "Anlıyorum…"
         case .thinking: "Düşünüyor…"
         case .speaking: "Konuşuyor…"
+        case .confirming: "Onayını bekliyorum — evet ya da hayır de"
         case let .failed(message): "Hata: \(message)"
         }
     }
@@ -53,6 +60,7 @@ extension AssistantController.Status {
         case .awake, .transcribing: "ear.fill"
         case .thinking: "ellipsis.circle.fill"
         case .speaking: "speaker.wave.2.circle.fill"
+        case .confirming: "questionmark.circle.fill"
         case .failed: "exclamationmark.circle"
         }
     }

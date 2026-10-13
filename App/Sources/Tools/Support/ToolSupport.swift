@@ -17,12 +17,27 @@ protocol AssistantTool: Tool where Output == String, Arguments: Generable & Send
     /// Lets a tool replace model-extracted values with ones parsed deterministically from the
     /// (number- and time-resolved) command text.
     func refine(_ arguments: Arguments, command: String) -> Arguments
+    /// Binds arguments into an executable call. Tools that must resolve something first (which file,
+    /// which shortcut) override this so the confirmation question names exactly what will be acted on.
+    func makeCall(_ arguments: Arguments) async -> PreparedToolCall
+    /// The yes/no question for `.needsConfirmation` tools, e.g. "…takvime ekleyeyim mi?".
+    func confirmationQuestion(for arguments: Arguments) -> String
 }
 
 extension AssistantTool {
     var risk: ToolRisk { .safe }
     func emptyArguments() -> Arguments? { nil }
     func refine(_ arguments: Arguments, command: String) -> Arguments { arguments }
+    func confirmationQuestion(for arguments: Arguments) -> String { "Bunu yapmamı onaylıyor musun?" }
+
+    func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
+        PreparedToolCall(
+            toolName: name,
+            argumentsDescription: String(describing: arguments),
+            risk: risk,
+            confirmationQuestion: risk == .needsConfirmation ? confirmationQuestion(for: arguments) : nil,
+            execute: { try await call(arguments: arguments) })
+    }
 }
 
 /// A tool call whose arguments are already resolved; executing it is a separate, deliberate step.
@@ -30,7 +45,14 @@ struct PreparedToolCall: Sendable {
     let toolName: String
     let argumentsDescription: String
     let risk: ToolRisk
+    let confirmationQuestion: String?
     let execute: @Sendable () async throws -> String
+
+    /// A call that cannot run (e.g. nothing matched); speaking `message` is the whole turn.
+    static func unavailable(_ toolName: String, message: String) -> PreparedToolCall {
+        PreparedToolCall(toolName: toolName, argumentsDescription: "", risk: .safe, confirmationQuestion: nil,
+                         execute: { ToolReply.failure(message) })
+    }
 }
 
 enum ToolReply {

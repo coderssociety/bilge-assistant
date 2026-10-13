@@ -28,3 +28,8 @@ Toplantıda konuşulanlar diye not oluştur	createNote
 Günaydın	conversation
 En uzun nehir hangisi	conversation
 Adın ne	conversation
+Perşembe öğleden sonra üçte veli toplantısı ekle	addCalendarEvent
+Fatura ödemeyi yapılacaklara ekle	addReminder
+İndirilenlerdeki kurulum dosyasını çöpe at	moveFileToTrash
+Hangi kestirmeler var	listShortcuts
+Eve geliyorum kestirmesini başlat	runShortcut

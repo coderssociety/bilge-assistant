@@ -31,13 +31,13 @@ struct FileTool: AssistantTool {
             switch arguments.action {
             case .find:
                 guard let query = arguments.query else { return ToolReply.failure("Aranacak dosya adı belirtilmedi.") }
-                let results = try await search(query)
+                let results = try await FileSearch.find(query, limit: Self.maxResults)
                 guard !results.isEmpty else { return "'\(query)' ile eşleşen dosya bulunamadı." }
-                let list = results.map { "\($0.lastPathComponent) (\(Self.describeLocation($0)))" }
+                let list = results.map { "\($0.lastPathComponent) (\(FileSearch.describeLocation($0)))" }
                 return "Bulunan dosyalar: " + list.joined(separator: "; ")
             case .openFound:
                 guard let query = arguments.query else { return ToolReply.failure("Açılacak dosya adı belirtilmedi.") }
-                guard let file = try await search(query).first else { return "'\(query)' ile eşleşen dosya bulunamadı." }
+                guard let file = try await FileSearch.find(query, limit: Self.maxResults).first else { return "'\(query)' ile eşleşen dosya bulunamadı." }
                 return await open(file)
             case .openLatestDownload:
                 guard let latest = try Self.latestFile(in: Self.url(for: .downloads)) else {
@@ -50,14 +50,6 @@ struct FileTool: AssistantTool {
         } catch {
             return ToolReply.failure(error)
         }
-    }
-
-    private func search(_ query: String) async throws -> [URL] {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let output = try await ProcessRunner.run("/usr/bin/mdfind", ["-onlyin", home, "-name", query])
-        let urls = output.standardOutput.split(separator: "\n").map { URL(filePath: String($0)) }
-            .filter { !$0.path.contains("/Library/") && !$0.lastPathComponent.hasPrefix(".") }
-        return Self.sortedByRecency(urls).prefix(Self.maxResults).map { $0 }
     }
 
     /// Opening an app, script or installer would run code the user never explicitly approved,
@@ -98,16 +90,6 @@ struct FileTool: AssistantTool {
     private static func latestFile(in directory: URL) throws -> URL? {
         let items = try FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: [.contentModificationDateKey], options: .skipsHiddenFiles)
-        return sortedByRecency(items).first
-    }
-
-    private static func sortedByRecency(_ urls: [URL]) -> [URL] {
-        urls.map { ($0, (try? $0.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast) }
-            .sorted { $0.1 > $1.1 }
-            .map(\.0)
-    }
-
-    private static func describeLocation(_ url: URL) -> String {
-        url.deletingLastPathComponent().path.replacingOccurrences(of: NSHomeDirectory(), with: "~")
+        return FileSearch.sortedByRecency(items).first
     }
 }

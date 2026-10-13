@@ -54,6 +54,7 @@ final class AppEnvironment {
         let brain = AssistantBrain(tools: ToolRegistry(catalog: AppCatalog(), timers: timers).makeTools())
         let assistant = AssistantController(settings: settings, speech: speech, handler: brain)
         announcer.target = assistant
+        brain.confirmer = assistant
         self.settings = settings
         self.speech = speech
         self.timers = timers

@@ -1,0 +1,92 @@
+import AsistanCore
+import Foundation
+import FoundationModels
+
+/// The user's own Shortcuts are the extension point for anything without a public API
+/// (Focus modes, brightness, smart home). Running one needs confirmation: a shortcut can do anything.
+enum ShortcutsCatalog {
+    private static let executable = "/usr/bin/shortcuts"
+
+    static func names() async throws -> [String] {
+        let output = try await ProcessRunner.run(executable, ["list"])
+        guard output.status == 0 else { throw ShortcutsError.listFailed(output.standardError) }
+        return output.standardOutput.split(separator: "\n").map(String.init).filter { !$0.isEmpty }
+    }
+
+    static func resolve(_ spokenName: String) async throws -> String? {
+        let names = try await names()
+        let matcher = AppNameMatcher(apps: names.map { .init(id: $0, names: [$0]) })
+        return matcher.bestMatch(for: spokenName)?.id
+    }
+
+    static func run(_ name: String) async throws -> String {
+        let output = try await ProcessRunner.run(executable, ["run", name], timeout: .seconds(60))
+        guard output.status == 0 else {
+            return ToolReply.failure(output.standardError.isEmpty ? "'\(name)' kestirmesi çalışmadı." : output.standardError)
+        }
+        return output.standardOutput.isEmpty ? "'\(name)' kestirmesi çalıştı." : "'\(name)' sonucu: \(output.standardOutput.prefix(300))"
+    }
+
+    enum ShortcutsError: LocalizedError {
+        case listFailed(String)
+        var errorDescription: String? {
+            if case let .listFailed(detail) = self { "Kestirmeler okunamadı. \(detail)" } else { nil }
+        }
+    }
+}
+
+struct ListShortcutsTool: AssistantTool {
+    let name = "listShortcuts"
+    let description = "Kestirmeler uygulamasındaki kestirmelerin adlarını listeler."
+    private static let maxNames = 20
+
+    @Generable
+    struct Arguments {}
+
+    func emptyArguments() -> Arguments? { Arguments() }
+
+    func call(arguments: Arguments) async throws -> String {
+        do {
+            let names = try await ShortcutsCatalog.names()
+            guard !names.isEmpty else { return "Hiç kestirmen yok." }
+            return "\(names.count) kestirmen var: " + names.prefix(Self.maxNames).joined(separator: ", ")
+        } catch {
+            return ToolReply.failure(error)
+        }
+    }
+}
+
+struct RunShortcutTool: AssistantTool {
+    let name = "runShortcut"
+    let description = "Kestirmeler uygulamasındaki bir kestirmeyi adıyla çalıştırır. Odak modu, parlaklık gibi ayarlar için de kullanılır."
+    let risk = ToolRisk.needsConfirmation
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "Kestirmenin adı, örn. 'Sabah rutini'")
+        var shortcutName: String
+    }
+
+    func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
+        let resolved: String?
+        do {
+            resolved = try await ShortcutsCatalog.resolve(arguments.shortcutName)
+        } catch {
+            return .unavailable(name, message: error.localizedDescription)
+        }
+        guard let shortcut = resolved else {
+            return .unavailable(name, message: "'\(arguments.shortcutName)' adında bir kestirme bulamadım.")
+        }
+        return PreparedToolCall(
+            toolName: name,
+            argumentsDescription: shortcut,
+            risk: risk,
+            confirmationQuestion: "'\(shortcut)' kestirmesini çalıştırayım mı?",
+            execute: { try await ShortcutsCatalog.run(shortcut) })
+    }
+
+    /// Only the confirmed path from `makeCall` runs shortcuts.
+    func call(arguments: Arguments) async throws -> String {
+        ToolReply.failure("Kestirmeler yalnızca sesli onayla çalıştırılabilir.")
+    }
+}

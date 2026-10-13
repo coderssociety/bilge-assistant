@@ -1,3 +1,4 @@
+import AsistanCore
 import Foundation
 import FoundationModels
 
@@ -12,6 +13,8 @@ final class AssistantBrain: CommandHandling {
     private let routerError: String?
     private var conversation: LanguageModelSession?
     private var previousTurn: CommandRouter.PreviousTurn?
+    /// Asks the user before `.needsConfirmation` tools run; without it those tools never run.
+    weak var confirmer: (any ConfirmationProviding)?
 
     init(tools: [any AssistantTool]) {
         do {
@@ -76,14 +79,38 @@ final class AssistantBrain: CommandHandling {
         }
         switch try await router.route(command, previous: previousTurn) {
         case let .tool(call):
-            Log.tools.info("Running \(call.toolName, privacy: .public) \(call.argumentsDescription, privacy: .private)")
-            let result = try await call.execute()
-            previousTurn = .init(command: command, action: call.toolName, result: result)
-            continuation.yield(ToolReply.spoken(result))
+            let reply = try await run(call, for: command, continuation: continuation)
+            previousTurn = .init(command: command, action: call.toolName, result: reply)
+            continuation.yield(ToolReply.spoken(reply))
         case .conversation:
             let reply = try await streamConversation(command, into: continuation)
             previousTurn = .init(command: command, action: CommandRouter.conversationAction, result: reply)
         }
+    }
+
+    /// Runs a prepared call, asking first when it is risky. Anything but a clear "yes" cancels.
+    private func run(
+        _ call: PreparedToolCall,
+        for command: String,
+        continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws -> String {
+        if call.risk == .needsConfirmation {
+            guard let confirmer, let question = call.confirmationQuestion else {
+                await ActionAuditLog.shared.record(command: command, call: call, decision: .unconfirmed, result: nil)
+                return "Bu işlem için onay gerekiyor ama şu an onay alamıyorum, bu yüzden yapmadım."
+            }
+            let answer = await confirmer.confirm(question)
+            try Task.checkCancellation()
+            guard answer == .confirmed else {
+                let decision: ActionAuditLog.Decision = answer == .rejected ? .rejected : .unconfirmed
+                await ActionAuditLog.shared.record(command: command, call: call, decision: decision, result: nil)
+                return answer == .rejected ? "Tamam, yapmadım." : "Net bir onay duymadım, bu yüzden yapmadım."
+            }
+        }
+        Log.tools.info("Running \(call.toolName, privacy: .public) \(call.argumentsDescription, privacy: .private)")
+        let result = try await call.execute()
+        await ActionAuditLog.shared.record(command: command, call: call, decision: .executed, result: result)
+        return result
     }
 
     private func streamConversation(

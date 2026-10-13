@@ -72,11 +72,7 @@ final class CommandRouter {
             let extracted = try await session.respond(to: prompt, generating: T.Arguments.self, options: options).content
             arguments = tool.refine(extracted, command: resolvedCommand)
         }
-        return PreparedToolCall(
-            toolName: tool.name,
-            argumentsDescription: String(describing: arguments),
-            risk: tool.risk,
-            execute: { try await tool.call(arguments: arguments) })
+        return await tool.makeCall(arguments)
     }
 
     private static func prompt(_ command: String, previous: PreviousTurn?) -> String {

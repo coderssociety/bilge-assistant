@@ -40,6 +40,28 @@ actor CalendarAccess {
         }
     }
 
+    func addEvent(title: String, start: Date, end: Date) async throws {
+        try await requireEvents()
+        let event = EKEvent(eventStore: store)
+        event.title = title
+        event.startDate = start
+        event.endDate = end
+        event.calendar = store.defaultCalendarForNewEvents
+        try store.save(event, span: .thisEvent, commit: true)
+    }
+
+    func addReminder(title: String, due: Date?) async throws {
+        try await requireReminders()
+        let reminder = EKReminder(eventStore: store)
+        reminder.title = title
+        reminder.calendar = store.defaultCalendarForNewReminders()
+        if let due {
+            reminder.dueDateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: due)
+            reminder.addAlarm(EKAlarm(absoluteDate: due))
+        }
+        try store.save(reminder, commit: true)
+    }
+
     private func requireEvents() async throws {
         switch EKEventStore.authorizationStatus(for: .event) {
         case .fullAccess: return

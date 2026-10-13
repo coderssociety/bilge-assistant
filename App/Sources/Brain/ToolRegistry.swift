@@ -27,6 +27,11 @@ struct ToolRegistry {
             SetTimerTool(service: timers),
             ManageTimersTool(service: timers),
             CreateNoteTool(),
+            CreateEventTool(),
+            CreateReminderTool(),
+            TrashFileTool(),
+            ListShortcutsTool(),
+            RunShortcutTool(),
         ]
     }
 }

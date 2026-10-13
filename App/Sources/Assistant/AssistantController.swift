@@ -16,15 +16,19 @@ final class AssistantController {
         case transcribing
         case thinking
         case speaking
+        case confirming
         case failed(String)
     }
 
     private static let wakeProbeSeconds = 2.5
     private static let tickInterval = Duration.milliseconds(250)
+    private static let confirmationTimeout = Duration.seconds(8)
+    private static let confirmationGrace = Duration.seconds(5)
 
     private(set) var status: Status = .off
     private(set) var lastHeard: String?
     private(set) var lastReply: String?
+    private(set) var pendingConfirmation: String?
     var isRunning: Bool { listenTask != nil }
 
     private let settings: AssistantSettings
@@ -41,6 +45,7 @@ final class AssistantController {
     private var tickTask: Task<Void, Never>?
     private var turnTask: Task<Void, Never>?
     private var isAudioSuspended = false
+    private var confirmationContinuation: CheckedContinuation<ConfirmationParser.Answer, Never>?
 
     init(settings: AssistantSettings, speech: SpeechOutput, handler: any CommandHandling,
          audioSource: (any AudioSource)? = nil) {
@@ -69,8 +74,16 @@ final class AssistantController {
 
     /// Stops the current reply (menu action); the assistant keeps listening.
     func interrupt() {
+        resolveConfirmation(.rejected)
         turnTask?.cancel()
         speech.stop()
+    }
+
+    /// Answers a pending confirmation from the menu instead of by voice.
+    func resolveConfirmation(_ answer: ConfirmationParser.Answer) {
+        guard let continuation = confirmationContinuation else { return }
+        confirmationContinuation = nil
+        continuation.resume(returning: answer)
     }
 
     /// Speaks something the user did not just ask for (a timer going off), after any reply in progress.
@@ -168,6 +181,12 @@ final class AssistantController {
     private func process(_ segment: SpeechSegmenter.Segment) async {
         guard let recognizer, !isAudioSuspended else { return }
         do {
+            if pendingConfirmation != nil {
+                let answer = try await recognizer.transcribe(segment.samples)
+                lastHeard = answer
+                resolveConfirmation(ConfirmationParser.parse(answer))
+                return
+            }
             let isWakeCheck = flow.phase == .listeningForWake
             if !isWakeCheck { status = .transcribing }
             guard let transcript = try await transcribe(segment.samples, with: recognizer, wakeCheckOnly: isWakeCheck),
@@ -265,9 +284,25 @@ final class AssistantController {
         }
     }
 
+    // MARK: - Confirmation
+
+    private func waitForConfirmationAnswer() async -> ConfirmationParser.Answer {
+        let timeout = Task { [weak self] in
+            try? await Task.sleep(for: Self.confirmationTimeout)
+            guard !Task.isCancelled, let self else { return }
+            // Someone mid-sentence gets a little longer before the question lapses.
+            if segmenter.isInSpeech { try? await Task.sleep(for: Self.confirmationGrace) }
+            guard !Task.isCancelled else { return }
+            resolveConfirmation(.unclear)
+        }
+        defer { timeout.cancel() }
+        return await withCheckedContinuation { confirmationContinuation = $0 }
+    }
+
     // MARK: - Lifecycle
 
     private func teardown() {
+        resolveConfirmation(.rejected)
         tickTask?.cancel()
         segmentTask?.cancel()
         turnTask?.cancel()
@@ -287,5 +322,32 @@ final class AssistantController {
     private func fail(_ message: String) {
         Log.wake.error("Assistant stopped: \(message, privacy: .public)")
         status = .failed(message)
+    }
+}
+
+extension AssistantController: ConfirmationProviding {
+    /// Speaks the question, then listens (no wake phrase needed) for a yes/no or a menu click.
+    func confirm(_ question: String) async -> ConfirmationParser.Answer {
+        lastReply = question
+        status = .speaking
+        do {
+            try await speech.speak(question)
+        } catch {
+            Log.audio.error("Could not ask for confirmation: \(error.localizedDescription, privacy: .public)")
+            return .unclear
+        }
+        guard !Task.isCancelled else { return .rejected }
+        await vad?.reset()
+        segmenter.reset()
+        pendingConfirmation = question
+        status = .confirming
+        isAudioSuspended = false
+        let answer = await waitForConfirmationAnswer()
+        isAudioSuspended = true
+        segmenter.reset()
+        pendingConfirmation = nil
+        status = .thinking
+        Log.tools.info("Confirmation answer: \(String(describing: answer), privacy: .public)")
+        return answer
     }
 }

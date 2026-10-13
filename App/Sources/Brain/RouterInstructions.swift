@@ -27,6 +27,11 @@ enum RouterInstructions {
         ("beş dakika sonra fırına bakmamı hatırlat", "setTimer"),
         ("alarmları sil", "manageTimers"),
         ("toplantı notu diye not al", "createNote"),
+        ("cumartesi saat ikide halı saha maçı ekle", "addCalendarEvent"),
+        ("süt almayı listeme ekle", "addReminder"),
+        ("eski ekran görüntüsünü sil", "moveFileToTrash"),
+        ("hangi kestirmelerim var", "listShortcuts"),
+        ("iş modu kestirmesini çalıştır", "runShortcut"),
         ("nasılsın", "conversation"),
         ("Ay'a ilk kim gitti", "conversation"),
     ]
@@ -48,6 +53,9 @@ enum RouterInstructions {
         - If the user wants something done on the Mac, or asks about the Mac's current state (time, date, battery, calendar, reminders, music, files, volume, timers), choose the matching action, never conversation.
         - "<name> aç" / "<name>'ı aç" with an application name means openApp, even for apps like Takvim, Notlar, Müzik or Mail.
         - Questions about the song that is playing are controlMusic.
+        - "hatırlat" after a duration ("10 dakika sonra") or at a time today is setTimer; adding something to the to-do list or for another day is addReminder.
+        - Appointments and meetings to put on the calendar are addCalendarEvent; asking what is on the calendar is readCalendar.
+        - Turning on Focus/Do Not Disturb, brightness or anything else not covered by an action is runShortcut.
         - Questions about the assistant itself (what it can do, who it is) are conversation.
         - A short follow-up such as "peki yarın?" or "biraz daha" continues the previous action.
         - Requests about weather, exchange rates or news are conversation unless the user asks to search the web.
