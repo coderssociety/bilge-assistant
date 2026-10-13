@@ -34,6 +34,8 @@ struct GeneralSettingsView: View {
                 Text("Esnek ayar kelimeyi daha kolay yakalar ama başka konuşmalarda yanlışlıkla uyanma ihtimali artar.")
                     .font(.caption).foregroundStyle(.secondary)
                 Toggle("Yanıttan sonra kelimesiz devam sorusu dinle", isOn: $settings.followUpEnabled)
+                Toggle("Konuşurken sözünü kesebileyim (“\(AppIdentity.name), dur”)", isOn: $settings.bargeInEnabled)
+                    .help("Yankı iptaliyle asistanın kendi sesini süzer. Kulaklıkla en iyi sonucu verir.")
             }
 
             Section("Başlangıç") {
@@ -59,6 +61,7 @@ struct GeneralSettingsView: View {
         .onAppear { wakePhraseDraft = settings.wakePhrase }
         .onChange(of: settings.wakeSensitivity) { assistant.restartIfRunning() }
         .onChange(of: settings.followUpEnabled) { assistant.restartIfRunning() }
+        .onChange(of: settings.bargeInEnabled) { assistant.restartIfRunning() }
     }
 
     private func applyWakePhrase() {

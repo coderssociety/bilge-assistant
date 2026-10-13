@@ -1,10 +1,10 @@
 @preconcurrency import AVFoundation
 
-/// Streams the default input device as 16 kHz mono Float32 sample arrays.
+/// Streams the default input device as 16 kHz mono Float32 chunks stamped with their capture time.
 @MainActor
 final class MicrophoneCapture {
     private let engine = AVAudioEngine()
-    private var continuation: AsyncStream<[Float]>.Continuation?
+    private var continuation: AsyncStream<AudioChunk>.Continuation?
     private var configurationObserver: NSObjectProtocol?
 
     var isRunning: Bool { continuation != nil }
@@ -17,9 +17,9 @@ final class MicrophoneCapture {
         }
     }
 
-    func start() throws -> AsyncStream<[Float]> {
+    func start() throws -> AsyncStream<AudioChunk> {
         stop()
-        let (stream, continuation) = AsyncStream<[Float]>.makeStream(bufferingPolicy: .bufferingNewest(128))
+        let (stream, continuation) = AsyncStream<AudioChunk>.makeStream(bufferingPolicy: .bufferingNewest(128))
         self.continuation = continuation
         do {
             try installTapAndStart(continuation: continuation)
@@ -44,7 +44,7 @@ final class MicrophoneCapture {
         continuation = nil
     }
 
-    private func installTapAndStart(continuation: AsyncStream<[Float]>.Continuation) throws {
+    private func installTapAndStart(continuation: AsyncStream<AudioChunk>.Continuation) throws {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else { throw AudioError.noInputDevice }
@@ -72,12 +72,13 @@ final class MicrophoneCapture {
     /// Built outside the main actor: the tap runs on a real-time audio thread.
     private nonisolated static func makeTapBlock(
         resampler: StreamingResampler,
-        continuation: AsyncStream<[Float]>.Continuation
+        continuation: AsyncStream<AudioChunk>.Continuation
     ) -> AVAudioNodeTapBlock {
-        { buffer, _ in
+        { buffer, when in
             do {
                 let samples = try resampler.convert(buffer)
-                if !samples.isEmpty { continuation.yield(samples) }
+                let hostTime = when.isHostTimeValid ? when.hostTime : mach_absolute_time()
+                if !samples.isEmpty { continuation.yield(AudioChunk(samples: samples, hostTime: hostTime)) }
             } catch {
                 Log.audio.error("Resampling failed: \(error.localizedDescription, privacy: .public)")
             }

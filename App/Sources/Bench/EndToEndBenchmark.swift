@@ -14,7 +14,11 @@ enum EndToEndBenchmark {
         let pauseBefore: Double
         let text: String
         let expectsReply: Bool
+        /// Spoken while the assistant is still talking; it must stop speaking promptly.
+        var interrupts = false
     }
+
+    private static let maxInterruptLatency = 3.0
 
     private static let script: [Line] = [
         Line(pauseBefore: 1.5, text: "Bugün hava çok güzel, dışarı çıkalım.", expectsReply: false),
@@ -25,6 +29,10 @@ enum EndToEndBenchmark {
         Line(pauseBefore: 7.0, text: "Teşekkür ederim.", expectsReply: true),
         Line(pauseBefore: 9.0, text: "Bilge, yarın saat onda diş hekimi randevusu ekle.", expectsReply: true),
         Line(pauseBefore: 8.0, text: "Hayır.", expectsReply: true),
+        Line(pauseBefore: 6.0, text: "Bilge, bana İstanbul'un tarihini anlat.", expectsReply: true),
+        Line(pauseBefore: 5.0, text: "Bilge, dur.", expectsReply: false, interrupts: true),
+        Line(pauseBefore: 8.0, text: "Bilge, bana Ankara'yı anlat.", expectsReply: true),
+        Line(pauseBefore: 5.0, text: "Bilge, saat kaç?", expectsReply: true, interrupts: true),
     ]
 
     static func run() async -> Int32 {
@@ -38,7 +46,9 @@ enum EndToEndBenchmark {
             let speech = SpeechOutput(voice: .f1)
             speech.isMuted = true
             let tools = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }).makeTools()
-            let source = ScriptedAudioSource(samples: audio)
+            // A laptop speaker leaking into its own microphone: 60 ms late, half as loud.
+            let source = ScriptedAudioSource(
+                samples: audio, echo: .init(timeline: speech.playbackTimeline, delay: 0.06, gain: 0.5))
             let brain = AssistantBrain(tools: tools)
             brain.prewarm()
             let assistant = AssistantController(settings: settings, speech: speech, handler: brain, audioSource: source)
@@ -104,6 +114,18 @@ enum EndToEndBenchmark {
         }
         print("— Gecikme (konuşma bitişi → yanıtın başlaması) —")
         let replyStarts = events.filter(\.isReplyStart).map(\.time)
+        let statusEvents = events.filter { $0.description.hasPrefix("durum:") }
+        let speakingStops = zip(statusEvents, statusEvents.dropFirst())
+            .filter { $0.0.isReplyStart && !$0.1.isReplyStart }
+            .map(\.1.time)
+        for (index, (end, line)) in endTimes.enumerated() where line.interrupts {
+            // Stopping already while the user is still saying "Bilge, dur" counts as instant.
+            let start = index > 0 ? endTimes[index - 1].0 + line.pauseBefore : 0
+            let stop = speakingStops.first { $0 > start }
+            let latency = stop.map { max(0, $0 - end) }
+            let passed = latency.map { $0 <= maxInterruptLatency } ?? false
+            print("\(passed ? "✓" : "✗") söz kesme \"\(line.text)\" → \(latency.map { String(format: "%.2fs", $0) } ?? "susmadı")")
+        }
         for (end, line) in endTimes {
             let next = replyStarts.first { $0 > end }
             let window = endTimes.first { $0.0 > end }?.0 ?? .infinity

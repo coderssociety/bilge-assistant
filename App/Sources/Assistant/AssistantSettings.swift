@@ -16,6 +16,7 @@ final class AssistantSettings {
         static let followUpEnabled = "followUpEnabled"
         static let listenOnLaunch = "listenOnLaunch"
         static let showHUD = "showHUD"
+        static let bargeInEnabled = "bargeInEnabled"
         static let onboardingCompleted = "onboardingCompleted"
     }
 
@@ -30,6 +31,7 @@ final class AssistantSettings {
     var followUpEnabled: Bool { didSet { defaults.set(followUpEnabled, forKey: Key.followUpEnabled) } }
     var listenOnLaunch: Bool { didSet { defaults.set(listenOnLaunch, forKey: Key.listenOnLaunch) } }
     var showHUD: Bool { didSet { defaults.set(showHUD, forKey: Key.showHUD) } }
+    var bargeInEnabled: Bool { didSet { defaults.set(bargeInEnabled, forKey: Key.bargeInEnabled) } }
     var onboardingCompleted: Bool { didSet { defaults.set(onboardingCompleted, forKey: Key.onboardingCompleted) } }
 
     init(defaults: UserDefaults = .standard) {
@@ -42,6 +44,7 @@ final class AssistantSettings {
         followUpEnabled = defaults.object(forKey: Key.followUpEnabled) as? Bool ?? true
         listenOnLaunch = defaults.object(forKey: Key.listenOnLaunch) as? Bool ?? false
         showHUD = defaults.object(forKey: Key.showHUD) as? Bool ?? true
+        bargeInEnabled = defaults.object(forKey: Key.bargeInEnabled) as? Bool ?? true
         onboardingCompleted = defaults.bool(forKey: Key.onboardingCompleted)
     }
 

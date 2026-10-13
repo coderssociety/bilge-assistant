@@ -9,6 +9,9 @@ final class AudioPlayer {
     private var outstandingBuffers = 0
     private var drainWaiters: [CheckedContinuation<Void, Never>] = []
     private var generation = 0
+    /// Everything this player renders, for echo cancellation (recorded before the volume stage,
+    /// so it still works when muted in benchmarks).
+    let timeline = PlaybackTimeline()
 
     init(sampleRate: Double) {
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else {
@@ -17,6 +20,25 @@ final class AudioPlayer {
         self.format = format
         engine.attach(node)
         engine.connect(node, to: engine.mainMixerNode, format: format)
+        installRenderTap()
+    }
+
+    private func installRenderTap() {
+        do {
+            let resampler = try StreamingResampler(inputFormat: format)
+            node.installTap(onBus: 0, bufferSize: 1024, format: format,
+                            block: Self.makeRenderTap(resampler: resampler, timeline: timeline))
+        } catch {
+            Log.audio.error("Playback tap unavailable; barge-in will not cancel echo: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private nonisolated static func makeRenderTap(resampler: StreamingResampler, timeline: PlaybackTimeline) -> AVAudioNodeTapBlock {
+        { buffer, when in
+            guard let samples = try? resampler.convert(buffer) else { return }
+            let hostTime = when.isHostTimeValid ? when.hostTime : mach_absolute_time()
+            timeline.append(samples, startSeconds: AVAudioTime.seconds(forHostTime: hostTime))
+        }
     }
 
     var isPlaying: Bool { outstandingBuffers > 0 }

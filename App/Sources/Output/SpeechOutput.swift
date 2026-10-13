@@ -27,6 +27,7 @@ final class SpeechOutput {
         set { player.isMuted = newValue }
     }
     var isSpeaking: Bool { player.isPlaying }
+    var playbackTimeline: PlaybackTimeline { player.timeline }
 
     func prepare() async throws {
         if manager == nil { manager = try await Supertonic3Manager.downloadAndCreate() }

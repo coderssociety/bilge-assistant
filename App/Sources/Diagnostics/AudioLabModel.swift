@@ -75,8 +75,8 @@ final class AudioLabModel {
                 let stream = try microphone.start()
                 isListening = true
                 append("Dinleme başladı")
-                for await samples in stream {
-                    for frame in try await detector.process(samples) { apply(frame) }
+                for await chunk in stream {
+                    for frame in try await detector.process(chunk.samples) { apply(frame) }
                 }
             } catch {
                 report(error)

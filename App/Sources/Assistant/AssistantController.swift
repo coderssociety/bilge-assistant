@@ -48,6 +48,13 @@ final class AssistantController {
     private var turnTask: Task<Void, Never>?
     private var isAudioSuspended = false
     private var confirmationContinuation: CheckedContinuation<ConfirmationParser.Answer, Never>?
+    private var bargeIn: BargeInListener?
+    /// A request the user made by cutting in; it runs once the interrupted reply has wound down.
+    private var pendingBargeCommand: String?
+    /// "Bilge, dur" means silence: no follow-up window, or the rest of the sentence gets answered.
+    private var stoppedByUser = false
+
+    private var isBargeInActive: Bool { status == .speaking && bargeIn != nil }
 
     init(settings: AssistantSettings, speech: SpeechOutput, handler: any CommandHandling,
          audioSource: (any AudioSource)? = nil) {
@@ -108,12 +115,15 @@ final class AssistantController {
         await turnTask?.value
         isAudioSuspended = true
         segmenter.reset()
+        await bargeIn?.reset()
+        lastReply = text
         status = .speaking
         do {
             try await speech.speak(text)
         } catch {
             Log.audio.error("Announcement failed: \(error.localizedDescription, privacy: .public)")
         }
+        await bargeIn?.reset()
         await vad?.reset()
         segmenter.reset()
         isAudioSuspended = false
@@ -137,10 +147,13 @@ final class AssistantController {
             let stream = try microphone.start()
             status = .listening
             Log.wake.info("Listening for wake phrase '\(self.settings.wakePhrase, privacy: .public)'")
-            for await samples in stream {
+            for await chunk in stream {
                 if Task.isCancelled { break }
-                if isAudioSuspended { continue }
-                for frame in try await vad.process(samples) { handle(frame) }
+                if isAudioSuspended {
+                    if isBargeInActive { await listenForBargeIn(chunk) }
+                    continue
+                }
+                for frame in try await vad.process(chunk.samples) { handle(frame) }
             }
         } catch is CancellationError {
             // stop() already cleaned up
@@ -175,7 +188,40 @@ final class AssistantController {
         speech.speed = settings.speechSpeed
         try await speech.setVoice(settings.voice)
         try await speech.prepare()
+        await loadBargeIn()
         return vad
+    }
+
+    /// Optional: if echo cancellation cannot load, the assistant still works, just without barge-in.
+    private func loadBargeIn() async {
+        bargeIn = nil
+        guard settings.bargeInEnabled, let recognizer else { return }
+        status = .loading("Yankı iptali hazırlanıyor…")
+        do {
+            bargeIn = try await BargeInListener(
+                timeline: speech.playbackTimeline, recognizer: recognizer,
+                detector: BargeInDetector(matcher: settings.makeWakeMatcher()))
+        } catch {
+            Log.audio.error("Barge-in disabled: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func listenForBargeIn(_ chunk: AudioChunk) async {
+        await bargeIn?.listen(chunk, replySoFar: lastReply ?? "") { [weak self] decision, heard in
+            self?.handleBargeIn(decision, heard: heard)
+        }
+    }
+
+    private func handleBargeIn(_ decision: BargeInDetector.Decision, heard: String) {
+        guard status == .speaking else { return }
+        lastHeard = heard
+        switch decision {
+        case let .command(command): pendingBargeCommand = command
+        case .stop: stoppedByUser = true
+        case .none: return
+        }
+        Log.wake.info("User cut in: \(String(describing: decision), privacy: .public)")
+        interrupt()
     }
 
     private func handle(_ frame: VoiceActivityFrame) {
@@ -263,6 +309,7 @@ final class AssistantController {
     private func runTurn(_ command: String) async {
         isAudioSuspended = true
         segmenter.reset()
+        await bargeIn?.reset()
         status = .thinking
         lastReply = ""
         flow.responseStarted()
@@ -274,12 +321,19 @@ final class AssistantController {
             Log.brain.error("Turn failed: \(error.localizedDescription, privacy: .public)")
             Earcon.failed.play()
         }
+        await bargeIn?.reset()
         await vad?.reset()
         segmenter.reset()
         isAudioSuspended = false
-        flow.responseFinished(at: .now, allowFollowUp: settings.followUpEnabled)
+        let allowFollowUp = pendingBargeCommand != nil || (!stoppedByUser && settings.followUpEnabled)
+        stoppedByUser = false
+        flow.responseFinished(at: .now, allowFollowUp: allowFollowUp)
         if !flow.isAwaitingSpeech { handler.endConversation() }
         status = flow.isAwaitingSpeech ? .awake : .listening
+        if let command = pendingBargeCommand {
+            pendingBargeCommand = nil
+            perform(flow.heard(command, at: .now))
+        }
     }
 
     /// Forwards the handler's reply while mirroring it into the UI.
