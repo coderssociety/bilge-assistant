@@ -46,4 +46,15 @@ struct WakePhraseMatcherTests {
         #expect(strict.match("asisstan sesi kıs") == nil)
         #expect(strict.match("asistan sesi kıs") != nil)
     }
+
+    @Test("short wake words allow suffixes but no misspellings, so everyday words don't wake it")
+    func shortWakeWord() {
+        let bilge = WakePhraseMatcher(phrase: "Bilge")
+        #expect(bilge.match("Bilge, saat kaç")?.command == "saat kaç")
+        #expect(bilge.match("hey bilge müziği aç")?.command == "müziği aç")
+        #expect(bilge.match("Bilgeciğim, sesi kıs")?.command == "sesi kıs")
+        #expect(bilge.match("Bilgi almak istiyorum") == nil)
+        #expect(bilge.match("Bilgisayarı kapat") == nil)
+        #expect(bilge.match("Bilgin olsun yarın geliyorum") == nil)
+    }
 }

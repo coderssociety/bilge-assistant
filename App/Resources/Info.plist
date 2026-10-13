@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Asistan</string>
+	<string>Bilge</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,14 +25,14 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Asistan, senin isteğinle uygulamaları kontrol etmek (müzik, notlar, sistem ayarları) için Apple Events kullanır.</string>
+	<string>Bilge, senin isteğinle uygulamaları kontrol etmek (müzik, notlar, sistem ayarları) için Apple Events kullanır.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Asistan, takvimindeki etkinlikleri okumak ve senin onayınla yenilerini eklemek için takvime erişir.</string>
+	<string>Bilge, takvimindeki etkinlikleri okumak ve senin onayınla yenilerini eklemek için takvime erişir.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Asistan, uyandırma kelimesini ve komutlarını duymak için mikrofonu kullanır. Ses kaydı saklanmaz ve Mac'inden dışarı çıkmaz.</string>
+	<string>Bilge, uyandırma kelimesini ve komutlarını duymak için mikrofonu kullanır. Ses kaydı saklanmaz ve Mac'inden dışarı çıkmaz.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
-	<string>Asistan, anımsatıcılarını okumak ve senin onayınla yenilerini eklemek için anımsatıcılara erişir.</string>
+	<string>Bilge, anımsatıcılarını okumak ve senin onayınla yenilerini eklemek için anımsatıcılara erişir.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Asistan, Türkçe komutlarını cihaz üzerinde yazıya dökmek için konuşma tanımayı kullanır.</string>
+	<string>Bilge, Türkçe komutlarını cihaz üzerinde yazıya dökmek için konuşma tanımayı kullanır.</string>
 </dict>
 </plist>

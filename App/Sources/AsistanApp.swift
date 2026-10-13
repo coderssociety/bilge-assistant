@@ -24,7 +24,7 @@ struct AsistanApp: App {
                 .accessibilityLabel(AppIdentity.name)
         }
 
-        Window("\(AppIdentity.name)'a hoş geldin", id: WindowID.onboarding) {
+        Window("\(AppIdentity.nameDative) hoş geldin", id: WindowID.onboarding) {
             OnboardingView(environment: environment)
         }
         .windowResizability(.contentSize)

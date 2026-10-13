@@ -18,12 +18,12 @@ enum EndToEndBenchmark {
 
     private static let script: [Line] = [
         Line(pauseBefore: 1.5, text: "Bugün hava çok güzel, dışarı çıkalım.", expectsReply: false),
-        Line(pauseBefore: 2.0, text: "Asistan, saat kaç?", expectsReply: true),
-        Line(pauseBefore: 9.0, text: "Asistan.", expectsReply: false),
+        Line(pauseBefore: 2.0, text: "Bilge, saat kaç?", expectsReply: true),
+        Line(pauseBefore: 9.0, text: "Bilge.", expectsReply: false),
         Line(pauseBefore: 1.0, text: "Pil durumu nedir?", expectsReply: true),
-        Line(pauseBefore: 7.0, text: "Asistan, yüz yirmi beşin yüzde on sekizi kaç eder?", expectsReply: true),
+        Line(pauseBefore: 7.0, text: "Bilge, yüz yirmi beşin yüzde on sekizi kaç eder?", expectsReply: true),
         Line(pauseBefore: 7.0, text: "Teşekkür ederim.", expectsReply: true),
-        Line(pauseBefore: 9.0, text: "Asistan, yarın saat onda diş hekimi randevusu ekle.", expectsReply: true),
+        Line(pauseBefore: 9.0, text: "Bilge, yarın saat onda diş hekimi randevusu ekle.", expectsReply: true),
         Line(pauseBefore: 8.0, text: "Hayır.", expectsReply: true),
     ]
 

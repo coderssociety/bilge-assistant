@@ -10,7 +10,11 @@ public struct WakePhraseMatcher: Sendable {
     private static let fillers: Set<String> = ["hey", "hay", "ey", "hu", "selam", "merhaba", "sey", "alo", "ya"]
     private static let maxLeadingFillers = 2
     private static let maxTokensPerPhrase = 3
-    private static let maxSuffixLength = 3
+    /// Room for Turkish vocative/possessive endings: "asistanım", "bilgeciğim".
+    private static let maxSuffixLength = 5
+    /// One misspelled letter in a short word is another common word ("bilge" → "bilgi"),
+    /// so wake phrases this short must be spelled exactly (suffixes still allowed).
+    private static let exactMatchMaxLength = 5
 
     private let phraseKey: String
     private let phraseFillers: [String]
@@ -22,8 +26,9 @@ public struct WakePhraseMatcher: Sendable {
         let leading = words.prefix(while: { Self.fillers.contains($0) })
         let core = words.dropFirst(leading.count)
         phraseFillers = Array(leading)
-        phraseKey = (core.isEmpty ? words : Array(core)).joined()
-        self.minimumSimilarity = minimumSimilarity
+        let key = (core.isEmpty ? words : Array(core)).joined()
+        phraseKey = key
+        self.minimumSimilarity = key.count <= Self.exactMatchMaxLength ? 1 : minimumSimilarity
     }
 
     public func match(_ transcript: String) -> Match? {
