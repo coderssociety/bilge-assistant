@@ -56,6 +56,18 @@ enum RouterInstructions {
         ("pencereyi sağa yasla", "windowControl"),
         ("şunu yaz toplantı ertelendi", "typeText"),
         ("işaretlediğim metni açıkla", "readSelection"),
+        ("İzmir'de yarın yağmur var mı", "weather"),
+        ("dışarısı kaç derece", "weather"),
+        ("sterlin ne kadar", "exchangeRate"),
+        ("50 dolar kaç lira eder", "exchangeRate"),
+        ("spor haberlerini oku", "news"),
+        ("gündemde ne var", "news"),
+        ("tarayıcıdaki makaleyi özetle", "readWebPage"),
+        ("hürriyet.com.tr'de ne yazıyor", "readWebPage"),
+        ("yeni mailim var mı", "readMail"),
+        ("Kemal'den e-posta geldi mi", "readMail"),
+        ("Burak'a yarınki toplantının iptal olduğunu mail at", "sendEmail"),
+        ("Elif'e eve geldiğimi mesaj at", "sendMessage"),
         ("Everest'in yüksekliği ne kadar", "conversation"),
         ("nasılsın", "conversation"),
         ("Ay'a ilk kim gitti", "conversation"),
@@ -84,7 +96,9 @@ enum RouterInstructions {
         - Questions about the assistant itself (what it can do, who it is) are conversation.
         - A short follow-up such as "peki yarın?" or "biraz daha" continues the previous action.
         - Questions that ask for knowledge ("…neresi", "…hangisi", "…kimdir", "kaç yaşında") are conversation. Use searchWeb only when the user explicitly asks to search or look something up on the web.
-        - Requests about weather, exchange rates or news are conversation unless the user asks to search the web.
+        - Weather and temperature are weather; exchange rates and currency conversion are exchangeRate; news headlines are news.
+        - Reading or summarizing the web page open in the browser, or a named web address, is readWebPage; opening a site is openWebsite.
+        - Reading unread e-mail is readMail. Sending e-mail is sendEmail; sending a text/iMessage ("mesaj at", "yaz") to a person is sendMessage.
         - Someone's phone number or e-mail address is findContact.
         - Finishing a to-do ("…tamamladım", "…yaptım, işaretle", "listeden çıkar") is completeReminder.
         - Playing a named song, artist, album or playlist is playMusic; play, pause, next and "what is playing" are controlMusic.

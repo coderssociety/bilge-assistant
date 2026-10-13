@@ -72,4 +72,18 @@ struct RouteGuardTests {
     func summer(command: String) {
         #expect(RouteGuard.review(action: "playMusic", command: command) == "playMusic")
     }
+
+    @Test("weather needs a weather word", arguments: [
+        ("Bana bir tavsiye ver", "conversation"), ("yarın yağmur yağacak mı", "weather"), ("dışarısı kaç derece", "weather"),
+        ("şemsiye alayım mı", "weather"),
+    ])
+    func weather(command: String, expected: String) {
+        #expect(RouteGuard.review(action: "weather", command: command) == expected)
+    }
+
+    @Test("a place to show on a map is a search, not just opening the app")
+    func mapSearch() {
+        #expect(RouteGuard.review(action: "openApp", command: "Haritalarda Kadıköy'ü göster") == "searchWeb")
+        #expect(RouteGuard.review(action: "openApp", command: "Haritaları aç") == "openApp")
+    }
 }

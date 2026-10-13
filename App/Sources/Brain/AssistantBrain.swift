@@ -16,12 +16,14 @@ final class AssistantBrain: CommandHandling {
         didSet { context.lastReply = previousTurn?.result }
     }
     private let context: ConversationContext
+    private let tools: [any AssistantTool]
     private let localModel = LocalModelResponder()
     /// Asks the user before `.needsConfirmation` tools run; without it those tools never run.
     weak var confirmer: (any ConfirmationProviding)?
 
     init(tools: [any AssistantTool], context: ConversationContext = ConversationContext()) {
         self.context = context
+        self.tools = tools
         do {
             router = try CommandRouter(tools: tools, model: model)
             routerError = nil
@@ -105,6 +107,62 @@ final class AssistantBrain: CommandHandling {
             continuation.yield(unavailableReason ?? "Dil modeli kullanılamıyor.")
             return
         }
+        if let parts = CompoundCommand.split(command) {
+            try await handleCompound(command, parts: parts, router: router, continuation: continuation)
+            return
+        }
+        try await handleSingle(command, router: router, continuation: continuation)
+    }
+
+    /// Parts that refer to an earlier result ("…bul ve ona mesaj at") are planned by the large model when
+    /// one is selected. Independent parts, or all parts without that model, run one after another as
+    /// separate commands, which is also several times faster.
+    private func handleCompound(
+        _ command: String,
+        parts: [String],
+        router: CommandRouter,
+        continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws {
+        if localModel.isEnabled, CompoundCommand.hasDependentParts(parts) {
+            continuation.yield("Tamam, sırayla yapıyorum. ")
+            do {
+                let outcome = try await multiStepAgent(for: command, continuation: continuation).run(command)
+                previousTurn = .init(command: command, action: "multiStep",
+                                     result: outcome.readUntrustedContent ? nil : outcome.summary)
+                context.lastReply = outcome.summary
+                continuation.yield(outcome.summary)
+                return
+            } catch {
+                try Self.rethrowIfCancelled(error)
+            }
+        }
+        for part in parts {
+            try Task.checkCancellation()
+            try await handleSingle(part, router: router, continuation: continuation)
+            continuation.yield(" ")
+        }
+    }
+
+    private func multiStepAgent(
+        for command: String,
+        continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) -> MultiStepAgent {
+        MultiStepAgent(
+            tools: tools,
+            complete: { [localModel] messages in
+                try await localModel.complete(messages, maxTokens: MultiStepAgent.maxReplyTokens, announcingWaitTo: continuation)
+            },
+            execute: { [weak self] call in
+                guard let self else { throw CancellationError() }
+                return try await run(call, for: command, continuation: continuation)
+            })
+    }
+
+    private func handleSingle(
+        _ command: String,
+        router: CommandRouter,
+        continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws {
         switch try await router.route(command, previous: previousTurn) {
         case let .tool(call):
             if !call.answersWithLanguageModel { localModel.turnNeededNoModel() }
@@ -133,7 +191,7 @@ final class AssistantBrain: CommandHandling {
                 await ActionAuditLog.shared.record(command: command, call: call, decision: .unconfirmed, result: nil)
                 return "Bu işlem için onay gerekiyor ama şu an onay alamıyorum, bu yüzden yapmadım."
             }
-            let answer = await confirmer.confirm(question)
+            let answer = await confirmer.confirm(question, strict: call.requiresExplicitYes)
             try Task.checkCancellation()
             guard answer == .confirmed else {
                 let decision: ActionAuditLog.Decision = answer == .rejected ? .rejected : .unconfirmed

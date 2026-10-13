@@ -1,3 +1,4 @@
+import AsistanCore
 import AppKit
 import FoundationModels
 import PDFKit
@@ -53,7 +54,7 @@ struct ReadDocumentTool: AssistantTool {
 
     @Generable
     struct Arguments {
-        @Guide(description: "Belge adında geçen kelimeler; 'son indirdiğim belge' gibi isteklerde boş bırak")
+        @Guide(description: "Belge adında geçen kelimeler. 'Son indirdiğim PDF' gibi isteklerde yalnızca türü yaz ('pdf', 'word'); tür de yoksa boş bırak")
         var query: String?
     }
 
@@ -71,12 +72,25 @@ struct ReadDocumentTool: AssistantTool {
         }
     }
 
+    private static let typeWords: [String: Set<String>] = [
+        "pdf": ["pdf"], "word": ["docx", "doc"], "metin": ["txt", "md", "rtf"], "tablo": ["csv"],
+    ]
+
+    /// A name search first. Phrasings like "son indirilen PDF" name no file, so they fall back to the
+    /// newest download of the mentioned type (or of any readable type).
     private static func locate(_ query: String?) async throws -> URL? {
-        if let query, !query.trimmingCharacters(in: .whitespaces).isEmpty {
-            return try await FileSearch.find(query, limit: 20).first { readableExtensions.contains($0.pathExtension.lowercased()) }
+        let query = query?.trimmingCharacters(in: .whitespaces) ?? ""
+        if !query.isEmpty,
+           let found = try await FileSearch.find(query, limit: 20).first(where: { readableExtensions.contains($0.pathExtension.lowercased()) }) {
+            return found
         }
+        let words = TurkishText.folded(query).split(separator: " ").map(String.init)
+        let wanted = words.compactMap { word in typeWords.first { word.hasPrefix($0.key) }?.value }.reduce(Set<String>()) { $0.union($1) }
+        let mentionsDownload = words.contains { $0.hasPrefix("indir") || $0 == "son" }
+        guard query.isEmpty || !wanted.isEmpty || mentionsDownload else { return nil }
+        let extensions = wanted.isEmpty ? readableExtensions : wanted
         let downloads = (try? FileManager.default.contentsOfDirectory(at: .downloadsDirectory, includingPropertiesForKeys: nil)) ?? []
-        return FileSearch.sortedByRecency(downloads).first { readableExtensions.contains($0.pathExtension.lowercased()) }
+        return FileSearch.sortedByRecency(downloads).first { extensions.contains($0.pathExtension.lowercased()) }
     }
 
     private static func text(of file: URL) throws -> String {

@@ -44,7 +44,7 @@ targets:
         LSApplicationCategoryType: public.app-category.productivity
         NSMicrophoneUsageDescription: Bilge, uyandırma kelimesini ve komutlarını duymak için mikrofonu kullanır. Ses kaydı saklanmaz ve Mac'inden dışarı çıkmaz.
         NSSpeechRecognitionUsageDescription: Bilge, Türkçe komutlarını cihaz üzerinde yazıya dökmek için konuşma tanımayı kullanır.
-        NSAppleEventsUsageDescription: Bilge, senin isteğinle uygulamaları kontrol etmek (müzik, notlar, sistem ayarları) için Apple Events kullanır.
+        NSAppleEventsUsageDescription: Bilge, senin isteğinle uygulamaları kontrol etmek (müzik, notlar, Mail, Mesajlar, tarayıcı) için Apple Events kullanır. Gönderme işlemleri her zaman onayınla yapılır.
         NSCalendarsFullAccessUsageDescription: Bilge, takvimindeki etkinlikleri okumak ve senin onayınla yenilerini eklemek için takvime erişir.
         NSRemindersFullAccessUsageDescription: Bilge, anımsatıcılarını okumak ve senin onayınla yenilerini eklemek için anımsatıcılara erişir.
         NSContactsUsageDescription: Bilge, sorduğunda birinin telefonunu ya da e-postasını bulmak ve senin onayınla mesaj göndermek için kişilerine erişir.

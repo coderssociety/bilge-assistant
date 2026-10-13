@@ -4,6 +4,7 @@ import ApplicationServices
 enum AccessibilityError: LocalizedError {
     case notTrusted
     case noWindow
+    case focusChanged
 
     var errorDescription: String? {
         switch self {
@@ -11,6 +12,8 @@ enum AccessibilityError: LocalizedError {
             "Bunun için Erişilebilirlik izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Erişilebilirlik'ten Bilge'yi aç."
         case .noWindow:
             "Öndeki pencereyi bulamadım."
+        case .focusChanged:
+            "Yazarken öndeki uygulama değişti, yazmayı durdurdum."
         }
     }
 }
@@ -57,12 +60,14 @@ enum AccessibilityControl {
         AXUIElementSetAttributeValue(element, name as CFString, value) == .success
     }
 
-    /// Types text into the focused field as Unicode key events; no Return is ever sent.
-    static func type(_ text: String) async throws {
+    /// Types already-sanitized text (`TypedText`) as Unicode key events, only while `pid` stays frontmost:
+    /// if focus moves to another app mid-way, typing stops.
+    static func type(_ text: String, into pid: pid_t) async throws {
         try requireTrust()
         let source = CGEventSource(stateID: .hidSystemState)
-        let units = Array(text.replacingOccurrences(of: "\n", with: " ").utf16)
+        let units = Array(text.utf16)
         for chunk in stride(from: 0, to: units.count, by: 16).map({ Array(units[$0..<min($0 + 16, units.count)]) }) {
+            guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else { throw AccessibilityError.focusChanged }
             for keyDown in [true, false] {
                 let event = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: keyDown)
                 event?.keyboardSetUnicodeString(stringLength: chunk.count, unicodeString: chunk)

@@ -15,13 +15,16 @@ public enum ConfirmationParser {
         "hayir", "iptal", "vazgec", "vazgectim", "yok", "istemiyorum", "dur", "durdur", "yapma", "gonderme",
         "silme", "ekleme", "calistirma", "bosver", "olmaz",
     ]
+    /// For sending messages: casual words ("tamam", "peki", "yap") from a TV or another person in the
+    /// room must not be enough.
+    private static let strictYesWords: Set<String> = ["evet", "onayliyorum", "onayla", "gonder"]
     private static let noPhrases = ["bos ver", "gerek yok"]
 
-    public static func parse(_ text: String) -> Answer {
+    public static func parse(_ text: String, strict: Bool = false) -> Answer {
         let folded = TurkishText.folded(text)
         let words = Set(folded.split(separator: " ").map(String.init))
         let saysNo = !words.isDisjoint(with: noWords) || noPhrases.contains { folded.contains($0) }
-        let saysYes = !words.isDisjoint(with: yesWords)
+        let saysYes = !words.isDisjoint(with: strict ? strictYesWords : yesWords)
         switch (saysYes, saysNo) {
         case (true, false): return .confirmed
         case (false, true): return .rejected

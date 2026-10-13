@@ -29,6 +29,7 @@ final class AssistantController {
     private(set) var lastHeard: String?
     private(set) var lastReply: String?
     private(set) var pendingConfirmation: String?
+    private var confirmationIsStrict = false
     /// Latest speech probability (0...1) for level meters; updated about four times a second.
     private(set) var inputLevel: Float = 0
     /// Increments each time the user cuts the assistant off mid-reply.
@@ -265,7 +266,7 @@ final class AssistantController {
             if pendingConfirmation != nil {
                 let answer = try await recognizer.transcribe(segment.samples)
                 lastHeard = answer
-                resolveConfirmation(ConfirmationParser.parse(answer))
+                resolveConfirmation(ConfirmationParser.parse(answer, strict: confirmationIsStrict))
                 return
             }
             let isWakeCheck = flow.phase == .listeningForWake
@@ -419,7 +420,7 @@ final class AssistantController {
 
 extension AssistantController: ConfirmationProviding {
     /// Speaks the question, then listens (no wake phrase needed) for a yes/no or a menu click.
-    func confirm(_ question: String) async -> ConfirmationParser.Answer {
+    func confirm(_ question: String, strict: Bool) async -> ConfirmationParser.Answer {
         lastReply = question
         status = .speaking
         do {
@@ -432,6 +433,7 @@ extension AssistantController: ConfirmationProviding {
         await vad?.reset()
         segmenter.reset()
         pendingConfirmation = question
+        confirmationIsStrict = strict
         status = .confirming
         isAudioSuspended = false
         let answer = await waitForConfirmationAnswer()

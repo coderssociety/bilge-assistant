@@ -48,6 +48,13 @@ struct ToolRegistry {
             WindowTool(),
             TypeTextTool(),
             ReadSelectionTool(),
+            WeatherTool(),
+            ExchangeRateTool(),
+            NewsTool(),
+            ReadWebPageTool(),
+            ReadMailTool(),
+            SendEmailTool(),
+            SendMessageTool(),
         ]
     }
 }

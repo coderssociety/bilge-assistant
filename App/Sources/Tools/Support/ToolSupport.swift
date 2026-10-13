@@ -59,7 +59,24 @@ struct PreparedToolCall: Sendable {
     let risk: ToolRisk
     let confirmationQuestion: String?
     var answersWithLanguageModel = false
+    /// Sending on the user's behalf: only an explicit "evet"/"gönder" confirms.
+    var requiresExplicitYes = false
     let execute: @Sendable () async throws -> String
+
+    /// The same call with `note` spoken before its confirmation question.
+    func cautioned(_ note: String) -> PreparedToolCall {
+        PreparedToolCall(toolName: toolName, argumentsDescription: argumentsDescription, risk: risk,
+                         confirmationQuestion: confirmationQuestion.map { note + " " + $0 },
+                         answersWithLanguageModel: answersWithLanguageModel, requiresExplicitYes: requiresExplicitYes,
+                         execute: execute)
+    }
+
+    /// The same call, but asking `question` first even if it was safe.
+    func requiringConfirmation(_ question: String) -> PreparedToolCall {
+        PreparedToolCall(toolName: toolName, argumentsDescription: argumentsDescription, risk: .needsConfirmation,
+                         confirmationQuestion: question, answersWithLanguageModel: answersWithLanguageModel,
+                         requiresExplicitYes: requiresExplicitYes, execute: execute)
+    }
 
     /// A call that cannot run (e.g. nothing matched); speaking `message` is the whole turn.
     static func unavailable(_ toolName: String, message: String) -> PreparedToolCall {

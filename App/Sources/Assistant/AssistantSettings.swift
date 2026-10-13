@@ -19,6 +19,7 @@ final class AssistantSettings {
         static let bargeInEnabled = "bargeInEnabled"
         static let localModelID = "localModelID"
         static let localModelKeepAlive = "localModelKeepAlive"
+        static let weatherCity = WeatherTool.defaultCityKey
         static let onboardingCompleted = "onboardingCompleted"
     }
 
@@ -37,6 +38,7 @@ final class AssistantSettings {
     /// `LocalModelChoice.storageKey` of the model for conversation and screen answers; nil means Apple's.
     var localModelID: String? { didSet { defaults.set(localModelID, forKey: Key.localModelID) } }
 
+    var weatherCity: String { didSet { defaults.set(weatherCity, forKey: Key.weatherCity) } }
     var localModelKeepAlive: LocalModelKeepAlive {
         didSet { defaults.set(localModelKeepAlive.rawValue, forKey: Key.localModelKeepAlive) }
     }
@@ -58,6 +60,7 @@ final class AssistantSettings {
         showHUD = defaults.object(forKey: Key.showHUD) as? Bool ?? true
         bargeInEnabled = defaults.object(forKey: Key.bargeInEnabled) as? Bool ?? true
         localModelID = defaults.string(forKey: Key.localModelID)
+        weatherCity = defaults.string(forKey: Key.weatherCity) ?? WeatherTool.fallbackCity
         localModelKeepAlive = defaults.string(forKey: Key.localModelKeepAlive)
             .flatMap(LocalModelKeepAlive.init(rawValue:)) ?? .untilConversationEnds
         onboardingCompleted = defaults.bool(forKey: Key.onboardingCompleted)

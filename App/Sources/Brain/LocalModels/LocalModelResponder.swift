@@ -86,6 +86,27 @@ final class LocalModelResponder {
         try await stream([.system(instructions), .user(prompt)], temperature: 0.3, into: continuation)
     }
 
+    /// A whole reply at once, for the multi-step planner, whose JSON is parsed rather than spoken.
+    func complete(
+        _ messages: [ChatMessage],
+        maxTokens: Int,
+        announcingWaitTo continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws -> String {
+        let endpoint = try await readyEndpoint(announcingWaitTo: continuation)
+        var reply = ""
+        do {
+            for try await chunk in endpoint.streamReply(messages: messages, temperature: 0, maxTokens: maxTokens) {
+                reply += chunk
+            }
+            try Task.checkCancellation()
+        } catch {
+            if Task.isCancelled || error is CancellationError { throw CancellationError() }
+            lifecycle.endpointFailed()
+            throw error
+        }
+        return reply
+    }
+
     /// Throws only when nothing was said yet, so the caller can fall back to Apple's model;
     /// a failure mid-reply keeps what was already spoken.
     private func stream(

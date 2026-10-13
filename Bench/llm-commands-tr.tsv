@@ -37,7 +37,7 @@ Bana kısa bir fıkra anlat	conversation
 Türkiye'nin başkenti neresi	conversation
 Teşekkür ederim	conversation
 Ne yapabilirsin	conversation
-Bugün hava nasıl	conversation,searchWeb
+Bugün hava nasıl	weather,conversation,searchWeb
 Yarın saat onda diş hekimi randevusu ekle	addCalendarEvent
 Ekmek almayı anımsatıcılarıma ekle	addReminder
 Masaüstündeki eski fatura dosyasını sil	moveFileToTrash

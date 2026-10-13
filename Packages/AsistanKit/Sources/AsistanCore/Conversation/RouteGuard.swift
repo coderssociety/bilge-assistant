@@ -9,6 +9,10 @@ public enum RouteGuard {
     private static let systemWords = ["kilit", "uyu", "uyku", "karanlik", "aydinlik", "koyu", "gorunum", "tema"]
     private static let shortcutOnlyWords = ["odak", "odag", "rahatsiz", "parlak"]
     private static let openVerbs: Set<String> = ["ac", "acar", "acsana", "baslat"]
+    private static let weatherWords = [
+        "hava", "derece", "sicak", "soguk", "yagmur", "yagis", "kar", "ruzgar", "gunes", "bulut", "nem", "firtina",
+        "semsiye", "mont", "ceket", "dolu", "sis", "don",
+    ]
 
     private static let acknowledgementWords: Set<String> = [
         "evet", "hayir", "tamam", "olur", "peki", "tesekkurler", "tesekkur", "ederim", "sag", "ol", "sagol", "cok",
@@ -36,6 +40,15 @@ public enum RouteGuard {
             if words.contains(where: { word in shortcutOnlyWords.contains(where: word.hasPrefix) }) { return "runShortcut" }
             let supported = words.contains { word in systemWords.contains(where: word.hasPrefix) }
             return supported ? action : "runShortcut"
+        case "weather":
+            // "Bana bir tavsiye ver" was once answered with a weather report.
+            let aboutWeather = words.contains { word in weatherWords.contains(where: word.hasPrefix) }
+            return aboutWeather ? action : "conversation"
+        case "openApp":
+            // "Haritalarda Kadıköy'ü göster" opened Maps without the place.
+            let searches = words.contains { searchVerbs.contains($0) && !openVerbs.contains($0) }
+                && words.contains { word in searchSites.contains(where: word.hasPrefix) }
+            return searches ? "searchWeb" : action
         case "readCalendar":
             let opensApp = words.contains { openVerbs.contains($0) }
                 && !words.contains { ["ne", "neler", "var", "mi", "kac"].contains($0) }

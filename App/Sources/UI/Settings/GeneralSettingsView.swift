@@ -46,6 +46,15 @@ struct GeneralSettingsView: View {
                 }
                 Toggle("Ekranda durum panelini göster", isOn: $settings.showHUD)
             }
+
+            Section("Hava durumu") {
+                LabeledContent("Şehir") {
+                    TextField("", text: $settings.weatherCity, prompt: Text(WeatherTool.fallbackCity))
+                        .frame(maxWidth: 200)
+                }
+                Text("Şehir söylemediğinde hava durumu bu şehir için verilir. Şehir adı Open-Meteo'ya gönderilir.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
         .onAppear { wakePhraseDraft = settings.wakePhrase }

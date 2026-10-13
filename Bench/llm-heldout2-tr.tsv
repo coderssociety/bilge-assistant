@@ -34,4 +34,4 @@ Nasılsın bugün	conversation
 Dünyanın en büyük okyanusu hangisi	conversation
 Bana bir tavsiye ver	conversation
 Bu hata mesajını oku	readScreen
-Açık sayfayı özetler misin	readScreen
+Açık sayfayı özetler misin	readScreen,readWebPage

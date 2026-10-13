@@ -83,15 +83,26 @@ struct WindowTool: AssistantTool {
     }
 }
 
-/// "Şunu yaz: ..." types dictated text into the focused field. It never presses Return, and refuses
-/// terminals, where typed text could become a command.
+/// "Şunu yaz: ..." types dictated text into the focused field. Control characters are removed, so it
+/// can never press Return or Tab, and it refuses apps where typed text could run as a command or
+/// land in a secret store (terminals, code editors, remote desktops, password managers).
 struct TypeTextTool: AssistantTool {
     let name = "typeText"
     let description = "Söylenen metni öndeki uygulamada imlecin olduğu yere yazar (dikte). Enter'a basmaz."
-    private static let terminalBundleIDs: Set<String> = [
-        "com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable", "com.mitchellh.ghostty",
-        "net.kovidgoyal.kitty", "io.alacritty", "com.github.wez.wezterm",
+    private static let refusedBundleIDs: Set<String> = [
+        "com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable", "dev.warp.Warp", "com.mitchellh.ghostty",
+        "net.kovidgoyal.kitty", "io.alacritty", "com.github.wez.wezterm", "co.zeit.hyper", "org.tabby",
+        "dev.commandline.waveterm", "com.termius-dmg.mac", "com.microsoft.VSCode", "com.todesktop.230313mzl4w4u92",
+        "com.apple.dt.Xcode", "com.microsoft.rdc.macos", "com.apple.ScreenSharing", "com.realvnc.vncviewer",
+        "com.1password.1password", "com.bitwarden.desktop", "com.apple.keychainaccess", "com.apple.Passwords",
     ]
+    private static let refusedBundlePrefixes = ["com.jetbrains.", "com.sublimetext.", "com.parallels.", "com.vmware."]
+
+    @MainActor
+    static func refuses(_ app: NSRunningApplication) -> Bool {
+        guard let id = app.bundleIdentifier else { return true }
+        return refusedBundleIDs.contains(id) || refusedBundlePrefixes.contains(where: id.hasPrefix)
+    }
 
     @Generable
     struct Arguments {
@@ -100,15 +111,15 @@ struct TypeTextTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
-        let text = arguments.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = TypedText.sanitized(arguments.text)
         guard !text.isEmpty else { return ToolReply.failure("Ne yazacağımı anlayamadım.") }
         let front = await MainActor.run { AccessibilityControl.frontApplication() }
         guard let front else { return ToolReply.failure("Yazı yazılacak bir uygulama önde değil.") }
-        if let bundleID = front.bundleIdentifier, Self.terminalBundleIDs.contains(bundleID) {
-            return ToolReply.failure("Güvenlik için terminale yazı yazmıyorum.")
+        if await Self.refuses(front) {
+            return ToolReply.failure("Güvenlik için terminallere, kod düzenleyicilere, uzak masaüstüne ve parola yöneticilerine yazı yazmıyorum.")
         }
         do {
-            try await AccessibilityControl.type(text)
+            try await AccessibilityControl.type(text, into: front.processIdentifier)
             return "Yazdım."
         } catch {
             return ToolReply.failure(error)

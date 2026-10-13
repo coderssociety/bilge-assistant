@@ -18,7 +18,8 @@ struct LMStudioClient: Sendable {
     private struct ModelList: Decodable { let data: [Model] }
 
     private static let baseURL = URL(string: "http://127.0.0.1:1234")!
-    private static let contextLength = 8192
+    /// Room for the multi-step planner: tool catalog, steps and their results.
+    private static let contextLength = 16384
     private static let loadTimeout: Duration = .seconds(240)
     private static let startupPolls = 10
 
