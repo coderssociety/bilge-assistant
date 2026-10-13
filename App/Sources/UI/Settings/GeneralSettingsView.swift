@@ -4,7 +4,6 @@ import SwiftUI
 struct GeneralSettingsView: View {
     @Bindable var settings: AssistantSettings
     let assistant: AssistantController
-    let brain: AssistantBrain
     @State private var wakePhraseDraft = ""
     @State private var wakePhraseError: String?
     @State private var launchAtLogin = LoginItem.isEnabled
@@ -46,15 +45,6 @@ struct GeneralSettingsView: View {
                     Text(loginItemError).font(.caption).foregroundStyle(.red)
                 }
                 Toggle("Ekranda durum panelini göster", isOn: $settings.showHUD)
-            }
-
-            Section("Dil modeli") {
-                if let reason = brain.unavailableReason {
-                    Label(reason, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
-                } else {
-                    Label("Apple cihaz içi model hazır. Hiçbir şey Mac'inden dışarı çıkmaz.", systemImage: "checkmark.shield")
-                        .foregroundStyle(.green)
-                }
             }
         }
         .formStyle(.grouped)

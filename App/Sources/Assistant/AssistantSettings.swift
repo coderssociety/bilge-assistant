@@ -17,6 +17,7 @@ final class AssistantSettings {
         static let listenOnLaunch = "listenOnLaunch"
         static let showHUD = "showHUD"
         static let bargeInEnabled = "bargeInEnabled"
+        static let localModelID = "localModelID"
         static let onboardingCompleted = "onboardingCompleted"
     }
 
@@ -32,6 +33,8 @@ final class AssistantSettings {
     var listenOnLaunch: Bool { didSet { defaults.set(listenOnLaunch, forKey: Key.listenOnLaunch) } }
     var showHUD: Bool { didSet { defaults.set(showHUD, forKey: Key.showHUD) } }
     var bargeInEnabled: Bool { didSet { defaults.set(bargeInEnabled, forKey: Key.bargeInEnabled) } }
+    /// LM Studio model for conversation and screen answers; nil means Apple's on-device model.
+    var localModelID: String? { didSet { defaults.set(localModelID, forKey: Key.localModelID) } }
     var onboardingCompleted: Bool { didSet { defaults.set(onboardingCompleted, forKey: Key.onboardingCompleted) } }
 
     init(defaults: UserDefaults = .standard) {
@@ -45,6 +48,7 @@ final class AssistantSettings {
         listenOnLaunch = defaults.object(forKey: Key.listenOnLaunch) as? Bool ?? false
         showHUD = defaults.object(forKey: Key.showHUD) as? Bool ?? true
         bargeInEnabled = defaults.object(forKey: Key.bargeInEnabled) as? Bool ?? true
+        localModelID = defaults.string(forKey: Key.localModelID)
         onboardingCompleted = defaults.bool(forKey: Key.onboardingCompleted)
     }
 

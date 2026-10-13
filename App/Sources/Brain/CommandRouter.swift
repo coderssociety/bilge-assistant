@@ -68,10 +68,10 @@ final class CommandRouter {
         let action = RouteGuard.review(action: modelAction, command: resolved)
         Log.brain.info("Routed to \(action, privacy: .public) (model: \(modelAction, privacy: .public))")
         guard let tool = tools[action] else { return .conversation }
-        return .tool(try await prepare(tool, prompt: prompt, resolvedCommand: resolved))
+        return try await prepare(tool, prompt: prompt, resolvedCommand: resolved)
     }
 
-    private func prepare<T: AssistantTool>(_ tool: T, prompt: String, resolvedCommand: String) async throws -> PreparedToolCall {
+    private func prepare<T: AssistantTool>(_ tool: T, prompt: String, resolvedCommand: String) async throws -> Route {
         let arguments: T.Arguments
         if let empty = tool.emptyArguments() {
             arguments = empty
@@ -80,7 +80,11 @@ final class CommandRouter {
             let extracted = try await session.respond(to: prompt, generating: T.Arguments.self, options: options).content
             arguments = tool.refine(extracted, command: resolvedCommand)
         }
-        return await tool.makeCall(arguments)
+        if tool.prefersConversation(for: arguments) {
+            Log.brain.info("\(tool.name, privacy: .public) handed to conversation")
+            return .conversation
+        }
+        return .tool(await tool.makeCall(arguments))
     }
 
     private static func prompt(_ command: String, previous: PreviousTurn?) -> String {

@@ -2,17 +2,18 @@ import AsistanCore
 import Foundation
 import FoundationModels
 
-/// The local "understand and act" layer on Apple's on-device model:
-/// route the command, run the chosen tool and speak its result, or chat when no action fits.
+/// The local "understand and act" layer. Apple's on-device model routes every command and runs tools;
+/// conversation and screen answers go to the LM Studio model when one is selected, else to Apple's.
 @MainActor
 final class AssistantBrain: CommandHandling {
-    private static let maximumResponseTokens = 250
+    static let maximumResponseTokens = 250
 
     private let model = SystemLanguageModel.default
     private let router: CommandRouter?
     private let routerError: String?
     private var conversation: LanguageModelSession?
     private var previousTurn: CommandRouter.PreviousTurn?
+    private let localModel = LocalModelResponder()
     /// Asks the user before `.needsConfirmation` tools run; without it those tools never run.
     weak var confirmer: (any ConfirmationProviding)?
 
@@ -47,6 +48,16 @@ final class AssistantBrain: CommandHandling {
         guard unavailableReason == nil else { return }
         router?.prewarm()
         conversationSession().prewarm()
+        localModel.prewarm()
+    }
+
+    /// nil uses Apple's model for conversation; otherwise an LM Studio model id.
+    func useLocalModel(_ id: String?) {
+        localModel.select(id)
+    }
+
+    func waitForLocalModel() async -> Bool {
+        await localModel.waitUntilReady()
     }
 
     func respond(to command: String) -> AsyncThrowingStream<String, any Error> {
@@ -70,6 +81,7 @@ final class AssistantBrain: CommandHandling {
     func endConversation() {
         conversation = nil
         previousTurn = nil
+        localModel.resetConversation()
     }
 
     private func handle(_ command: String, continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
@@ -124,8 +136,15 @@ final class AssistantBrain: CommandHandling {
         from material: String,
         into continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws -> String {
-        let session = LanguageModelSession(model: model, instructions: BrainInstructions.screen())
         let prompt = "Kullanıcının isteği: \(command)\n\nEkrandaki metin:\n<<<\n\(material)\n>>>"
+        if localModel.isEnabled {
+            do {
+                return try await localModel.answer(prompt, instructions: BrainInstructions.screen(), into: continuation)
+            } catch {
+                try Self.rethrowIfCancelled(error)
+            }
+        }
+        let session = LanguageModelSession(model: model, instructions: BrainInstructions.screen())
         let options = GenerationOptions(temperature: 0.3, maximumResponseTokens: Self.maximumResponseTokens)
         var emitted = ""
         for try await snapshot in session.streamResponse(to: prompt, options: options) {
@@ -138,6 +157,20 @@ final class AssistantBrain: CommandHandling {
     }
 
     private func streamConversation(
+        _ command: String,
+        into continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws -> String {
+        if localModel.isEnabled {
+            do {
+                return try await localModel.converse(command, instructions: BrainInstructions.make(), into: continuation)
+            } catch {
+                try Self.rethrowIfCancelled(error)
+            }
+        }
+        return try await streamAppleConversation(command, into: continuation)
+    }
+
+    private func streamAppleConversation(
         _ command: String,
         into continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws -> String {
@@ -154,7 +187,7 @@ final class AssistantBrain: CommandHandling {
             guard case .contextSizeExceeded = error, emitted.isEmpty else { throw error }
             Log.brain.info("Conversation context full; starting fresh")
             conversation = nil
-            return try await streamConversation(command, into: continuation)
+            return try await streamAppleConversation(command, into: continuation)
         }
         return emitted
     }
@@ -164,6 +197,12 @@ final class AssistantBrain: CommandHandling {
         let created = LanguageModelSession(model: model, instructions: BrainInstructions.make())
         conversation = created
         return created
+    }
+
+    /// A local-model failure falls back to Apple's model for this turn; cancellation must not.
+    private static func rethrowIfCancelled(_ error: any Error) throws {
+        if error is CancellationError || Task.isCancelled { throw CancellationError() }
+        Log.brain.error("Local model unavailable, using Apple's: \(String(describing: error), privacy: .public)")
     }
 
     private static func spokenMessage(for error: any Error) -> String {

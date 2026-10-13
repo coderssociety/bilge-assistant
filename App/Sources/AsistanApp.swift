@@ -13,6 +13,8 @@ struct AsistanApp: App {
             Task { @MainActor in exit(await LLMBenchmark.run(arguments: arguments)) }
         } else if arguments.contains(EndToEndBenchmark.flag) {
             Task { @MainActor in exit(await EndToEndBenchmark.run()) }
+        } else if arguments.contains(ChatBenchmark.flag) {
+            Task { @MainActor in exit(await ChatBenchmark.run(arguments: arguments)) }
         }
     }
 
@@ -79,6 +81,7 @@ final class AppEnvironment {
         hud = HUDPresenter(assistant: assistant, settings: settings)
         guard !isBenchmark else { return }
         hud.start()
+        brain.useLocalModel(settings.localModelID)
         brain.prewarm()
         if settings.onboardingCompleted, settings.listenOnLaunch { assistant.start() }
     }

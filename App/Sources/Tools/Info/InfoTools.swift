@@ -42,6 +42,10 @@ struct CalculatorTool: AssistantTool {
         return refined
     }
 
+    func prefersConversation(for arguments: Arguments) -> Bool {
+        arguments.expression.isEmpty
+    }
+
     func call(arguments: Arguments) async throws -> String {
         guard !arguments.expression.isEmpty else {
             return ToolReply.failure("Hesabı tam anlayamadım, sayılarla tekrar söyler misin?")
