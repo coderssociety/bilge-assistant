@@ -81,7 +81,10 @@ final class AppEnvironment {
         hud = HUDPresenter(assistant: assistant, settings: settings)
         guard !isBenchmark else { return }
         hud.start()
-        brain.useLocalModel(settings.localModelID)
+        brain.useLocalModel(settings.localModel)
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { brain.shutDownLocalModel() }
+        }
         brain.prewarm()
         if settings.onboardingCompleted, settings.listenOnLaunch { assistant.start() }
     }

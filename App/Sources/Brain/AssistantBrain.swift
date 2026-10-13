@@ -51,9 +51,13 @@ final class AssistantBrain: CommandHandling {
         localModel.prewarm()
     }
 
-    /// nil uses Apple's model for conversation; otherwise an LM Studio model id.
-    func useLocalModel(_ id: String?) {
-        localModel.select(id)
+    /// nil uses Apple's model for conversation.
+    func useLocalModel(_ choice: LocalModelChoice?) {
+        localModel.select(choice)
+    }
+
+    func shutDownLocalModel() {
+        localModel.shutDown()
     }
 
     func waitForLocalModel() async -> Bool {

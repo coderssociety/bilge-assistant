@@ -2,7 +2,7 @@ import AsistanCore
 import Foundation
 
 /// Knowledge-answer benchmark through the full brain (routing + conversation):
-/// `Asistan --bench-chat <questions.tsv> [lmstudio-model-id]`. Each line is "question<TAB>key|key";
+/// `Asistan --bench-chat <questions.tsv> [lmstudio:<id> | vmlx:<publisher/id>]`. Each line is "question<TAB>key|key";
 /// an answer passes when it contains one of the keys. Without a model id, Apple's model answers.
 @MainActor
 enum ChatBenchmark {
@@ -11,7 +11,7 @@ enum ChatBenchmark {
     static func run(arguments: [String]) async -> Int32 {
         setvbuf(stdout, nil, _IOLBF, 0)
         guard let index = arguments.firstIndex(of: flag), arguments.count > index + 1 else {
-            print("Kullanım: Asistan \(flag) <sorular.tsv> [lmstudio-model]")
+            print("Kullanım: Asistan \(flag) <sorular.tsv> [lmstudio:<model> | vmlx:<yayıncı/model>]")
             return 2
         }
         let cases: [(String, [String])]
@@ -27,7 +27,11 @@ enum ChatBenchmark {
         }
         let brain = AssistantBrain(tools: ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }).makeTools())
         if arguments.count > index + 2 {
-            brain.useLocalModel(arguments[index + 2])
+            guard let choice = LocalModelChoice(storageKey: arguments[index + 2]) else {
+                print("Model biçimi: lmstudio:<model> ya da vmlx:<yayıncı/model>")
+                return 2
+            }
+            brain.useLocalModel(choice)
             guard await brain.waitForLocalModel() else {
                 print("LM Studio modeli hazırlanamadı: \(arguments[index + 2])")
                 return 1
@@ -57,6 +61,7 @@ enum ChatBenchmark {
         }
         let median = firstChunkTimes.sorted()[firstChunkTimes.count / 2]
         print(String(format: "Doğru: %d/%d · ilk yanıt parçası medyan %.2f sn", passed, cases.count, median))
+        brain.shutDownLocalModel()
         return 0
     }
 }

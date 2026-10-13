@@ -7,42 +7,67 @@ enum LocalModelError: Error {
     case emptyReply
 }
 
-/// Answers conversation and screen questions with a larger model served by LM Studio on this Mac.
+/// Answers conversation and screen questions with a larger model served on this Mac (LM Studio or vMLX).
 /// Routing and Mac actions stay on Apple's model; this only ever produces text and has no tools.
-/// A turn never waits for LM Studio to start or load: until the model is ready, Apple's model answers.
+/// A turn never waits for a server to start or load: until the model is ready, Apple's model answers.
 @MainActor
 final class LocalModelResponder {
-    private let client = LMStudioClient()
-    private(set) var modelID: String?
-    private var ready: LMStudioClient.Model?
+    private let lmStudio = LMStudioClient()
+    private(set) var choice: LocalModelChoice?
+    private var ready: LocalModelEndpoint?
     private var preparation: Task<Void, Never>?
+    /// Frees what Bilge itself loaded or started for the current choice, when switching away.
+    private var release: (@MainActor () -> Void)?
     private var history = ChatHistory()
-    /// After a failed start, LM Studio is not retried for a while so each turn isn't slowed by it.
+    /// After a failed start, the server is not retried for a while so each turn isn't slowed by it.
     private var unavailableUntil: ContinuousClock.Instant?
     private static let retryDelay: Duration = .seconds(60)
 
-    var isEnabled: Bool { modelID != nil }
+    var isEnabled: Bool { choice != nil }
 
-    func select(_ id: String?) {
-        guard id != modelID else { return }
+    func select(_ newChoice: LocalModelChoice?) {
+        guard newChoice != choice else { return }
         preparation?.cancel()
         preparation = nil
         ready = nil
+        release?()
+        release = nil
         unavailableUntil = nil
-        modelID = id
+        choice = newChoice
         history = ChatHistory()
         prewarm()
     }
 
+    /// Stops a server Bilge started; called when the app quits.
+    func shutDown() {
+        release?()
+        release = nil
+    }
+
     func prewarm() {
-        guard let modelID, ready == nil, preparation == nil else { return }
+        guard let choice, ready == nil, preparation == nil else { return }
         if let unavailableUntil, ContinuousClock.now < unavailableUntil { return }
-        preparation = Task { [client] in
+        preparation = Task {
             do {
-                finishPreparation(of: modelID, with: .success(try await client.prepare(modelID)))
+                finishPreparation(of: choice, with: .success(try await prepare(choice)))
             } catch {
-                finishPreparation(of: modelID, with: .failure(error))
+                finishPreparation(of: choice, with: .failure(error))
             }
+        }
+    }
+
+    private func prepare(_ choice: LocalModelChoice) async throws -> LocalModelEndpoint {
+        switch choice.server {
+        case .lmStudio:
+            let (endpoint, loadedByUs) = try await lmStudio.prepare(choice.modelID)
+            if loadedByUs {
+                release = { [lmStudio] in Task { await lmStudio.unload(choice.modelID) } }
+            }
+            return endpoint
+        case .vmlx:
+            let endpoint = try await VMLXServer.shared.prepare(choice.modelID)
+            release = { VMLXServer.shared.stop() }
+            return endpoint
         }
     }
 
@@ -83,14 +108,14 @@ final class LocalModelResponder {
         temperature: Double,
         into continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws -> String {
-        guard let model = ready else {
+        guard let endpoint = ready else {
             prewarm()
             throw LocalModelError.notReady
         }
         var emitted = ""
         do {
-            let chunks = client.streamReply(model: model, messages: messages, temperature: temperature,
-                                            maxTokens: AssistantBrain.maximumResponseTokens)
+            let chunks = endpoint.streamReply(messages: messages, temperature: temperature,
+                                              maxTokens: AssistantBrain.maximumResponseTokens)
             for try await chunk in chunks {
                 let text = emitted.isEmpty ? String(chunk.drop(while: \.isWhitespace)) : chunk
                 guard !text.isEmpty else { continue }
@@ -100,7 +125,7 @@ final class LocalModelResponder {
             try Task.checkCancellation()
         } catch {
             if Task.isCancelled || error is CancellationError { throw CancellationError() }
-            // The model may have been unloaded in LM Studio; check it again before the next turn.
+            // The model may have been unloaded or the server stopped; check again before the next turn.
             ready = nil
             guard !emitted.isEmpty else { throw error }
             Log.brain.error("Local model stopped mid-reply: \(String(describing: error), privacy: .public)")
@@ -109,17 +134,17 @@ final class LocalModelResponder {
         return emitted
     }
 
-    private func finishPreparation(of id: String, with result: Result<LMStudioClient.Model, any Error>) {
-        guard id == modelID else { return }
+    private func finishPreparation(of prepared: LocalModelChoice, with result: Result<LocalModelEndpoint, any Error>) {
+        guard prepared == choice else { return }
         preparation = nil
         switch result {
-        case let .success(model):
-            ready = model
-            Log.brain.info("LM Studio model ready: \(id, privacy: .public)")
+        case let .success(endpoint):
+            ready = endpoint
+            Log.brain.info("Local model ready: \(prepared.storageKey, privacy: .public)")
         case let .failure(error):
             guard !(error is CancellationError) else { return }
             unavailableUntil = .now + Self.retryDelay
-            Log.brain.error("LM Studio model unavailable: \(String(describing: error), privacy: .public)")
+            Log.brain.error("Local model unavailable: \(String(describing: error), privacy: .public)")
         }
     }
 }
