@@ -23,6 +23,8 @@ enum EndToEndBenchmark {
         Line(pauseBefore: 1.0, text: "Pil durumu nedir?", expectsReply: true),
         Line(pauseBefore: 7.0, text: "Asistan, yüz yirmi beşin yüzde on sekizi kaç eder?", expectsReply: true),
         Line(pauseBefore: 7.0, text: "Teşekkür ederim.", expectsReply: true),
+        Line(pauseBefore: 9.0, text: "Asistan, yarın saat onda diş hekimi randevusu ekle.", expectsReply: true),
+        Line(pauseBefore: 8.0, text: "Hayır.", expectsReply: true),
     ]
 
     static func run() async -> Int32 {
@@ -40,6 +42,7 @@ enum EndToEndBenchmark {
             let brain = AssistantBrain(tools: tools)
             brain.prewarm()
             let assistant = AssistantController(settings: settings, speech: speech, handler: brain, audioSource: source)
+            brain.confirmer = assistant
 
             assistant.start()
             while assistant.status != .listening {

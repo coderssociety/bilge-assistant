@@ -346,6 +346,7 @@ extension AssistantController: ConfirmationProviding {
         isAudioSuspended = true
         segmenter.reset()
         pendingConfirmation = nil
+        lastReply = ""
         status = .thinking
         Log.tools.info("Confirmation answer: \(String(describing: answer), privacy: .public)")
         return answer

@@ -4,7 +4,7 @@ import FoundationModels
 /// Opens pages in the default browser. The assistant itself never reads the web (fully local brain).
 struct WebSearchTool: AssistantTool {
     let name = "searchWeb"
-    let description = "Varsayılan tarayıcıda arama yapar (Google, YouTube, Haritalar veya Vikipedi). Sonuçları okuyamaz, sadece sayfayı açar."
+    let description = "Kullanıcı açıkça aramamı istediğinde ('Google\'da ara', 'YouTube\'da bul') tarayıcıda arama sayfasını açar. Soruları yanıtlamak için kullanılmaz."
 
     @Generable
     enum Service {

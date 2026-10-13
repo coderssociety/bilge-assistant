@@ -17,7 +17,7 @@ enum ScheduledMoment {
     static func describe(_ date: Date, now: Date = .now) -> String {
         let calendar = Calendar.current
         let locale = Locale(identifier: "tr_TR")
-        let time = date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute().locale(locale))
+        let time = date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(locale))
         let day: String
         if calendar.isDateInToday(date) { day = "bugün" }
         else if calendar.isDateInTomorrow(date) { day = "yarın" }
@@ -25,11 +25,18 @@ enum ScheduledMoment {
         return "\(day) saat \(time)"
     }
 
-    /// Day and clock time stated in the text override the model's values.
+    private static let partOfDayWords = ["sabah", "ogle", "aksam", "gece"]
+
+    /// Day and clock time stated in the text override the model's values. A model hour is kept only
+    /// when the text names a part of day ("yarın akşam"); otherwise it was invented, so it is dropped.
     static func refine(dayOffset: Int?, hour: Int?, minute: Int?, command: String) -> (dayOffset: Int?, hour: Int?, minute: Int?) {
-        let day = RelativeDayParser.dayOffset(in: command, now: .now) ?? dayOffset
-        guard let clock = TimerPhraseParser.parse(command), let parsedHour = clock.hour else { return (day, hour, minute) }
-        return (day, parsedHour, clock.minute)
+        let day = RelativeDayParser.dayOffset(in: command, now: .now)
+        if let clock = TimerPhraseParser.parse(command), let parsedHour = clock.hour {
+            return (day, parsedHour, clock.minute)
+        }
+        let folded = TurkishText.folded(command)
+        let mentionsPartOfDay = partOfDayWords.contains { folded.contains($0) }
+        return mentionsPartOfDay ? (day, hour, minute) : (day, nil, nil)
     }
 }
 

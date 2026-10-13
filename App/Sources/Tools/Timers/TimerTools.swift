@@ -53,7 +53,7 @@ struct SetTimerTool: AssistantTool {
 
 struct ManageTimersTool: AssistantTool {
     let name = "manageTimers"
-    let description = "Kurulu zamanlayıcıları listeler ya da hepsini iptal eder."
+    let description = "Bu uygulamada kurulu zamanlayıcı ve alarmları listeler, sayar ya da hepsini iptal eder."
     let service: TimerService
 
     @Generable

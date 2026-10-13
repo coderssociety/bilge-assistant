@@ -14,7 +14,7 @@ struct DateTimeTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         let locale = Locale(identifier: "tr_TR")
-        let time = Date.now.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute().locale(locale))
+        let time = Date.now.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(locale))
         let day = Date.now.formatted(.dateTime.day().month(.wide).year().weekday(.wide).locale(locale))
         return "Saat \(time). Bugün \(day)."
     }

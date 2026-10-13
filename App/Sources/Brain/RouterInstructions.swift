@@ -32,6 +32,9 @@ enum RouterInstructions {
         ("eski ekran görüntüsünü sil", "moveFileToTrash"),
         ("hangi kestirmelerim var", "listShortcuts"),
         ("iş modu kestirmesini çalıştır", "runShortcut"),
+        ("uyku odağını aç", "runShortcut"),
+        ("kaç zamanlayıcım var", "manageTimers"),
+        ("Everest'in yüksekliği ne kadar", "conversation"),
         ("nasılsın", "conversation"),
         ("Ay'a ilk kim gitti", "conversation"),
     ]
@@ -58,6 +61,7 @@ enum RouterInstructions {
         - Turning on Focus/Do Not Disturb, brightness or anything else not covered by an action is runShortcut.
         - Questions about the assistant itself (what it can do, who it is) are conversation.
         - A short follow-up such as "peki yarın?" or "biraz daha" continues the previous action.
+        - Questions that ask for knowledge ("…neresi", "…hangisi", "…kimdir", "kaç yaşında") are conversation. Use searchWeb only when the user explicitly asks to search or look something up on the web.
         - Requests about weather, exchange rates or news are conversation unless the user asks to search the web.
 
         Examples:

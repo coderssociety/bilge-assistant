@@ -50,7 +50,7 @@ struct CalendarQueryTool: AssistantTool {
 
 struct RemindersQueryTool: AssistantTool {
     let name = "readReminders"
-    let description = "Tamamlanmamış anımsatıcıları listeler."
+    let description = "Anımsatıcılar uygulamasındaki tamamlanmamış yapılacakları listeler (zamanlayıcı ve alarmlar değil)."
     private static let maxReminders = 10
 
     @Generable

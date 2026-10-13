@@ -103,7 +103,7 @@ struct MediaTool: AssistantTool {
 
 struct SystemActionTool: AssistantTool {
     let name = "systemAction"
-    let description = "Ekranı kapatıp kilitler, Mac'i uyutur ya da karanlık modu açar/kapatır."
+    let description = "Yalnızca şunları yapar: ekranı kilitlemek, Mac'i uyutmak, karanlık/aydınlık görünüme geçmek. Odak ve rahatsız etme modları bu araçla yapılmaz."
 
     @Generable
     enum Action {

@@ -57,8 +57,9 @@ final class CommandRouter {
         readySession = nil
         defer { prewarm() }
         let response = try await session.respond(to: prompt, schema: decisionSchema, options: options)
-        let action = try response.content.value(String.self, forProperty: Self.actionProperty)
-        Log.brain.info("Routed to \(action, privacy: .public)")
+        let modelAction = try response.content.value(String.self, forProperty: Self.actionProperty)
+        let action = RouteGuard.review(action: modelAction, command: resolved)
+        Log.brain.info("Routed to \(action, privacy: .public) (model: \(modelAction, privacy: .public))")
         guard let tool = tools[action] else { return .conversation }
         return .tool(try await prepare(tool, prompt: prompt, resolvedCommand: resolved))
     }
