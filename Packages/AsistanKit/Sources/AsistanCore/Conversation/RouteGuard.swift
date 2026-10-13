@@ -10,6 +10,19 @@ public enum RouteGuard {
     private static let shortcutOnlyWords = ["odak", "odag", "rahatsiz", "parlak"]
     private static let openVerbs: Set<String> = ["ac", "acar", "acsana", "baslat"]
 
+    private static let acknowledgementWords: Set<String> = [
+        "evet", "hayir", "tamam", "olur", "peki", "tesekkurler", "tesekkur", "ederim", "sag", "ol", "sagol", "cok",
+        "eyvallah", "super", "harika", "guzel", "iyi", "anladim", "tamamdir",
+    ]
+
+    /// Answers that need no model at all. A bare "Evet" in the follow-up window once made the model
+    /// repeat the previous action with invented arguments.
+    public static func preRoute(_ command: String) -> String? {
+        let words = TurkishText.folded(command).split(separator: " ").map(String.init)
+        guard !words.isEmpty, words.count <= 3, words.allSatisfy(acknowledgementWords.contains) else { return nil }
+        return "conversation"
+    }
+
     public static func review(action: String, command: String) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         switch action {

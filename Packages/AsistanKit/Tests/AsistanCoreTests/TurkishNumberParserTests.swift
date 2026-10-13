@@ -14,6 +14,7 @@ struct TurkishNumberParserTests {
         ("on dakika sonra", "10 dakika sonra"),
         ("üç milyon iki yüz bin", "3200000"),
         ("sesi yüzde otuz yap", "sesi yüzde 30 yap"),
+        ("bin iki yüzün yüzde yirmisi ne kadar", "1200'ün yüzde 20'si ne kadar"),
     ])
     func digitizes(input: String, expected: String) {
         #expect(TurkishNumberParser.digitize(input) == expected)

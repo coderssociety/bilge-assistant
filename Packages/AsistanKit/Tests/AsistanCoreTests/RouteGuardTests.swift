@@ -44,4 +44,18 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "openApp", command: "Safari'yi aç") == "openApp")
         #expect(RouteGuard.review(action: "conversation", command: "nasılsın") == "conversation")
     }
+
+    @Test("bare acknowledgements never trigger an action", arguments: [
+        "Evet", "Evet.", "Hayır", "tamam", "Teşekkürler", "teşekkür ederim", "sağ ol", "çok sağ ol", "eyvallah",
+    ])
+    func acknowledgements(command: String) {
+        #expect(RouteGuard.preRoute(command) == "conversation")
+    }
+
+    @Test("real commands are left to the model", arguments: [
+        "Safari'yi aç", "evet Safari'yi aç lütfen", "saat kaç", "dosyayı sil",
+    ])
+    func commandsGoToModel(command: String) {
+        #expect(RouteGuard.preRoute(command) == nil)
+    }
 }

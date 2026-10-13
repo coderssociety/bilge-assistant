@@ -30,7 +30,22 @@ struct CalculatorTool: AssistantTool {
         var expression: String
     }
 
+    /// Common phrasings are parsed exactly; a model-written expression is only trusted when every
+    /// number in it was actually said (it once computed "125 * 18 / 100" for a bare "Evet").
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        var refined = arguments
+        if let parsed = TurkishArithmeticParser.expression(from: command) {
+            refined.expression = parsed
+        } else if !TurkishArithmeticParser.isGrounded(arguments.expression, in: command) {
+            refined.expression = ""
+        }
+        return refined
+    }
+
     func call(arguments: Arguments) async throws -> String {
+        guard !arguments.expression.isEmpty else {
+            return ToolReply.failure("Hesabı tam anlayamadım, sayılarla tekrar söyler misin?")
+        }
         do {
             let value = try ArithmeticEvaluator.evaluate(arguments.expression)
             return "Sonuç \(ArithmeticEvaluator.display(value))."

@@ -52,6 +52,7 @@ final class CommandRouter {
 
     func route(_ command: String, previous: PreviousTurn?) async throws -> Route {
         let resolved = TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(command))
+        if RouteGuard.preRoute(resolved) != nil { return .conversation }
         let prompt = Self.prompt(resolved, previous: previous)
         let session = readySession ?? LanguageModelSession(model: model, instructions: routerInstructions)
         readySession = nil

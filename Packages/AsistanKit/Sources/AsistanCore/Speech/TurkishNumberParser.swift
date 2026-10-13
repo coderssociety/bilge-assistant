@@ -13,10 +13,10 @@ public enum TurkishNumberParser {
     /// Case, possessive and ordinal endings that follow numbers. Deliberately excludes "na/nda/ne/nde",
     /// which turn "altı" into "altına/altında" (under it).
     private static let suffixes: [String] = [
-        "nın", "nin", "nun", "nün", "ıncı", "inci", "uncu", "üncü", "ncı", "nci", "ncu", "ncü",
+        "sını", "sini", "sunu", "sünü", "nın", "nin", "nun", "nün", "ıncı", "inci", "uncu", "üncü", "ncı", "nci", "ncu", "ncü",
         "lık", "lik", "luk", "lük", "yla", "yle", "dan", "den", "tan", "ten", "dır", "dir", "dur", "dür",
         "tır", "tir", "tur", "tür", "şar", "şer", "da", "de", "ta", "te", "ya", "ye", "yı", "yi", "yu", "yü",
-        "ın", "in", "un", "ün", "la", "le", "ar", "er", "a", "e", "ı", "i", "u", "ü",
+        "ın", "in", "un", "ün", "sı", "si", "su", "sü", "la", "le", "ar", "er", "a", "e", "ı", "i", "u", "ü",
     ]
     private static let unitWords: Set<String> = [
         "dakika", "dakikalık", "saniye", "saniyelik", "saat", "saatlik", "gün", "günlük", "hafta", "ay", "yıl",
