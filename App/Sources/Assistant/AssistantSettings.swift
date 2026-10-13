@@ -21,7 +21,11 @@ final class AssistantSettings {
         static let localModelKeepAlive = "localModelKeepAlive"
         static let weatherCity = WeatherTool.defaultCityKey
         static let onboardingCompleted = "onboardingCompleted"
+        static let proactiveAlertsEnabled = "proactiveAlertsEnabled"
+        static let eventAlertLeadMinutes = "eventAlertLeadMinutes"
     }
+
+    static let eventAlertLeadChoices = [5, 10, 15, 30]
 
     private let defaults: UserDefaults
 
@@ -47,6 +51,9 @@ final class AssistantSettings {
         localModelID.flatMap(LocalModelChoice.init(storageKey:))
     }
     var onboardingCompleted: Bool { didSet { defaults.set(onboardingCompleted, forKey: Key.onboardingCompleted) } }
+    /// Speak upcoming calendar events and reminders that come due, while listening is on.
+    var proactiveAlertsEnabled: Bool { didSet { defaults.set(proactiveAlertsEnabled, forKey: Key.proactiveAlertsEnabled) } }
+    var eventAlertLeadMinutes: Int { didSet { defaults.set(eventAlertLeadMinutes, forKey: Key.eventAlertLeadMinutes) } }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -64,6 +71,8 @@ final class AssistantSettings {
         localModelKeepAlive = defaults.string(forKey: Key.localModelKeepAlive)
             .flatMap(LocalModelKeepAlive.init(rawValue:)) ?? .untilConversationEnds
         onboardingCompleted = defaults.bool(forKey: Key.onboardingCompleted)
+        proactiveAlertsEnabled = defaults.object(forKey: Key.proactiveAlertsEnabled) as? Bool ?? true
+        eventAlertLeadMinutes = defaults.object(forKey: Key.eventAlertLeadMinutes) as? Int ?? 10
     }
 
     /// Maps the 0...1 sensitivity slider onto the matcher's similarity threshold (0.9 strict ... 0.65 loose).

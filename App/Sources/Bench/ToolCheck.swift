@@ -1,0 +1,233 @@
+import AsistanCore
+import Foundation
+import Network
+import Synchronization
+
+/// Checks inside the real app that tools work, not just that their parsing rules do:
+/// `open -n -W Bilge.app --args --bench-tools <report.txt>`. Launch it with `open` so macOS asks for
+/// (and remembers) permissions for Bilge rather than for the terminal. Only read-only tools run;
+/// memory uses a store that lives in memory only, so the user's own facts are never touched.
+@MainActor
+enum ToolCheck {
+    static let flag = "--bench-tools"
+
+    private struct Report {
+        var lines: [String] = []
+        var failures = 0
+
+        mutating func check(_ name: String, _ passed: Bool, _ detail: String) {
+            if !passed { failures += 1 }
+            lines.append("\(passed ? "✓" : "✗") \(name): \(detail)")
+        }
+    }
+
+    /// Commands routed and executed for real; every tool here only reads.
+    private static let readOnlyCommands: [(command: String, tool: String)] = [
+        ("Saat kaç", "currentDateTime"),
+        ("Yüz yirmi beşin yüzde on sekizi kaç eder", "calculate"),
+        ("Pil durumu nedir", "batteryStatus"),
+        ("Diskte ne kadar boş yer var", "systemInfo"),
+        ("Mac ne zamandır açık", "systemInfo"),
+        ("Yarın Ankara'da hava nasıl", "weather"),
+        ("Yüz euro kaç lira", "exchangeRate"),
+        ("Gündemde ne var", "news"),
+        ("Bugün takvimimde ne var", "readCalendar"),
+        ("Yapılacaklar listemde ne var", "readReminders"),
+        ("Hangi kestirmelerim var", "listShortcuts"),
+        ("Şu an hangi uygulamalar açık", "listRunningApps"),
+    ]
+
+    /// Routed only: these would change something, so the check stops at the routing decision.
+    private static let routedOnly: [(command: String, tool: String)] = [
+        ("Yarın sabah süt almayı hatırlat", "addReminder"),
+        ("On dakika sonra fırına bakmamı hatırlat", "setTimer"),
+        ("Süt almayı unutma diye hatırlat", "addReminder"),
+    ]
+
+    static func run(arguments: [String]) async -> Int32 {
+        setvbuf(stdout, nil, _IOLBF, 0)
+        let outPath = arguments.firstIndex(of: flag).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
+        var report = Report()
+        await checkAppleScript(&report)
+        await checkWebSafety(&report)
+        let memory = MemoryStore(fileURL: nil)
+        let tools = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }, memory: memory).makeTools()
+        do {
+            let router = try CommandRouter(tools: tools)
+            router.prewarm()
+            await checkReadOnlyTools(router, &report)
+            await checkMemory(router, memory, &report)
+            await checkMemoryInConversation(tools: tools, memory: memory, &report)
+        } catch {
+            report.check("router", false, "başlatılamadı: \(error)")
+        }
+        await checkAlerts(&report)
+        report.lines.append("\(report.failures == 0 ? "TAMAM" : "\(report.failures) HATA")")
+        let text = report.lines.joined(separator: "\n")
+        print(text)
+        if let outPath { try? text.write(toFile: outPath, atomically: true, encoding: .utf8) }
+        return report.failures == 0 ? 0 : 1
+    }
+
+    private static func checkAppleScript(_ report: inout Report) async {
+        var maxGap = 0.0
+        var last = Date()
+        let ticker = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(20))
+                maxGap = max(maxGap, Date().timeIntervalSince(last))
+                last = Date()
+            }
+        }
+        let result = try? await AppleScriptRunner.run("delay 1\nreturn \"çğış\"")
+        ticker.cancel()
+        report.check("AppleScript ana iş parçacığı", result == "çğış" && maxGap < 0.3,
+                     String(format: "sonuç %@, en uzun takılma %.2f sn", result ?? "yok", maxGap))
+
+        let started = Date()
+        let hanging = Task { try await AppleScriptRunner.run("delay 10") }
+        try? await Task.sleep(for: .milliseconds(500))
+        hanging.cancel()
+        let cancelled = await hanging.result
+        let elapsed = Date().timeIntervalSince(started)
+        let isCancelled = if case .failure(is CancellationError) = cancelled { true } else { false }
+        report.check("AppleScript iptal", isCancelled && elapsed < 3, String(format: "%.2f sn", elapsed))
+
+        do {
+            _ = try await AppleScriptRunner.run("error \"x\" number -1743")
+            report.check("AppleScript hata", false, "hata gelmedi")
+        } catch {
+            report.check("AppleScript hata", error.localizedDescription.contains("Otomasyon"), error.localizedDescription)
+        }
+    }
+
+    private static func checkWebSafety(_ report: inout Report) async {
+        for address in ["http://localhost/", "http://127.0.0.1:80/", "http://[::1]/"] {
+            do {
+                _ = try await WebFetch.data(from: URL(string: address)!)
+                report.check("yerel adres reddi", false, "\(address) okundu!")
+            } catch WebFetchError.localAddress {
+                report.check("yerel adres reddi", true, address)
+            } catch {
+                report.check("yerel adres reddi", false, "\(address): beklenmeyen hata \(error)")
+            }
+        }
+        await checkRebinding(&report)
+        let started = Date()
+        do {
+            let data = try await WebFetch.data(from: URL(string: "https://api.frankfurter.app/latest?from=USD&to=TRY")!)
+            report.check("açık internet", String(decoding: data, as: UTF8.self).contains("TRY"),
+                         String(format: "%d bayt, %.2f sn", data.count, Date().timeIntervalSince(started)))
+        } catch {
+            report.check("açık internet", false, error.localizedDescription)
+        }
+    }
+
+    /// localtest.me is a public name that resolves to 127.0.0.1, the shape of a DNS rebinding attack.
+    /// A local listener plays the victim service: the client must refuse before sending a single byte.
+    private static func checkRebinding(_ report: inout Report) async {
+        let listener: NWListener
+        do {
+            let parameters = NWParameters.tcp
+            parameters.requiredLocalEndpoint = .hostPort(host: .ipv4(.loopback), port: .any)
+            listener = try NWListener(using: parameters)
+        } catch {
+            report.check("DNS rebinding", false, "dinleyici açılamadı: \(error)")
+            return
+        }
+        let received = Mutex(0)
+        listener.newConnectionHandler = { connection in
+            connection.start(queue: .global())
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 4096) { data, _, _, _ in
+                received.withLock { $0 += data?.count ?? 0 }
+                connection.cancel()
+            }
+        }
+        let isReady = Mutex(false)
+        listener.stateUpdateHandler = { state in if case .ready = state { isReady.withLock { $0 = true } } }
+        listener.start(queue: .global())
+        defer { listener.cancel() }
+        for _ in 0..<100 where !isReady.withLock({ $0 }) { try? await Task.sleep(for: .milliseconds(20)) }
+        guard let port = listener.port?.rawValue, let url = URL(string: "http://localtest.me:\(port)/") else {
+            report.check("DNS rebinding", false, "dinleyici hazır olmadı")
+            return
+        }
+        do {
+            _ = try await PublicHTTPClient.get(url, headers: [], maxBodyBytes: 1000, timeout: .seconds(5))
+            report.check("DNS rebinding", false, "yerel servise istek gitti!")
+        } catch WebFetchError.localAddress {
+            try? await Task.sleep(for: .milliseconds(200))
+            let bytes = received.withLock { $0 }
+            report.check("DNS rebinding", bytes == 0, "localtest.me → 127.0.0.1 reddedildi, servise giden bayt: \(bytes)")
+        } catch {
+            report.check("DNS rebinding", false, "beklenmeyen hata \(error)")
+        }
+    }
+
+    private static func checkReadOnlyTools(_ router: CommandRouter, _ report: inout Report) async {
+        for (command, expected) in readOnlyCommands {
+            let started = Date()
+            do {
+                guard case let .tool(call) = try await router.route(command, previous: nil), call.toolName == expected else {
+                    report.check(expected, false, "\(command) → yanlış yönlendirildi")
+                    continue
+                }
+                guard call.risk == .safe else {
+                    report.check(expected, false, "\(command) → onay istiyor, çalıştırılmadı")
+                    continue
+                }
+                let result = try await call.execute()
+                let detail = String(format: "%.2f sn · %@", Date().timeIntervalSince(started), String(result.prefix(90)))
+                report.check(expected, !ToolReply.isFailure(result), detail.replacingOccurrences(of: "\n", with: " "))
+            } catch {
+                report.check(expected, false, "\(command): \(error)")
+            }
+        }
+        for (command, expected) in routedOnly {
+            let route = try? await router.route(command, previous: nil)
+            let action = if case let .tool(call)? = route { call.toolName } else { "conversation" }
+            report.check("yönlendirme", action == expected, "\(command) → \(action)")
+        }
+    }
+
+    private static func checkMemory(_ router: CommandRouter, _ memory: MemoryStore, _ report: inout Report) async {
+        let steps: [(command: String, tool: String, expect: (String) -> Bool)] = [
+            ("Eşimin adının Ayşe olduğunu hatırla", "remember", { _ in memory.book.entries.map(\.text) == ["Eşimin adının Ayşe olduğunu"] }),
+            ("Neleri hatırlıyorsun", "listMemories", { $0.contains("Ayşe") }),
+            ("Eşimin adını unut", "forget", { _ in memory.book.entries.isEmpty }),
+        ]
+        for step in steps {
+            do {
+                guard case let .tool(call) = try await router.route(step.command, previous: nil), call.toolName == step.tool else {
+                    report.check("hafıza", false, "\(step.command) → yanlış yönlendirildi")
+                    continue
+                }
+                let result = try await call.execute()
+                report.check("hafıza", step.expect(result), "\(step.command) → \(result)")
+            } catch {
+                report.check("hafıza", false, "\(step.command): \(error)")
+            }
+        }
+    }
+
+    /// A remembered fact must reach the conversation model's instructions and shape its answer.
+    private static func checkMemoryInConversation(tools: [any AssistantTool], memory: MemoryStore, _ report: inout Report) async {
+        _ = try? memory.remember("Kızımın adı Defne")
+        defer { _ = try? memory.forgetAll() }
+        let brain = AssistantBrain(tools: tools, memory: memory)
+        var answer = ""
+        do {
+            for try await chunk in brain.respond(to: "Kızımın adı ne?") { answer += chunk }
+            report.check("hafıza sohbette", answer.contains("Defne"), answer)
+        } catch {
+            report.check("hafıza sohbette", false, "\(error)")
+        }
+    }
+
+    private static func checkAlerts(_ report: inout Report) async {
+        let now = Date()
+        let day = DateInterval(start: now, duration: 24 * 60 * 60)
+        let candidates = await CalendarAccess.shared.alertCandidates(eventsIn: day, remindersDueIn: day)
+        report.check("hatırlatma sorgusu", true, "önümüzdeki 24 saatte \(candidates.count) etkinlik/anımsatıcı")
+    }
+}

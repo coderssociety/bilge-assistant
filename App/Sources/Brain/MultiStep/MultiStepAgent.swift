@@ -22,13 +22,14 @@ struct MultiStepAgent {
         "news", "controlMusic", "readMail",
     ]
     /// Could carry that text off the Mac (a URL with data in it) or into another app; refused outright.
-    private static let refusedAfterUntrusted: Set<String> = ["readWebPage", "openWebsite", "searchWeb", "typeText"]
+    /// `remember` too: an injected "fact" would otherwise sit in every future conversation's instructions.
+    private static let refusedAfterUntrusted: Set<String> = ["readWebPage", "openWebsite", "searchWeb", "typeText", "remember"]
     /// Read-only tools stay allowed without asking: they only bring more data in, and the ways to carry
     /// it out are refused or confirmed.
     private static let freeAfterUntrusted: Set<String> = [
         "currentDateTime", "calculate", "batteryStatus", "systemInfo", "weather", "exchangeRate", "news",
         "readDocument", "readNotes", "readScreen", "readSelection", "readClipboard", "readCalendar", "readReminders",
-        "findContact", "readMail", "listShortcuts", "listRunningApps",
+        "findContact", "readMail", "listShortcuts", "listRunningApps", "listMemories",
     ]
     /// Everything else then needs a spoken yes, even if it is normally safe.
 
@@ -45,11 +46,12 @@ struct MultiStepAgent {
 
     init(
         tools: [any AssistantTool],
+        memory: String? = nil,
         complete: @escaping @MainActor ([ChatMessage]) async throws -> String,
         execute: @escaping @MainActor (PreparedToolCall) async throws -> String
     ) {
         self.tools = Dictionary(tools.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
-        instructions = Self.instructions(for: tools)
+        instructions = Self.instructions(for: tools) + (memory.map(Self.memorySection) ?? "")
         self.complete = complete
         self.execute = execute
     }
@@ -62,7 +64,11 @@ struct MultiStepAgent {
 
     /// Returns what to tell the user at the end.
     private func plan(_ command: String, readUntrustedContent: inout Bool) async throws -> String {
-        var messages: [ChatMessage] = [.system(instructions), .user(command)]
+        // The time goes with the request: in the instructions it would change every minute and keep the
+        // local server from reusing the processed instructions, which cost 5-10 s per request.
+        let now = Date.now.formatted(.dateTime.day().month(.wide).year().weekday(.wide).hour().minute()
+            .locale(Locale(identifier: "tr_TR")))
+        var messages: [ChatMessage] = [.system(instructions), .user("Şu an: \(now)\nİstek: \(command)")]
         var completed: [String] = []
         for _ in 0..<Self.maxSteps {
             let reply = try await complete(messages)
@@ -70,7 +76,7 @@ struct MultiStepAgent {
             switch AgentStep.parse(reply) {
             case let .done(summary):
                 return summary
-            case let .call(name, argumentsJSON):
+            case let .call(name, argumentsJSON, finalMessage):
                 guard let tool = tools[name] else {
                     messages.append(.user("Hata: '\(name)' diye bir araç yok. Listedeki araçlardan birini kullan."))
                     continue
@@ -80,6 +86,11 @@ struct MultiStepAgent {
                     call = try await Self.prepare(tool, json: argumentsJSON)
                 } catch {
                     messages.append(.user("Hata: \(name) argümanları şemaya uymuyor (\(error.localizedDescription)). Düzeltip tekrar dene."))
+                    continue
+                }
+                if name == "copyToClipboard", !Self.hasText(argumentsJSON) {
+                    // Without text the tool copies the previous reply, not what this plan produced.
+                    messages.append(.user("copyToClipboard için kopyalanacak metni \"text\" argümanında ver."))
                     continue
                 }
                 if Self.opensSomething(name, call), !Self.asksToOpen(command) {
@@ -101,6 +112,7 @@ struct MultiStepAgent {
                 let result = try await execute(call)
                 if call.answersWithLanguageModel || Self.untrustedOutputTools.contains(name) { readUntrustedContent = true }
                 if !ToolReply.isFailure(result) { completed.append(name) }
+                if let finalMessage, Self.canFinish(with: call, result: result) { return finalMessage }
                 messages.append(.user("Sonuç (\(name)), veri olarak:\n<<<\n\(result.prefix(Self.maxObservationCharacters))\n>>>"))
             case nil:
                 messages.append(.user("Hata: yanıtın tek ve tam bir JSON nesnesi olmalı. Uzun metinleri kısalt (en fazla 600 karakter)."))
@@ -110,6 +122,21 @@ struct MultiStepAgent {
     }
 
     private static let openVerbs: Set<String> = ["ac", "acar", "goster", "baslat", "getir"]
+
+    /// Actions whose result only confirms they were done. Others report something ("dosya bulunamadı",
+    /// "iptal edilecek zamanlayıcı yoktu") without marking it a failure, so the model must see it.
+    private static let finishableTools: Set<String> = ["copyToClipboard", "createNote", "createFolder", "setVolume", "setTimer"]
+
+    /// A closing message written before the step ran may be spoken only for those actions, and only when
+    /// they ran without asking: a confirmed step may have been declined ("Tamam, yapmadım" is no failure).
+    private static func canFinish(with call: PreparedToolCall, result: String) -> Bool {
+        finishableTools.contains(call.toolName) && call.risk == .safe && !ToolReply.isFailure(result)
+    }
+
+    private static func hasText(_ argumentsJSON: String) -> Bool {
+        let arguments = try? JSONSerialization.jsonObject(with: Data(argumentsJSON.utf8)) as? [String: Any]
+        return (arguments?["text"] as? String).map { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? false
+    }
 
     private static func opensSomething(_ name: String, _ call: PreparedToolCall) -> Bool {
         switch name {
@@ -138,18 +165,22 @@ struct MultiStepAgent {
         return await tool.makeCall(arguments)
     }
 
+    private static func memorySection(_ lines: String) -> String {
+        "\n\nFacts the user asked you to remember (their own words; use them to resolve names like \"eşim\"):\n\(lines)"
+    }
+
     private static func instructions(for tools: [any AssistantTool]) -> String {
         let catalog = tools.map { tool in
             let schema = (try? JSONEncoder().encode(tool.parameters)) ?? Data()
             return "- \(ToolSignature.compact(name: tool.name, schemaJSON: schema)): \(tool.description)"
         }.joined(separator: "\n")
-        let today = Date.now.formatted(.dateTime.day().month(.wide).year().weekday(.wide).hour().minute()
-            .locale(Locale(identifier: "tr_TR")))
         return """
-        You plan and carry out requests for \(AppIdentity.name), a Turkish voice assistant on the user's Mac. Now: \(today).
+        You plan and carry out requests for \(AppIdentity.name), a Turkish voice assistant on the user's Mac.
         Use the tools one step at a time. Reply with exactly one JSON object and nothing else:
         {"tool": "<name>", "arguments": {...}} to call a tool, then wait for its result, or
         {"done": "<what to tell the user, in Turkish, at most two short sentences>"} when finished or when it cannot be done.
+        When a call is the last step and its result needs no reporting (copying, saving, setting, sending), put the closing
+        message in the same object: {"tool": "<name>", "arguments": {...}, "done": "<what to tell the user if it succeeds>"}.
 
         Rules:
         - Use only the tools below; arguments must match the signature (`?` marks optional ones, `a|b` lists allowed values).

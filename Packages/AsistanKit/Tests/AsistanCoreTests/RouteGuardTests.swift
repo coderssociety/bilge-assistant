@@ -86,4 +86,17 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "openApp", command: "Haritalarda Kadıköy'ü göster") == "searchWeb")
         #expect(RouteGuard.review(action: "openApp", command: "Haritaları aç") == "openApp")
     }
+
+    // Commands reach the guard number- and time-resolved: "yirmi dakika" is "20 dakika", "akşam sekizde" is "20:00".
+    @Test("a reminder for another day, or with no time, is a to-do, not an in-app timer", arguments: [
+        ("Yarın sabah süt almayı hatırlat", "setTimer", "addReminder"),
+        ("Süt almayı unutma diye hatırlat", "setTimer", "addReminder"),
+        ("Pazartesi faturayı ödememi hatırlat", "setTimer", "addReminder"),
+        ("20 dakika sonra çayı hatırlat", "setTimer", "setTimer"),
+        ("20:00 ilacımı hatırlat", "setTimer", "setTimer"),
+        ("10 dakikalık zamanlayıcı kur", "setTimer", "setTimer"),
+    ])
+    func reminderDay(command: String, action: String, expected: String) {
+        #expect(RouteGuard.review(action: action, command: command) == expected)
+    }
 }

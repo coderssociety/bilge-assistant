@@ -12,17 +12,22 @@ final class AssistantBrain: CommandHandling {
     private let router: CommandRouter?
     private let routerError: String?
     private var conversation: LanguageModelSession?
+    /// The memory revision `conversation` was created with; a new fact means new instructions.
+    private var conversationMemoryRevision = 0
     private var previousTurn: CommandRouter.PreviousTurn? {
         didSet { context.lastReply = previousTurn?.result }
     }
     private let context: ConversationContext
+    private let memory: MemoryStore
     private let tools: [any AssistantTool]
     private let localModel = LocalModelResponder()
     /// Asks the user before `.needsConfirmation` tools run; without it those tools never run.
     weak var confirmer: (any ConfirmationProviding)?
 
-    init(tools: [any AssistantTool], context: ConversationContext = ConversationContext()) {
+    init(tools: [any AssistantTool], context: ConversationContext = ConversationContext(),
+         memory: MemoryStore = MemoryStore(fileURL: nil)) {
         self.context = context
+        self.memory = memory
         self.tools = tools
         do {
             router = try CommandRouter(tools: tools, model: model)
@@ -149,6 +154,7 @@ final class AssistantBrain: CommandHandling {
     ) -> MultiStepAgent {
         MultiStepAgent(
             tools: tools,
+            memory: memory.promptLines,
             complete: { [localModel] messages in
                 try await localModel.complete(messages, maxTokens: MultiStepAgent.maxReplyTokens, announcingWaitTo: continuation)
             },
@@ -237,7 +243,7 @@ final class AssistantBrain: CommandHandling {
     ) async throws -> String {
         if localModel.isEnabled {
             do {
-                return try await localModel.converse(command, instructions: BrainInstructions.make(), into: continuation)
+                return try await localModel.converse(command, instructions: conversationInstructions(), into: continuation)
             } catch {
                 try Self.rethrowIfCancelled(error)
             }
@@ -268,10 +274,15 @@ final class AssistantBrain: CommandHandling {
     }
 
     private func conversationSession() -> LanguageModelSession {
-        if let conversation { return conversation }
-        let created = LanguageModelSession(model: model, instructions: BrainInstructions.make())
+        if let conversation, conversationMemoryRevision == memory.revision { return conversation }
+        let created = LanguageModelSession(model: model, instructions: conversationInstructions())
         conversation = created
+        conversationMemoryRevision = memory.revision
         return created
+    }
+
+    private func conversationInstructions() -> String {
+        BrainInstructions.make(memory: memory.promptLines)
     }
 
     /// A local-model failure falls back to Apple's model for this turn; cancellation must not.

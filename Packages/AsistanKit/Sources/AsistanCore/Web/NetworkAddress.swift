@@ -6,13 +6,15 @@ public enum NetworkAddress {
     public static func isPublic(_ address: String) -> Bool {
         if let octets = ipv4(address) { return isPublicIPv4(octets) }
         guard let groups = ipv6(address) else { return false }
-        if groups[0..<5].allSatisfy({ $0 == 0 }) && groups[5] == 0xFFFF {
-            return isPublicIPv4([groups[6] >> 8, groups[6] & 0xFF, groups[7] >> 8, groups[7] & 0xFF].map { Int($0) })
-        }
+        let embeddedIPv4 = [groups[6] >> 8, groups[6] & 0xFF, groups[7] >> 8, groups[7] & 0xFF].map { Int($0) }
+        if groups[0..<5].allSatisfy({ $0 == 0 }) && groups[5] == 0xFFFF { return isPublicIPv4(embeddedIPv4) }
+        // NAT64 (64:ff9b::/96) reaches IPv4 hosts from IPv6-only networks, private ones included.
+        if groups[0] == 0x64, groups[1] == 0xFF9B, groups[2..<6].allSatisfy({ $0 == 0 }) { return isPublicIPv4(embeddedIPv4) }
         if groups.allSatisfy({ $0 == 0 }) || groups[0..<7].allSatisfy({ $0 == 0 }) { return false }
         let first = groups[0]
         if first & 0xFE00 == 0xFC00 { return false }  // unique local fc00::/7
         if first & 0xFFC0 == 0xFE80 { return false }  // link-local fe80::/10
+        if first & 0xFFC0 == 0xFEC0 { return false }  // deprecated site-local fec0::/10
         if first & 0xFF00 == 0xFF00 { return false }  // multicast
         return true
     }

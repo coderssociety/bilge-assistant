@@ -15,6 +15,10 @@ struct AsistanApp: App {
             Task { @MainActor in exit(await EndToEndBenchmark.run()) }
         } else if arguments.contains(ChatBenchmark.flag) {
             Task { @MainActor in exit(await ChatBenchmark.run(arguments: arguments)) }
+        } else if arguments.contains(ToolCheck.flag) {
+            Task { @MainActor in exit(await ToolCheck.run(arguments: arguments)) }
+        } else if arguments.contains(MultiStepBenchmark.flag) {
+            Task { @MainActor in exit(await MultiStepBenchmark.run(arguments: arguments)) }
         }
     }
 
@@ -56,9 +60,11 @@ final class AppEnvironment {
     let speech: SpeechOutput
     let timers: TimerService
     let brain: AssistantBrain
+    let memory: MemoryStore
     let assistant: AssistantController
     let audioLab: AudioLabModel
     private let hud: HUDPresenter
+    private let alerts: ProactiveAlerts
     private let isBenchmark = CommandLine.arguments.contains(where: { $0.hasPrefix("--bench") })
 
     var needsOnboarding: Bool { !isBenchmark && !settings.onboardingCompleted }
@@ -68,8 +74,9 @@ final class AppEnvironment {
         let speech = SpeechOutput(voice: settings.voice, speed: settings.speechSpeed)
         let announcer = Announcer()
         let timers = TimerService { await announcer.target?.announce($0) }
-        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers)
-        let brain = AssistantBrain(tools: registry.makeTools(), context: registry.context)
+        let memory = MemoryStore()
+        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory)
+        let brain = AssistantBrain(tools: registry.makeTools(), context: registry.context, memory: memory)
         let assistant = AssistantController(settings: settings, speech: speech, handler: brain)
         announcer.target = assistant
         brain.confirmer = assistant
@@ -77,11 +84,15 @@ final class AppEnvironment {
         self.speech = speech
         self.timers = timers
         self.brain = brain
+        self.memory = memory
         self.assistant = assistant
         audioLab = AudioLabModel(speech: speech)
         hud = HUDPresenter(assistant: assistant, settings: settings)
+        alerts = ProactiveAlerts(settings: settings, isListening: { [weak assistant] in assistant?.isRunning ?? false },
+                                 announce: { await announcer.target?.announce($0) })
         guard !isBenchmark else { return }
         hud.start()
+        alerts.start()
         brain.setLocalModelKeepAlive(settings.localModelKeepAlive)
         brain.useLocalModel(settings.localModel)
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in

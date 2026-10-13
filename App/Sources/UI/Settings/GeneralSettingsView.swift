@@ -47,6 +47,16 @@ struct GeneralSettingsView: View {
                 Toggle("Ekranda durum panelini göster", isOn: $settings.showHUD)
             }
 
+            Section("Hatırlatmalar") {
+                Toggle("Yaklaşan toplantıları ve vakti gelen anımsatıcıları sesli söyle", isOn: $settings.proactiveAlertsEnabled)
+                Picker("Toplantıdan önce", selection: $settings.eventAlertLeadMinutes) {
+                    ForEach(AssistantSettings.eventAlertLeadChoices, id: \.self) { Text("\($0) dakika").tag($0) }
+                }
+                .disabled(!settings.proactiveAlertsEnabled)
+                Text("Yalnızca dinleme açıkken ve Takvim/Anımsatıcılar izni verilmişse çalışır.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("Hava durumu") {
                 LabeledContent("Şehir") {
                     TextField("", text: $settings.weatherCity, prompt: Text(WeatherTool.fallbackCity))

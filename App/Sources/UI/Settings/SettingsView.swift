@@ -20,6 +20,9 @@ struct SettingsView: View {
             Tab("İzinler", systemImage: "lock.shield") {
                 PermissionsView()
             }
+            Tab("Hafıza", systemImage: "brain") {
+                MemoryView(memory: environment.memory)
+            }
             Tab("Geçmiş", systemImage: "clock.arrow.circlepath") {
                 HistoryView()
             }

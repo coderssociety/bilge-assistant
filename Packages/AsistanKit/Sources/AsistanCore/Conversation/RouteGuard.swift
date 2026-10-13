@@ -14,6 +14,11 @@ public enum RouteGuard {
         "semsiye", "mont", "ceket", "dolu", "sis", "don",
     ]
 
+    private static let otherDayWords: Set<String> = [
+        "yarin", "obur", "pazartesi", "sali", "carsamba", "persembe", "cuma", "cumartesi", "pazar", "haftaya", "hafta",
+    ]
+    private static let durationWords = ["saniye", "dakika", "saat", "sabah", "aksam", "ogle", "gece"]
+
     private static let acknowledgementWords: Set<String> = [
         "evet", "hayir", "tamam", "olur", "peki", "tesekkurler", "tesekkur", "ederim", "sag", "ol", "sagol", "cok",
         "eyvallah", "super", "harika", "guzel", "iyi", "anladim", "tamamdir",
@@ -33,6 +38,12 @@ public enum RouteGuard {
         // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.
         if isDictation(words), action != "createNote" { return "typeText" }
         switch action {
+        case "setTimer":
+            // Timers live in the app and fire only today; "yarın sabah süt almayı hatırlat" was set as one.
+            let reminds = words.contains { $0.hasPrefix("hatirlat") }
+            let otherDay = words.contains { word in otherDayWords.contains(where: word.hasPrefix) }
+            let hasTime = words.contains { word in word.contains(where: \.isNumber) || durationWords.contains(where: word.hasPrefix) }
+            return reminds && (otherDay || !hasTime) ? "addReminder" : action
         case "searchWeb":
             let explicit = words.contains { searchVerbs.contains($0) || searchSites.contains(where: $0.hasPrefix) }
             return explicit ? action : "conversation"

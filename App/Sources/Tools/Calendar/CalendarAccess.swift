@@ -62,6 +62,37 @@ actor CalendarAccess {
         return title
     }
 
+    /// Timed events in `window` and incomplete reminders due in `dueWindow`. Never asks for access:
+    /// a background check must not pop up a permission prompt, so it reads only what is already allowed.
+    func alertCandidates(eventsIn window: DateInterval, remindersDueIn dueWindow: DateInterval) async -> [AlertCandidate] {
+        var candidates: [AlertCandidate] = []
+        if EKEventStore.authorizationStatus(for: .event) == .fullAccess {
+            let predicate = store.predicateForEvents(withStart: window.start, end: window.end, calendars: nil)
+            candidates += store.events(matching: predicate)
+                .filter { !$0.isAllDay && window.contains($0.startDate) && $0.status != .canceled }
+                .filter { event in event.attendees?.first(where: \.isCurrentUser)?.participantStatus != .declined }
+                .map { event in
+                    AlertCandidate(key: "event:\(event.calendarItemIdentifier):\(event.startDate.timeIntervalSince1970)",
+                                   title: event.title ?? "Bir etkinlik", date: event.startDate, kind: .event)
+                }
+        }
+        guard EKEventStore.authorizationStatus(for: .reminder) == .fullAccess else { return candidates }
+        let predicate = store.predicateForIncompleteReminders(withDueDateStarting: dueWindow.start, ending: dueWindow.end, calendars: nil)
+        let reminders: [AlertCandidate] = await withCheckedContinuation { continuation in
+            store.fetchReminders(matching: predicate) { reminders in
+                continuation.resume(returning: (reminders ?? []).compactMap { reminder in
+                    // A reminder due on a day but at no particular time has nothing to announce.
+                    guard let components = reminder.dueDateComponents, components.hour != nil,
+                          let due = Calendar.current.date(from: components), let title = reminder.title
+                    else { return nil }
+                    return AlertCandidate(key: "reminder:\(reminder.calendarItemIdentifier):\(due.timeIntervalSince1970)",
+                                          title: title, date: due, kind: .reminder)
+                })
+            }
+        }
+        return candidates + reminders
+    }
+
     func addEvent(title: String, start: Date, end: Date) async throws {
         try await requireEvents()
         let event = EKEvent(eventStore: store)

@@ -7,6 +7,8 @@ struct ToolRegistry {
     let catalog: AppCatalog
     let timers: TimerService
     var context = ConversationContext()
+    /// In memory only unless the app passes its stored one, so benchmarks never touch the user's facts.
+    var memory = MemoryStore(fileURL: nil)
 
     func makeTools() -> [any AssistantTool] {
         [
@@ -55,6 +57,9 @@ struct ToolRegistry {
             ReadMailTool(),
             SendEmailTool(),
             SendMessageTool(),
+            RememberTool(memory: memory, context: context),
+            ForgetTool(memory: memory),
+            ListMemoriesTool(memory: memory),
         ]
     }
 }

@@ -1,19 +1,21 @@
 import Foundation
 
 /// One reply of the multi-step planner: call a tool, or finish with what to tell the user.
+/// A call may carry the closing message too, when it is the last step: if it succeeds, the plan ends
+/// without another round trip to the model.
 public enum AgentStep: Equatable, Sendable {
-    case call(tool: String, argumentsJSON: String)
+    case call(tool: String, argumentsJSON: String, finalMessage: String? = nil)
     case done(String)
 
     /// Accepts the first JSON object in the reply, so stray text around it does no harm.
     public static func parse(_ reply: String) -> AgentStep? {
         guard let json = firstJSONObject(in: reply),
               let object = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any] else { return nil }
-        if let done = object["done"] as? String { return .done(done) }
-        guard let tool = object["tool"] as? String, !tool.isEmpty else { return nil }
+        let done = (object["done"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+        guard let tool = object["tool"] as? String, !tool.isEmpty else { return done.map(AgentStep.done) }
         let arguments = object["arguments"] as? [String: Any] ?? [:]
         guard let data = try? JSONSerialization.data(withJSONObject: arguments, options: [.sortedKeys]) else { return nil }
-        return .call(tool: tool, argumentsJSON: String(decoding: data, as: UTF8.self))
+        return .call(tool: tool, argumentsJSON: String(decoding: data, as: UTF8.self), finalMessage: done)
     }
 
     /// The first balanced {...}, ignoring braces inside strings.

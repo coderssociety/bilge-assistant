@@ -20,6 +20,9 @@ final class CommandRouter {
     }
 
     nonisolated static let conversationAction = "conversation"
+    /// Chosen by `MemoryIntent` only. Offering them to the model risked "…hatırlat" reminders being
+    /// stored as memories, since "hatırla" and "hatırlat" differ by one letter.
+    private static let ruleRoutedActions: [MemoryIntent: String] = [.remember: "remember", .forget: "forget", .list: "listMemories"]
     private static let actionProperty = "action"
 
     private let model: SystemLanguageModel
@@ -34,13 +37,15 @@ final class CommandRouter {
         self.model = model
         self.tools = Dictionary(tools.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
         fastPath = FastPath(tools: self.tools)
-        let actions = tools.map(\.name) + [Self.conversationAction]
+        let ruleRouted = Set(Self.ruleRoutedActions.values)
+        let modelRouted = tools.filter { !ruleRouted.contains($0.name) }
+        let actions = modelRouted.map(\.name) + [Self.conversationAction]
         let actionSchema = DynamicGenerationSchema(name: "Action", anyOf: actions)
         let decision = DynamicGenerationSchema(name: "Decision", properties: [
             .init(name: Self.actionProperty, schema: actionSchema),
         ])
         decisionSchema = try GenerationSchema(root: decision, dependencies: [])
-        routerInstructions = RouterInstructions.router(tools: tools)
+        routerInstructions = RouterInstructions.router(tools: modelRouted)
     }
 
     /// Loads the model and processes the routing instructions ahead of time, so the next
@@ -53,6 +58,11 @@ final class CommandRouter {
     }
 
     func route(_ command: String, previous: PreviousTurn?) async throws -> Route {
+        if let intent = MemoryIntent.parse(command), let tool = Self.ruleRoutedActions[intent].flatMap({ tools[$0] }) {
+            Log.brain.info("Memory request: \(tool.name, privacy: .public)")
+            // The spoken words are kept as said: digitizing would turn "sabah yedide" into "07:00".
+            return try await prepare(tool, prompt: Self.prompt(command, previous: previous), resolvedCommand: command)
+        }
         let resolved = TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(command))
         if RouteGuard.preRoute(resolved) != nil { return .conversation }
         if let intent = QuickIntentParser.parse(resolved), let call = await fastPath.call(for: intent) {

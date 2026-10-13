@@ -16,9 +16,23 @@ enum BrainInstructions {
         """
     }
 
-    static func make(now: Date = .now) -> String {
+    static func make(now: Date = .now, memory: String? = nil) -> String {
         let today = now.formatted(.dateTime.day().month(.wide).year().weekday(.wide).locale(Locale(identifier: "tr_TR")))
-        return """
+        return base(today: today) + (memory.map(memorySection) ?? "")
+    }
+
+    /// What the user asked to be remembered, in their own words. It comes only from the user's voice
+    /// (the planner may not store anything after reading fetched content).
+    static func memorySection(_ lines: String) -> String {
+        """
+
+        Kullanıcının daha önce hatırlamanı istediği bilgiler (kendi sözleriyle). Soruları yanıtlarken kullan, tercihlerine uy; sorulmadıkça bunları sayıp dökme:
+        \(lines)
+        """
+    }
+
+    private static func base(today: String) -> String {
+        """
         Sen \(AppIdentity.name), kullanıcının Mac bilgisayarında tamamen yerel çalışan Türkçe sesli asistansın.
         Bugün \(today).
 

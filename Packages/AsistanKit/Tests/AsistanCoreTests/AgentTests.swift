@@ -29,6 +29,8 @@ struct AgentTests {
         #expect(AgentStep.parse("Tamam.\n```json\n{\"done\": \"İkisini de yaptım.\"}\n```") == .done("İkisini de yaptım."))
         #expect(AgentStep.parse(#"{"tool": "note", "arguments": {"body": "a } b"}}"#)
             == .call(tool: "note", argumentsJSON: #"{"body":"a } b"}"#))
+        #expect(AgentStep.parse(#"{"tool": "sendMessage", "arguments": {"recipient": "Ali"}, "done": "Gönderdim."}"#)
+            == .call(tool: "sendMessage", argumentsJSON: #"{"recipient":"Ali"}"#, finalMessage: "Gönderdim."))
         #expect(AgentStep.parse("JSON yok") == nil)
         #expect(AgentStep.parse(#"{"arguments": {}}"#) == nil)
     }
