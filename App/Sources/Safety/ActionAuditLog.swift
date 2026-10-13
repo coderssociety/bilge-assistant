@@ -31,6 +31,22 @@ actor ActionAuditLog {
         try? ModelStorage.root().appending(path: "actions.jsonl")
     }
 
+    /// Newest first. Unreadable lines are skipped (and logged) rather than hiding the whole history.
+    func recentEntries(limit: Int) -> [Entry] {
+        guard let url = Self.fileURL, let data = try? Data(contentsOf: url) else { return [] }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let lines = data.split(separator: 0x0A).suffix(limit)
+        return lines.reversed().compactMap { line in
+            do {
+                return try decoder.decode(Entry.self, from: Data(line))
+            } catch {
+                Log.tools.error("Skipping unreadable audit line: \(error.localizedDescription, privacy: .public)")
+                return nil
+            }
+        }
+    }
+
     func record(command: String, call: PreparedToolCall, decision: Decision, result: String?) {
         let entry = Entry(date: .now, command: command, tool: call.toolName, arguments: call.argumentsDescription,
                           decision: decision, result: result.map { String($0.prefix(Self.maxResultLength)) })

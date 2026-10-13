@@ -24,6 +24,16 @@ struct AsistanApp: App {
                 .accessibilityLabel(AppIdentity.name)
         }
 
+        Window("\(AppIdentity.name)'a hoş geldin", id: WindowID.onboarding) {
+            OnboardingView(environment: environment)
+        }
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(environment.needsOnboarding ? .presented : .suppressed)
+
+        Settings {
+            SettingsView(environment: environment)
+        }
+
         Window("Ses Laboratuvarı", id: WindowID.audioLab) {
             AudioLabView(model: environment.audioLab)
         }
@@ -33,6 +43,7 @@ struct AsistanApp: App {
 
 enum WindowID {
     static let audioLab = "audio-lab"
+    static let onboarding = "onboarding"
 }
 
 /// Owns the long-lived services; one instance per app run.
@@ -45,6 +56,10 @@ final class AppEnvironment {
     let brain: AssistantBrain
     let assistant: AssistantController
     let audioLab: AudioLabModel
+    private let hud: HUDPresenter
+    private let isBenchmark = CommandLine.arguments.contains(where: { $0.hasPrefix("--bench") })
+
+    var needsOnboarding: Bool { !isBenchmark && !settings.onboardingCompleted }
 
     init() {
         let settings = AssistantSettings()
@@ -61,11 +76,11 @@ final class AppEnvironment {
         self.brain = brain
         self.assistant = assistant
         audioLab = AudioLabModel(speech: speech)
-        let isBenchmark = CommandLine.arguments.contains(where: { $0.hasPrefix("--bench") })
-        if !isBenchmark {
-            brain.prewarm()
-            if settings.listenOnLaunch { assistant.start() }
-        }
+        hud = HUDPresenter(assistant: assistant, settings: settings)
+        guard !isBenchmark else { return }
+        hud.start()
+        brain.prewarm()
+        if settings.onboardingCompleted, settings.listenOnLaunch { assistant.start() }
     }
 }
 

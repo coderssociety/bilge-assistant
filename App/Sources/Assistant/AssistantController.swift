@@ -29,6 +29,8 @@ final class AssistantController {
     private(set) var lastHeard: String?
     private(set) var lastReply: String?
     private(set) var pendingConfirmation: String?
+    /// Latest speech probability (0...1) for level meters; updated about four times a second.
+    private(set) var inputLevel: Float = 0
     var isRunning: Bool { listenTask != nil }
 
     private let settings: AssistantSettings
@@ -69,7 +71,22 @@ final class AssistantController {
         listenTask?.cancel()
         listenTask = nil
         teardown()
+        inputLevel = 0
         status = .off
+    }
+
+    /// Applies changed settings (wake phrase, recognizer, voice) by restarting if listening.
+    func restartIfRunning() {
+        guard isRunning else { return }
+        stop()
+        start()
+    }
+
+    /// Downloads and loads every model without opening the microphone (first-run setup).
+    func prepareModels() async throws {
+        guard !isRunning else { return }
+        defer { if !isRunning { status = .off } }
+        _ = try await loadModels()
     }
 
     /// Stops the current reply (menu action); the assistant keeps listening.
@@ -162,6 +179,7 @@ final class AssistantController {
     }
 
     private func handle(_ frame: VoiceActivityFrame) {
+        inputLevel = frame.probability
         let wasInSpeech = segmenter.isInSpeech
         let segments = segmenter.process(frame.samples, probability: frame.probability)
         if !wasInSpeech, segmenter.isInSpeech { flow.speechStarted(at: .now) }

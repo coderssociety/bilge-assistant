@@ -27,13 +27,18 @@ struct MenuBarContent: View {
             Button("Yanıtı durdur") { assistant.interrupt() }
         }
         Divider()
-        Button("Ses Laboratuvarı…") {
-            openWindow(id: WindowID.audioLab)
-            NSApplication.shared.activate()
-        }
+        SettingsLink { Text("Ayarlar…") }
+            .keyboardShortcut(",")
+        Button("Kurulum rehberi…") { show(WindowID.onboarding) }
+        Button("Ses Laboratuvarı…") { show(WindowID.audioLab) }
         Divider()
         Button("Çıkış") { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    private func show(_ id: String) {
+        openWindow(id: id)
+        NSApplication.shared.activate()
     }
 }
 

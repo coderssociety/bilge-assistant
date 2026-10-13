@@ -15,6 +15,8 @@ final class AssistantSettings {
         static let speechSpeed = "speechSpeed"
         static let followUpEnabled = "followUpEnabled"
         static let listenOnLaunch = "listenOnLaunch"
+        static let showHUD = "showHUD"
+        static let onboardingCompleted = "onboardingCompleted"
     }
 
     private let defaults: UserDefaults
@@ -27,6 +29,8 @@ final class AssistantSettings {
     var speechSpeed: Float { didSet { defaults.set(speechSpeed, forKey: Key.speechSpeed) } }
     var followUpEnabled: Bool { didSet { defaults.set(followUpEnabled, forKey: Key.followUpEnabled) } }
     var listenOnLaunch: Bool { didSet { defaults.set(listenOnLaunch, forKey: Key.listenOnLaunch) } }
+    var showHUD: Bool { didSet { defaults.set(showHUD, forKey: Key.showHUD) } }
+    var onboardingCompleted: Bool { didSet { defaults.set(onboardingCompleted, forKey: Key.onboardingCompleted) } }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -37,6 +41,8 @@ final class AssistantSettings {
         speechSpeed = defaults.object(forKey: Key.speechSpeed) as? Float ?? 1.05
         followUpEnabled = defaults.object(forKey: Key.followUpEnabled) as? Bool ?? true
         listenOnLaunch = defaults.object(forKey: Key.listenOnLaunch) as? Bool ?? false
+        showHUD = defaults.object(forKey: Key.showHUD) as? Bool ?? true
+        onboardingCompleted = defaults.bool(forKey: Key.onboardingCompleted)
     }
 
     /// Maps the 0...1 sensitivity slider onto the matcher's similarity threshold (0.9 strict ... 0.65 loose).
