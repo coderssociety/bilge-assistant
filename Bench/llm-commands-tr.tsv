@@ -44,3 +44,4 @@ Masaüstündeki eski fatura dosyasını sil	moveFileToTrash
 Kestirmelerimi listele	listShortcuts
 Sabah rutini kestirmesini çalıştır	runShortcut
 Rahatsız etme modunu aç	runShortcut
+Ekranda ne yazıyor	readScreen

@@ -79,9 +79,14 @@ final class AssistantBrain: CommandHandling {
         }
         switch try await router.route(command, previous: previousTurn) {
         case let .tool(call):
-            let reply = try await run(call, for: command, continuation: continuation)
-            previousTurn = .init(command: command, action: call.toolName, result: reply)
-            continuation.yield(ToolReply.spoken(reply))
+            let result = try await run(call, for: command, continuation: continuation)
+            if call.answersWithLanguageModel, !ToolReply.isFailure(result) {
+                let answer = try await answer(command, from: result, into: continuation)
+                previousTurn = .init(command: command, action: call.toolName, result: answer)
+            } else {
+                previousTurn = .init(command: command, action: call.toolName, result: result)
+                continuation.yield(ToolReply.spoken(result))
+            }
         case .conversation:
             let reply = try await streamConversation(command, into: continuation)
             previousTurn = .init(command: command, action: CommandRouter.conversationAction, result: reply)
@@ -111,6 +116,25 @@ final class AssistantBrain: CommandHandling {
         let result = try await call.execute()
         await ActionAuditLog.shared.record(command: command, call: call, decision: .executed, result: result)
         return result
+    }
+
+    /// Answers about untrusted text (the screen) in a fresh session that has no tools.
+    private func answer(
+        _ command: String,
+        from material: String,
+        into continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws -> String {
+        let session = LanguageModelSession(model: model, instructions: BrainInstructions.screen())
+        let prompt = "Kullanıcının isteği: \(command)\n\nEkrandaki metin:\n<<<\n\(material)\n>>>"
+        let options = GenerationOptions(temperature: 0.3, maximumResponseTokens: Self.maximumResponseTokens)
+        var emitted = ""
+        for try await snapshot in session.streamResponse(to: prompt, options: options) {
+            let text = snapshot.content
+            guard text.count > emitted.count, text.hasPrefix(emitted) else { continue }
+            continuation.yield(String(text.dropFirst(emitted.count)))
+            emitted = text
+        }
+        return emitted
     }
 
     private func streamConversation(

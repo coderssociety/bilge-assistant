@@ -32,6 +32,7 @@ struct ToolRegistry {
             TrashFileTool(),
             ListShortcutsTool(),
             RunShortcutTool(),
+            ReadScreenTool(),
         ]
     }
 }

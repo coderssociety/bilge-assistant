@@ -12,6 +12,8 @@ enum ToolRisk: Sendable, Equatable {
 /// failures are reported as text (see `ToolReply`) rather than thrown.
 protocol AssistantTool: Tool where Output == String, Arguments: Generable & Sendable {
     var risk: ToolRisk { get }
+    /// The result is raw material (screen text) that the language model turns into the answer.
+    var answersWithLanguageModel: Bool { get }
     /// Non-nil for tools without parameters, so the router can skip argument extraction.
     func emptyArguments() -> Arguments?
     /// Lets a tool replace model-extracted values with ones parsed deterministically from the
@@ -26,6 +28,7 @@ protocol AssistantTool: Tool where Output == String, Arguments: Generable & Send
 
 extension AssistantTool {
     var risk: ToolRisk { .safe }
+    var answersWithLanguageModel: Bool { false }
     func emptyArguments() -> Arguments? { nil }
     func refine(_ arguments: Arguments, command: String) -> Arguments { arguments }
     func confirmationQuestion(for arguments: Arguments) -> String { "Bunu yapmamı onaylıyor musun?" }
@@ -36,6 +39,7 @@ extension AssistantTool {
             argumentsDescription: String(describing: arguments),
             risk: risk,
             confirmationQuestion: risk == .needsConfirmation ? confirmationQuestion(for: arguments) : nil,
+            answersWithLanguageModel: answersWithLanguageModel,
             execute: { try await call(arguments: arguments) })
     }
 }
@@ -46,6 +50,7 @@ struct PreparedToolCall: Sendable {
     let argumentsDescription: String
     let risk: ToolRisk
     let confirmationQuestion: String?
+    var answersWithLanguageModel = false
     let execute: @Sendable () async throws -> String
 
     /// A call that cannot run (e.g. nothing matched); speaking `message` is the whole turn.
@@ -60,6 +65,10 @@ enum ToolReply {
 
     static func failure(_ message: String) -> String {
         failurePrefix + message
+    }
+
+    static func isFailure(_ result: String) -> Bool {
+        result.hasPrefix(failurePrefix)
     }
 
     /// Turns a tool result into what the assistant says out loud.
