@@ -15,13 +15,11 @@ struct CreateNoteTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         let html = Self.html(title: arguments.title, body: arguments.body ?? "")
         do {
-            _ = try await MainActor.run {
-                try AppleScriptRunner.run("""
-                tell application "Notes"
-                make new note at default account with properties {body:\(AppleScriptRunner.quoted(html))}
-                end tell
-                """)
-            }
+            _ = try await AppleScriptRunner.run("""
+            tell application "Notes"
+            make new note at default account with properties {body:\(AppleScriptRunner.quoted(html))}
+            end tell
+            """)
             return "'\(arguments.title)' başlıklı not oluşturuldu."
         } catch {
             return ToolReply.failure(error)

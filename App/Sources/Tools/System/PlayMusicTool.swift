@@ -18,22 +18,18 @@ struct PlayMusicTool: AssistantTool {
         guard !query.isEmpty else { return ToolReply.failure("Ne çalmamı istediğini anlayamadım.") }
         do {
             if let playlist = try await matchingPlaylist(query) {
-                _ = try await MainActor.run {
-                    try AppleScriptRunner.run("tell application \"Music\" to play playlist \(AppleScriptRunner.quoted(playlist))")
-                }
+                _ = try await AppleScriptRunner.run("tell application \"Music\" to play playlist \(AppleScriptRunner.quoted(playlist))")
                 return "'\(playlist)' çalma listesini çalıyorum."
             }
-            let playing = try await MainActor.run {
-                try AppleScriptRunner.run("""
-                tell application "Music"
-                set q to \(AppleScriptRunner.quoted(query))
-                set found to (every track of library playlist 1 whose name contains q or artist contains q or album contains q)
-                if (count of found) = 0 then return ""
-                play item 1 of found
-                return (name of item 1 of found) & " — " & (artist of item 1 of found)
-                end tell
-                """)
-            }
+            let playing = try await AppleScriptRunner.run("""
+            tell application "Music"
+            set q to \(AppleScriptRunner.quoted(query))
+            set found to (every track of library playlist 1 whose name contains q or artist contains q or album contains q)
+            if (count of found) = 0 then return ""
+            play item 1 of found
+            return (name of item 1 of found) & " — " & (artist of item 1 of found)
+            end tell
+            """)
             guard !playing.isEmpty else {
                 return ToolReply.failure("Müzik kitaplığında '\(query)' bulamadım.")
             }
@@ -44,14 +40,12 @@ struct PlayMusicTool: AssistantTool {
     }
 
     private func matchingPlaylist(_ query: String) async throws -> String? {
-        let names = try await MainActor.run {
-            try AppleScriptRunner.run("""
-            tell application "Music"
-            set AppleScript's text item delimiters to linefeed
-            return (name of every user playlist) as text
-            end tell
-            """)
-        }
+        let names = try await AppleScriptRunner.run("""
+        tell application "Music"
+        set AppleScript's text item delimiters to linefeed
+        return (name of every user playlist) as text
+        end tell
+        """)
         return PhraseMatcher.bestMatch(for: query, in: names.split(separator: "\n").map(String.init))
     }
 }

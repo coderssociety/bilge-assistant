@@ -67,17 +67,16 @@ struct SendEmailTool: AssistantTool {
             risk: risk,
             confirmationQuestion: "\(recipient.name), \(recipient.address) adresine \"\(subject)\" konulu e-postayı gönderiyorum: \(Recipient.preview(body)) Göndermem için evet ya da gönder de.",
             requiresExplicitYes: true,
-            execute: { try await Self.send(to: recipient, subject: subject, body: body) })
+            execute: { await Self.send(to: recipient, subject: subject, body: body) })
     }
 
     func call(arguments: Arguments) async throws -> String {
         ToolReply.failure("E-posta yalnızca onayla gönderilir.")
     }
 
-    @MainActor
-    private static func send(to recipient: Recipient, subject: String, body: String) throws -> String {
+    private static func send(to recipient: Recipient, subject: String, body: String) async -> String {
         do {
-            _ = try AppleScriptRunner.run("""
+            try await AppleScriptRunner.runToCompletion("""
             tell application "Mail"
             set newMessage to make new outgoing message with properties {subject:\(AppleScriptRunner.quoted(subject)), content:\(AppleScriptRunner.quoted(body)), visible:false}
             tell newMessage to make new to recipient at end of to recipients with properties {address:\(AppleScriptRunner.quoted(recipient.address))}
@@ -127,17 +126,16 @@ struct SendMessageTool: AssistantTool {
             risk: risk,
             confirmationQuestion: "\(recipient.name), \(recipient.address) için iMessage ile şunu gönderiyorum: \(Recipient.preview(text)) Göndermem için evet ya da gönder de.",
             requiresExplicitYes: true,
-            execute: { try await Self.send(to: recipient, text: text) })
+            execute: { await Self.send(to: recipient, text: text) })
     }
 
     func call(arguments: Arguments) async throws -> String {
         ToolReply.failure("Mesaj yalnızca onayla gönderilir.")
     }
 
-    @MainActor
-    private static func send(to recipient: Recipient, text: String) throws -> String {
+    private static func send(to recipient: Recipient, text: String) async -> String {
         do {
-            _ = try AppleScriptRunner.run("""
+            try await AppleScriptRunner.runToCompletion("""
             tell application "Messages"
             set targetService to 1st account whose service type = iMessage
             send \(AppleScriptRunner.quoted(text)) to participant \(AppleScriptRunner.quoted(recipient.address)) of targetService
@@ -167,21 +165,19 @@ struct ReadMailTool: AssistantTool {
         let filter = arguments.sender?.trimmingCharacters(in: .whitespaces).nilIfEmpty
             .map { " and sender contains \(AppleScriptRunner.quoted($0))" } ?? ""
         do {
-            let listing = try await MainActor.run {
-                try AppleScriptRunner.run("""
-                tell application "Mail"
-                set unread to (messages of inbox whose read status is false\(filter))
-                set total to count of unread
-                set output to "Okunmamış e-posta sayısı: " & total
-                repeat with i from 1 to (total)
-                if i > \(Self.maxMessages) then exit repeat
-                set m to item i of unread
-                set output to output & linefeed & "- " & (sender of m) & ": " & (subject of m)
-                end repeat
-                return output
-                end tell
-                """)
-            }
+            let listing = try await AppleScriptRunner.run("""
+            tell application "Mail"
+            set unread to (messages of inbox whose read status is false\(filter))
+            set total to count of unread
+            set output to "Okunmamış e-posta sayısı: " & total
+            repeat with i from 1 to (total)
+            if i > \(Self.maxMessages) then exit repeat
+            set m to item i of unread
+            set output to output & linefeed & "- " & (sender of m) & ": " & (subject of m)
+            end repeat
+            return output
+            end tell
+            """)
             return listing
         } catch {
             return ToolReply.failure(error)

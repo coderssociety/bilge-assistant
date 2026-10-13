@@ -243,12 +243,11 @@ struct ReadWebPageTool: AssistantTool {
             let full = address.contains("://") ? address : "https://\(address)"
             return URL(string: full)
         }
-        return try await MainActor.run { try frontBrowserURL() }.flatMap(URL.init(string:))
+        return try await frontBrowserURL().flatMap(URL.init(string:))
     }
 
     /// The front tab of Safari, Chrome, Edge, Brave or Arc, whichever is frontmost.
-    @MainActor
-    private static func frontBrowserURL() throws -> String? {
+    private static func frontBrowserURL() async throws -> String? {
         let scripts: [String: String] = [
             "com.apple.Safari": "tell application \"Safari\" to return URL of front document",
             "com.google.Chrome": "tell application \"Google Chrome\" to return URL of active tab of front window",
@@ -256,11 +255,13 @@ struct ReadWebPageTool: AssistantTool {
             "com.brave.Browser": "tell application \"Brave Browser\" to return URL of active tab of front window",
             "company.thebrowser.Browser": "tell application \"Arc\" to return URL of active tab of front window",
         ]
-        let running = NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)
-        let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        let candidates = ([front].compactMap { $0 } + running).filter { scripts[$0] != nil }
+        let candidates = await MainActor.run {
+            let running = NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)
+            let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+            return ([front].compactMap { $0 } + running).filter { scripts[$0] != nil }
+        }
         guard let browser = candidates.first, let script = scripts[browser] else { return nil }
-        return try AppleScriptRunner.run(script).nilIfEmpty
+        return try await AppleScriptRunner.run(script).nilIfEmpty
     }
 }
 

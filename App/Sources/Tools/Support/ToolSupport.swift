@@ -122,7 +122,9 @@ enum ProcessRunner {
     /// Runs a fixed executable with discrete arguments (never through a shell) and captures its output.
     /// Always returns within `timeout` plus a few seconds, even if the process ignores SIGTERM;
     /// cancelling the calling task stops the process and throws `CancellationError`.
-    static func run(_ executable: String, _ arguments: [String], timeout: Duration = defaultTimeout) async throws -> Output {
+    /// `input` is written to standard input, which keeps it out of the process list, unlike arguments.
+    static func run(_ executable: String, _ arguments: [String], input: Data? = nil,
+                    timeout: Duration = defaultTimeout) async throws -> Output {
         let process = Process()
         process.executableURL = URL(filePath: executable)
         process.arguments = arguments
@@ -134,6 +136,8 @@ enum ProcessRunner {
         }
         process.standardOutput = stdout.pipe
         process.standardError = stderr.pipe
+        let stdin = input.map { _ in Pipe() }
+        if let stdin { process.standardInput = stdin }
         let exit = ExitSignal()
         process.terminationHandler = { _ in exit.signal() }
 
@@ -144,6 +148,9 @@ enum ProcessRunner {
             await stop(process)
         }
         defer { watchdog.cancel() }
+        if let input, let stdin {
+            write(input, to: stdin.fileHandleForWriting, of: executable)
+        }
         await withTaskCancellationHandler {
             await exit.wait()
         } onCancel: {
@@ -154,6 +161,19 @@ enum ProcessRunner {
         async let standardOutput = stdout.text(waitingUpTo: outputGrace)
         async let standardError = stderr.text(waitingUpTo: outputGrace)
         return Output(status: process.terminationStatus, standardOutput: await standardOutput, standardError: await standardError)
+    }
+
+    /// A process that exits before reading its input would otherwise kill the app with SIGPIPE;
+    /// with F_SETNOSIGPIPE the write fails with EPIPE, and the exit status reports the failure.
+    /// The watchdog is already running, so a process that never reads cannot block this past the timeout.
+    private static func write(_ data: Data, to handle: FileHandle, of executable: String) {
+        defer { try? handle.close() }
+        _ = fcntl(handle.fileDescriptor, F_SETNOSIGPIPE, 1)
+        do {
+            try handle.write(contentsOf: data)
+        } catch {
+            Log.tools.error("Could not write input to \(executable, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private static func stop(_ process: Process) async {

@@ -23,16 +23,14 @@ struct ReadNotesTool: AssistantTool {
             if (count of found) = 0 then set found to (notes whose plaintext contains \(AppleScriptRunner.quoted(query)))
             """
         do {
-            let text = try await MainActor.run {
-                try AppleScriptRunner.run("""
-                tell application "Notes"
-                \(selection)
-                if (count of found) = 0 then return ""
-                set picked to item 1 of found
-                return (name of picked) & linefeed & (plaintext of picked)
-                end tell
-                """)
-            }
+            let text = try await AppleScriptRunner.run("""
+            tell application "Notes"
+            \(selection)
+            if (count of found) = 0 then return ""
+            set picked to item 1 of found
+            return (name of picked) & linefeed & (plaintext of picked)
+            end tell
+            """)
             guard !text.isEmpty else {
                 return ToolReply.failure(query.isEmpty ? "Hiç not bulamadım." : "'\(query)' geçen bir not bulamadım.")
             }

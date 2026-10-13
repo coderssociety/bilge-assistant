@@ -19,35 +19,39 @@ struct VolumeTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
+        let currentLevel = "(output volume of (get volume settings))"
         do {
-            return try await MainActor.run {
-                let current = Int(try AppleScriptRunner.run("output volume of (get volume settings)")) ?? 50
-                switch arguments.action {
-                case .set:
-                    guard let level = arguments.level else { return ToolReply.failure("Hedef seviye belirtilmedi.") }
-                    return try apply(level)
-                case .increase:
-                    return try apply(current + Self.step)
-                case .decrease:
-                    return try apply(current - Self.step)
-                case .mute:
-                    _ = try AppleScriptRunner.run("set volume with output muted")
-                    return "Ses kapatıldı."
-                case .unmute:
-                    _ = try AppleScriptRunner.run("set volume without output muted")
-                    return "Ses açıldı, seviye yüzde \(current)."
-                }
+            switch arguments.action {
+            case .set:
+                guard let level = arguments.level else { return ToolReply.failure("Hedef seviye belirtilmedi.") }
+                return try await apply("\(level)")
+            case .increase:
+                return try await apply("\(currentLevel) + \(Self.step)")
+            case .decrease:
+                return try await apply("\(currentLevel) - \(Self.step)")
+            case .mute:
+                _ = try await AppleScriptRunner.run("set volume with output muted")
+                return "Ses kapatıldı."
+            case .unmute:
+                let level = try await AppleScriptRunner.run("set volume without output muted\nreturn \(currentLevel)")
+                return "Ses açıldı, seviye yüzde \(level)."
             }
         } catch {
             return ToolReply.failure(error)
         }
     }
 
-    @MainActor
-    private func apply(_ level: Int) throws -> String {
-        let clamped = min(max(level, 0), 100)
-        _ = try AppleScriptRunner.run("set volume without output muted\nset volume output volume \(clamped)")
-        return "Ses seviyesi yüzde \(clamped)."
+    /// Reads, clamps and sets in one script, since every script starts an osascript process.
+    private func apply(_ levelExpression: String) async throws -> String {
+        let level = try await AppleScriptRunner.run("""
+        set target to \(levelExpression)
+        if target > 100 then set target to 100
+        if target < 0 then set target to 0
+        set volume without output muted
+        set volume output volume target
+        return target
+        """)
+        return "Ses seviyesi yüzde \(level)."
     }
 }
 
@@ -78,9 +82,7 @@ struct MediaTool: AssistantTool {
             command = "if player state is playing then return (name of current track) & \" - \" & (artist of current track)\nreturn \"\""
         }
         do {
-            let output = try await MainActor.run {
-                try AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(player))\n\(command)\nend tell")
-            }
+            let output = try await AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(player))\n\(command)\nend tell")
             switch arguments.action {
             case .nowPlaying: return output.isEmpty ? "Şu an çalan bir şey yok." : "Çalan: \(output)."
             case .play: return "\(player) çalıyor."
@@ -130,14 +132,12 @@ struct SystemActionTool: AssistantTool {
                 case .darkModeOff: "false"
                 default: "not dark mode"
                 }
-                let enabled = try await MainActor.run {
-                    try AppleScriptRunner.run("""
-                    tell application "System Events" to tell appearance preferences
-                    set dark mode to \(value)
-                    return dark mode
-                    end tell
-                    """)
-                }
+                let enabled = try await AppleScriptRunner.run("""
+                tell application "System Events" to tell appearance preferences
+                set dark mode to \(value)
+                return dark mode
+                end tell
+                """)
                 return enabled == "true" ? "Karanlık mod açık." : "Karanlık mod kapalı."
             }
         } catch {
