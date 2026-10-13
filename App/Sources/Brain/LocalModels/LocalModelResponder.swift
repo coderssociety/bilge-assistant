@@ -2,84 +2,69 @@ import AsistanCore
 import Foundation
 
 enum LocalModelError: Error {
-    /// Still starting or loading; this turn uses Apple's model while it finishes in the background.
+    /// Could not be started or loaded in time; this turn uses Apple's model.
     case notReady
     case emptyReply
 }
 
 /// Answers conversation and screen questions with a larger model served on this Mac (LM Studio or vMLX).
 /// Routing and Mac actions stay on Apple's model; this only ever produces text and has no tools.
-/// A turn never waits for a server to start or load: until the model is ready, Apple's model answers.
+/// Loading starts when the wake phrase is heard, so it mostly overlaps with the user speaking;
+/// the model is freed again according to `keepAlive`.
 @MainActor
 final class LocalModelResponder {
-    private let lmStudio = LMStudioClient()
-    private(set) var choice: LocalModelChoice?
-    private var ready: LocalModelEndpoint?
-    private var preparation: Task<Void, Never>?
-    /// Frees what Bilge itself loaded or started for the current choice, when switching away.
-    private var release: (@MainActor () -> Void)?
+    /// A turn waits this long in silence for a model that is still loading, then says so.
+    private static let silentWait: Duration = .milliseconds(1500)
+    /// Covers a cold load after a restart (15–30 s); past this the turn falls back to Apple's model.
+    private static let maximumWait: Duration = .seconds(30)
+    private static let pollInterval: Duration = .milliseconds(100)
+    static let waitingNotice = "Bir saniye. "
+
+    private let lifecycle = LocalModelLifecycle()
     private var history = ChatHistory()
-    /// After a failed start, the server is not retried for a while so each turn isn't slowed by it.
-    private var unavailableUntil: ContinuousClock.Instant?
-    private static let retryDelay: Duration = .seconds(60)
 
-    var isEnabled: Bool { choice != nil }
+    var isEnabled: Bool { lifecycle.choice != nil }
 
-    func select(_ newChoice: LocalModelChoice?) {
-        guard newChoice != choice else { return }
-        preparation?.cancel()
-        preparation = nil
-        ready = nil
-        release?()
-        release = nil
-        unavailableUntil = nil
-        choice = newChoice
+    var keepAlive: LocalModelKeepAlive {
+        get { lifecycle.keepAlive }
+        set { lifecycle.keepAlive = newValue }
+    }
+
+    func select(_ choice: LocalModelChoice?) {
         history = ChatHistory()
-        prewarm()
+        lifecycle.select(choice)
     }
 
-    /// Stops a server Bilge started; called when the app quits.
+    func launched() {
+        if keepAlive == .always { lifecycle.load() }
+    }
+
+    /// The wake phrase was heard: start loading while the user is still speaking.
+    func conversationWillStart() {
+        lifecycle.cancelIdleUnload()
+        lifecycle.load()
+    }
+
+    func conversationEnded() {
+        history = ChatHistory()
+        lifecycle.conversationEnded()
+    }
+
+    /// The turn went to a Mac action; a model still loading for it is likely not needed (most such
+    /// conversations are commands only), so it is freed once loaded unless a question asks for it.
+    func turnNeededNoModel() {
+        lifecycle.abandonLoadIfNotReady()
+    }
+
     func shutDown() {
-        release?()
-        release = nil
-    }
-
-    func prewarm() {
-        guard let choice, ready == nil, preparation == nil else { return }
-        if let unavailableUntil, ContinuousClock.now < unavailableUntil { return }
-        preparation = Task {
-            do {
-                finishPreparation(of: choice, with: .success(try await prepare(choice)))
-            } catch {
-                finishPreparation(of: choice, with: .failure(error))
-            }
-        }
-    }
-
-    private func prepare(_ choice: LocalModelChoice) async throws -> LocalModelEndpoint {
-        switch choice.server {
-        case .lmStudio:
-            let (endpoint, loadedByUs) = try await lmStudio.prepare(choice.modelID)
-            if loadedByUs {
-                release = { [lmStudio] in Task { await lmStudio.unload(choice.modelID) } }
-            }
-            return endpoint
-        case .vmlx:
-            let endpoint = try await VMLXServer.shared.prepare(choice.modelID)
-            release = { VMLXServer.shared.stop() }
-            return endpoint
-        }
+        lifecycle.shutDown()
     }
 
     /// For benchmarks: waits until the selected model is loaded. Returns false if it could not be.
     func waitUntilReady() async -> Bool {
-        prewarm()
-        await preparation?.value
-        return ready != nil
-    }
-
-    func resetConversation() {
-        history = ChatHistory()
+        lifecycle.load()
+        await lifecycle.waitForLoad()
+        return lifecycle.ready != nil
     }
 
     func converse(
@@ -108,10 +93,7 @@ final class LocalModelResponder {
         temperature: Double,
         into continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws -> String {
-        guard let endpoint = ready else {
-            prewarm()
-            throw LocalModelError.notReady
-        }
+        let endpoint = try await readyEndpoint(announcingWaitTo: continuation)
         var emitted = ""
         do {
             let chunks = endpoint.streamReply(messages: messages, temperature: temperature,
@@ -125,8 +107,8 @@ final class LocalModelResponder {
             try Task.checkCancellation()
         } catch {
             if Task.isCancelled || error is CancellationError { throw CancellationError() }
-            // The model may have been unloaded or the server stopped; check again before the next turn.
-            ready = nil
+            // The model may have been unloaded or the server stopped; load afresh next time.
+            lifecycle.endpointFailed()
             guard !emitted.isEmpty else { throw error }
             Log.brain.error("Local model stopped mid-reply: \(String(describing: error), privacy: .public)")
         }
@@ -134,18 +116,24 @@ final class LocalModelResponder {
         return emitted
     }
 
-    private func finishPreparation(of prepared: LocalModelChoice, with result: Result<LocalModelEndpoint, any Error>) {
-        guard prepared == choice else { return }
-        preparation = nil
-        switch result {
-        case let .success(endpoint):
-            ready = endpoint
-            Log.brain.info("Local model ready: \(prepared.storageKey, privacy: .public)")
-        case let .failure(error):
-            guard !(error is CancellationError) else { return }
-            unavailableUntil = .now + Self.retryDelay
-            Log.brain.error("Local model unavailable: \(String(describing: error), privacy: .public)")
+    /// Waits for a model that is still loading, saying "Bir saniye." if it takes noticeably long.
+    private func readyEndpoint(
+        announcingWaitTo continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws -> LocalModelEndpoint {
+        lifecycle.cancelIdleUnload()
+        lifecycle.load()
+        let started = ContinuousClock.now
+        var announced = false
+        while true {
+            if let ready = lifecycle.ready { return ready }
+            guard lifecycle.isLoading, ContinuousClock.now - started < Self.maximumWait else {
+                throw LocalModelError.notReady
+            }
+            if !announced, ContinuousClock.now - started >= Self.silentWait {
+                announced = true
+                continuation.yield(Self.waitingNotice)
+            }
+            try await Task.sleep(for: Self.pollInterval)
         }
     }
 }
-

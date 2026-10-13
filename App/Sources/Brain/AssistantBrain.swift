@@ -48,12 +48,16 @@ final class AssistantBrain: CommandHandling {
         guard unavailableReason == nil else { return }
         router?.prewarm()
         conversationSession().prewarm()
-        localModel.prewarm()
+        localModel.launched()
     }
 
     /// nil uses Apple's model for conversation.
     func useLocalModel(_ choice: LocalModelChoice?) {
         localModel.select(choice)
+    }
+
+    func setLocalModelKeepAlive(_ keepAlive: LocalModelKeepAlive) {
+        localModel.keepAlive = keepAlive
     }
 
     func shutDownLocalModel() {
@@ -85,7 +89,11 @@ final class AssistantBrain: CommandHandling {
     func endConversation() {
         conversation = nil
         previousTurn = nil
-        localModel.resetConversation()
+        localModel.conversationEnded()
+    }
+
+    func conversationWillStart() {
+        localModel.conversationWillStart()
     }
 
     private func handle(_ command: String, continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
@@ -95,6 +103,7 @@ final class AssistantBrain: CommandHandling {
         }
         switch try await router.route(command, previous: previousTurn) {
         case let .tool(call):
+            if !call.answersWithLanguageModel { localModel.turnNeededNoModel() }
             let result = try await run(call, for: command, continuation: continuation)
             if call.answersWithLanguageModel, !ToolReply.isFailure(result) {
                 let answer = try await answer(command, from: result, into: continuation)

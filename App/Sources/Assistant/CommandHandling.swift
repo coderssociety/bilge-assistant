@@ -6,6 +6,8 @@ protocol CommandHandling: AnyObject {
     func respond(to command: String) -> AsyncThrowingStream<String, any Error>
     /// Clears conversational context, e.g. when the user goes quiet and the exchange is over.
     func endConversation()
+    /// The wake phrase was heard; a command is about to follow.
+    func conversationWillStart()
 }
 
 /// Placeholder until the language model is wired in: repeats what it heard so the audio loop can be tested.
@@ -19,4 +21,5 @@ final class EchoCommandHandler: CommandHandling {
     }
 
     func endConversation() {}
+    func conversationWillStart() {}
 }

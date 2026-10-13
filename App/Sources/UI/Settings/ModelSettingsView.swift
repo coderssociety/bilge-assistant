@@ -39,10 +39,18 @@ struct ModelSettingsView: View {
                     }
                 }
                 status
+                if settings.localModel != nil {
+                    Picker("Bellek", selection: $settings.localModelKeepAlive) {
+                        ForEach(LocalModelKeepAlive.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                    }
+                    Text(settings.localModelKeepAlive.explanation)
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 Text("Genel bilgi sorularında, sohbette ve ekran özetlerinde büyük yerel modeller daha bilgili. 20 zor soruluk testimizde Apple modeli 14, Qwen 4-bit 19, Gemma 4 31B 19 soruyu bildi. Qwen daha hızlı üretir; Gemma ilk kelimeye daha çabuk başlar.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Seçilen model açık kaldıkça bellekte durur (Qwen 4-bit ~16 GB, Gemma ~23 GB). Bilge'nin yüklediği modeli başka modele geçince ya da Bilge kapanınca boşaltır. Model hazır değilse o yanıt Apple modeliyle verilir. Her şey Mac'inde kalır.")
+                Text("Açıkken model bellekte durur (Qwen 4-bit ~16 GB, Gemma ~23 GB). Bilge yalnızca kendi yüklediği modeli kapatır; LM Studio'da ya da vMLX'te senin açtığın modele dokunmaz. Model açılamazsa o yanıt Apple modeliyle verilir. Her şey Mac'inde kalır.")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -50,6 +58,7 @@ struct ModelSettingsView: View {
         .formStyle(.grouped)
         .task { await refresh(startingLMStudio: false) }
         .onChange(of: settings.localModelID) { brain.useLocalModel(settings.localModel) }
+        .onChange(of: settings.localModelKeepAlive) { brain.setLocalModelKeepAlive(settings.localModelKeepAlive) }
     }
 
     @ViewBuilder
@@ -74,7 +83,7 @@ struct ModelSettingsView: View {
     }
 
     private func readiness(_ isLoaded: Bool) -> some View {
-        Label(isLoaded ? "Model yüklü ve hazır." : "Model arka planda yükleniyor ya da ilk soruda yüklenecek (15–30 sn).",
+        Label(isLoaded ? "Model şu an açık." : "Model kapalı; “\(AppIdentity.name)” dediğinde açılır.",
               systemImage: isLoaded ? "checkmark.circle" : "clock")
             .foregroundStyle(isLoaded ? .green : .secondary)
     }
@@ -90,8 +99,9 @@ struct ModelSettingsView: View {
     private func refresh(startingLMStudio: Bool) async {
         isWorking = true
         defer { isWorking = false }
-        vmlxRunning = (try? await VMLXServer.runningModels()) ?? []
-        vmlxModels = VMLXServer.isInstalled ? Array(Set(VMLXServer.installedModels() + vmlxRunning)).sorted() : []
+        vmlxRunning = await VMLXServer.awakeModels()
+        let served = (try? await VMLXServer.runningModels()) ?? []
+        vmlxModels = VMLXServer.isInstalled ? Array(Set(VMLXServer.installedModels() + served)).sorted() : []
         guard LMStudioClient.isInstalled else { return }
         do {
             if startingLMStudio { try await lmStudio.startServerIfNeeded() }
@@ -106,5 +116,18 @@ struct ModelSettingsView: View {
 private extension LMStudioClient.Model {
     var label: String {
         [id, quantization].compactMap { $0 }.joined(separator: " · ")
+    }
+}
+
+private extension LocalModelKeepAlive {
+    var explanation: String {
+        switch self {
+        case .untilConversationEnds:
+            "“\(AppIdentity.name)” dediğinde yüklenmeye başlar, sen konuşurken büyük ölçüde hazır olur (Qwen ~4 sn, Gemma ~6 sn). Yanıt bitip devam sorusu gelmezse bellekten çıkar. Gecikirse “Bir saniye” der."
+        case .fiveMinutes, .thirtyMinutes:
+            "Arka arkaya konuşmalarda yeniden yüklemeyi bekletmez; süre dolunca bellekten çıkar."
+        case .always:
+            "Uygulama açılınca yüklenir ve kapanana kadar bellekte kalır. En hızlı yanıt, en çok bellek."
+        }
     }
 }

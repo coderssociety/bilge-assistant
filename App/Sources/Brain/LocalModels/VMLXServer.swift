@@ -1,14 +1,17 @@
 import Foundation
 
 /// Serves models LM Studio cannot load (JANG quantizations such as Gemma 4 31B) with the `vmlx` tool.
-/// A server the user started is reused; one Bilge started is stopped again when no longer needed.
+/// Between conversations the model is put into vMLX's deep sleep: weights leave memory (22 GB → under 1 GB)
+/// but the process stays, so waking takes ~5 s instead of a ~6.5 s restart. Other clients wake it on demand.
+/// The process itself is only stopped if Bilge started it, when the app quits or the choice changes.
 @MainActor
 final class VMLXServer {
     static let shared = VMLXServer()
 
     private static let baseURL = URL(string: "http://127.0.0.1:8000")!
     private static let startupTimeout: Duration = .seconds(180)
-    private static let pollInterval: Duration = .seconds(1)
+    private static let pollInterval: Duration = .milliseconds(250)
+    private static let shutdownTimeout: Duration = .seconds(5)
     private var ownedProcess: Process?
 
     nonisolated static var executable: URL {
@@ -47,20 +50,40 @@ final class VMLXServer {
         return try JSONDecoder().decode(ModelList.self, from: data).data.map(\.id)
     }
 
-    /// Reuses a running server or starts one; loading a 30B model takes about 10–20 s.
+    /// Models served with weights in memory; empty while the server is down or in deep sleep.
+    nonisolated static func awakeModels() async -> [String] {
+        struct Health: Decodable { let status: String }
+        guard let (data, _) = try? await URLSession.shared.data(from: baseURL.appending(path: "health")),
+              (try? JSONDecoder().decode(Health.self, from: data))?.status == "healthy"
+        else { return [] }
+        return (try? await runningModels()) ?? []
+    }
+
+    /// Reuses a running server or starts one (about 6 s once the weights are in the file cache).
     func prepare(_ id: String) async throws -> LocalModelEndpoint {
-        if let running = try? await Self.runningModels() {
+        let running = try? await Self.runningModels()
+        try Task.checkCancellation()
+        if let running {
             guard running.contains(id) else {
                 throw LocalModelServerError.loadFailed("vMLX şu an başka bir model sunuyor (\(running.joined(separator: ", "))).")
             }
+            do {
+                try await admin("wake")
+            } catch {
+                // An abandoned wake still completes on the server; put the weights back to sleep.
+                // The caller may be cancelled, so this runs in a task of its own.
+                await Task { await sleep() }.value
+                throw error
+            }
             return endpoint(for: id)
         }
-        try start(id)
+        // A process Bilge started that is not answering yet is waited for, never started twice.
+        if ownedProcess?.isRunning != true { try start(id) }
         do {
             try await waitUntilServing(id)
             return endpoint(for: id)
         } catch {
-            stop()
+            stopImmediately()
             throw error
         }
     }
@@ -75,12 +98,63 @@ final class VMLXServer {
         throw LocalModelServerError.serverUnavailable("vMLX")
     }
 
-    /// Stops the server only if Bilge started it.
-    func stop() {
+    /// When switching models: ends the process Bilge started, or puts the user's server to sleep.
+    func stopOrSleep() async {
+        if ownedProcess != nil { await stop() } else { await sleep() }
+    }
+
+    /// Called when the app quits. `sleepingServer` puts a server Bilge used but did not start to sleep;
+    /// that request is waited for briefly, since nothing runs after the app exits.
+    func shutDown(sleepingServer: Bool) {
+        if ownedProcess != nil {
+            stopImmediately()
+            return
+        }
+        guard sleepingServer else { return }
+        var request = URLRequest(url: Self.baseURL.appending(path: "admin/deep-sleep"), timeoutInterval: 2)
+        request.httpMethod = "POST"
+        let done = DispatchSemaphore(value: 0)
+        URLSession.shared.dataTask(with: request) { _, _, _ in done.signal() }.resume()
+        _ = done.wait(timeout: .now() + 2)
+    }
+
+    /// Unloads the weights but keeps the server; a wake or any inference request loads them again.
+    func sleep() async {
+        do {
+            try await admin("deep-sleep")
+            Log.brain.info("vMLX model asleep")
+        } catch LocalModelServerError.badResponse(409) {
+            return
+        } catch {
+            Log.brain.error("vMLX deep sleep failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// Wake blocks until the model is loaded again, so it gets a long timeout.
+    private func admin(_ action: String) async throws {
+        var request = URLRequest(url: Self.baseURL.appending(path: "admin/\(action)"), timeoutInterval: Self.startupTimeout / .seconds(1))
+        request.httpMethod = "POST"
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try LocalModelEndpoint.check(response)
+    }
+
+    /// Stops the server only if Bilge started it, and waits until it has exited and freed the port.
+    func stop() async {
+        guard let process = ownedProcess else { return }
+        ownedProcess = nil
+        process.terminate()
+        let deadline = ContinuousClock.now + Self.shutdownTimeout
+        while process.isRunning, ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+        Log.brain.info("Stopped vMLX")
+    }
+
+    func stopImmediately() {
         guard let process = ownedProcess else { return }
         ownedProcess = nil
         if process.isRunning { process.terminate() }
-        Log.brain.info("Stopped vMLX")
     }
 
     private func start(_ id: String) throws {

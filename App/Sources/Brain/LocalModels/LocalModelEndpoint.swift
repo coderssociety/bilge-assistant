@@ -40,7 +40,7 @@ struct LocalModelEndpoint: Sendable, Hashable {
             let task = Task {
                 do {
                     let (bytes, response) = try await URLSession.shared.bytes(
-                        for: makeRequest(messages: messages, temperature: temperature, maxTokens: maxTokens))
+                        for: makeRequest(messages: messages, temperature: temperature, maxTokens: maxTokens, stream: true))
                     try Self.check(response)
                     for try await line in bytes.lines {
                         switch ServerSentEventLine(line) {
@@ -59,13 +59,22 @@ struct LocalModelEndpoint: Sendable, Hashable {
         }
     }
 
+    /// A one-token request: the first generation after a load pays one-off setup (about 1 s), better
+    /// spent while the user is still speaking. Sending the real instructions lets the server's prompt
+    /// cache reuse them for the first actual question.
+    func warmUp(instructions: String) async throws {
+        let request = try makeRequest(messages: [.system(instructions), .user("Merhaba")], temperature: 0, maxTokens: 1, stream: false)
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try Self.check(response)
+    }
+
     static func check(_ response: URLResponse) throws {
         guard let status = (response as? HTTPURLResponse)?.statusCode else { return }
         guard (200..<300).contains(status) else { throw LocalModelServerError.badResponse(status) }
     }
 
-    private func makeRequest(messages: [ChatMessage], temperature: Double, maxTokens: Int) throws -> URLRequest {
-        var body: [String: Any] = ["model": modelID, "stream": true, "temperature": temperature, "max_tokens": maxTokens]
+    private func makeRequest(messages: [ChatMessage], temperature: Double, maxTokens: Int, stream: Bool) throws -> URLRequest {
+        var body: [String: Any] = ["model": modelID, "stream": stream, "temperature": temperature, "max_tokens": maxTokens]
         let path: String
         switch promptStyle {
         case .chatML:

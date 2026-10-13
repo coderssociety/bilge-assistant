@@ -59,11 +59,32 @@ struct LMStudioClient: Sendable {
         let endpoint = Self.endpoint(for: model)
         if model.isLoaded { return (endpoint, false) }
         Log.brain.info("Loading \(id, privacy: .public) in LM Studio")
-        try await runTool(["load", id, "--context-length", String(Self.contextLength), "-y"], timeout: Self.loadTimeout)
-        guard try await chatModels().first(where: { $0.id == id })?.isLoaded == true else {
-            throw LocalModelServerError.loadFailed(id)
+        do {
+            try await runTool(["load", id, "--context-length", String(Self.contextLength), "-y"], timeout: Self.loadTimeout)
+            guard try await chatModels().first(where: { $0.id == id })?.isLoaded == true else {
+                throw LocalModelServerError.loadFailed(id)
+            }
+            return (endpoint, true)
+        } catch {
+            // LM Studio may finish a load even when `lms` was stopped. The caller may be cancelled,
+            // so the unload runs in a task of its own and is awaited so it can't race a later load.
+            await Task { await unload(id) }.value
+            throw error
         }
-        return (endpoint, true)
+    }
+
+    /// Starts `lms unload` without waiting, for when the app is quitting or the caller is cancelled.
+    static func unloadInBackground(_ id: String) {
+        let process = Process()
+        process.executableURL = commandLineTool
+        process.arguments = ["unload", id]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            Log.brain.error("Could not start lms unload: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     func unload(_ id: String) async {

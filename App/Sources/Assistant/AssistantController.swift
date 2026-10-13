@@ -314,8 +314,10 @@ final class AssistantController {
             break
         case .acknowledgeWake:
             Earcon.wake.play()
+            handler.conversationWillStart()
             status = .awake
         case let .runCommand(command):
+            handler.conversationWillStart()
             turnTask = Task { await runTurn(command) }
         case let .returnToIdle(timedOut):
             if timedOut { Earcon.cancelled.play() }

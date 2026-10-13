@@ -18,6 +18,7 @@ final class AssistantSettings {
         static let showHUD = "showHUD"
         static let bargeInEnabled = "bargeInEnabled"
         static let localModelID = "localModelID"
+        static let localModelKeepAlive = "localModelKeepAlive"
         static let onboardingCompleted = "onboardingCompleted"
     }
 
@@ -36,6 +37,10 @@ final class AssistantSettings {
     /// `LocalModelChoice.storageKey` of the model for conversation and screen answers; nil means Apple's.
     var localModelID: String? { didSet { defaults.set(localModelID, forKey: Key.localModelID) } }
 
+    var localModelKeepAlive: LocalModelKeepAlive {
+        didSet { defaults.set(localModelKeepAlive.rawValue, forKey: Key.localModelKeepAlive) }
+    }
+
     var localModel: LocalModelChoice? {
         localModelID.flatMap(LocalModelChoice.init(storageKey:))
     }
@@ -53,6 +58,8 @@ final class AssistantSettings {
         showHUD = defaults.object(forKey: Key.showHUD) as? Bool ?? true
         bargeInEnabled = defaults.object(forKey: Key.bargeInEnabled) as? Bool ?? true
         localModelID = defaults.string(forKey: Key.localModelID)
+        localModelKeepAlive = defaults.string(forKey: Key.localModelKeepAlive)
+            .flatMap(LocalModelKeepAlive.init(rawValue:)) ?? .untilConversationEnds
         onboardingCompleted = defaults.bool(forKey: Key.onboardingCompleted)
     }
 

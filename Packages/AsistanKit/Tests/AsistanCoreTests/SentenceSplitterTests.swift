@@ -48,4 +48,10 @@ struct SentenceAccumulatorTests {
         #expect(accumulator.append("30 oldu. ") == ["Saat 14.30 oldu."])
         #expect(accumulator.finish() == [])
     }
+
+    @Test("a filler ending in a space is spoken before the rest of the reply arrives")
+    func fillerFlushesAlone() {
+        var accumulator = SentenceAccumulator()
+        #expect(accumulator.append("Bir saniye. ") == ["Bir saniye."])
+    }
 }
