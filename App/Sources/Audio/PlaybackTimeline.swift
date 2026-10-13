@@ -14,6 +14,11 @@ final class PlaybackTimeline: Sendable {
 
     private let segments = Mutex<[Segment]>([])
 
+    /// Host time up to which rendered audio has been recorded (render taps arrive slightly late).
+    var coveredUntil: Double {
+        segments.withLock { $0.last?.end ?? 0 }
+    }
+
     func append(_ samples: [Float], startSeconds: Double) {
         guard !samples.isEmpty else { return }
         segments.withLock { segments in

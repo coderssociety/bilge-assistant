@@ -28,10 +28,12 @@ final class CommandRouter {
     private let routerInstructions: String
     private let options = GenerationOptions(samplingMode: .greedy, maximumResponseTokens: 200)
     private var readySession: LanguageModelSession?
+    private let fastPath: FastPath
 
     init(tools: [any AssistantTool], model: SystemLanguageModel = .default) throws {
         self.model = model
         self.tools = Dictionary(tools.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        fastPath = FastPath(tools: self.tools)
         let actions = tools.map(\.name) + [Self.conversationAction]
         let actionSchema = DynamicGenerationSchema(name: "Action", anyOf: actions)
         let decision = DynamicGenerationSchema(name: "Decision", properties: [
@@ -53,6 +55,10 @@ final class CommandRouter {
     func route(_ command: String, previous: PreviousTurn?) async throws -> Route {
         let resolved = TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(command))
         if RouteGuard.preRoute(resolved) != nil { return .conversation }
+        if let intent = QuickIntentParser.parse(resolved), let call = await fastPath.call(for: intent) {
+            Log.brain.info("Fast path: \(call.toolName, privacy: .public)")
+            return .tool(call)
+        }
         let prompt = Self.prompt(resolved, previous: previous)
         let session = readySession ?? LanguageModelSession(model: model, instructions: routerInstructions)
         readySession = nil

@@ -31,6 +31,8 @@ final class AssistantController {
     private(set) var pendingConfirmation: String?
     /// Latest speech probability (0...1) for level meters; updated about four times a second.
     private(set) var inputLevel: Float = 0
+    /// Increments each time the user cuts the assistant off mid-reply.
+    private(set) var interruptionCount = 0
     var isRunning: Bool { listenTask != nil }
 
     private let settings: AssistantSettings
@@ -53,6 +55,11 @@ final class AssistantController {
     private var pendingBargeCommand: String?
     /// "Bilge, dur" means silence: no follow-up window, or the rest of the sentence gets answered.
     private var stoppedByUser = false
+
+    var bargeInDiagnostics: [String] { bargeIn?.diagnostics ?? [] }
+    /// Everything the main pipeline transcribed, including speech it ignored (for diagnostics).
+    private(set) var recentTranscripts: [String] = []
+    private static let maxRecentTranscripts = 40
 
     private var isBargeInActive: Bool { status == .speaking && bargeIn != nil }
 
@@ -212,6 +219,15 @@ final class AssistantController {
         }
     }
 
+    /// Evaluates speech still pending when the reply ends, then clears barge-in state.
+    private func settleBargeIn() async {
+        guard let bargeIn else { return }
+        if let late = await bargeIn.finish(replySoFar: lastReply ?? "") {
+            handleBargeIn(late.decision, heard: late.heard)
+        }
+        await bargeIn.reset()
+    }
+
     private func handleBargeIn(_ decision: BargeInDetector.Decision, heard: String) {
         guard status == .speaking else { return }
         lastHeard = heard
@@ -221,6 +237,7 @@ final class AssistantController {
         case .none: return
         }
         Log.wake.info("User cut in: \(String(describing: decision), privacy: .public)")
+        interruptionCount += 1
         interrupt()
     }
 
@@ -257,6 +274,7 @@ final class AssistantController {
                   !isAudioSuspended
             else { return }
             Log.wake.debug("Heard: \(transcript, privacy: .private)")
+            recentTranscripts = Array((recentTranscripts + ["\(isWakeCheck ? "uyandırma" : "komut"): “\(transcript)”"]).suffix(Self.maxRecentTranscripts))
             let action = flow.heard(transcript, at: .now)
             if action != .none { lastHeard = transcript }
             perform(action)
@@ -321,7 +339,7 @@ final class AssistantController {
             Log.brain.error("Turn failed: \(error.localizedDescription, privacy: .public)")
             Earcon.failed.play()
         }
-        await bargeIn?.reset()
+        await settleBargeIn()
         await vad?.reset()
         segmenter.reset()
         isAudioSuspended = false

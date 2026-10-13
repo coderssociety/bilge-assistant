@@ -16,6 +16,11 @@ public enum TimerPhraseParser {
         (try! NSRegularExpression(pattern: #"(\d+)(\s+buçuk)?\s+saniye"#), 1),
     ]
 
+    private static let fractionsOfHour: [(pattern: NSRegularExpression, seconds: Double)] = [
+        (try! NSRegularExpression(pattern: #"(?<!\p{L})yarım\s+saat"#, options: .caseInsensitive), 1800),
+        (try! NSRegularExpression(pattern: #"(?<!\p{L})çeyrek\s+saat"#, options: .caseInsensitive), 900),
+    ]
+
     public static func parse(_ text: String) -> Result? {
         let source = text as NSString
         let range = NSRange(location: 0, length: source.length)
@@ -31,6 +36,9 @@ public enum TimerPhraseParser {
                 let half = match.range(at: 2).location != NSNotFound ? 0.5 : 0
                 total += (value + half) * unit.seconds
             }
+        }
+        for fraction in fractionsOfHour where fraction.pattern.firstMatch(in: text, range: range) != nil {
+            total += fraction.seconds
         }
         return total > 0 ? Result(hour: nil, minute: nil, durationSeconds: Int(total)) : nil
     }

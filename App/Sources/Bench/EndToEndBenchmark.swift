@@ -60,8 +60,14 @@ enum EndToEndBenchmark {
                 try await Task.sleep(for: pollInterval)
             }
             let events = try await observe(assistant, duration: Double(audio.count) / StreamingResampler.targetSampleRate)
+            let bargeLog = assistant.bargeInDiagnostics
+            let transcripts = assistant.recentTranscripts
             assistant.stop()
             report(events: events, endTimes: endTimes)
+            print("— Söz kesme dinleyicisinin duydukları —")
+            bargeLog.forEach { print("  \($0)") }
+            print("— Ana dinleme hattının duydukları —")
+            transcripts.forEach { print("  \($0)") }
             return 0
         } catch {
             print("Uçtan uca test başarısız: \(error.localizedDescription)")
@@ -87,6 +93,7 @@ enum EndToEndBenchmark {
         var lastStatus = assistant.status
         var lastHeard = assistant.lastHeard
         var lastReply = assistant.lastReply
+        var lastInterruptions = assistant.interruptionCount
         while true {
             let elapsed = start.duration(to: clock.now)
             let seconds = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18
@@ -98,6 +105,13 @@ enum EndToEndBenchmark {
             if assistant.lastHeard != lastHeard, let heard = assistant.lastHeard {
                 lastHeard = heard
                 events.append(Event(time: seconds, description: "duyulan: \(heard)", isReplyStart: false))
+            }
+            if assistant.interruptionCount != lastInterruptions {
+                lastInterruptions = assistant.interruptionCount
+                events.append(Event(time: seconds, description: "kesildi", isReplyStart: false))
+            }
+            if let reply = assistant.lastReply, !reply.isEmpty, !reply.hasPrefix(lastReply ?? "\u{0}"), lastStatus == .speaking {
+                events.append(Event(time: seconds, description: "yeni yanıt", isReplyStart: true))
             }
             if assistant.lastReply != lastReply, let reply = assistant.lastReply, assistant.status != .speaking || reply.count > (lastReply?.count ?? 0) + 40 {
                 lastReply = reply
@@ -115,9 +129,9 @@ enum EndToEndBenchmark {
         print("— Gecikme (konuşma bitişi → yanıtın başlaması) —")
         let replyStarts = events.filter(\.isReplyStart).map(\.time)
         let statusEvents = events.filter { $0.description.hasPrefix("durum:") }
-        let speakingStops = zip(statusEvents, statusEvents.dropFirst())
+        let speakingStops = (zip(statusEvents, statusEvents.dropFirst())
             .filter { $0.0.isReplyStart && !$0.1.isReplyStart }
-            .map(\.1.time)
+            .map(\.1.time) + events.filter { $0.description == "kesildi" }.map(\.time)).sorted()
         for (index, (end, line)) in endTimes.enumerated() where line.interrupts {
             // Stopping already while the user is still saying "Bilge, dur" counts as instant.
             let start = index > 0 ? endTimes[index - 1].0 + line.pauseBefore : 0

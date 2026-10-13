@@ -56,9 +56,12 @@ final class ScriptedAudioSource: AudioSource {
             for start in stride(from: 0, to: samples.count, by: Self.bufferSamples) {
                 if Task.isCancelled { break }
                 var chunk = Array(samples[start..<min(start + Self.bufferSamples, samples.count)])
-                let hostTime = mach_absolute_time()
+                // Like a real microphone: a chunk is delivered once captured, so it began a chunk ago.
+                let captureStart = AVAudioTime.seconds(forHostTime: mach_absolute_time())
+                    - Double(chunk.count) / StreamingResampler.targetSampleRate
+                let hostTime = AVAudioTime.hostTime(forSeconds: captureStart)
                 if let echo {
-                    let heard = echo.timeline.samples(from: AVAudioTime.seconds(forHostTime: hostTime) - echo.delay, count: chunk.count)
+                    let heard = echo.timeline.samples(from: captureStart - echo.delay, count: chunk.count)
                     for index in chunk.indices { chunk[index] += heard[index] * echo.gain }
                 }
                 continuation.yield(AudioChunk(samples: chunk, hostTime: hostTime))

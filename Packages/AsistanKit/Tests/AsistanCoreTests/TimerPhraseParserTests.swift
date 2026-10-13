@@ -10,6 +10,8 @@ struct TimerPhraseParserTests {
         ("1 saat 15 dakika sonra hatırlat", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 4500)),
         ("30 saniye say", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 30)),
         ("2 buçuk saat sonra", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 9000)),
+        ("Yarım saat sonra uyar", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 1800)),
+        ("çeyrek saatlik zamanlayıcı", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 900)),
     ])
     func parses(text: String, expected: TimerPhraseParser.Result) {
         #expect(TimerPhraseParser.parse(text) == expected)
