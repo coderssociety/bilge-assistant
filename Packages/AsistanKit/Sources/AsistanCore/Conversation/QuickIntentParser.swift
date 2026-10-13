@@ -24,6 +24,11 @@ public enum QuickIntent: Sendable, Equatable {
     case alarm(hour: Int, minute: Int)
     case openApp(String)
     case quitApp(String)
+    case screenshot
+    case wifi(on: Bool)
+    case window(Window)
+    case settings(SettingsPane)
+    case systemInfo(SystemInfoTopic)
 }
 
 public enum QuickIntentParser {
@@ -41,6 +46,7 @@ public enum QuickIntentParser {
         for rule in wordRules {
             if let intent = rule(words) { return intent }
         }
+        if let intent = MacQuickIntents.parse(words) { return intent }
         if let intent = timer(words, text: text) { return intent }
         if let expression = TurkishArithmeticParser.expression(from: text) { return .calculate(expression) }
         return app(words, original: kept)
@@ -240,7 +246,7 @@ public enum QuickIntentParser {
     private static let nonAppPrefixes = [
         "ses", "muzi", "sarki", "bilgisayar", "mac", "ekran", "bluetooth", "wifi", "wi", "internet", "odak",
         "rahatsiz", "mod", "karanlik", "aydinlik", "isik", "masaustu", "indirilen", "belge", "klasor", "dosya",
-        "pencere", "zamanlayici", "alarm", "parlaklik", "bildirim", "kamera", "mikrofon", "ondan", "sonra", "ve",
+        "pencere", "zamanlayici", "alarm", "parlaklik", "bildirim", "kamera", "mikrofon", "ondan", "sonra", "ve", "ayar",
     ]
 
     private static func isNotAnAppWord(_ word: String) -> Bool {

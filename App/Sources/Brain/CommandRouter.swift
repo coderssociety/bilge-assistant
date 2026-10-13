@@ -75,6 +75,8 @@ final class CommandRouter {
         let arguments: T.Arguments
         if let empty = tool.emptyArguments() {
             arguments = empty
+        } else if let direct = tool.arguments(fromCommand: resolvedCommand) {
+            arguments = direct
         } else {
             let session = LanguageModelSession(model: model, instructions: RouterInstructions.extraction(for: tool))
             let extracted = try await session.respond(to: prompt, generating: T.Arguments.self, options: options).content

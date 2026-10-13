@@ -45,8 +45,9 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "conversation", command: "nasılsın") == "conversation")
     }
 
-    @Test("bare acknowledgements never trigger an action", arguments: [
+    @Test("bare acknowledgements and greetings never trigger an action", arguments: [
         "Evet", "Evet.", "Hayır", "tamam", "Teşekkürler", "teşekkür ederim", "sağ ol", "çok sağ ol", "eyvallah",
+        "Günaydın", "Merhaba", "iyi akşamlar", "nasılsın",
     ])
     func acknowledgements(command: String) {
         #expect(RouteGuard.preRoute(command) == "conversation")
@@ -57,5 +58,18 @@ struct RouteGuardTests {
     ])
     func commandsGoToModel(command: String) {
         #expect(RouteGuard.preRoute(command) == nil)
+    }
+
+    @Test("dictation wins over time words", arguments: [
+        ("şunu yaz yarın sabah görüşelim", "setTimer"), ("buraya merhaba nasılsın yaz", "conversation"),
+        ("Ahmet'e 10 dakika sonra geliyorum yaz", "setTimer"),
+    ])
+    func dictation(command: String, modelAction: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == "typeText")
+    }
+
+    @Test("summer is not dictation", arguments: ["yaz şarkıları listemi çal", "yaz tatili ne zaman"])
+    func summer(command: String) {
+        #expect(RouteGuard.review(action: "playMusic", command: command) == "playMusic")
     }
 }

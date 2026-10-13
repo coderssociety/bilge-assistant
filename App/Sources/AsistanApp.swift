@@ -68,7 +68,8 @@ final class AppEnvironment {
         let speech = SpeechOutput(voice: settings.voice, speed: settings.speechSpeed)
         let announcer = Announcer()
         let timers = TimerService { await announcer.target?.announce($0) }
-        let brain = AssistantBrain(tools: ToolRegistry(catalog: AppCatalog(), timers: timers).makeTools())
+        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers)
+        let brain = AssistantBrain(tools: registry.makeTools(), context: registry.context)
         let assistant = AssistantController(settings: settings, speech: speech, handler: brain)
         announcer.target = assistant
         brain.confirmer = assistant

@@ -1,3 +1,4 @@
+import AsistanCore
 @preconcurrency import EventKit
 
 enum CalendarAccessError: LocalizedError {
@@ -38,6 +39,27 @@ actor CalendarAccess {
                 continuation.resume(returning: (reminders ?? []).compactMap(\.title))
             }
         }
+    }
+
+    /// Marks the incomplete reminder best matching `query` as done; returns its title, or nil if none matched.
+    func completeReminder(matching query: String) async throws -> String? {
+        try await requireReminders()
+        let predicate = store.predicateForIncompleteReminders(withDueDateStarting: nil, ending: nil, calendars: nil)
+        // EKReminder is not Sendable; only identifiers and titles cross the callback.
+        let candidates: [(id: String, title: String)] = await withCheckedContinuation { continuation in
+            store.fetchReminders(matching: predicate) { reminders in
+                continuation.resume(returning: (reminders ?? []).compactMap { reminder in
+                    reminder.title.map { (reminder.calendarItemIdentifier, $0) }
+                })
+            }
+        }
+        guard let title = PhraseMatcher.bestMatch(for: query, in: candidates.map(\.title)),
+              let id = candidates.first(where: { $0.title == title })?.id,
+              let reminder = store.calendarItem(withIdentifier: id) as? EKReminder
+        else { return nil }
+        reminder.isCompleted = true
+        try store.save(reminder, commit: true)
+        return title
     }
 
     func addEvent(title: String, start: Date, end: Date) async throws {

@@ -37,6 +37,25 @@ enum RouterInstructions {
         ("bu sayfayı özetle", "readScreen"),
         ("uyku odağını aç", "runShortcut"),
         ("kaç zamanlayıcım var", "manageTimers"),
+        ("Mehmet'in telefonu kaç", "findContact"),
+        ("Zeynep'in e-postası ne", "findContact"),
+        ("ilacı aldım listeden çıkar", "completeReminder"),
+        ("tarif notumu oku", "readNotes"),
+        ("Barış Manço çal", "playMusic"),
+        ("sabah listemi çal", "playMusic"),
+        ("makine kaç saattir çalışıyor", "systemInfo"),
+        ("bellek ne kadar dolu", "systemInfo"),
+        ("kablosuz ağı kapat", "setWiFi"),
+        ("ekranın resmini çek", "takeScreenshot"),
+        ("ses ayarlarını aç", "openSettings"),
+        ("güncellemeleri kontrol et", "openSettings"),
+        ("İndirilenler'de Fotoğraflar adında klasör yap", "createFolder"),
+        ("bütçe raporu belgesini özetle", "readDocument"),
+        ("bu cevabı kopyala", "copyToClipboard"),
+        ("Mail'i gizle", "windowControl"),
+        ("pencereyi sağa yasla", "windowControl"),
+        ("şunu yaz toplantı ertelendi", "typeText"),
+        ("işaretlediğim metni açıkla", "readSelection"),
         ("Everest'in yüksekliği ne kadar", "conversation"),
         ("nasılsın", "conversation"),
         ("Ay'a ilk kim gitti", "conversation"),
@@ -66,6 +85,15 @@ enum RouterInstructions {
         - A short follow-up such as "peki yarın?" or "biraz daha" continues the previous action.
         - Questions that ask for knowledge ("…neresi", "…hangisi", "…kimdir", "kaç yaşında") are conversation. Use searchWeb only when the user explicitly asks to search or look something up on the web.
         - Requests about weather, exchange rates or news are conversation unless the user asks to search the web.
+        - Someone's phone number or e-mail address is findContact.
+        - Finishing a to-do ("…tamamladım", "…yaptım, işaretle", "listeden çıkar") is completeReminder.
+        - Playing a named song, artist, album or playlist is playMusic; play, pause, next and "what is playing" are controlMusic.
+        - Uptime, disk space, memory, IP address and macOS version are systemInfo, not currentDateTime.
+        - "<section> ayarlarını aç" opens a System Settings section: openSettings, not openApp.
+        - Making a new folder is createFolder; opening an existing folder is files.
+        - Reading or summarizing a document file is readDocument; a note in the Notes app is readNotes.
+        - Text the user selected or highlighted ("seçili", "seçtiğim", "işaretlediğim"), including translating it, is readSelection.
+        - "şunu yaz …" / "buraya … yaz" types the words into the current app: typeText. Taking a note is createNote.
 
         Examples:
         \(shots)

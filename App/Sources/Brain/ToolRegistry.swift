@@ -6,6 +6,7 @@ import FoundationModels
 struct ToolRegistry {
     let catalog: AppCatalog
     let timers: TimerService
+    var context = ConversationContext()
 
     func makeTools() -> [any AssistantTool] {
         [
@@ -33,6 +34,20 @@ struct ToolRegistry {
             ListShortcutsTool(),
             RunShortcutTool(),
             ReadScreenTool(),
+            FindContactTool(),
+            CompleteReminderTool(),
+            ReadNotesTool(),
+            PlayMusicTool(),
+            SystemInfoTool(),
+            WiFiTool(),
+            ScreenshotTool(),
+            SettingsPaneTool(),
+            CreateFolderTool(),
+            ReadDocumentTool(),
+            CopyToClipboardTool(context: context),
+            WindowTool(),
+            TypeTextTool(),
+            ReadSelectionTool(),
         ]
     }
 }

@@ -12,12 +12,16 @@ final class AssistantBrain: CommandHandling {
     private let router: CommandRouter?
     private let routerError: String?
     private var conversation: LanguageModelSession?
-    private var previousTurn: CommandRouter.PreviousTurn?
+    private var previousTurn: CommandRouter.PreviousTurn? {
+        didSet { context.lastReply = previousTurn?.result }
+    }
+    private let context: ConversationContext
     private let localModel = LocalModelResponder()
     /// Asks the user before `.needsConfirmation` tools run; without it those tools never run.
     weak var confirmer: (any ConfirmationProviding)?
 
-    init(tools: [any AssistantTool]) {
+    init(tools: [any AssistantTool], context: ConversationContext = ConversationContext()) {
+        self.context = context
         do {
             router = try CommandRouter(tools: tools, model: model)
             routerError = nil
@@ -149,15 +153,15 @@ final class AssistantBrain: CommandHandling {
         from material: String,
         into continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws -> String {
-        let prompt = "Kullanıcının isteği: \(command)\n\nEkrandaki metin:\n<<<\n\(material)\n>>>"
+        let prompt = "Kullanıcının isteği: \(command)\n\nMetin:\n<<<\n\(material)\n>>>"
         if localModel.isEnabled {
             do {
-                return try await localModel.answer(prompt, instructions: BrainInstructions.screen(), into: continuation)
+                return try await localModel.answer(prompt, instructions: BrainInstructions.material(), into: continuation)
             } catch {
                 try Self.rethrowIfCancelled(error)
             }
         }
-        let session = LanguageModelSession(model: model, instructions: BrainInstructions.screen())
+        let session = LanguageModelSession(model: model, instructions: BrainInstructions.material())
         let options = GenerationOptions(temperature: 0.3, maximumResponseTokens: Self.maximumResponseTokens)
         var emitted = ""
         for try await snapshot in session.streamResponse(to: prompt, options: options) {

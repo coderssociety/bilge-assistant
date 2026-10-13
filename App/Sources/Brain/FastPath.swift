@@ -43,6 +43,16 @@ struct FastPath {
         case let .quitApp(name):
             guard let tool = tools["quitApp"] as? QuitAppTool, await tool.catalog.resolve(name) != nil else { return nil }
             return await tool.makeCall(.init(appName: name))
+        case .screenshot:
+            return await make("takeScreenshot", ScreenshotTool.self) { .init(area: .wholeScreen, toClipboard: false) }
+        case let .wifi(on):
+            return await make("setWiFi", WiFiTool.self) { .init(power: on ? .on : .off) }
+        case let .window(window):
+            return await make("windowControl", WindowTool.self) { .init(action: Self.action(for: window), appName: nil) }
+        case let .settings(pane):
+            return await make("openSettings", SettingsPaneTool.self) { .init(pane: Self.pane(for: pane)) }
+        case let .systemInfo(topic):
+            return await make("systemInfo", SystemInfoTool.self) { .init(topic: Self.topic(for: topic)) }
         }
     }
 

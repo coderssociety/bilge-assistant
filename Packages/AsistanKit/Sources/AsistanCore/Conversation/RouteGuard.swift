@@ -13,10 +13,11 @@ public enum RouteGuard {
     private static let acknowledgementWords: Set<String> = [
         "evet", "hayir", "tamam", "olur", "peki", "tesekkurler", "tesekkur", "ederim", "sag", "ol", "sagol", "cok",
         "eyvallah", "super", "harika", "guzel", "iyi", "anladim", "tamamdir",
+        "gunaydin", "merhaba", "selam", "aksamlar", "geceler", "gunler", "hosca", "kal", "nasilsin",
     ]
 
     /// Answers that need no model at all. A bare "Evet" in the follow-up window once made the model
-    /// repeat the previous action with invented arguments.
+    /// repeat the previous action with invented arguments, and "Günaydın" was once read as a time question.
     public static func preRoute(_ command: String) -> String? {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         guard !words.isEmpty, words.count <= 3, words.allSatisfy(acknowledgementWords.contains) else { return nil }
@@ -25,6 +26,8 @@ public enum RouteGuard {
 
     public static func review(action: String, command: String) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
+        // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.
+        if isDictation(words), action != "createNote" { return "typeText" }
         switch action {
         case "searchWeb":
             let explicit = words.contains { searchVerbs.contains($0) || searchSites.contains(where: $0.hasPrefix) }
@@ -40,5 +43,11 @@ public enum RouteGuard {
         default:
             return action
         }
+    }
+
+    /// "Yaz" is also "summer" ("yaz şarkıları"), so it only counts with "şunu"/"buraya" or as the last word.
+    private static func isDictation(_ words: [String]) -> Bool {
+        guard words.contains("yaz") else { return false }
+        return words.last == "yaz" || words.contains("sunu") || words.contains("buraya")
     }
 }

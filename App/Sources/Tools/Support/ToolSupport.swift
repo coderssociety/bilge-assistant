@@ -17,6 +17,8 @@ protocol AssistantTool: Tool where Output == String, Arguments: Generable & Send
     var answersWithLanguageModel: Bool { get }
     /// Non-nil for tools without parameters, so the router can skip argument extraction.
     func emptyArguments() -> Arguments?
+    /// Non-nil when the whole command can serve as the arguments, skipping model extraction.
+    func arguments(fromCommand command: String) -> Arguments?
     /// Lets a tool replace model-extracted values with ones parsed deterministically from the
     /// (number- and time-resolved) command text.
     func refine(_ arguments: Arguments, command: String) -> Arguments
@@ -34,6 +36,7 @@ extension AssistantTool {
     var risk: ToolRisk { .safe }
     var answersWithLanguageModel: Bool { false }
     func emptyArguments() -> Arguments? { nil }
+    func arguments(fromCommand command: String) -> Arguments? { nil }
     func refine(_ arguments: Arguments, command: String) -> Arguments { arguments }
     func prefersConversation(for arguments: Arguments) -> Bool { false }
     func confirmationQuestion(for arguments: Arguments) -> String { "Bunu yapmamı onaylıyor musun?" }

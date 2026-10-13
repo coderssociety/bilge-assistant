@@ -135,3 +135,31 @@ extension String {
         return String(first).uppercased(with: Locale(identifier: "tr_TR")) + dropFirst()
     }
 }
+
+struct CompleteReminderTool: AssistantTool {
+    let name = "completeReminder"
+    let description = "Anımsatıcılardaki bir yapılacağı tamamlandı olarak işaretler ('faturayı ödedim, işaretle', 'ilacı aldım, listeden düş')."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "Tamamlanan işin adı, örn. 'Süt al'")
+        var title: String
+    }
+
+    /// The matcher finds "Süt al" in "süt almayı tamamladım işaretle" by itself. Extracting the title
+    /// with the model also tripped Apple's guardrails on such sentences.
+    func arguments(fromCommand command: String) -> Arguments? {
+        Arguments(title: command)
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        do {
+            guard let title = try await CalendarAccess.shared.completeReminder(matching: arguments.title) else {
+                return ToolReply.failure("Anımsatıcılarında '\(arguments.title)' diye tamamlanmamış bir iş bulamadım.")
+            }
+            return "'\(title)' tamamlandı olarak işaretlendi."
+        } catch {
+            return ToolReply.failure(error)
+        }
+    }
+}

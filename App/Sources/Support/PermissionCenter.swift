@@ -1,5 +1,7 @@
 @preconcurrency import AVFoundation
 import AppKit
+import ApplicationServices
+import Contacts
 import EventKit
 import Speech
 
@@ -10,6 +12,8 @@ enum Permission: String, CaseIterable, Identifiable {
     case calendar
     case reminders
     case screenRecording
+    case contacts
+    case accessibility
     case automation
 
     enum State {
@@ -29,6 +33,8 @@ enum Permission: String, CaseIterable, Identifiable {
         case .calendar: "Takvim"
         case .reminders: "Anımsatıcılar"
         case .screenRecording: "Ekran Kaydı"
+        case .contacts: "Kişiler"
+        case .accessibility: "Erişilebilirlik"
         case .automation: "Otomasyon (Müzik, Notlar, Sistem Olayları)"
         }
     }
@@ -40,6 +46,8 @@ enum Permission: String, CaseIterable, Identifiable {
         case .calendar: "Takvimi okumak ve onayınla etkinlik eklemek için."
         case .reminders: "Anımsatıcıları okumak ve onayınla eklemek için."
         case .screenRecording: "“Ekranda ne yazıyor?” için. Görüntü kaydedilmez, sadece okunur."
+        case .contacts: "Birinin numarasını ya da e-postasını bulmak ve onayınla mesaj göndermek için."
+        case .accessibility: "Dikte edileni yazmak, seçili metni okumak ve pencereleri düzenlemek için."
         case .automation: "Müzik kontrolü, not oluşturma ve karanlık mod için. İlk kullanımda sorulur."
         }
     }
@@ -63,6 +71,13 @@ enum Permission: String, CaseIterable, Identifiable {
         case .calendar: Self.eventState(EKEventStore.authorizationStatus(for: .event))
         case .reminders: Self.eventState(EKEventStore.authorizationStatus(for: .reminder))
         case .screenRecording: CGPreflightScreenCaptureAccess() ? .granted : .notAsked
+        case .contacts:
+            switch CNContactStore.authorizationStatus(for: .contacts) {
+            case .authorized, .limited: .granted
+            case .notDetermined: .notAsked
+            default: .denied
+            }
+        case .accessibility: AXIsProcessTrusted() ? .granted : .notAsked
         case .automation: .askedOnUse
         }
     }
@@ -82,6 +97,10 @@ enum Permission: String, CaseIterable, Identifiable {
             _ = try? await EKEventStore().requestFullAccessToReminders()
         case .screenRecording:
             CGRequestScreenCaptureAccess()
+        case .contacts:
+            _ = try? await CNContactStore().requestAccess(for: .contacts)
+        case .accessibility:
+            _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
         case .automation:
             openSystemSettings()
         }
@@ -94,6 +113,8 @@ enum Permission: String, CaseIterable, Identifiable {
         case .calendar: "Privacy_Calendars"
         case .reminders: "Privacy_Reminders"
         case .screenRecording: "Privacy_ScreenCapture"
+        case .contacts: "Privacy_Contacts"
+        case .accessibility: "Privacy_Accessibility"
         case .automation: "Privacy_Automation"
         }
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(anchor)") else { return }

@@ -7,6 +7,9 @@ import FoundationModels
 @MainActor
 enum LLMBenchmark {
     static let flag = "--bench-llm"
+    /// Leaves the router time to prewarm between commands, as a user's pauses do (~1 s less per command).
+    static let pacedFlag = "--paced"
+    private static let pause: Duration = .seconds(3)
 
     struct CaseResult: Codable {
         let command: String
@@ -29,8 +32,11 @@ enum LLMBenchmark {
             let cases = try loadCases(URL(filePath: arguments[index + 1]))
             let tools = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }).makeTools()
             let router = try CommandRouter(tools: tools)
+            let paced = arguments.contains(pacedFlag)
+            router.prewarm()
             var results: [CaseResult] = []
             for (command, expected) in cases {
+                if paced { try await Task.sleep(for: pause) }
                 let result = await evaluate(command, expected: expected, router: router)
                 let mark = result.passed ? "✓" : "✗"
                 print("\(mark) \(command) → \(result.action) \(result.arguments ?? "") (\(String(format: "%.2f", result.seconds))s)")
