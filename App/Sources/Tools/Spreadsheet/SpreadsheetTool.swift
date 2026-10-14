@@ -5,7 +5,7 @@ import FoundationModels
 /// Live edits in the Excel sheet in front: "D3'e B2 ile B1'i topla", "C5'e 1250 yaz", "D3'ü oku",
 /// "geri al". Commands the rules understand never touch a language model; in Excel mode, other
 /// requests about cells get a model-written formula, which is checked and read out before it is written.
-struct SpreadsheetTool: AssistantTool {
+struct SpreadsheetTool: RuleRoutedTool {
     let name = "spreadsheet"
     let description = "Öndeki Excel tablosunda hücreye formül ya da değer yazar, hücre okur, siler, kopyalar ve hesaplar ('D3'e B2 ile B1'i topla')."
     let session: SpreadsheetSession

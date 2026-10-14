@@ -77,6 +77,18 @@ enum AccessibilityControl {
         }
     }
 
+    /// One key press (down and up) to the front app. Use layout-independent keys (Tab, arrows, Page
+    /// Down) or letters that sit in the same place on Turkish and US layouts.
+    static func press(_ key: CGKeyCode, flags: CGEventFlags = []) throws {
+        try requireTrust()
+        let source = CGEventSource(stateID: .hidSystemState)
+        for keyDown in [true, false] {
+            let event = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: keyDown)
+            event?.flags = flags
+            event?.post(tap: .cghidEventTap)
+        }
+    }
+
     /// Sends ⌘C, for apps that don't expose their selection through AX.
     static func copySelection() {
         let source = CGEventSource(stateID: .hidSystemState)

@@ -23,10 +23,6 @@ final class CommandRouter {
     /// Chosen by `MemoryIntent` only. Offering them to the model risked "…hatırlat" reminders being
     /// stored as memories, since "hatırla" and "hatırlat" differ by one letter.
     private static let ruleRoutedActions: [MemoryIntent: String] = [.remember: "remember", .forget: "forget", .list: "listMemories"]
-    /// Also chosen by rules only (`SpreadsheetTool.claims`): cell names must never be the model's guess.
-    private static let spreadsheetAction = "spreadsheet"
-    /// Chosen by rules when the command points at something that is on screen (`ContextTool.claims`).
-    private static let contextAction = "useContext"
     private static let actionProperty = "action"
 
     private let model: SystemLanguageModel
@@ -36,13 +32,16 @@ final class CommandRouter {
     private let options = GenerationOptions(samplingMode: .greedy, maximumResponseTokens: 200)
     private var readySession: LanguageModelSession?
     private let fastPath: FastPath
+    /// Asked in this order; the first that claims a command takes it.
+    private let ruleRouted: [any RuleRoutedTool]
 
     init(tools: [any AssistantTool], model: SystemLanguageModel = .default) throws {
         self.model = model
         self.tools = Dictionary(tools.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
         fastPath = FastPath(tools: self.tools)
-        let ruleRouted = Set(Self.ruleRoutedActions.values).union([Self.spreadsheetAction, Self.contextAction])
-        let modelRouted = tools.filter { !ruleRouted.contains($0.name) }
+        ruleRouted = tools.compactMap { $0 as? any RuleRoutedTool }
+        let memoryActions = Set(Self.ruleRoutedActions.values)
+        let modelRouted = tools.filter { !memoryActions.contains($0.name) && !($0 is any RuleRoutedTool) }
         let actions = modelRouted.map(\.name) + [Self.conversationAction]
         let actionSchema = DynamicGenerationSchema(name: "Action", anyOf: actions)
         let decision = DynamicGenerationSchema(name: "Decision", properties: [
@@ -62,13 +61,9 @@ final class CommandRouter {
     }
 
     func route(_ command: String, previous: PreviousTurn?) async throws -> Route {
-        if let spreadsheet = tools[Self.spreadsheetAction] as? SpreadsheetTool, spreadsheet.claims(command) {
-            Log.brain.info("Spreadsheet command")
-            return try await prepare(spreadsheet, prompt: Self.prompt(command, previous: previous), resolvedCommand: command)
-        }
-        if let contextTool = tools[Self.contextAction] as? ContextTool, contextTool.claims(command) {
-            Log.brain.info("Command about what is on screen")
-            return try await prepare(contextTool, prompt: Self.prompt(command, previous: previous), resolvedCommand: command)
+        if let tool = ruleRouted.first(where: { $0.claims(command) }) {
+            Log.brain.info("Rule-routed: \(tool.name, privacy: .public)")
+            return try await prepare(tool, prompt: Self.prompt(command, previous: previous), resolvedCommand: command)
         }
         if let intent = MemoryIntent.parse(command), let tool = Self.ruleRoutedActions[intent].flatMap({ tools[$0] }) {
             Log.brain.info("Memory request: \(tool.name, privacy: .public)")

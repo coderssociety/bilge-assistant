@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 
 /// "Bunu özetle", "bu sayfayı çevir", "şu dosyayı aç": acts on what the user points at on screen
 /// (see `ContextResolver`). Text that is read is untrusted and answered by the tool-less session.
-struct ContextTool: AssistantTool {
+struct ContextTool: RuleRoutedTool {
     let name = "useContext"
     let description = "Ekranda seçili metni, Finder'da seçili dosyayı, tarayıcıdaki sayfayı ya da açık belgeyi özetler, çevirir, açıklar, okur ya da açar ('bunu özetle', 'şu dosyayı aç')."
     let context: ConversationContext

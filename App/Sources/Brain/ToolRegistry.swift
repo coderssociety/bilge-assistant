@@ -63,6 +63,7 @@ struct ToolRegistry {
             ListMemoriesTool(memory: memory),
             SpreadsheetTool(session: spreadsheet),
             ContextTool(context: context),
+            BrowserTool(),
         ]
     }
 }

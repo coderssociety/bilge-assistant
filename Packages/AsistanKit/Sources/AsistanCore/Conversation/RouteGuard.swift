@@ -37,6 +37,8 @@ public enum RouteGuard {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.
         if isDictation(words), action != "createNote" { return "typeText" }
+        // "geri al" (undo) outside a spreadsheet was once routed to quitApp.
+        if action == "quitApp", words.contains("geri"), words.contains(where: { $0.hasPrefix("al") }) { return "conversation" }
         switch action {
         case "setTimer":
             // Timers live in the app and fire only today; "yarın sabah süt almayı hatırlat" was set as one.

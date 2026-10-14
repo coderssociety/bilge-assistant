@@ -32,6 +32,12 @@ protocol AssistantTool: Tool where Output == String, Arguments: Generable & Send
     func confirmationQuestion(for arguments: Arguments) -> String
 }
 
+/// A tool chosen by rules rather than by the router model, for commands where a guess would be wrong
+/// (cell names, what "bu" points at, keys sent to a browser). It is never offered to the model.
+protocol RuleRoutedTool: AssistantTool {
+    @MainActor func claims(_ command: String) -> Bool
+}
+
 extension AssistantTool {
     var risk: ToolRisk { .safe }
     var answersWithLanguageModel: Bool { false }

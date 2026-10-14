@@ -1,3 +1,4 @@
+import AppKit
 import AsistanCore
 import Foundation
 import Network
@@ -62,6 +63,7 @@ enum ToolCheck {
             await checkMemory(router, memory, &report)
             await checkMemoryInConversation(tools: tools, memory: memory, &report)
             await checkContext(router, registry.context, &report)
+            await checkBrowser(router, &report)
             if arguments.contains(excelFlag) { await checkExcel(router, &report) }
         } catch {
             report.check("router", false, "başlatılamadı: \(error)")
@@ -320,6 +322,30 @@ enum ToolCheck {
         let nothing = try? await router.route("Bunu özetle", previous: nil)
         let routedAway = if case let .tool(call)? = nothing { call.toolName != "useContext" } else { true }
         report.check("bağlam", routedAway, "ekranda bir şey yokken 'bunu özetle' bağlam aracına gitmedi")
+    }
+
+    /// Routing only, plus reading tab titles: sending keys would change the user's own browser.
+    private static func checkBrowser(_ router: CommandRouter, _ report: inout Report) async {
+        let cases = [("Sonraki sekmeye geç", "browserControl"), ("Geri git", "browserControl"), ("Aşağı kaydır", "browserControl"),
+                     ("Bu sayfada fiyat kelimesini ara", "browserControl"), ("geri al", "conversation"), ("Safari'yi aç", "openApp")]
+        for (command, expected) in cases {
+            let route = try? await router.route(command, previous: nil)
+            let actual = if case let .tool(call)? = route { call.toolName } else { "conversation" }
+            report.check("tarayıcı", actual == expected || (expected == "conversation" && actual != "browserControl"), "\(command) → \(actual)")
+        }
+        let browser = await MainActor.run {
+            NSWorkspace.shared.runningApplications.first { BrowserPage.isScriptable($0.bundleIdentifier) }?.bundleIdentifier
+        }
+        guard let browser else {
+            report.check("tarayıcı", true, "açık tarayıcı yok, sekme okuma atlandı")
+            return
+        }
+        do {
+            let titles = try await BrowserPage.tabTitles(in: browser)
+            report.check("tarayıcı", !titles.isEmpty, "\(browser): \(titles.count) sekme okundu")
+        } catch {
+            report.check("tarayıcı", false, "\(browser) sekmeleri okunamadı: \(error.localizedDescription)")
+        }
     }
 
     private static func checkAlerts(_ report: inout Report) async {

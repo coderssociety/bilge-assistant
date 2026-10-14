@@ -99,4 +99,11 @@ struct RouteGuardTests {
     func reminderDay(command: String, action: String, expected: String) {
         #expect(RouteGuard.review(action: action, command: command) == expected)
     }
+
+    @Test("undo is never taken for quitting an app")
+    func undoIsNotQuit() {
+        #expect(RouteGuard.review(action: "quitApp", command: "geri al") == "conversation")
+        #expect(RouteGuard.review(action: "quitApp", command: "son işlemi geri al") == "conversation")
+        #expect(RouteGuard.review(action: "quitApp", command: "Safari'yi kapat") == "quitApp")
+    }
 }
