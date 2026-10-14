@@ -5,6 +5,8 @@ public struct LocalModelChoice: Sendable, Hashable {
         case vmlx
         /// Downloaded by Bilge and run inside the app; the id is a `ModelCatalog` entry.
         case builtIn = "builtin"
+        /// An MLX model the user put in Bilge's own models folder; the id is its folder name.
+        case custom = "mlx"
     }
 
     public let server: Server
@@ -28,4 +30,9 @@ public struct LocalModelChoice: Sendable, Hashable {
     }
 
     public var storageKey: String { "\(server.rawValue):\(modelID)" }
+}
+
+extension LocalModelChoice.Server {
+    /// Runs inside Bilge rather than behind another program's server.
+    public var isInApp: Bool { self == .builtIn || self == .custom }
 }

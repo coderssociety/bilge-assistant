@@ -1,11 +1,13 @@
 import AsistanCore
 import SwiftUI
 
-/// Apple's model or a downloadable one for conversation, with what each can do. Used in onboarding and settings.
+/// Apple's model, a downloadable one or the user's own MLX model for conversation, with what each can do.
+/// Used in onboarding and settings.
 struct ModelChoiceList: View {
     @Bindable var settings: AssistantSettings
     let downloads: ModelDownloads
     let brain: AssistantBrain
+    @State private var customModels: [CustomModels.Model] = []
 
     private let physicalMemory = ProcessInfo.processInfo.physicalMemory
 
@@ -24,16 +26,31 @@ struct ModelChoiceList: View {
                     cancel: { downloads.cancel(model) },
                     delete: { delete(model) })
             }
+            CustomModelsHeader(refresh: refreshCustomModels)
+            ForEach(customModels) { model in
+                let choice = LocalModelChoice(server: .custom, modelID: model.name)
+                CustomModelRow(model: model, isSelected: settings.localModelID == choice.storageKey,
+                               tooLarge: UInt64(max(model.bytes, 0)) > physicalMemory / 4 * 3) { use(choice) }
+            }
         }
+        .task { refreshCustomModels() }
     }
 
     private func choice(for model: DownloadableModel) -> LocalModelChoice {
         LocalModelChoice(server: .builtIn, modelID: model.id)
     }
 
+    private func refreshCustomModels() {
+        customModels = CustomModels.scan()
+    }
+
     /// A model still downloading can be chosen: Apple's model answers until it is in place.
     private func select(_ model: DownloadableModel?) {
-        settings.localModelID = model.map { choice(for: $0).storageKey }
+        use(model.map(choice(for:)))
+    }
+
+    private func use(_ choice: LocalModelChoice?) {
+        settings.localModelID = choice?.storageKey
         brain.useLocalModel(settings.localModel)
     }
 
@@ -132,6 +149,56 @@ private struct DownloadableModelRow: View {
                 .font(.caption).foregroundStyle(.secondary)
         case .downloaded, .notDownloaded:
             EmptyView()
+        }
+    }
+}
+
+private struct CustomModelsHeader: View {
+    let refresh: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Kendi modellerin").font(.headline)
+                Spacer()
+                Button("Yenile", action: refresh)
+                Button("Klasörü aç") { CustomModels.revealInFinder() }
+            }
+            Text("Hugging Face'ten MLX biçiminde bir model indir (örneğin mlx-community'den) ve klasörünü buraya koy. Klasörde config.json, tokenizer ve .safetensors dosyaları olmalı. Desteklenmeyen bir model türü açılamazsa cevabı Apple modeli verir.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.top, 6)
+    }
+}
+
+private struct CustomModelRow: View {
+    let model: CustomModels.Model
+    let isSelected: Bool
+    let tooLarge: Bool
+    let select: () -> Void
+
+    private var isReady: Bool {
+        if case .ready = model.status { true } else { false }
+    }
+
+    var body: some View {
+        ChoiceCard(isSelected: isSelected, isEnabled: isReady, select: select) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(model.name).font(.headline)
+                switch model.status {
+                case let .ready(modelType):
+                    Text("\(model.bytes.formatted(.byteCount(style: .file))) · tür: \(modelType)")
+                        .font(.caption).foregroundStyle(.secondary)
+                    if tooLarge {
+                        Label("Bu Mac'in belleği için büyük olabilir.", systemImage: "memorychip")
+                            .font(.caption).foregroundStyle(.orange)
+                    }
+                case let .missing(reason):
+                    Label("Kullanılamıyor: \(reason).", systemImage: "exclamationmark.triangle")
+                        .font(.caption).foregroundStyle(.orange)
+                }
+            }
         }
     }
 }

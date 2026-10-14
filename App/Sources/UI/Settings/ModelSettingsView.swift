@@ -79,9 +79,9 @@ struct ModelSettingsView: View {
     /// The external model in use, if any; clearing it goes back to Apple's model.
     private var externalSelection: Binding<String?> {
         Binding {
-            settings.localModel?.server == .builtIn ? nil : settings.localModelID
+            settings.localModel?.server.isInApp == true ? nil : settings.localModelID
         } set: { key in
-            if key != nil || settings.localModel?.server != .builtIn { settings.localModelID = key }
+            if key != nil || settings.localModel?.server.isInApp != true { settings.localModelID = key }
         }
     }
 
@@ -101,7 +101,7 @@ struct ModelSettingsView: View {
             }
         case .vmlx:
             readiness(vmlxRunning.contains(settings.localModel?.modelID ?? ""))
-        case .builtIn, nil:
+        case .builtIn, .custom, nil:
             EmptyView()
         }
     }
@@ -117,7 +117,7 @@ struct ModelSettingsView: View {
         return switch choice.server {
         case .lmStudio: lmStudioModels.contains { $0.id == choice.modelID }
         case .vmlx: vmlxModels.contains(choice.modelID)
-        case .builtIn: true
+        case .builtIn, .custom: true
         }
     }
 

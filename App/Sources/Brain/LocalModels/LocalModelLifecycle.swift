@@ -12,7 +12,7 @@ final class LocalModelLifecycle {
         case lmStudioModel(String)
         /// Any vMLX server Bilge used: put to deep sleep after a conversation, it wakes on demand.
         case vmlx
-        /// A model running inside Bilge; its memory goes back once nothing holds it.
+        /// A model running inside Bilge (downloaded or the user's own); its memory goes back once nothing holds it.
         case builtIn
     }
 
@@ -53,7 +53,7 @@ final class LocalModelLifecycle {
         discardWhenLoaded = false
         guard let choice, ready == nil, !isLoading else { return }
         // Still downloading: Apple's model answers meanwhile, and the next turn loads it once it is in.
-        if choice.server == .builtIn, !BuiltInChatModel.isDownloaded(choice.modelID) { return }
+        if choice.server.isInApp, !BuiltInChatModel.isAvailable(choice) { return }
         if let unavailableUntil, ContinuousClock.now < unavailableUntil { return }
         isLoading = true
         let started = generation
@@ -163,8 +163,8 @@ final class LocalModelLifecycle {
             return (endpoint, loadedByUs ? .lmStudioModel(choice.modelID) : nil)
         case .vmlx:
             return (try await VMLXServer.shared.prepare(choice.modelID), .vmlx)
-        case .builtIn:
-            return (try await BuiltInChatModel.load(choice.modelID), .builtIn)
+        case .builtIn, .custom:
+            return (try await BuiltInChatModel.load(choice), .builtIn)
         }
     }
 

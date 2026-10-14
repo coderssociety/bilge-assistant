@@ -6,7 +6,8 @@ import MLXLMCommon
 import Synchronization
 import Tokenizers
 
-/// A downloaded catalog model running inside Bilge on the GPU through MLX; no other program is needed.
+/// A catalog model Bilge downloaded, or an MLX model the user put in its models folder, running inside
+/// Bilge on the GPU; no other program is needed.
 /// Its memory goes back once the lifecycle drops it and `releaseMemory` empties MLX's buffer cache.
 struct BuiltInChatModel: LoadedChatModel {
     /// Buffers MLX keeps for reuse between replies; the rest goes back to the system.
@@ -18,26 +19,43 @@ struct BuiltInChatModel: LoadedChatModel {
     private static let topP: Float = 0.95
     private static let topK = 64
 
-    private let container: ModelContainer
-    private let disablesThinking: Bool
+    /// Qwen 3.x thinks for seconds before answering unless the chat template is told not to;
+    /// templates without the switch ignore it.
+    private static let templateOptions: [String: any Sendable] = ["enable_thinking": false]
 
-    static func isDownloaded(_ id: String) -> Bool {
-        ModelCatalog.model(id: id).map(ModelDownloads.isDownloaded) ?? false
+    private let container: ModelContainer
+    private let prefixCache = PromptPrefixCache()
+
+    static func isAvailable(_ choice: LocalModelChoice) -> Bool {
+        (try? folder(for: choice)) != nil
     }
 
-    static func isLoaded(_ id: String) -> Bool {
-        loadedID.withLock { $0 == id }
+    static func isLoaded(_ choice: LocalModelChoice) -> Bool {
+        loadedID.withLock { $0 == choice.storageKey }
     }
 
     /// Reads the weights from disk (a few seconds once they are in the file cache). Never touches the network.
-    static func load(_ id: String) async throws -> BuiltInChatModel {
-        guard let model = ModelCatalog.model(id: id) else { throw LocalModelServerError.loadFailed("\(id) tanınmıyor.") }
-        guard ModelDownloads.isDownloaded(model) else { throw LocalModelServerError.notInstalled(model.name) }
+    static func load(_ choice: LocalModelChoice) async throws -> BuiltInChatModel {
+        let folder = try folder(for: choice)
         Memory.cacheLimit = bufferCacheLimit
-        let container = try await LLMModelFactory.shared.loadContainer(
-            from: try ModelDownloads.folder(for: model), using: TransformersTokenizerLoader())
-        loadedID.withLock { $0 = id }
-        return BuiltInChatModel(container: container, disablesThinking: model.disablesThinking)
+        let container = try await LLMModelFactory.shared.loadContainer(from: folder, using: TransformersTokenizerLoader())
+        loadedID.withLock { $0 = choice.storageKey }
+        return BuiltInChatModel(container: container)
+    }
+
+    private static func folder(for choice: LocalModelChoice) throws -> URL {
+        switch choice.server {
+        case .builtIn:
+            guard let model = ModelCatalog.model(id: choice.modelID) else {
+                throw LocalModelServerError.loadFailed("\(choice.modelID) tanınmıyor.")
+            }
+            guard ModelDownloads.isDownloaded(model) else { throw LocalModelServerError.notInstalled(model.name) }
+            return try ModelDownloads.folder(for: model)
+        case .custom:
+            return try CustomModels.folder(named: choice.modelID)
+        case .lmStudio, .vmlx:
+            throw LocalModelServerError.loadFailed(choice.modelID)
+        }
     }
 
     static func releaseMemory() {
@@ -46,9 +64,11 @@ struct BuiltInChatModel: LoadedChatModel {
     }
 
     func streamReply(messages: [ChatMessage], temperature: Double, maxTokens: Int) -> AsyncThrowingStream<String, any Error> {
-        let templateOptions: [String: any Sendable]? = disablesThinking ? ["enable_thinking": false] : nil
+        let templateOptions = Self.templateOptions
         let parameters = GenerateParameters(maxTokens: maxTokens, temperature: Float(temperature), topP: Self.topP, topK: Self.topK)
         let container = container
+        let prefixCache = prefixCache
+        let systemPrompt = messages.first { $0.role == .system }?.content
         return AsyncThrowingStream { continuation in
             let task = Task {
                 // The decoding loop outlives `perform`, so replies take turns: a cancelled reply's last
@@ -60,8 +80,11 @@ struct BuiltInChatModel: LoadedChatModel {
                     let (generations, loop) = try await container.perform { context in
                         let input = try await context.processor.prepare(
                             input: UserInput(chat: messages.map(Self.message), additionalContext: templateOptions))
-                        let iterator = try TokenIterator(input: input, model: context.model, parameters: parameters)
-                        return MLXLMCommon.generateTask(promptTokenCount: input.text.tokens.size,
+                        let start = try await prefixCache.start(for: input, systemPrompt: systemPrompt, options: templateOptions,
+                                                                context: context, parameters: parameters)
+                        let iterator = try TokenIterator(input: start.input, model: context.model, cache: start.cache,
+                                                         parameters: parameters)
+                        return MLXLMCommon.generateTask(promptTokenCount: start.input.text.tokens.size,
                                                         modelConfiguration: context.configuration,
                                                         tokenizer: context.tokenizer, iterator: iterator)
                     }

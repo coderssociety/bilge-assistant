@@ -3,7 +3,7 @@ import Foundation
 import Synchronization
 
 /// Knowledge-answer benchmark through the full brain (routing + conversation):
-/// `Asistan --bench-chat <questions.tsv> [lmstudio:<id> | vmlx:<publisher/id> | builtin:<catalog id>]`. Each line is "question<TAB>key|key";
+/// `Asistan --bench-chat <questions.tsv> [lmstudio:<id> | vmlx:<publisher/id> | builtin:<catalog id> | mlx:<folder>]`. Each line is "question<TAB>key|key";
 /// an answer passes when it contains one of the keys. Without a model id, Apple's model answers.
 /// A catalog model that is not on disk yet is downloaded first, as the app would.
 /// `--on-demand` exercises the default lifecycle instead: load on wake, free when the exchange ends.
@@ -43,7 +43,7 @@ enum ChatBenchmark {
                 return 2
             }
             choice = parsed
-            if parsed.server == .builtIn, !BuiltInChatModel.isDownloaded(parsed.modelID) {
+            if parsed.server == .builtIn, !BuiltInChatModel.isAvailable(parsed) {
                 guard await download(parsed.modelID) else { return 1 }
             }
             brain.setLocalModelKeepAlive(onDemand ? .untilConversationEnds : .always)
@@ -124,8 +124,8 @@ enum ChatBenchmark {
             return models.contains { $0.id == choice.modelID && $0.isLoaded }
         case .vmlx:
             return await VMLXServer.awakeModels().contains(choice.modelID)
-        case .builtIn:
-            return BuiltInChatModel.isLoaded(choice.modelID)
+        case .builtIn, .custom:
+            return BuiltInChatModel.isLoaded(choice)
         }
     }
 }
