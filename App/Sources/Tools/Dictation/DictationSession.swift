@@ -8,6 +8,7 @@ final class DictationSession {
     /// How long dictation waits for the next sentence before it ends.
     static let window: TimeInterval = 60
     private static let maxRemembered = 50
+    private static let keyPause: Duration = .milliseconds(8)
     private enum Key {
         static let returnKey: CGKeyCode = 36
         static let delete: CGKeyCode = 51
@@ -49,7 +50,11 @@ final class DictationSession {
                 try newLine()
             case .deleteLast:
                 guard let last = typed.popLast() else { return "Silinecek bir şey yok." }
-                for _ in 0..<last.count { try AccessibilityControl.press(Key.delete) }
+                // Paced like typing, so the deletes never overtake text the app has not drawn yet.
+                for _ in 0..<last.count {
+                    try AccessibilityControl.press(Key.delete)
+                    try await Task.sleep(for: Self.keyPause)
+                }
             case nil:
                 let text = TypedText.sanitized(DictationText.format(input, after: typed.joined()))
                 guard !text.isEmpty else { return "" }

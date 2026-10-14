@@ -49,6 +49,14 @@ enum AccessibilityControl {
         return attribute(focused as! AXUIElement, kAXSelectedTextAttribute) as? String
     }
 
+    /// The text of the focused field, e.g. a document's text view.
+    static func focusedValue() throws -> String? {
+        try requireTrust()
+        let system = AXUIElementCreateSystemWide()
+        guard let focused = attribute(system, kAXFocusedUIElementAttribute) else { return nil }
+        return attribute(focused as! AXUIElement, kAXValueAttribute) as? String
+    }
+
     static func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success else { return nil }

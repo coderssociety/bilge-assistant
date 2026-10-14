@@ -34,7 +34,8 @@ struct DictationTool: RuleRoutedTool {
                 return ToolReply.failure("Güvenlik için terminallere, kod düzenleyicilere, uzak masaüstüne ve parola yöneticilerine dikte etmiyorum.")
             }
             session.begin(in: front)
-            return "Dikte açık, \(front.localizedName ?? "öndeki uygulamaya") yazıyorum. Bitirmek için 'dikteyi bitir' de."
+            let target = front.localizedName.map { "\($0) uygulamasına" } ?? "öndeki uygulamaya"
+            return "Dikte açık, \(target) yazıyorum. Bitirmek için 'dikteyi bitir' de."
         }
     }
 }

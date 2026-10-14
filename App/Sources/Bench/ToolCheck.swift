@@ -351,10 +351,10 @@ enum ToolCheck {
         }
     }
 
-    /// Opens a temporary text file in TextEdit (no Automation permission needed), dictates into it, saves
-    /// with ⌘S and reads the file back, then closes the window and deletes the file.
+    /// Opens a temporary text file in TextEdit (no Automation permission needed), dictates into it, reads
+    /// the text back through Accessibility, then empties, saves and closes it (no save prompt) and deletes it.
     private static func checkDictation(_ report: inout Report) async {
-        let file = FileManager.default.temporaryDirectory.appending(path: "bilge-dikte-denemesi.txt")
+        let file = FileManager.default.temporaryDirectory.appending(path: "bilge-dikte-\(UUID().uuidString.prefix(8)).txt")
         try? "".write(to: file, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: file) }
         guard let textEdit = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.TextEdit") else {
@@ -376,13 +376,24 @@ enum ToolCheck {
         report.check("dikte", session.isActive, start)
         for input in ["merhaba virgül nasılsın soru işareti", "yeni satır", "ikinci satır nokta", "son cümleyi sil", "üçüncü deneme"] {
             let reply = await session.handle(input)
-            if !reply.isEmpty { report.lines.append("   \(input) → \(reply)") }
+            try? await Task.sleep(for: .milliseconds(200))
+            let now = ((try? AccessibilityControl.focusedValue()) ?? nil) ?? "?"
+            report.lines.append("   \(input) → [\(now.replacingOccurrences(of: "\n", with: "⏎"))] \(reply)")
         }
         let finished = await session.handle("dikteyi bitir")
-        try? AccessibilityControl.press(1, flags: .maskCommand)
-        try? await Task.sleep(for: .seconds(1))
-        let typed = (try? String(contentsOf: file, encoding: .utf8)) ?? "(okunamadı)"
-        try? AccessibilityControl.press(13, flags: .maskCommand)
+        try? await Task.sleep(for: .milliseconds(300))
+        let typed = ((try? AccessibilityControl.focusedValue()) ?? nil) ?? "(okunamadı)"
+        let focused = AccessibilityControl.attribute(AXUIElementCreateSystemWide(), kAXFocusedUIElementAttribute)
+        let role = focused.flatMap { AccessibilityControl.attribute($0 as! AXUIElement, kAXRoleAttribute) as? String } ?? "yok"
+        report.lines.append("   tanı: postEvent=\(CGPreflightPostEventAccess()) ax=\(AXIsProcessTrusted()) önde=\(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?") odak=\(role)")
+        let (a, delete, s, w): (CGKeyCode, CGKeyCode, CGKeyCode, CGKeyCode) = (0, 51, 1, 13)
+        if NSWorkspace.shared.frontmostApplication?.processIdentifier == app.processIdentifier {
+            try? AccessibilityControl.press(a, flags: .maskCommand)
+            try? AccessibilityControl.press(delete)
+            try? AccessibilityControl.press(s, flags: .maskCommand)
+            try? await Task.sleep(for: .milliseconds(500))
+            try? AccessibilityControl.press(w, flags: .maskCommand)
+        }
         let expected = "Merhaba, nasılsın?\nÜçüncü deneme"
         report.check("dikte", typed == expected && !session.isActive && finished == "Dikte bitti.",
                      "yazılan: \(typed.replacingOccurrences(of: "\n", with: "⏎")) · bitiş: \(finished)")
