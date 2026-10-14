@@ -13,6 +13,8 @@ enum ToolCheck {
     static let flag = "--bench-tools"
     /// Also edits a new, unsaved Excel workbook by voice commands, then closes it without saving.
     static let excelFlag = "--excel"
+    /// Also dictates into a new, unsaved TextEdit document, then closes it without saving.
+    static let dictationFlag = "--dictation"
 
     private struct Report {
         var lines: [String] = []
@@ -65,6 +67,7 @@ enum ToolCheck {
             await checkContext(router, registry.context, &report)
             await checkBrowser(router, &report)
             if arguments.contains(excelFlag) { await checkExcel(router, &report) }
+            if arguments.contains(dictationFlag) { await checkDictation(&report) }
         } catch {
             report.check("router", false, "başlatılamadı: \(error)")
         }
@@ -346,6 +349,43 @@ enum ToolCheck {
         } catch {
             report.check("tarayıcı", false, "\(browser) sekmeleri okunamadı: \(error.localizedDescription)")
         }
+    }
+
+    /// Opens a temporary text file in TextEdit (no Automation permission needed), dictates into it, saves
+    /// with ⌘S and reads the file back, then closes the window and deletes the file.
+    private static func checkDictation(_ report: inout Report) async {
+        let file = FileManager.default.temporaryDirectory.appending(path: "bilge-dikte-denemesi.txt")
+        try? "".write(to: file, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: file) }
+        guard let textEdit = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.TextEdit") else {
+            report.check("dikte", false, "TextEdit bulunamadı")
+            return
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        guard let app = try? await NSWorkspace.shared.open([file], withApplicationAt: textEdit, configuration: configuration) else {
+            report.check("dikte", false, "TextEdit açılamadı")
+            return
+        }
+        for _ in 0..<40 where NSWorkspace.shared.frontmostApplication?.processIdentifier != app.processIdentifier {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        try? await Task.sleep(for: .milliseconds(500))
+        let session = DictationSession()
+        let start = (try? await DictationTool(session: session).call(arguments: .init())) ?? ""
+        report.check("dikte", session.isActive, start)
+        for input in ["merhaba virgül nasılsın soru işareti", "yeni satır", "ikinci satır nokta", "son cümleyi sil", "üçüncü deneme"] {
+            let reply = await session.handle(input)
+            if !reply.isEmpty { report.lines.append("   \(input) → \(reply)") }
+        }
+        let finished = await session.handle("dikteyi bitir")
+        try? AccessibilityControl.press(1, flags: .maskCommand)
+        try? await Task.sleep(for: .seconds(1))
+        let typed = (try? String(contentsOf: file, encoding: .utf8)) ?? "(okunamadı)"
+        try? AccessibilityControl.press(13, flags: .maskCommand)
+        let expected = "Merhaba, nasılsın?\nÜçüncü deneme"
+        report.check("dikte", typed == expected && !session.isActive && finished == "Dikte bitti.",
+                     "yazılan: \(typed.replacingOccurrences(of: "\n", with: "⏎")) · bitiş: \(finished)")
     }
 
     private static func checkAlerts(_ report: inout Report) async {

@@ -20,16 +20,19 @@ final class AssistantBrain: CommandHandling {
     private let context: ConversationContext
     private let memory: MemoryStore
     private let spreadsheet: SpreadsheetSession
+    private let dictation: DictationSession
     private let tools: [any AssistantTool]
     private let localModel = LocalModelResponder()
     /// Asks the user before `.needsConfirmation` tools run; without it those tools never run.
     weak var confirmer: (any ConfirmationProviding)?
 
     init(tools: [any AssistantTool], context: ConversationContext = ConversationContext(),
-         memory: MemoryStore = MemoryStore(fileURL: nil), spreadsheet: SpreadsheetSession = SpreadsheetSession()) {
+         memory: MemoryStore = MemoryStore(fileURL: nil), spreadsheet: SpreadsheetSession = SpreadsheetSession(),
+         dictation: DictationSession = DictationSession()) {
         self.context = context
         self.memory = memory
         self.spreadsheet = spreadsheet
+        self.dictation = dictation
         self.tools = tools
         do {
             router = try CommandRouter(tools: tools, model: model)
@@ -99,15 +102,30 @@ final class AssistantBrain: CommandHandling {
         }
     }
 
-    /// Excel mode: the window stays open for the next spreadsheet command without the wake phrase.
+    /// Dictation takes everything said; Excel mode only spreadsheet commands. Either way the window
+    /// stays open for the next input without the wake phrase.
     var workSession: ConversationFlow.WorkSession? {
+        if dictation.isActive { return ConversationFlow.WorkSession(window: DictationSession.window) { _ in true } }
         guard spreadsheet.isActive else { return nil }
         return ConversationFlow.WorkSession(window: SpreadsheetSession.window) { command in
             SpreadsheetCommand.parse(TurkishNumberParser.digitize(command)) != nil || SpreadsheetCommand.mentionsCells(command)
         }
     }
 
+    func respond(toWorkInput input: String) -> AsyncThrowingStream<String, any Error> {
+        guard dictation.isActive else { return respond(to: input) }
+        return AsyncThrowingStream { continuation in
+            let task = Task { @MainActor in
+                let reply = await dictation.handle(input)
+                if !reply.isEmpty { continuation.yield(reply) }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
     func endConversation() {
+        dictation.end()
         spreadsheet.end()
         conversation = nil
         previousTurn = nil
@@ -121,6 +139,12 @@ final class AssistantBrain: CommandHandling {
     private func handle(_ command: String, continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
         guard let router, unavailableReason == nil else {
             continuation.yield(unavailableReason ?? "Dil modeli kullanılamıyor.")
+            return
+        }
+        // "Bilge, dikteyi bitir" said with the wake phrase still controls dictation.
+        if dictation.isActive, DictationCommand.parse(command) != nil {
+            let reply = await dictation.handle(command)
+            if !reply.isEmpty { continuation.yield(reply) }
             return
         }
         // "Bunu Ahmet'e gönder": what was on screen when the command was heard, read only when it points.

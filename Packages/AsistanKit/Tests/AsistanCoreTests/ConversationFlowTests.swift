@@ -114,7 +114,7 @@ struct ConversationFlowTests {
         // Chatter in the room is ignored and does not end the session.
         #expect(flow.heard("akşam ne yiyoruz", at: start.addingTimeInterval(5)) == .none)
         #expect(flow.isAwaitingSpeech)
-        #expect(flow.heard("C5'e 1250 yaz", at: start.addingTimeInterval(8)) == .runCommand("C5'e 1250 yaz"))
+        #expect(flow.heard("C5'e 1250 yaz", at: start.addingTimeInterval(8)) == .runWorkInput("C5'e 1250 yaz"))
     }
 
     @Test("in a work session the wake phrase still reaches everything")

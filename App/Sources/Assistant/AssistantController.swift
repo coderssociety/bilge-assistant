@@ -320,6 +320,8 @@ final class AssistantController {
         case let .runCommand(command):
             handler.conversationWillStart()
             turnTask = Task { await runTurn(command) }
+        case let .runWorkInput(input):
+            turnTask = Task { await runTurn(input, isWorkInput: true) }
         case let .returnToIdle(timedOut):
             if timedOut { Earcon.cancelled.play() }
             handler.endConversation()
@@ -327,7 +329,7 @@ final class AssistantController {
         }
     }
 
-    private func runTurn(_ command: String) async {
+    private func runTurn(_ command: String, isWorkInput: Bool = false) async {
         isAudioSuspended = true
         segmenter.reset()
         await bargeIn?.reset()
@@ -335,7 +337,7 @@ final class AssistantController {
         lastReply = ""
         flow.responseStarted()
         do {
-            try await speech.speak(streaming: replyFragments(for: command))
+            try await speech.speak(streaming: replyFragments(for: command, isWorkInput: isWorkInput))
         } catch is CancellationError {
             speech.stop()
         } catch {
@@ -359,8 +361,8 @@ final class AssistantController {
     }
 
     /// Forwards the handler's reply while mirroring it into the UI.
-    private func replyFragments(for command: String) -> AsyncThrowingStream<String, any Error> {
-        let source = handler.respond(to: command)
+    private func replyFragments(for command: String, isWorkInput: Bool) -> AsyncThrowingStream<String, any Error> {
+        let source = isWorkInput ? handler.respond(toWorkInput: command) : handler.respond(to: command)
         return AsyncThrowingStream { continuation in
             let forwarding = Task { @MainActor in
                 do {

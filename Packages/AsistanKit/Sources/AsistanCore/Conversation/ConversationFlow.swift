@@ -14,6 +14,9 @@ public struct ConversationFlow: Sendable {
         case none
         case acknowledgeWake
         case runCommand(String)
+        /// Said during a work session without the wake phrase: input for that work (a cell edit, text
+        /// to type) rather than a command to the assistant.
+        case runWorkInput(String)
         case returnToIdle(timedOut: Bool)
     }
 
@@ -69,8 +72,10 @@ public struct ConversationFlow: Sendable {
             let command = wakeMatch?.command ?? transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             let key = TurkishText.folded(command)
             guard !key.isEmpty else { return .none }
-            if case .followUp = phase, let session, wakeMatch == nil, !session.accepts(command), !Self.cancelPhrases.contains(key) {
-                return .none
+            if case .followUp = phase, let session, wakeMatch == nil, !Self.cancelPhrases.contains(key) {
+                guard session.accepts(command) else { return .none }
+                phase = .processing
+                return .runWorkInput(command)
             }
             if Self.cancelPhrases.contains(key) {
                 session = nil

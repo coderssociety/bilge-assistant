@@ -10,6 +10,7 @@ struct ToolRegistry {
     /// In memory only unless the app passes its stored one, so benchmarks never touch the user's facts.
     var memory = MemoryStore(fileURL: nil)
     var spreadsheet = SpreadsheetSession()
+    var dictation = DictationSession()
 
     func makeTools() -> [any AssistantTool] {
         [
@@ -64,6 +65,7 @@ struct ToolRegistry {
             SpreadsheetTool(session: spreadsheet),
             ContextTool(context: context),
             BrowserTool(),
+            DictationTool(session: dictation),
         ]
     }
 }
