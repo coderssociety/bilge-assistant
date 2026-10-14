@@ -12,6 +12,8 @@ final class VMLXServer {
     private static let startupTimeout: Duration = .seconds(180)
     private static let pollInterval: Duration = .milliseconds(250)
     private static let shutdownTimeout: Duration = .seconds(5)
+    /// vMLX's default cap is 10% of the volume (~83 GB here), far more than a few warm prompt prefixes need.
+    private static let blockDiskCacheMaxGB = 4
     private var ownedProcess: Process?
 
     nonisolated static var executable: URL {
@@ -163,7 +165,8 @@ final class VMLXServer {
         let process = Process()
         process.executableURL = Self.executable
         process.arguments = ["serve", folder.path(percentEncoded: false), "--host", "127.0.0.1",
-                             "--port", String(Self.baseURL.port ?? 8000), "--served-model-name", id]
+                             "--port", String(Self.baseURL.port ?? 8000), "--served-model-name", id,
+                             "--block-disk-cache-max-gb", String(Self.blockDiskCacheMaxGB)]
         var environment = ProcessInfo.processInfo.environment
         environment["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
         process.environment = environment
