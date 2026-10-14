@@ -43,6 +43,8 @@ targets:
       - App/Sources
       - path: App/Resources
         excludes: ["Info.plist", "Asistan.entitlements"]
+      - path: THIRD_PARTY_NOTICES.md
+        buildPhase: resources
     info:
       path: App/Resources/Info.plist
       properties:

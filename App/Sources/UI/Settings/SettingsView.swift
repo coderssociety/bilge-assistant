@@ -26,6 +26,9 @@ struct SettingsView: View {
             Tab("Geçmiş", systemImage: "clock.arrow.circlepath") {
                 HistoryView()
             }
+            Tab("Hakkında", systemImage: "info.circle") {
+                AboutView()
+            }
         }
         .frame(width: 560, height: 470)
     }
