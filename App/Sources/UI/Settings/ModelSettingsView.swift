@@ -4,6 +4,7 @@ import SwiftUI
 struct ModelSettingsView: View {
     @Bindable var settings: AssistantSettings
     let brain: AssistantBrain
+    let downloads: ModelDownloads
     @State private var lmStudioModels: [LMStudioClient.Model] = []
     @State private var lmStudioError: String?
     @State private var vmlxModels: [String] = []
@@ -25,40 +26,63 @@ struct ModelSettingsView: View {
             }
 
             Section("Sohbet ve ekran yanıtları") {
-                Picker("Model", selection: $settings.localModelID) {
-                    Text("Apple cihaz içi model").tag(String?.none)
-                    ForEach(lmStudioModels) { model in
-                        Text(model.label).tag(Optional(LocalModelChoice(server: .lmStudio, modelID: model.id).storageKey))
-                    }
-                    ForEach(vmlxModels, id: \.self) { id in
-                        Text("\(id.split(separator: "/").last ?? Substring(id)) · vMLX")
-                            .tag(Optional(LocalModelChoice(server: .vmlx, modelID: id).storageKey))
-                    }
-                    if let key = settings.localModelID, !isListed(key) {
-                        Text(key).tag(Optional(key))
-                    }
+                ModelChoiceList(settings: settings, downloads: downloads, brain: brain)
+            }
+
+            if LMStudioClient.isInstalled || VMLXServer.isInstalled {
+                Section("Başka programla çalışan modeller") {
+                    externalModels
                 }
-                status
-                if settings.localModel != nil {
-                    Picker("Bellek", selection: $settings.localModelKeepAlive) {
+            }
+
+            if settings.localModel != nil {
+                Section("Bellek") {
+                    Picker("Model", selection: $settings.localModelKeepAlive) {
                         ForEach(LocalModelKeepAlive.allCases, id: \.self) { Text($0.displayName).tag($0) }
                     }
                     Text(settings.localModelKeepAlive.explanation)
                         .font(.caption).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    Text("Model açılamazsa o yanıt Apple modeliyle verilir. Her şey Mac'inde kalır.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
-                Text("Genel bilgi sorularında, sohbette ve ekran özetlerinde büyük yerel modeller daha bilgili. 20 zor soruluk testimizde Apple modeli 14, Qwen 4-bit 19, Gemma 4 31B 19 soruyu bildi. Qwen daha hızlı üretir; Gemma ilk kelimeye daha çabuk başlar.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Açıkken model bellekte durur (Qwen 4-bit ~16 GB, Gemma ~23 GB). Bilge yalnızca kendi yüklediği modeli kapatır; LM Studio'da ya da vMLX'te senin açtığın modele dokunmaz. Model açılamazsa o yanıt Apple modeliyle verilir. Her şey Mac'inde kalır.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .formStyle(.grouped)
         .task { await refresh(startingLMStudio: false) }
         .onChange(of: settings.localModelID) { brain.useLocalModel(settings.localModel) }
         .onChange(of: settings.localModelKeepAlive) { brain.setLocalModelKeepAlive(settings.localModelKeepAlive) }
+    }
+
+    /// LM Studio and vMLX models, for people who already run one of them.
+    @ViewBuilder
+    private var externalModels: some View {
+        Picker("Model", selection: externalSelection) {
+            Text("Seçili değil").tag(String?.none)
+            ForEach(lmStudioModels) { model in
+                Text(model.label).tag(Optional(LocalModelChoice(server: .lmStudio, modelID: model.id).storageKey))
+            }
+            ForEach(vmlxModels, id: \.self) { id in
+                Text("\(id.split(separator: "/").last ?? Substring(id)) · vMLX")
+                    .tag(Optional(LocalModelChoice(server: .vmlx, modelID: id).storageKey))
+            }
+            if let key = externalSelection.wrappedValue, !isListed(key) {
+                Text(key).tag(Optional(key))
+            }
+        }
+        status
+        Text("Bilge yalnızca kendi yüklediği modeli kapatır; LM Studio'da ya da vMLX'te senin açtığın modele dokunmaz.")
+            .font(.caption).foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// The external model in use, if any; clearing it goes back to Apple's model.
+    private var externalSelection: Binding<String?> {
+        Binding {
+            settings.localModel?.server == .builtIn ? nil : settings.localModelID
+        } set: { key in
+            if key != nil || settings.localModel?.server != .builtIn { settings.localModelID = key }
+        }
     }
 
     @ViewBuilder
@@ -77,7 +101,7 @@ struct ModelSettingsView: View {
             }
         case .vmlx:
             readiness(vmlxRunning.contains(settings.localModel?.modelID ?? ""))
-        case nil:
+        case .builtIn, nil:
             EmptyView()
         }
     }
@@ -93,6 +117,7 @@ struct ModelSettingsView: View {
         return switch choice.server {
         case .lmStudio: lmStudioModels.contains { $0.id == choice.modelID }
         case .vmlx: vmlxModels.contains(choice.modelID)
+        case .builtIn: true
         }
     }
 

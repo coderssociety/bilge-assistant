@@ -1,10 +1,10 @@
 import AsistanCore
 import SwiftUI
 
-/// First-run setup: what the assistant is, permissions, model preparation, voice, first command.
+/// First-run setup: what the assistant is, permissions, model preparation, conversation model, voice, first command.
 struct OnboardingView: View {
     enum Step: Int, CaseIterable {
-        case welcome, permissions, preparation, voice, finish
+        case welcome, permissions, preparation, model, voice, finish
     }
 
     let environment: AppEnvironment
@@ -18,6 +18,7 @@ struct OnboardingView: View {
                 case .welcome: WelcomeStep()
                 case .permissions: PermissionsStep()
                 case .preparation: PreparationStep(assistant: environment.assistant, brain: environment.brain)
+                case .model: ModelStep(environment: environment)
                 case .voice: VoiceSettingsView(settings: environment.settings, speech: environment.speech)
                 case .finish: FinishStep(settings: environment.settings)
                 }
@@ -39,7 +40,7 @@ struct OnboardingView: View {
             }
             .padding(16)
         }
-        .frame(width: 560, height: 500)
+        .frame(width: 600, height: 560)
     }
 
     private var canAdvance: Bool {
@@ -140,6 +141,23 @@ private struct PreparationStep: View {
             isDone = true
         } catch {
             self.error = error.localizedDescription
+        }
+    }
+}
+
+private struct ModelStep: View {
+    let environment: AppEnvironment
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Sohbet modeli").font(.title.bold())
+            Text("Komutları her zaman Apple'ın cihaz içi modeli anlar. Sohbet, genel sorular ve ekran özetleri için istersen daha bilgili bir model indirebilirsin; Bilge onu kendi içinde çalıştırır, başka program gerekmez. Sonra Ayarlar > Model'den değiştirebilirsin.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            ScrollView {
+                ModelChoiceList(settings: environment.settings, downloads: environment.downloads, brain: environment.brain)
+                    .padding(.trailing, 8)
+            }
         }
     }
 }

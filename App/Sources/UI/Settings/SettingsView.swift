@@ -9,7 +9,7 @@ struct SettingsView: View {
                 GeneralSettingsView(settings: environment.settings, assistant: environment.assistant)
             }
             Tab("Model", systemImage: "cpu") {
-                ModelSettingsView(settings: environment.settings, brain: environment.brain)
+                ModelSettingsView(settings: environment.settings, brain: environment.brain, downloads: environment.downloads)
             }
             Tab("Ses", systemImage: "speaker.wave.2") {
                 VoiceSettingsView(settings: environment.settings, speech: environment.speech)

@@ -6,6 +6,7 @@ struct LocalModelChoiceTests {
     @Test("round-trips through its storage key", arguments: [
         LocalModelChoice(server: .lmStudio, modelID: "qwen3.8-27b-uncensored-mlx"),
         LocalModelChoice(server: .vmlx, modelID: "dealignai/Gemma-4-31B-JANG_4M-Uncensored"),
+        LocalModelChoice(server: .builtIn, modelID: "mlx-community/Qwen3-4B-Instruct-2507-4bit"),
     ])
     func roundTrip(choice: LocalModelChoice) {
         #expect(LocalModelChoice(storageKey: choice.storageKey) == choice)

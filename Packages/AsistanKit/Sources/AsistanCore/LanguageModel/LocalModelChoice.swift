@@ -1,8 +1,10 @@
-/// A conversation model served on this Mac, persisted as "<server>:<model id>".
+/// A conversation model on this Mac, persisted as "<server>:<model id>".
 public struct LocalModelChoice: Sendable, Hashable {
     public enum Server: String, Sendable, CaseIterable {
         case lmStudio = "lmstudio"
         case vmlx
+        /// Downloaded by Bilge and run inside the app; the id is a `ModelCatalog` entry.
+        case builtIn = "builtin"
     }
 
     public let server: Server

@@ -72,6 +72,11 @@ final class AssistantBrain: CommandHandling {
         localModel.select(choice)
     }
 
+    /// A catalog model finished downloading; if it is the selected one and kept loaded, load it now.
+    func localModelDownloaded() {
+        localModel.launched()
+    }
+
     func setLocalModelKeepAlive(_ keepAlive: LocalModelKeepAlive) {
         localModel.keepAlive = keepAlive
     }

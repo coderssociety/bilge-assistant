@@ -1,9 +1,11 @@
 import AsistanCore
 import Foundation
+import Synchronization
 
 /// Knowledge-answer benchmark through the full brain (routing + conversation):
-/// `Asistan --bench-chat <questions.tsv> [lmstudio:<id> | vmlx:<publisher/id>]`. Each line is "question<TAB>key|key";
+/// `Asistan --bench-chat <questions.tsv> [lmstudio:<id> | vmlx:<publisher/id> | builtin:<catalog id>]`. Each line is "question<TAB>key|key";
 /// an answer passes when it contains one of the keys. Without a model id, Apple's model answers.
+/// A catalog model that is not on disk yet is downloaded first, as the app would.
 /// `--on-demand` exercises the default lifecycle instead: load on wake, free when the exchange ends.
 @MainActor
 enum ChatBenchmark {
@@ -41,6 +43,9 @@ enum ChatBenchmark {
                 return 2
             }
             choice = parsed
+            if parsed.server == .builtIn, !BuiltInChatModel.isDownloaded(parsed.modelID) {
+                guard await download(parsed.modelID) else { return 1 }
+            }
             brain.setLocalModelKeepAlive(onDemand ? .untilConversationEnds : .always)
             brain.useLocalModel(parsed)
             if !onDemand, await !brain.waitForLocalModel() {
@@ -92,6 +97,26 @@ enum ChatBenchmark {
         return 0
     }
 
+    private static func download(_ id: String) async -> Bool {
+        guard let model = ModelCatalog.model(id: id) else {
+            print("Katalogda yok: \(id)")
+            return false
+        }
+        let started = Date()
+        let reported = Mutex(-1)
+        do {
+            try await HuggingFaceDownloader().download(model, into: try ModelDownloads.folder(for: model)) { progress in
+                let percent = Int(progress.fraction * 100) / 10 * 10
+                if reported.withLock({ defer { $0 = percent }; return $0 != percent }) { print("   indiriliyor %\(percent)") }
+            }
+            print(String(format: "   indirildi: %.0f sn", Date.now.timeIntervalSince(started)))
+            return true
+        } catch {
+            print("İndirilemedi: \(error.localizedDescription)")
+            return false
+        }
+    }
+
     private static func isLoaded(_ choice: LocalModelChoice) async -> Bool {
         switch choice.server {
         case .lmStudio:
@@ -99,6 +124,8 @@ enum ChatBenchmark {
             return models.contains { $0.id == choice.modelID && $0.isLoaded }
         case .vmlx:
             return await VMLXServer.awakeModels().contains(choice.modelID)
+        case .builtIn:
+            return BuiltInChatModel.isLoaded(choice.modelID)
         }
     }
 }

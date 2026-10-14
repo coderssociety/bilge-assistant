@@ -63,6 +63,7 @@ final class AppEnvironment {
     let timers: TimerService
     let brain: AssistantBrain
     let memory: MemoryStore
+    let downloads: ModelDownloads
     let speakerGate: SpeakerGate
     let assistant: AssistantController
     let audioLab: AudioLabModel
@@ -89,6 +90,9 @@ final class AppEnvironment {
         self.timers = timers
         self.brain = brain
         self.memory = memory
+        let downloads = ModelDownloads()
+        downloads.onDownloaded = { _ in brain.localModelDownloaded() }
+        self.downloads = downloads
         speakerGate = SpeakerGate(store: VoiceprintStore(), settings: settings)
         assistant.speakerGate = speakerGate
         self.assistant = assistant

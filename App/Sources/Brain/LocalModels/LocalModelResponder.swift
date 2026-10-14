@@ -140,7 +140,7 @@ final class LocalModelResponder {
     /// Waits for a model that is still loading, saying "Bir saniye." if it takes noticeably long.
     private func readyEndpoint(
         announcingWaitTo continuation: AsyncThrowingStream<String, any Error>.Continuation
-    ) async throws -> LocalModelEndpoint {
+    ) async throws -> any LoadedChatModel {
         lifecycle.cancelIdleUnload()
         lifecycle.load()
         let started = ContinuousClock.now

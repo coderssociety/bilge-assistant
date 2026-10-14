@@ -19,7 +19,7 @@ enum LocalModelServerError: LocalizedError {
 
 /// A loaded model behind an OpenAI-compatible server on this Mac. Addresses are always loopback,
 /// so conversations never leave the machine whatever the server's own network setting is.
-struct LocalModelEndpoint: Sendable, Hashable {
+struct LocalModelEndpoint: LoadedChatModel, Hashable {
     enum PromptStyle: Sendable, Hashable {
         /// Raw ChatML through /v1/completions with reasoning closed: LM Studio ignores
         /// `enable_thinking`, and Qwen would otherwise think for seconds before answering.

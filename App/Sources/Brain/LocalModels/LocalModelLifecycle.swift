@@ -12,13 +12,15 @@ final class LocalModelLifecycle {
         case lmStudioModel(String)
         /// Any vMLX server Bilge used: put to deep sleep after a conversation, it wakes on demand.
         case vmlx
+        /// A model running inside Bilge; its memory goes back once nothing holds it.
+        case builtIn
     }
 
     private static let retryDelay: Duration = .seconds(60)
 
     private let lmStudio = LMStudioClient()
     private(set) var choice: LocalModelChoice?
-    private(set) var ready: LocalModelEndpoint?
+    private(set) var ready: (any LoadedChatModel)?
     private(set) var isLoading = false
     private var owned: Owned?
     private var generation = 0
@@ -50,6 +52,8 @@ final class LocalModelLifecycle {
     func load() {
         discardWhenLoaded = false
         guard let choice, ready == nil, !isLoading else { return }
+        // Still downloading: Apple's model answers meanwhile, and the next turn loads it once it is in.
+        if choice.server == .builtIn, !BuiltInChatModel.isDownloaded(choice.modelID) { return }
         if let unavailableUntil, ContinuousClock.now < unavailableUntil { return }
         isLoading = true
         let started = generation
@@ -152,13 +156,15 @@ final class LocalModelLifecycle {
         }
     }
 
-    private func prepare(_ choice: LocalModelChoice) async throws -> (LocalModelEndpoint, Owned?) {
+    private func prepare(_ choice: LocalModelChoice) async throws -> (any LoadedChatModel, Owned?) {
         switch choice.server {
         case .lmStudio:
             let (endpoint, loadedByUs) = try await lmStudio.prepare(choice.modelID)
             return (endpoint, loadedByUs ? .lmStudioModel(choice.modelID) : nil)
         case .vmlx:
             return (try await VMLXServer.shared.prepare(choice.modelID), .vmlx)
+        case .builtIn:
+            return (try await BuiltInChatModel.load(choice.modelID), .builtIn)
         }
     }
 
@@ -168,6 +174,8 @@ final class LocalModelLifecycle {
             await lmStudio.unload(id)
         case .vmlx:
             if stoppingServer { await VMLXServer.shared.stopOrSleep() } else { await VMLXServer.shared.sleep() }
+        case .builtIn:
+            BuiltInChatModel.releaseMemory()
         case nil:
             // A server Bilge started and already put to sleep is still running.
             if stoppingServer { await VMLXServer.shared.stop() }
