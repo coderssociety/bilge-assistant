@@ -53,6 +53,7 @@ struct GeneralSettingsView: View {
                     ForEach(AssistantSettings.eventAlertLeadChoices, id: \.self) { Text("\($0) dakika").tag($0) }
                 }
                 .disabled(!settings.proactiveAlertsEnabled)
+                Toggle("Günün ilk “günaydın”ında günün özetini söyle", isOn: $settings.morningBriefingEnabled)
                 Text("Yalnızca dinleme açıkken ve Takvim/Anımsatıcılar izni verilmişse çalışır.")
                     .font(.caption).foregroundStyle(.secondary)
             }

@@ -66,6 +66,7 @@ enum ToolCheck {
             await checkMemoryInConversation(tools: tools, memory: memory, &report)
             await checkContext(router, registry.context, &report)
             await checkBrowser(router, &report)
+            await checkBriefing(router, &report)
             if arguments.contains(excelFlag) { await checkExcel(router, &report) }
             if arguments.contains(dictationFlag) { await checkDictation(&report) }
         } catch {
@@ -397,6 +398,29 @@ enum ToolCheck {
         let expected = "Merhaba, nasılsın?\nÜçüncü deneme"
         report.check("dikte", typed == expected && !session.isActive && finished == "Dikte bitti.",
                      "yazılan: \(typed.replacingOccurrences(of: "\n", with: "⏎")) · bitiş: \(finished)")
+    }
+
+    /// Runs the summary for real (it only reads); the "already briefed today" mark is put back after.
+    private static func checkBriefing(_ router: CommandRouter, _ report: inout Report) async {
+        let markKey = "lastMorningBriefing"
+        let mark = UserDefaults.standard.object(forKey: markKey)
+        defer { UserDefaults.standard.set(mark, forKey: markKey) }
+        let started = Date()
+        do {
+            guard case let .tool(call) = try await router.route("Günün özeti", previous: nil), call.toolName == "dailyBriefing" else {
+                report.check("günlük özet", false, "Günün özeti → yanlış yönlendirildi")
+                return
+            }
+            let text = try await call.execute()
+            let greets = ["Günaydın.", "İyi günler.", "İyi akşamlar."].contains { text.hasPrefix($0) }
+            report.check("günlük özet", greets, String(format: "%.2f sn · %@", Date().timeIntervalSince(started), text))
+        } catch {
+            report.check("günlük özet", false, "\(error)")
+        }
+        let afternoon = try? await router.route("Günaydın", previous: nil)
+        let greetingRoute = if case let .tool(call)? = afternoon { call.toolName } else { "conversation" }
+        let isMorning = Calendar.current.component(.hour, from: .now) < 12
+        report.check("günlük özet", isMorning || greetingRoute != "dailyBriefing", "öğleden sonra 'Günaydın' → \(greetingRoute)")
     }
 
     private static func checkAlerts(_ report: inout Report) async {

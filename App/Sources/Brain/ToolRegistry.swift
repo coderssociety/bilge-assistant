@@ -66,6 +66,7 @@ struct ToolRegistry {
             ContextTool(context: context),
             BrowserTool(),
             DictationTool(session: dictation),
+            BriefingTool(),
         ]
     }
 }

@@ -23,6 +23,7 @@ final class AssistantSettings {
         static let onboardingCompleted = "onboardingCompleted"
         static let proactiveAlertsEnabled = "proactiveAlertsEnabled"
         static let eventAlertLeadMinutes = "eventAlertLeadMinutes"
+        static let morningBriefingEnabled = BriefingTool.enabledKey
     }
 
     static let eventAlertLeadChoices = [5, 10, 15, 30]
@@ -54,6 +55,8 @@ final class AssistantSettings {
     /// Speak upcoming calendar events and reminders that come due, while listening is on.
     var proactiveAlertsEnabled: Bool { didSet { defaults.set(proactiveAlertsEnabled, forKey: Key.proactiveAlertsEnabled) } }
     var eventAlertLeadMinutes: Int { didSet { defaults.set(eventAlertLeadMinutes, forKey: Key.eventAlertLeadMinutes) } }
+    /// The first "günaydın" of the day is answered with the day's summary.
+    var morningBriefingEnabled: Bool { didSet { defaults.set(morningBriefingEnabled, forKey: Key.morningBriefingEnabled) } }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -73,6 +76,7 @@ final class AssistantSettings {
         onboardingCompleted = defaults.bool(forKey: Key.onboardingCompleted)
         proactiveAlertsEnabled = defaults.object(forKey: Key.proactiveAlertsEnabled) as? Bool ?? true
         eventAlertLeadMinutes = defaults.object(forKey: Key.eventAlertLeadMinutes) as? Int ?? 10
+        morningBriefingEnabled = defaults.object(forKey: Key.morningBriefingEnabled) as? Bool ?? true
     }
 
     /// Maps the 0...1 sensitivity slider onto the matcher's similarity threshold (0.9 strict ... 0.65 loose).

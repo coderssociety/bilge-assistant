@@ -41,6 +41,21 @@ actor CalendarAccess {
         }
     }
 
+    /// Incomplete reminders due by `date`, overdue ones included, earliest first.
+    func dueReminderTitles(until date: Date) async throws -> [String] {
+        try await requireReminders()
+        let predicate = store.predicateForIncompleteReminders(withDueDateStarting: nil, ending: date, calendars: nil)
+        return await withCheckedContinuation { continuation in
+            store.fetchReminders(matching: predicate) { reminders in
+                let dated = (reminders ?? []).compactMap { reminder -> (Date, String)? in
+                    guard let title = reminder.title, let due = reminder.dueDateComponents.flatMap(Calendar.current.date(from:)) else { return nil }
+                    return (due, title)
+                }
+                continuation.resume(returning: dated.sorted { $0.0 < $1.0 }.map(\.1))
+            }
+        }
+    }
+
     /// Marks the incomplete reminder best matching `query` as done; returns its title, or nil if none matched.
     func completeReminder(matching query: String) async throws -> String? {
         try await requireReminders()
