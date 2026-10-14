@@ -36,4 +36,18 @@ struct TurkishSpeechNormalizerTests {
     func stripsMarkdown() {
         #expect(TurkishSpeechNormalizer.normalize("**Önemli:** `ls` komutu") == "Önemli: ls komutu")
     }
+
+    @Test("strips emphasis and emoji but keeps word-internal symbols", arguments: [
+        ("En bilinen romanı *Kürk Mantolu Madonna*.", "En bilinen romanı Kürk Mantolu Madonna."),
+        ("Ankara başkent oldu. 🇹🇷", "Ankara başkent oldu."),
+        ("Mona Lisa'yı Leonardo da Vinci çizdi. 🎨😊", "Mona Lisa'yı Leonardo da Vinci çizdi."),
+        ("Teşekkürler ❤️ görüşürüz 👨‍👩‍👧", "Teşekkürler görüşürüz"),
+        ("dosya_adi.txt hazır", "dosya_adi.txt hazır"),
+        ("7 * 24 eder", "yedi * yirmi dört eder"),
+        ("3*(4+5) kaç", "üç*(dört+beş) kaç"),
+        ("_önemli_ not", "önemli not"),
+    ])
+    func stripsEmphasisAndEmoji(input: String, expected: String) {
+        #expect(TurkishSpeechNormalizer.normalize(input) == expected)
+    }
 }
