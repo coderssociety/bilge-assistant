@@ -102,4 +102,36 @@ struct ConversationFlowTests {
         flow.responseFinished(at: start, allowFollowUp: false)
         #expect(flow.phase == .listeningForWake)
     }
+
+    @Test("a work session keeps listening longer but only for what it accepts")
+    func workSession() {
+        var flow = makeFlow()
+        _ = flow.heard("Asistan, D3'e B2 ile B1'i topla", at: start)
+        flow.responseStarted()
+        let session = ConversationFlow.WorkSession(window: 40) { $0.contains("topla") || $0.contains("yaz") }
+        flow.responseFinished(at: start, allowFollowUp: false, session: session)
+        #expect(flow.phase == .followUp(deadline: start.addingTimeInterval(40)))
+        // Chatter in the room is ignored and does not end the session.
+        #expect(flow.heard("akşam ne yiyoruz", at: start.addingTimeInterval(5)) == .none)
+        #expect(flow.isAwaitingSpeech)
+        #expect(flow.heard("C5'e 1250 yaz", at: start.addingTimeInterval(8)) == .runCommand("C5'e 1250 yaz"))
+    }
+
+    @Test("in a work session the wake phrase still reaches everything")
+    func workSessionWakePhrase() {
+        var flow = makeFlow()
+        flow.responseStarted()
+        flow.responseFinished(at: start, allowFollowUp: false, session: .init(window: 40) { _ in false })
+        #expect(flow.heard("Asistan, saat kaç", at: start.addingTimeInterval(3)) == .runCommand("saat kaç"))
+    }
+
+    @Test("ignored speech in a work session does not keep the window open past its deadline")
+    func workSessionExpires() {
+        var flow = makeFlow()
+        flow.responseStarted()
+        flow.responseFinished(at: start, allowFollowUp: false, session: .init(window: 40) { _ in false })
+        flow.speechStarted(at: start.addingTimeInterval(39))
+        #expect(flow.heard("bir şeyler", at: start.addingTimeInterval(41)) == .none)
+        #expect(flow.tick(at: start.addingTimeInterval(41)) == .returnToIdle(timedOut: false))
+    }
 }

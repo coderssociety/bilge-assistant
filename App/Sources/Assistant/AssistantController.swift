@@ -347,8 +347,9 @@ final class AssistantController {
         segmenter.reset()
         isAudioSuspended = false
         let allowFollowUp = pendingBargeCommand != nil || (!stoppedByUser && settings.followUpEnabled)
+        let session = stoppedByUser ? nil : handler.workSession
         stoppedByUser = false
-        flow.responseFinished(at: .now, allowFollowUp: allowFollowUp)
+        flow.responseFinished(at: .now, allowFollowUp: allowFollowUp, session: session)
         if !flow.isAwaitingSpeech { handler.endConversation() }
         status = flow.isAwaitingSpeech ? .awake : .listening
         if let command = pendingBargeCommand {

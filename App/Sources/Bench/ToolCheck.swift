@@ -10,6 +10,8 @@ import Synchronization
 @MainActor
 enum ToolCheck {
     static let flag = "--bench-tools"
+    /// Also edits a new, unsaved Excel workbook by voice commands, then closes it without saving.
+    static let excelFlag = "--excel"
 
     private struct Report {
         var lines: [String] = []
@@ -58,6 +60,7 @@ enum ToolCheck {
             await checkReadOnlyTools(router, &report)
             await checkMemory(router, memory, &report)
             await checkMemoryInConversation(tools: tools, memory: memory, &report)
+            if arguments.contains(excelFlag) { await checkExcel(router, &report) }
         } catch {
             report.check("router", false, "başlatılamadı: \(error)")
         }
@@ -222,6 +225,60 @@ enum ToolCheck {
         } catch {
             report.check("hafıza sohbette", false, "\(error)")
         }
+    }
+
+    private static func checkExcel(_ router: CommandRouter, _ report: inout Report) async {
+        do {
+            _ = try await AppleScriptRunner.run("tell application \"Microsoft Excel\" to make new workbook")
+        } catch {
+            report.check("Excel", false, "yeni çalışma kitabı açılamadı: \(error.localizedDescription)")
+            return
+        }
+        try? await Task.sleep(for: .seconds(1))
+        let steps: [(command: String, expected: String, asks: Bool)] = [
+            ("B1'e 10 yaz", "B1: 10.", false),
+            ("B2'ye 20,5 yaz", "B2: 20,5.", false),
+            ("D3'e B2 ile B1'i topla", "D3: 30,5.", false),
+            ("D3'ü oku", "D3: 30,5.", false),
+            ("B10'a B1'den B9'a kadar topla", "B10: 30,5.", false),
+            ("B1'den B2'ye kadar ortalama kaç", "Sonuç 15,25.", false),
+            ("D3'e B2 çarpı 2 yaz", "D3: 41.", true),
+            ("geri al", "Geri aldım, D3: 30,5.", false),
+            ("D3'ü E3'e kopyala", "E3: ", false),
+            ("A1'e Kira Gideri yaz", "A1: Kira Gideri.", false),
+            ("E3'ü sil", "E3 boş.", false),
+            ("B sütununun toplamı kaç", "Sonuç 61.", false),
+            ("D3 eşittir B2 bölü 0", "D3 hata veriyor", true),
+            ("geri al", "Geri aldım, D3: 30,5.", false),
+            ("D4'e B2'nin yüzde yirmi fazlasını hesapla", "D4: 24,6.", true),
+            ("C1'e B1'in iki katını hesapla", "C1: 20.", true),
+        ]
+        for step in steps {
+            let started = Date()
+            do {
+                let route = try await router.route(step.command, previous: nil)
+                guard case let .tool(call) = route, call.toolName == "spreadsheet" else {
+                    let actual = if case let .tool(other) = route { other.toolName } else { "conversation" }
+                    report.check("Excel", false, "\(step.command) → \(actual)")
+                    continue
+                }
+                let asked = call.risk == .needsConfirmation
+                if let question = call.confirmationQuestion { report.lines.append("   soru: \(question)") }
+                let result = try await call.execute()
+                let passed = result.hasPrefix(step.expected) && asked == step.asks
+                report.check("Excel", passed, String(format: "%@ → %@%@ (%.2f sn)", step.command, result,
+                                                     asked ? " [onay istedi]" : "", Date().timeIntervalSince(started)))
+            } catch {
+                report.check("Excel", false, "\(step.command): \(error)")
+            }
+        }
+        let chatter = try? await router.route("akşam ne yiyoruz", previous: nil)
+        if case let .tool(call)? = chatter, call.toolName == "spreadsheet" {
+            report.check("Excel", false, "sohbet Excel'e gitti")
+        } else {
+            report.check("Excel", true, "sohbet Excel komutu sayılmadı")
+        }
+        _ = try? await AppleScriptRunner.run("tell application \"Microsoft Excel\" to close active workbook saving no")
     }
 
     private static func checkAlerts(_ report: inout Report) async {

@@ -19,15 +19,17 @@ final class AssistantBrain: CommandHandling {
     }
     private let context: ConversationContext
     private let memory: MemoryStore
+    private let spreadsheet: SpreadsheetSession
     private let tools: [any AssistantTool]
     private let localModel = LocalModelResponder()
     /// Asks the user before `.needsConfirmation` tools run; without it those tools never run.
     weak var confirmer: (any ConfirmationProviding)?
 
     init(tools: [any AssistantTool], context: ConversationContext = ConversationContext(),
-         memory: MemoryStore = MemoryStore(fileURL: nil)) {
+         memory: MemoryStore = MemoryStore(fileURL: nil), spreadsheet: SpreadsheetSession = SpreadsheetSession()) {
         self.context = context
         self.memory = memory
+        self.spreadsheet = spreadsheet
         self.tools = tools
         do {
             router = try CommandRouter(tools: tools, model: model)
@@ -97,7 +99,16 @@ final class AssistantBrain: CommandHandling {
         }
     }
 
+    /// Excel mode: the window stays open for the next spreadsheet command without the wake phrase.
+    var workSession: ConversationFlow.WorkSession? {
+        guard spreadsheet.isActive else { return nil }
+        return ConversationFlow.WorkSession(window: SpreadsheetSession.window) { command in
+            SpreadsheetCommand.parse(TurkishNumberParser.digitize(command)) != nil || SpreadsheetCommand.mentionsCells(command)
+        }
+    }
+
     func endConversation() {
+        spreadsheet.end()
         conversation = nil
         previousTurn = nil
         localModel.conversationEnded()

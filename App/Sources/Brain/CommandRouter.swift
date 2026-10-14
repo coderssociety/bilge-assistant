@@ -23,6 +23,8 @@ final class CommandRouter {
     /// Chosen by `MemoryIntent` only. Offering them to the model risked "…hatırlat" reminders being
     /// stored as memories, since "hatırla" and "hatırlat" differ by one letter.
     private static let ruleRoutedActions: [MemoryIntent: String] = [.remember: "remember", .forget: "forget", .list: "listMemories"]
+    /// Also chosen by rules only (`SpreadsheetTool.claims`): cell names must never be the model's guess.
+    private static let spreadsheetAction = "spreadsheet"
     private static let actionProperty = "action"
 
     private let model: SystemLanguageModel
@@ -37,7 +39,7 @@ final class CommandRouter {
         self.model = model
         self.tools = Dictionary(tools.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
         fastPath = FastPath(tools: self.tools)
-        let ruleRouted = Set(Self.ruleRoutedActions.values)
+        let ruleRouted = Set(Self.ruleRoutedActions.values).union([Self.spreadsheetAction])
         let modelRouted = tools.filter { !ruleRouted.contains($0.name) }
         let actions = modelRouted.map(\.name) + [Self.conversationAction]
         let actionSchema = DynamicGenerationSchema(name: "Action", anyOf: actions)
@@ -58,6 +60,10 @@ final class CommandRouter {
     }
 
     func route(_ command: String, previous: PreviousTurn?) async throws -> Route {
+        if let spreadsheet = tools[Self.spreadsheetAction] as? SpreadsheetTool, spreadsheet.claims(command) {
+            Log.brain.info("Spreadsheet command")
+            return try await prepare(spreadsheet, prompt: Self.prompt(command, previous: previous), resolvedCommand: command)
+        }
         if let intent = MemoryIntent.parse(command), let tool = Self.ruleRoutedActions[intent].flatMap({ tools[$0] }) {
             Log.brain.info("Memory request: \(tool.name, privacy: .public)")
             // The spoken words are kept as said: digitizing would turn "sabah yedide" into "07:00".

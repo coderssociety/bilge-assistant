@@ -21,7 +21,21 @@ public struct ConversationFlow: Sendable {
         "iptal", "iptal et", "vazgec", "vazgectim", "bos ver", "bosver", "bir sey yok", "yok bir sey", "unut gitsin",
     ]
 
+    /// A stretch of hands-free work, such as editing a spreadsheet: the window stays open longer, and
+    /// without the wake phrase only what `accepts` recognizes is taken as a command, so talk in the
+    /// room is not acted on.
+    public struct WorkSession: Sendable {
+        public let window: TimeInterval
+        public let accepts: @Sendable (String) -> Bool
+
+        public init(window: TimeInterval, accepts: @escaping @Sendable (String) -> Bool) {
+            self.window = window
+            self.accepts = accepts
+        }
+    }
+
     public private(set) var phase: Phase = .listeningForWake
+    private var session: WorkSession?
     public var matcher: WakePhraseMatcher
     public var commandTimeout: TimeInterval
     public var followUpWindow: TimeInterval
@@ -51,10 +65,15 @@ public struct ConversationFlow: Sendable {
             }
             return run(match.command)
         case .awaitingCommand, .followUp:
-            let command = matcher.match(transcript)?.command ?? transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+            let wakeMatch = matcher.match(transcript)
+            let command = wakeMatch?.command ?? transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             let key = TurkishText.folded(command)
             guard !key.isEmpty else { return .none }
+            if case .followUp = phase, let session, wakeMatch == nil, !session.accepts(command), !Self.cancelPhrases.contains(key) {
+                return .none
+            }
             if Self.cancelPhrases.contains(key) {
+                session = nil
                 phase = .listeningForWake
                 return .returnToIdle(timedOut: false)
             }
@@ -76,6 +95,7 @@ public struct ConversationFlow: Sendable {
             phase = .listeningForWake
             return .returnToIdle(timedOut: true)
         case let .followUp(deadline) where now >= deadline:
+            session = nil
             phase = .listeningForWake
             return .returnToIdle(timedOut: false)
         default:
@@ -87,14 +107,20 @@ public struct ConversationFlow: Sendable {
         phase = .responding
     }
 
-    public mutating func responseFinished(at now: Date, allowFollowUp: Bool) {
+    public mutating func responseFinished(at now: Date, allowFollowUp: Bool, session: WorkSession? = nil) {
         speechInProgress = false
-        phase = allowFollowUp ? .followUp(deadline: now.addingTimeInterval(followUpWindow)) : .listeningForWake
+        self.session = session
+        if let session {
+            phase = .followUp(deadline: now.addingTimeInterval(session.window))
+        } else {
+            phase = allowFollowUp ? .followUp(deadline: now.addingTimeInterval(followUpWindow)) : .listeningForWake
+        }
     }
 
     /// Abandons whatever is happening (errors, user stop) and listens for the wake phrase again.
     public mutating func reset() {
         speechInProgress = false
+        session = nil
         phase = .listeningForWake
     }
 

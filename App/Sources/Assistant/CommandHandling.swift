@@ -1,3 +1,4 @@
+import AsistanCore
 import Foundation
 
 /// Streams the spoken reply for one user command; fragments are spoken as soon as they form sentences.
@@ -8,6 +9,12 @@ protocol CommandHandling: AnyObject {
     func endConversation()
     /// The wake phrase was heard; a command is about to follow.
     func conversationWillStart()
+    /// Hands-free work in progress (Excel mode), which keeps listening after the reply.
+    var workSession: ConversationFlow.WorkSession? { get }
+}
+
+extension CommandHandling {
+    var workSession: ConversationFlow.WorkSession? { nil }
 }
 
 /// Placeholder until the language model is wired in: repeats what it heard so the audio loop can be tested.
