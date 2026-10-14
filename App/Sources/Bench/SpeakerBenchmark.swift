@@ -29,7 +29,7 @@ enum SpeakerBenchmark {
             for voice in Supertonic3Voice.allCases {
                 let style = try await Supertonic3ResourceDownloader.loadVoiceStyle(voice)
                 func embed(_ text: String) async throws -> [Float] {
-                    let result = try await manager.synthesize(text: TurkishSpeechNormalizer.normalize(text), language: SpeechOutput.language, style: style)
+                    let result = try await manager.synthesize(text: TurkishSpeechNormalizer.normalize(text), language: AssistantLanguage.turkish.code, style: style)
                     return try await verifier.embedding(of: try converter.resample(result.samples, from: SpeechOutput.sampleRate))
                 }
                 var enroll: [[Float]] = []
@@ -73,7 +73,7 @@ enum SpeakerBenchmark {
         let gate = SpeakerGate(store: VoiceprintStore(fileURL: nil), settings: settings)
         func audio(_ text: String, _ voice: Supertonic3Voice) async throws -> [Float] {
             let style = try await Supertonic3ResourceDownloader.loadVoiceStyle(voice)
-            let result = try await manager.synthesize(text: TurkishSpeechNormalizer.normalize(text), language: SpeechOutput.language, style: style)
+            let result = try await manager.synthesize(text: TurkishSpeechNormalizer.normalize(text), language: AssistantLanguage.turkish.code, style: style)
             return try converter.resample(result.samples, from: SpeechOutput.sampleRate)
         }
         var enrolled: [[Float]] = []

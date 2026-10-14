@@ -1,3 +1,4 @@
+import AsistanCore
 import Foundation
 @preconcurrency import WhisperKit
 
@@ -6,11 +7,16 @@ actor WhisperKitRecognizer: SpeechRecognizer {
     static let modelName = "openai_whisper-large-v3-v20240930_turbo"
 
     nonisolated let engine = RecognizerEngine.whisper
+    private let language: AssistantLanguage
     private var pipeline: WhisperKit?
+
+    init(language: AssistantLanguage) {
+        self.language = language
+    }
 
     private var decodingOptions: DecodingOptions {
         var options = DecodingOptions()
-        options.language = "tr"
+        options.language = language.code
         options.detectLanguage = false
         options.temperature = 0
         options.usePrefillPrompt = true

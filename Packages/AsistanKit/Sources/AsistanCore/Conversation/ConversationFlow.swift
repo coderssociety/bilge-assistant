@@ -20,8 +20,10 @@ public struct ConversationFlow: Sendable {
         case returnToIdle(timedOut: Bool)
     }
 
+    /// Both languages' phrases: none of them means anything else in the other language.
     private static let cancelPhrases: Set<String> = [
         "iptal", "iptal et", "vazgec", "vazgectim", "bos ver", "bosver", "bir sey yok", "yok bir sey", "unut gitsin",
+        "cancel", "never mind", "nevermind", "forget it", "nothing", "that s all", "thats all",
     ]
 
     /// A stretch of hands-free work, such as editing a spreadsheet: the window stays open longer, and

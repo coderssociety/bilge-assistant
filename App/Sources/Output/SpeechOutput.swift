@@ -1,11 +1,10 @@
 import AsistanCore
 import FluidAudio
 
-/// Turkish voice output: normalizes text, synthesizes sentence by sentence with Supertonic-3 and
+/// Voice output in the assistant's language: normalizes text, synthesizes sentence by sentence with Supertonic-3 and
 /// queues each sentence as soon as it is ready, so the first words play while later ones are rendered.
 @MainActor
 final class SpeechOutput {
-    static let language = "tr"
     static let sampleRate: Double = 44_100
 
     private let player = AudioPlayer(sampleRate: sampleRate)
@@ -13,10 +12,12 @@ final class SpeechOutput {
     private var style: Supertonic3VoiceStyle?
     private(set) var voice: Supertonic3Voice
     var speed: Float
+    let language: AssistantLanguage
 
-    init(voice: Supertonic3Voice = .f1, speed: Float = 1.05) {
+    init(voice: Supertonic3Voice = .f1, speed: Float = 1.05, language: AssistantLanguage = .turkish) {
         self.voice = voice
         self.speed = speed
+        self.language = language
     }
 
     var isReady: Bool { manager != nil && style != nil }
@@ -64,10 +65,10 @@ final class SpeechOutput {
     private func enqueue(_ sentence: String) async throws {
         try await prepare()
         guard let manager, let style else { throw Supertonic3Error.notInitialized }
-        let spoken = TurkishSpeechNormalizer.normalize(sentence)
+        let spoken = SpokenText.normalize(sentence, language: language)
         guard !spoken.isEmpty else { return }
         try Task.checkCancellation()
-        let result = try await manager.synthesize(text: spoken, language: Self.language, style: style, speed: speed)
+        let result = try await manager.synthesize(text: spoken, language: language.code, style: style, speed: speed)
         try Task.checkCancellation()
         try player.enqueue(result.samples)
     }

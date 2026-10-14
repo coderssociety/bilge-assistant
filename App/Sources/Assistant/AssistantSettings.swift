@@ -25,11 +25,17 @@ final class AssistantSettings {
         static let eventAlertLeadMinutes = "eventAlertLeadMinutes"
         static let morningBriefingEnabled = BriefingTool.enabledKey
         static let speakerCheckEnabled = "speakerCheckEnabled"
+        static let language = "assistantLanguage"
+        /// The system key that picks the app's localization; set together with `language`.
+        static let appleLanguages = "AppleLanguages"
     }
 
     static let eventAlertLeadChoices = [5, 10, 15, 30]
 
     private let defaults: UserDefaults
+
+    /// Fixed for the app's run: menus follow it too, so switching restarts the app (`chooseLanguage`).
+    let language: AssistantLanguage
 
     var wakePhrase: String { didSet { defaults.set(wakePhrase, forKey: Key.wakePhrase) } }
     /// 0...1 where higher accepts fuzzier matches (more triggers, more false alarms).
@@ -63,9 +69,11 @@ final class AssistantSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        language = Self.storedLanguage(in: defaults)
         wakePhrase = defaults.string(forKey: Key.wakePhrase) ?? AppIdentity.defaultWakePhrase
         wakeSensitivity = defaults.object(forKey: Key.wakeSensitivity) as? Double ?? 0.5
-        recognizer = defaults.string(forKey: Key.recognizer).flatMap(RecognizerEngine.init(rawValue:)) ?? .appleDictation
+        recognizer = defaults.string(forKey: Key.recognizer).flatMap(RecognizerEngine.init(rawValue:))
+            ?? RecognizerFactory.defaultEngine(for: language)
         voice = defaults.string(forKey: Key.voice).flatMap(Supertonic3Voice.init(rawValue:)) ?? .f1
         speechSpeed = defaults.object(forKey: Key.speechSpeed) as? Float ?? 1.05
         followUpEnabled = defaults.object(forKey: Key.followUpEnabled) as? Bool ?? true
@@ -86,6 +94,21 @@ final class AssistantSettings {
     /// Maps the 0...1 sensitivity slider onto the matcher's similarity threshold (0.9 strict ... 0.65 loose).
     var minimumWakeSimilarity: Double {
         0.9 - 0.25 * min(max(wakeSensitivity, 0), 1)
+    }
+
+    /// Saves the language and the matching app localization; it takes effect when the app next starts.
+    func chooseLanguage(_ language: AssistantLanguage) {
+        defaults.set(language.rawValue, forKey: Key.language)
+        defaults.set([language.code], forKey: Key.appleLanguages)
+        // The best recognizer differs by language (see `RecognizerFactory.defaultEngine`).
+        defaults.removeObject(forKey: Key.recognizer)
+    }
+
+    /// Before languages existed everyone who finished setup used Turkish; a new user starts with the Mac's language.
+    private static func storedLanguage(in defaults: UserDefaults) -> AssistantLanguage {
+        if let stored = defaults.string(forKey: Key.language).flatMap(AssistantLanguage.init(rawValue:)) { return stored }
+        if defaults.bool(forKey: Key.onboardingCompleted) { return .turkish }
+        return AssistantLanguage.preferred(from: Locale.preferredLanguages)
     }
 
     func makeWakeMatcher() -> WakePhraseMatcher {

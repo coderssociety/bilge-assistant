@@ -14,6 +14,10 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
+            Section("Dil · Language") {
+                LanguageChoice(settings: settings)
+            }
+
             Section("Uyandırma") {
                 LabeledContent("Uyandırma kelimesi") {
                     TextField("", text: $wakePhraseDraft, prompt: Text(AppIdentity.defaultWakePhrase))

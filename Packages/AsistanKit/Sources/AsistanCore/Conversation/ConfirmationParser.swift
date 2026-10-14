@@ -1,5 +1,6 @@
-/// Interprets the user's spoken answer to "…yapayım mı?". Errs toward `.unclear`: an irreversible
-/// action must only run on a clear yes.
+/// Interprets the user's spoken answer to "…yapayım mı?" / "Shall I…?". Errs toward `.unclear`: an
+/// irreversible action must only run on a clear yes. Each language has its own words; mixing them would
+/// let a folded Turkish word ("süre" → "sure") read as an English yes.
 public enum ConfirmationParser {
     public enum Answer: Sendable, Equatable {
         case confirmed
@@ -7,24 +8,42 @@ public enum ConfirmationParser {
         case unclear
     }
 
-    private static let yesWords: Set<String> = [
-        "evet", "olur", "tamam", "onayliyorum", "onayla", "onay", "gonder", "yap", "tabii", "tabi", "aynen",
-        "kesinlikle", "elbette", "peki", "devam", "sil", "ekle", "calistir",
-    ]
-    private static let noWords: Set<String> = [
-        "hayir", "iptal", "vazgec", "vazgectim", "yok", "istemiyorum", "dur", "durdur", "yapma", "gonderme",
-        "silme", "ekleme", "calistirma", "bosver", "olmaz",
-    ]
-    /// For sending messages: casual words ("tamam", "peki", "yap") from a TV or another person in the
-    /// room must not be enough.
-    private static let strictYesWords: Set<String> = ["evet", "onayliyorum", "onayla", "gonder"]
-    private static let noPhrases = ["bos ver", "gerek yok"]
+    private struct Words {
+        let yes: Set<String>
+        let no: Set<String>
+        /// For sending messages: casual words ("tamam", "okay") from a TV or another person in the room
+        /// must not be enough.
+        let strictYes: Set<String>
+        let noPhrases: [String]
+    }
 
-    public static func parse(_ text: String, strict: Bool = false) -> Answer {
+    private static let turkish = Words(
+        yes: [
+            "evet", "olur", "tamam", "onayliyorum", "onayla", "onay", "gonder", "yap", "tabii", "tabi", "aynen",
+            "kesinlikle", "elbette", "peki", "devam", "sil", "ekle", "calistir",
+        ],
+        no: [
+            "hayir", "iptal", "vazgec", "vazgectim", "yok", "istemiyorum", "dur", "durdur", "yapma", "gonderme",
+            "silme", "ekleme", "calistirma", "bosver", "olmaz",
+        ],
+        strictYes: ["evet", "onayliyorum", "onayla", "gonder"],
+        noPhrases: ["bos ver", "gerek yok"])
+
+    private static let english = Words(
+        yes: [
+            "yes", "yeah", "yep", "yup", "sure", "ok", "okay", "confirm", "confirmed", "send", "go", "proceed",
+            "absolutely", "definitely", "certainly", "delete", "add", "run", "please",
+        ],
+        no: ["no", "nope", "nah", "cancel", "stop", "dont", "abort", "negative", "never"],
+        strictYes: ["yes", "confirm", "confirmed", "send"],
+        noPhrases: ["never mind", "not now", "forget it", "do not"])
+
+    public static func parse(_ text: String, strict: Bool = false, language: AssistantLanguage = .turkish) -> Answer {
+        let table = language == .english ? english : turkish
         let folded = TurkishText.folded(text)
         let words = Set(folded.split(separator: " ").map(String.init))
-        let saysNo = !words.isDisjoint(with: noWords) || noPhrases.contains { folded.contains($0) }
-        let saysYes = !words.isDisjoint(with: strict ? strictYesWords : yesWords)
+        let saysNo = !words.isDisjoint(with: table.no) || table.noPhrases.contains { folded.contains($0) }
+        let saysYes = !words.isDisjoint(with: strict ? table.strictYes : table.yes)
         switch (saysYes, saysNo) {
         case (true, false): return .confirmed
         case (false, true): return .rejected

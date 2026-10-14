@@ -189,7 +189,7 @@ final class AssistantController {
 
         if recognizer?.engine != settings.recognizer {
             status = .loading("Konuşma tanıma modeli yükleniyor…")
-            let recognizer = RecognizerFactory.make(settings.recognizer)
+            let recognizer = RecognizerFactory.make(settings.recognizer, language: settings.language)
             try await recognizer.prepare()
             self.recognizer = recognizer
         }
@@ -210,7 +210,7 @@ final class AssistantController {
         do {
             bargeIn = try await BargeInListener(
                 timeline: speech.playbackTimeline, recognizer: recognizer,
-                detector: BargeInDetector(matcher: settings.makeWakeMatcher()))
+                detector: BargeInDetector(matcher: settings.makeWakeMatcher(), language: settings.language))
         } catch {
             Log.audio.error("Barge-in disabled: \(error.localizedDescription, privacy: .public)")
         }
@@ -270,7 +270,7 @@ final class AssistantController {
                 guard await speakerAllows(segment.samples) else { return }
                 let answer = try await recognizer.transcribe(segment.samples)
                 lastHeard = answer
-                resolveConfirmation(ConfirmationParser.parse(answer, strict: confirmationIsStrict))
+                resolveConfirmation(ConfirmationParser.parse(answer, strict: confirmationIsStrict, language: settings.language))
                 return
             }
             let isWakeCheck = flow.phase == .listeningForWake

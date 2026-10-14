@@ -7,7 +7,9 @@ public struct WakePhraseMatcher: Sendable {
     }
 
     public static let defaultMinimumSimilarity = 0.75
-    private static let fillers: Set<String> = ["hey", "hay", "ey", "hu", "selam", "merhaba", "sey", "alo", "ya"]
+    private static let fillers: Set<String> = [
+        "hey", "hay", "ey", "hu", "selam", "merhaba", "sey", "alo", "ya", "hi", "hello", "ok", "okay", "oh",
+    ]
     private static let maxLeadingFillers = 2
     private static let maxTokensPerPhrase = 3
     /// Room for Turkish vocative/possessive endings: "asistanım", "bilgeciğim".

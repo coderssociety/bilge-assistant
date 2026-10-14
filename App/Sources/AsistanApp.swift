@@ -75,7 +75,7 @@ final class AppEnvironment {
 
     init() {
         let settings = AssistantSettings()
-        let speech = SpeechOutput(voice: settings.voice, speed: settings.speechSpeed)
+        let speech = SpeechOutput(voice: settings.voice, speed: settings.speechSpeed, language: settings.language)
         let announcer = Announcer()
         let timers = TimerService { await announcer.target?.announce($0) }
         let memory = MemoryStore()

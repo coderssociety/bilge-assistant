@@ -4,17 +4,18 @@ import SwiftUI
 /// First-run setup: what the assistant is, permissions, model preparation, conversation model, voice, first command.
 struct OnboardingView: View {
     enum Step: Int, CaseIterable {
-        case welcome, permissions, preparation, model, voice, finish
+        case language, welcome, permissions, preparation, model, voice, finish
     }
 
     let environment: AppEnvironment
     @Environment(\.dismissWindow) private var dismissWindow
-    @State private var step = Step.welcome
+    @State private var step = Step.language
 
     var body: some View {
         VStack(spacing: 0) {
             Group {
                 switch step {
+                case .language: LanguageStep(settings: environment.settings)
                 case .welcome: WelcomeStep()
                 case .permissions: PermissionsStep()
                 case .preparation: PreparationStep(assistant: environment.assistant, brain: environment.brain)
@@ -30,7 +31,7 @@ struct OnboardingView: View {
             HStack {
                 StepDots(current: step)
                 Spacer()
-                if step != .welcome {
+                if step != .language {
                     Button("Geri") { move(by: -1) }
                 }
                 Button(step == .finish ? "Dinlemeye başla" : "Devam", action: advance)
@@ -60,6 +61,18 @@ struct OnboardingView: View {
 
     private func move(by offset: Int) {
         step = Step(rawValue: step.rawValue + offset) ?? step
+    }
+}
+
+private struct LanguageStep: View {
+    let settings: AssistantSettings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Image(systemName: "globe").font(.system(size: 44)).foregroundStyle(.tint)
+            Text("Dil · Language").font(.largeTitle.bold())
+            LanguageChoice(settings: settings)
+        }
     }
 }
 

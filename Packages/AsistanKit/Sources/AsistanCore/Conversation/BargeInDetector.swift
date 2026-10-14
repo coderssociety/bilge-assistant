@@ -8,15 +8,20 @@ public struct BargeInDetector: Sendable {
         case command(String)
     }
 
-    private static let stopWords: Set<String> = [
-        "dur", "durdur", "sus", "yeter", "kes", "tamam", "iptal", "hayir", "bekle", "stop",
+    private static let turkishStopWords: Set<String> = [
+        "dur", "durdur", "sus", "yeter", "kes", "tamam", "iptal", "hayir", "bekle", "stop", "artik",
+    ]
+    private static let englishStopWords: Set<String> = [
+        "stop", "quiet", "enough", "cancel", "wait", "hush", "silence", "okay", "ok", "no", "please", "now",
     ]
     private static let maxStopUtteranceWords = 4
 
     public let matcher: WakePhraseMatcher
+    private let stopWords: Set<String>
 
-    public init(matcher: WakePhraseMatcher) {
+    public init(matcher: WakePhraseMatcher, language: AssistantLanguage = .turkish) {
         self.matcher = matcher
+        stopWords = language == .english ? Self.englishStopWords : Self.turkishStopWords
     }
 
     public func evaluate(heard: String, speaking reply: String) -> Decision {
@@ -33,11 +38,18 @@ public struct BargeInDetector: Sendable {
         let text = remaining.joined(separator: " ")
         if let match = matcher.match(text) {
             let rest = TurkishText.folded(match.command).split(separator: " ").map(String.init)
-            if rest.isEmpty || rest.allSatisfy({ Self.stopWords.contains($0) || $0 == "artik" }) { return .stop }
+            if rest.isEmpty || rest.allSatisfy(stopWords.contains) { return .stop }
             return .command(match.command)
         }
         let keys = remaining.map { TurkishText.folded($0) }
-        if keys.count <= Self.maxStopUtteranceWords, keys.contains(where: Self.stopWords.contains) { return .stop }
+        if keys.count <= Self.maxStopUtteranceWords, keys.contains(where: Self.isStop(in: stopWords)) { return .stop }
         return .none
     }
+
+    /// Filler words such as "artık" or "please" end a stop only together with a real stop word.
+    private static func isStop(in words: Set<String>) -> (String) -> Bool {
+        { words.contains($0) && !fillerOnly.contains($0) }
+    }
+
+    private static let fillerOnly: Set<String> = ["artik", "please", "now", "okay", "ok", "no"]
 }

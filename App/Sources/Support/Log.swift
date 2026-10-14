@@ -8,4 +8,5 @@ enum Log {
     static let wake = Logger(subsystem: subsystem, category: "wake")
     static let brain = Logger(subsystem: subsystem, category: "brain")
     static let tools = Logger(subsystem: subsystem, category: "tools")
+    static let app = Logger(subsystem: subsystem, category: "app")
 }

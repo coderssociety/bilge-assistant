@@ -1,16 +1,24 @@
 @preconcurrency import AVFoundation
+import AsistanCore
 import Speech
 
-/// Apple's on-device dictation model. macOS 27's SpeechTranscriber has no Turkish, DictationTranscriber does.
+/// Apple's on-device dictation model. macOS 27's SpeechTranscriber has no Turkish, DictationTranscriber has both
+/// languages. In English it rarely hears a Turkish-pronounced "Bilge" ("Bill", "Build"), even with the word
+/// given as context, so English defaults to Whisper.
 actor AppleDictationRecognizer: SpeechRecognizer {
     nonisolated let engine = RecognizerEngine.appleDictation
+    private let language: AssistantLanguage
     private var locale: Locale?
+
+    init(language: AssistantLanguage) {
+        self.language = language
+    }
     private var analyzerFormat: AVAudioFormat?
 
     func prepare() async throws {
         guard locale == nil else { return }
         try await Self.ensureAuthorized()
-        guard let supported = await DictationTranscriber.supportedLocale(equivalentTo: Locale(identifier: "tr-TR")) else {
+        guard let supported = await DictationTranscriber.supportedLocale(equivalentTo: language.locale) else {
             throw RecognizerError.localeUnsupported
         }
         let transcriber = Self.makeTranscriber(locale: supported)

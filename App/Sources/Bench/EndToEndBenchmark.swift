@@ -160,7 +160,7 @@ enum EndToEndBenchmark {
         for line in script {
             audio += [Float](repeating: 0, count: Int(line.pauseBefore * rate))
             let spoken = TurkishSpeechNormalizer.normalize(line.text)
-            let result = try await manager.synthesize(text: spoken, language: SpeechOutput.language, style: style)
+            let result = try await manager.synthesize(text: spoken, language: AssistantLanguage.turkish.code, style: style)
             audio += try converter.resample(result.samples, from: SpeechOutput.sampleRate)
             endTimes.append((Double(audio.count) / rate, line))
         }

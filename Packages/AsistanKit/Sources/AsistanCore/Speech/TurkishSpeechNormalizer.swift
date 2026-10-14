@@ -6,7 +6,7 @@ public enum TurkishSpeechNormalizer {
     private static let maxReadableDigits = 15
 
     public static func normalize(_ text: String) -> String {
-        var result = stripMarkdown(text)
+        var result = SpokenText.withoutMarkup(text)
         result = replaceDates(result)
         result = replaceTimes(result)
         result = replace(#"%\s?(?=\d)"#, in: result) { _ in "yüzde " }
@@ -27,17 +27,6 @@ public enum TurkishSpeechNormalizer {
         return result
             .replacingOccurrences(of: #"[ \t]{2,}"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// Markdown and emoji, which conversation models add despite being told not to; TTS would read them out.
-    private static func stripMarkdown(_ text: String) -> String {
-        var result = text.replacingOccurrences(of: #"\*\*|__|`"#, with: "", options: .regularExpression)
-        result = result.replacingOccurrences(of: #"(?m)^\s*(#{1,6}|[-*•])\s+"#, with: "", options: .regularExpression)
-        result = result.replacingOccurrences(of: #"(?<![\p{L}\d*_])([*_])(?=\S)(.+?)(?<=\S)\1(?![\p{L}\d*_])"#,
-                                             with: "$2", options: .regularExpression)
-        result = result.replacingOccurrences(of: #"[\p{Extended_Pictographic}\p{Regional_Indicator}\x{FE0F}\x{200D}\x{20E3}]+"#,
-                                             with: "", options: .regularExpression)
-        return result
     }
 
     private static func replaceDates(_ text: String) -> String {

@@ -2,7 +2,8 @@ import AsistanCore
 import FluidAudio
 import Foundation
 
-/// Headless ASR comparison: `Asistan --bench-asr <corpus.txt> <output-dir>`.
+/// Headless ASR comparison: `Asistan --bench-asr <corpus.txt> <output-dir> [--language en] [--voice-language tr]`.
+/// `--voice-language` synthesizes in another language than the recognizer's, e.g. a Turkish "Bilge" heard in English.
 /// Utterances are synthesized with Supertonic (clean studio-like audio), so absolute WER is optimistic;
 /// the result is for ranking engines, not for promising real-world accuracy.
 @MainActor
@@ -38,17 +39,21 @@ enum ASRBenchmark {
             print("Kullanım: Asistan \(flag) <komutlar.txt> <çıktı-klasörü>")
             return 2
         }
+        let language = languageArgument(arguments)
         let corpusURL = URL(filePath: arguments[index + 1])
         let outputURL = URL(filePath: arguments[index + 2], directoryHint: .isDirectory)
         do {
             let references = try String(contentsOf: corpusURL, encoding: .utf8)
                 .split(whereSeparator: \.isNewline).map(String.init).filter { !$0.isEmpty }
             print("Sentetik ses üretiliyor: \(references.count) komut × \(voices.count) ses")
-            let samples = try await synthesize(references)
+            let voiceLanguage = arguments.firstIndex(of: "--voice-language").flatMap { index in
+                arguments.indices.contains(index + 1) ? AssistantLanguage(rawValue: arguments[index + 1]) : nil
+            } ?? language
+            let samples = try await synthesize(references, language: voiceLanguage)
             var reports: [EngineReport] = []
             for engine in RecognizerEngine.allCases {
                 print("Ölçülüyor: \(engine.displayName)")
-                reports.append(try await evaluate(RecognizerFactory.make(engine), on: samples))
+                reports.append(try await evaluate(RecognizerFactory.make(engine, language: language), on: samples, language: language))
             }
             try write(reports, to: outputURL)
             return 0
@@ -58,7 +63,13 @@ enum ASRBenchmark {
         }
     }
 
-    private static func synthesize(_ references: [String]) async throws -> [Sample] {
+    /// `--language en`; Turkish when absent.
+    static func languageArgument(_ arguments: [String]) -> AssistantLanguage {
+        guard let index = arguments.firstIndex(of: "--language"), arguments.count > index + 1 else { return .turkish }
+        return AssistantLanguage(rawValue: arguments[index + 1]) ?? .turkish
+    }
+
+    private static func synthesize(_ references: [String], language: AssistantLanguage) async throws -> [Sample] {
         let manager = try await Supertonic3Manager.downloadAndCreate()
         let converter = AudioConverter()
         var generator = SystemRandomNumberGenerator()
@@ -66,8 +77,8 @@ enum ASRBenchmark {
         for voice in voices {
             let style = try await Supertonic3ResourceDownloader.loadVoiceStyle(voice)
             for reference in references {
-                let spoken = TurkishSpeechNormalizer.normalize(reference)
-                let result = try await manager.synthesize(text: spoken, language: SpeechOutput.language, style: style)
+                let spoken = SpokenText.normalize(reference, language: language)
+                let result = try await manager.synthesize(text: spoken, language: language.code, style: style)
                 let audio16k = try converter.resample(result.samples, from: SpeechOutput.sampleRate)
                 samples.append(Sample(reference: reference, voice: voice.rawValue,
                                       audio: padded(audio16k, generator: &generator)))
@@ -82,7 +93,9 @@ enum ASRBenchmark {
         return framed.map { $0 + Float.random(in: -noiseAmplitude...noiseAmplitude, using: &generator) }
     }
 
-    private static func evaluate(_ recognizer: any SpeechRecognizer, on samples: [Sample]) async throws -> EngineReport {
+    private static func evaluate(
+        _ recognizer: any SpeechRecognizer, on samples: [Sample], language: AssistantLanguage
+    ) async throws -> EngineReport {
         let prepareStart = Date()
         try await recognizer.prepare()
         let prepareSeconds = Date.now.timeIntervalSince(prepareStart)
@@ -95,7 +108,7 @@ enum ASRBenchmark {
             let started = Date()
             let hypothesis = try await recognizer.transcribe(sample.audio)
             latencies.append(Date.now.timeIntervalSince(started))
-            let score = WordErrorRate.compute(reference: sample.reference, hypothesis: hypothesis)
+            let score = WordErrorRate.compute(reference: sample.reference, hypothesis: hypothesis, language: language)
             scores.append(score)
             if score.errors > 0 {
                 failures.append(Failure(voice: sample.voice, reference: sample.reference, hypothesis: hypothesis))

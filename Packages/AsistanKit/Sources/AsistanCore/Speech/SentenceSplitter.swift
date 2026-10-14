@@ -1,12 +1,13 @@
 import Foundation
 
-/// Splits Turkish text into sentence-sized pieces so speech can start before the whole reply is synthesized.
+/// Splits text into sentence-sized pieces so speech can start before the whole reply is synthesized.
 public enum SentenceSplitter {
     public static let defaultMaxLength = 160
 
     private static let terminators: Set<Character> = [".", "!", "?", "…"]
     private static let abbreviations: Set<String> = [
         "dr", "prof", "doç", "av", "sn", "vb", "vs", "örn", "bkz", "no", "st", "cad", "sok", "mah", "apt", "yy",
+        "mr", "mrs", "ms", "jr", "sr", "etc", "approx", "ave", "rd", "vol", "fig",
     ]
 
     public static func split(_ text: String, maxLength: Int = defaultMaxLength) -> [String] {
