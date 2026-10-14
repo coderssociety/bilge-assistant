@@ -1,3 +1,4 @@
+import AsistanCore
 import AppKit
 import FoundationModels
 
@@ -5,6 +6,8 @@ import FoundationModels
 @MainActor
 final class ConversationContext {
     var lastReply: String?
+    /// What was on screen when the current command was heard, read only for commands that point ("bunu").
+    var screen: ScreenContext?
 }
 
 struct CopyToClipboardTool: AssistantTool {

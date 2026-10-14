@@ -56,12 +56,13 @@ struct ToolRegistry {
             NewsTool(),
             ReadWebPageTool(),
             ReadMailTool(),
-            SendEmailTool(),
-            SendMessageTool(),
+            SendEmailTool(context: context),
+            SendMessageTool(context: context),
             RememberTool(memory: memory, context: context),
             ForgetTool(memory: memory),
             ListMemoriesTool(memory: memory),
             SpreadsheetTool(session: spreadsheet),
+            ContextTool(context: context),
         ]
     }
 }

@@ -123,6 +123,8 @@ final class AssistantBrain: CommandHandling {
             continuation.yield(unavailableReason ?? "Dil modeli kullanılamıyor.")
             return
         }
+        // "Bunu Ahmet'e gönder": what was on screen when the command was heard, read only when it points.
+        context.screen = ContextIntent.points(command) ? await ScreenContextReader.snapshot() : nil
         if let parts = CompoundCommand.split(command) {
             try await handleCompound(command, parts: parts, router: router, continuation: continuation)
             return

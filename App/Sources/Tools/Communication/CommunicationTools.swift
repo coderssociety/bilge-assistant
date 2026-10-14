@@ -33,10 +33,48 @@ struct Recipient: Sendable {
     }
 }
 
+/// What a message carries: the words as said, or, when they only point ("bunu gönder"), what is on
+/// screen: the selected text, the page's title and address, or the selected files as attachments.
+struct MessageContent: Sendable {
+    let body: String
+    let attachments: [URL]
+
+    private static let maxPointedText = 2000
+    private static let maxAttachments = 5
+
+    static func resolve(_ said: String, context: ConversationContext) async -> MessageContent? {
+        let trimmed = said.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard ContextIntent.onlyPoints(trimmed) else { return MessageContent(body: trimmed, attachments: []) }
+        let item = await MainActor.run {
+            context.screen.flatMap { ContextResolver.resolve(ContextIntent.wantedKind(in: trimmed), in: $0) }
+        }
+        switch item {
+        case let .text(text)?:
+            return MessageContent(body: String(text.prefix(maxPointedText)), attachments: [])
+        case let .page(url, title)?:
+            return MessageContent(body: [title, url.absoluteString].compactMap { $0 }.joined(separator: "\n"), attachments: [])
+        case let .files(urls)?:
+            let files = urls.filter { (try? $0.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true }
+            return files.isEmpty ? nil : MessageContent(body: "", attachments: Array(files.prefix(maxAttachments)))
+        case let .document(url)?:
+            return MessageContent(body: "", attachments: [url])
+        case nil:
+            return nil
+        }
+    }
+
+    /// "rapor.pdf" or "rapor.pdf ve 2 dosya daha", for the confirmation question.
+    var spokenAttachments: String? {
+        guard let first = attachments.first else { return nil }
+        return attachments.count == 1 ? first.lastPathComponent : "\(first.lastPathComponent) ve \(attachments.count - 1) dosya daha"
+    }
+}
+
 struct SendEmailTool: AssistantTool {
     let name = "sendEmail"
     let description = "Mail uygulamasıyla birine e-posta gönderir; göndermeden önce kime ne gideceğini okuyup onay ister."
     let risk = ToolRisk.needsConfirmation
+    let context: ConversationContext
 
     @Generable
     struct Arguments {
@@ -44,13 +82,16 @@ struct SendEmailTool: AssistantTool {
         var recipient: String
         @Guide(description: "Konu; söylenmediyse boş bırak")
         var subject: String?
-        @Guide(description: "E-postanın metni, kullanıcının ağzından birinci tekil şahısla: 'yarın gelemeyeceğimi yaz' → 'Yarın gelemeyeceğim.'")
+        @Guide(description: "E-postanın metni, kullanıcının ağzından birinci tekil şahısla: 'yarın gelemeyeceğimi yaz' → 'Yarın gelemeyeceğim.'; 'bunu gönder' deniyorsa 'bunu'")
         var body: String
     }
 
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
-        let body = arguments.body.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !body.isEmpty else { return .unavailable(name, message: "E-postada ne yazmamı istediğini söylemedin.") }
+        guard let content = await MessageContent.resolve(arguments.body, context: context),
+              !content.body.isEmpty || !content.attachments.isEmpty else {
+            return .unavailable(name, message: "E-postada ne göndermemi istediğini anlayamadım. Bir metni ya da dosyayı seçip 'bunu gönder' diyebilirsin.")
+        }
+        let body = content.body
         let recipient: Recipient?
         do {
             recipient = try await Recipient.resolve(arguments.recipient, as: .email)
@@ -60,26 +101,39 @@ struct SendEmailTool: AssistantTool {
         guard let recipient else {
             return .unavailable(name, message: "\(arguments.recipient) için kayıtlı bir e-posta adresi bulamadım.")
         }
-        let subject = arguments.subject?.trimmingCharacters(in: .whitespaces).nilIfEmpty ?? Self.subject(from: body)
+        let subject = arguments.subject?.trimmingCharacters(in: .whitespaces).nilIfEmpty
+            ?? (body.isEmpty ? content.attachments.first?.deletingPathExtension().lastPathComponent ?? "" : Self.subject(from: body))
+        let attached = content.spokenAttachments.map { ", ekinde \($0)" } ?? ""
+        let preview = body.isEmpty ? "" : ": \(Recipient.preview(body))"
         return PreparedToolCall(
             toolName: name,
-            argumentsDescription: "to: \(recipient.address), subject: \(subject)",
+            argumentsDescription: "to: \(recipient.address), subject: \(subject), attachments: \(content.attachments.count)",
             risk: risk,
-            confirmationQuestion: "\(recipient.name), \(recipient.address) adresine \"\(subject)\" konulu e-postayı gönderiyorum: \(Recipient.preview(body)) Göndermem için evet ya da gönder de.",
+            confirmationQuestion: "\(recipient.name), \(recipient.address) adresine \"\(subject)\" konulu e-postayı gönderiyorum\(attached)\(preview). Göndermem için evet ya da gönder de.",
             requiresExplicitYes: true,
-            execute: { await Self.send(to: recipient, subject: subject, body: body) })
+            execute: { await Self.send(to: recipient, subject: subject, body: body, attachments: content.attachments) })
     }
 
     func call(arguments: Arguments) async throws -> String {
         ToolReply.failure("E-posta yalnızca onayla gönderilir.")
     }
 
-    private static func send(to recipient: Recipient, subject: String, body: String) async -> String {
+    /// Mail needs a moment to take in attachments before it sends.
+    private static let attachmentSettleSeconds = 2
+
+    private static func send(to recipient: Recipient, subject: String, body: String, attachments: [URL]) async -> String {
+        let attaching = attachments.map { file in
+            "make new attachment with properties {file name:(POSIX file \(AppleScriptRunner.quoted(file.path)) as alias)} at after the last paragraph"
+        }.joined(separator: "\n")
         do {
             try await AppleScriptRunner.runToCompletion("""
             tell application "Mail"
-            set newMessage to make new outgoing message with properties {subject:\(AppleScriptRunner.quoted(subject)), content:\(AppleScriptRunner.quoted(body)), visible:false}
-            tell newMessage to make new to recipient at end of to recipients with properties {address:\(AppleScriptRunner.quoted(recipient.address))}
+            set newMessage to make new outgoing message with properties {subject:\(AppleScriptRunner.quoted(subject)), content:\(AppleScriptRunner.quoted(body.isEmpty ? " " : body)), visible:false}
+            tell newMessage
+            make new to recipient at end of to recipients with properties {address:\(AppleScriptRunner.quoted(recipient.address))}
+            \(attaching)
+            end tell
+            \(attachments.isEmpty ? "" : "delay \(attachmentSettleSeconds)")
             send newMessage
             end tell
             """)
@@ -99,18 +153,22 @@ struct SendMessageTool: AssistantTool {
     let name = "sendMessage"
     let description = "Mesajlar uygulamasıyla birine iMessage gönderir; göndermeden önce kime ne gideceğini okuyup onay ister."
     let risk = ToolRisk.needsConfirmation
+    let context: ConversationContext
 
     @Generable
     struct Arguments {
         @Guide(description: "Alıcının eksiz adı ya da telefon numarası: 'Ayşe'ye' → 'Ayşe'")
         var recipient: String
-        @Guide(description: "Mesajın metni, kullanıcının ağzından birinci tekil şahısla: 'geç kalacağımı yaz' → 'Geç kalacağım.'")
+        @Guide(description: "Mesajın metni, kullanıcının ağzından birinci tekil şahısla: 'geç kalacağımı yaz' → 'Geç kalacağım.'; 'bunu gönder' deniyorsa 'bunu'")
         var text: String
     }
 
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
-        let text = arguments.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return .unavailable(name, message: "Mesajda ne yazmamı istediğini söylemedin.") }
+        guard let content = await MessageContent.resolve(arguments.text, context: context),
+              !content.body.isEmpty || !content.attachments.isEmpty else {
+            return .unavailable(name, message: "Mesajda ne göndermemi istediğini anlayamadım. Bir metni ya da dosyayı seçip 'bunu gönder' diyebilirsin.")
+        }
+        let text = content.body
         let recipient: Recipient?
         do {
             recipient = try await Recipient.resolve(arguments.recipient, as: .phone)
@@ -124,21 +182,24 @@ struct SendMessageTool: AssistantTool {
             toolName: name,
             argumentsDescription: "to: \(recipient.address)",
             risk: risk,
-            confirmationQuestion: "\(recipient.name), \(recipient.address) için iMessage ile şunu gönderiyorum: \(Recipient.preview(text)) Göndermem için evet ya da gönder de.",
+            confirmationQuestion: "\(recipient.name), \(recipient.address) için iMessage ile \(content.spokenAttachments.map { "\($0) dosyasını " } ?? "")\(text.isEmpty ? "" : "şunu ")gönderiyorum\(text.isEmpty ? "" : ": \(Recipient.preview(text))"). Göndermem için evet ya da gönder de.",
             requiresExplicitYes: true,
-            execute: { await Self.send(to: recipient, text: text) })
+            execute: { await Self.send(to: recipient, text: text, attachments: content.attachments) })
     }
 
     func call(arguments: Arguments) async throws -> String {
         ToolReply.failure("Mesaj yalnızca onayla gönderilir.")
     }
 
-    private static func send(to recipient: Recipient, text: String) async -> String {
+    private static func send(to recipient: Recipient, text: String, attachments: [URL]) async -> String {
+        let sends = attachments.map { "send (POSIX file \(AppleScriptRunner.quoted($0.path))) to targetBuddy" }
+            + (text.isEmpty ? [] : ["send \(AppleScriptRunner.quoted(text)) to targetBuddy"])
         do {
             try await AppleScriptRunner.runToCompletion("""
             tell application "Messages"
             set targetService to 1st account whose service type = iMessage
-            send \(AppleScriptRunner.quoted(text)) to participant \(AppleScriptRunner.quoted(recipient.address)) of targetService
+            set targetBuddy to participant \(AppleScriptRunner.quoted(recipient.address)) of targetService
+            \(sends.joined(separator: "\n"))
             end tell
             """)
             return "Mesaj \(recipient.name) kişisine gönderildi."

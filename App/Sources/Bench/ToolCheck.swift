@@ -53,13 +53,15 @@ enum ToolCheck {
         await checkAppleScript(&report)
         await checkWebSafety(&report)
         let memory = MemoryStore(fileURL: nil)
-        let tools = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }, memory: memory).makeTools()
+        let registry = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }, memory: memory)
+        let tools = registry.makeTools()
         do {
             let router = try CommandRouter(tools: tools)
             router.prewarm()
             await checkReadOnlyTools(router, &report)
             await checkMemory(router, memory, &report)
             await checkMemoryInConversation(tools: tools, memory: memory, &report)
+            await checkContext(router, registry.context, &report)
             if arguments.contains(excelFlag) { await checkExcel(router, &report) }
         } catch {
             report.check("router", false, "başlatılamadı: \(error)")
@@ -279,6 +281,45 @@ enum ToolCheck {
             report.check("Excel", true, "sohbet Excel komutu sayılmadı")
         }
         _ = try? await AppleScriptRunner.run("tell application \"Microsoft Excel\" to close active workbook saving no")
+    }
+
+    /// What "bu" refers to, with the screen given rather than read, so the check does not depend on
+    /// which app happens to be in front.
+    private static func checkContext(_ router: CommandRouter, _ context: ConversationContext, _ report: inout Report) async {
+        let document = FileManager.default.temporaryDirectory.appending(path: "bilge-baglam-denemesi.txt")
+        try? "Toplantı perşembeye ertelendi. Bütçe onaylandı.".write(to: document, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: document) }
+        let cases: [(command: String, screen: ScreenContext, tool: String, expect: (String) -> Bool)] = [
+            ("Bu sayfayı özetle", ScreenContext(pageURL: URL(string: "https://example.com")!, pageTitle: "Example"), "useContext",
+             { $0.contains("Example Domain") }),
+            ("Bu belgede ne yazıyor", ScreenContext(documentURL: document), "useContext", { $0.contains("perşembeye") }),
+            ("Seçili metni İngilizceye çevir", ScreenContext(selectedText: "Merhaba dünya"), "useContext", { $0 == "Merhaba dünya" }),
+            ("Şu dosyayı aç", ScreenContext(selectedFiles: [URL(filePath: "/System/Applications/Calculator.app")]), "useContext",
+             { $0.contains("programları sesle açmıyorum") }),
+        ]
+        for item in cases {
+            context.screen = item.screen
+            do {
+                let route = try await router.route(item.command, previous: nil)
+                guard case let .tool(call) = route, call.toolName == item.tool else {
+                    let actual = if case let .tool(other) = route { other.toolName } else { "conversation" }
+                    report.check("bağlam", false, "\(item.command) → \(actual)")
+                    continue
+                }
+                let result = try await call.execute()
+                report.check("bağlam", item.expect(result), "\(item.command) → \(result.prefix(70).replacingOccurrences(of: "\n", with: " "))")
+            } catch {
+                report.check("bağlam", false, "\(item.command): \(error)")
+            }
+        }
+        context.screen = ScreenContext(selectedFiles: [document])
+        let mail = await SendEmailTool(context: context).makeCall(.init(recipient: "deneme@example.com", subject: nil, body: "bunu"))
+        report.check("bağlam", mail.confirmationQuestion?.contains("ekinde bilge-baglam-denemesi.txt") == true,
+                     "bunu mail at → \(mail.confirmationQuestion ?? "soru yok")")
+        context.screen = nil
+        let nothing = try? await router.route("Bunu özetle", previous: nil)
+        let routedAway = if case let .tool(call)? = nothing { call.toolName != "useContext" } else { true }
+        report.check("bağlam", routedAway, "ekranda bir şey yokken 'bunu özetle' bağlam aracına gitmedi")
     }
 
     private static func checkAlerts(_ report: inout Report) async {

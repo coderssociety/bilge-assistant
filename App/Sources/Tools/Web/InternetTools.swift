@@ -215,7 +215,6 @@ struct ReadWebPageTool: AssistantTool {
     let name = "readWebPage"
     let description = "Tarayıcıda açık olan web sayfasını ya da söylenen adresi indirip okur; özetler ya da soruyu yanıtlar."
     let answersWithLanguageModel = true
-    private static let maxCharacters = 6000
 
     @Generable
     struct Arguments {
@@ -228,11 +227,7 @@ struct ReadWebPageTool: AssistantTool {
             guard let url = try await Self.target(arguments.address) else {
                 return ToolReply.failure("Tarayıcıda açık bir sayfa bulamadım.")
             }
-            let html = try await WebFetch.text(from: url)
-            let text = HTMLText.extract(html)
-            guard !text.isEmpty else { return ToolReply.failure("Sayfada okunabilir yazı yok.") }
-            let title = HTMLText.title(html).map { "Başlık: \($0)\n" } ?? ""
-            return title + String(text.prefix(Self.maxCharacters))
+            return try await BrowserPage.text(of: url)
         } catch {
             return ToolReply.failure(error)
         }
@@ -243,25 +238,7 @@ struct ReadWebPageTool: AssistantTool {
             let full = address.contains("://") ? address : "https://\(address)"
             return URL(string: full)
         }
-        return try await frontBrowserURL().flatMap(URL.init(string:))
-    }
-
-    /// The front tab of Safari, Chrome, Edge, Brave or Arc, whichever is frontmost.
-    private static func frontBrowserURL() async throws -> String? {
-        let scripts: [String: String] = [
-            "com.apple.Safari": "tell application \"Safari\" to return URL of front document",
-            "com.google.Chrome": "tell application \"Google Chrome\" to return URL of active tab of front window",
-            "com.microsoft.edgemac": "tell application \"Microsoft Edge\" to return URL of active tab of front window",
-            "com.brave.Browser": "tell application \"Brave Browser\" to return URL of active tab of front window",
-            "company.thebrowser.Browser": "tell application \"Arc\" to return URL of active tab of front window",
-        ]
-        let candidates = await MainActor.run {
-            let running = NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)
-            let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-            return ([front].compactMap { $0 } + running).filter { scripts[$0] != nil }
-        }
-        guard let browser = candidates.first, let script = scripts[browser] else { return nil }
-        return try await AppleScriptRunner.run(script).nilIfEmpty
+        return try await BrowserPage.current(frontmostOnly: false)?.url
     }
 }
 

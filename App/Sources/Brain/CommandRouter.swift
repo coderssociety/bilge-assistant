@@ -25,6 +25,8 @@ final class CommandRouter {
     private static let ruleRoutedActions: [MemoryIntent: String] = [.remember: "remember", .forget: "forget", .list: "listMemories"]
     /// Also chosen by rules only (`SpreadsheetTool.claims`): cell names must never be the model's guess.
     private static let spreadsheetAction = "spreadsheet"
+    /// Chosen by rules when the command points at something that is on screen (`ContextTool.claims`).
+    private static let contextAction = "useContext"
     private static let actionProperty = "action"
 
     private let model: SystemLanguageModel
@@ -39,7 +41,7 @@ final class CommandRouter {
         self.model = model
         self.tools = Dictionary(tools.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
         fastPath = FastPath(tools: self.tools)
-        let ruleRouted = Set(Self.ruleRoutedActions.values).union([Self.spreadsheetAction])
+        let ruleRouted = Set(Self.ruleRoutedActions.values).union([Self.spreadsheetAction, Self.contextAction])
         let modelRouted = tools.filter { !ruleRouted.contains($0.name) }
         let actions = modelRouted.map(\.name) + [Self.conversationAction]
         let actionSchema = DynamicGenerationSchema(name: "Action", anyOf: actions)
@@ -63,6 +65,10 @@ final class CommandRouter {
         if let spreadsheet = tools[Self.spreadsheetAction] as? SpreadsheetTool, spreadsheet.claims(command) {
             Log.brain.info("Spreadsheet command")
             return try await prepare(spreadsheet, prompt: Self.prompt(command, previous: previous), resolvedCommand: command)
+        }
+        if let contextTool = tools[Self.contextAction] as? ContextTool, contextTool.claims(command) {
+            Log.brain.info("Command about what is on screen")
+            return try await prepare(contextTool, prompt: Self.prompt(command, previous: previous), resolvedCommand: command)
         }
         if let intent = MemoryIntent.parse(command), let tool = Self.ruleRoutedActions[intent].flatMap({ tools[$0] }) {
             Log.brain.info("Memory request: \(tool.name, privacy: .public)")

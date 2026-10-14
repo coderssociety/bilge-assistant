@@ -50,7 +50,7 @@ struct ReadDocumentTool: AssistantTool {
     let description = "Bir belgeyi (PDF, metin, Word, RTF) açmadan okur; özetler ya da içeriğiyle ilgili soruyu yanıtlar."
     let answersWithLanguageModel = true
     private static let maxCharacters = 6000
-    private static let readableExtensions: Set<String> = ["pdf", "txt", "md", "rtf", "rtfd", "docx", "doc", "html", "htm", "csv"]
+    static let readableExtensions: Set<String> = ["pdf", "txt", "md", "rtf", "rtfd", "docx", "doc", "html", "htm", "csv"]
 
     @Generable
     struct Arguments {
@@ -93,7 +93,7 @@ struct ReadDocumentTool: AssistantTool {
         return FileSearch.sortedByRecency(downloads).first { extensions.contains($0.pathExtension.lowercased()) }
     }
 
-    private static func text(of file: URL) throws -> String {
+    static func text(of file: URL) throws -> String {
         switch file.pathExtension.lowercased() {
         case "pdf":
             return PDFDocument(url: file)?.string ?? ""
