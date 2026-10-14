@@ -19,6 +19,8 @@ struct AsistanApp: App {
             Task { @MainActor in exit(await ToolCheck.run(arguments: arguments)) }
         } else if arguments.contains(MultiStepBenchmark.flag) {
             Task { @MainActor in exit(await MultiStepBenchmark.run(arguments: arguments)) }
+        } else if arguments.contains(SpeakerBenchmark.flag) {
+            Task { @MainActor in exit(await SpeakerBenchmark.run()) }
         }
     }
 
@@ -61,6 +63,7 @@ final class AppEnvironment {
     let timers: TimerService
     let brain: AssistantBrain
     let memory: MemoryStore
+    let speakerGate: SpeakerGate
     let assistant: AssistantController
     let audioLab: AudioLabModel
     private let hud: HUDPresenter
@@ -86,6 +89,8 @@ final class AppEnvironment {
         self.timers = timers
         self.brain = brain
         self.memory = memory
+        speakerGate = SpeakerGate(store: VoiceprintStore(), settings: settings)
+        assistant.speakerGate = speakerGate
         self.assistant = assistant
         audioLab = AudioLabModel(speech: speech)
         hud = HUDPresenter(assistant: assistant, settings: settings)
@@ -94,6 +99,7 @@ final class AppEnvironment {
         guard !isBenchmark else { return }
         hud.start()
         alerts.start()
+        speakerGate.prepare()
         brain.setLocalModelKeepAlive(settings.localModelKeepAlive)
         brain.useLocalModel(settings.localModel)
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in

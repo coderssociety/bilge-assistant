@@ -63,6 +63,8 @@ final class AssistantController {
     private static let maxRecentTranscripts = 40
 
     private var isBargeInActive: Bool { status == .speaking && bargeIn != nil }
+    /// Set by the app; benchmarks run without it.
+    var speakerGate: SpeakerGate?
 
     init(settings: AssistantSettings, speech: SpeechOutput, handler: any CommandHandling,
          audioSource: (any AudioSource)? = nil) {
@@ -264,6 +266,8 @@ final class AssistantController {
         guard let recognizer, !isAudioSuspended else { return }
         do {
             if pendingConfirmation != nil {
+                // A "yes" from the TV must not confirm a message being sent.
+                guard await speakerAllows(segment.samples) else { return }
                 let answer = try await recognizer.transcribe(segment.samples)
                 lastHeard = answer
                 resolveConfirmation(ConfirmationParser.parse(answer, strict: confirmationIsStrict))
@@ -275,6 +279,11 @@ final class AssistantController {
                   !isAudioSuspended
             else { return }
             Log.wake.debug("Heard: \(transcript, privacy: .private)")
+            if needsSpeakerCheck(transcript, isWakeCheck: isWakeCheck), await !speakerAllows(segment.samples) {
+                recentTranscripts = Array((recentTranscripts + ["başka bir ses (yok sayıldı): “\(transcript)”"]).suffix(Self.maxRecentTranscripts))
+                if !isWakeCheck { status = .awake }
+                return
+            }
             recentTranscripts = Array((recentTranscripts + ["\(isWakeCheck ? "uyandırma" : "komut"): “\(transcript)”"]).suffix(Self.maxRecentTranscripts))
             let action = flow.heard(transcript, at: .now)
             if action != .none { lastHeard = transcript }
@@ -284,6 +293,20 @@ final class AssistantController {
             Log.speech.error("Transcription failed: \(error.localizedDescription, privacy: .public)")
             if flow.phase != .listeningForWake { status = .awake }
         }
+    }
+
+    /// Commands and work input are checked; a bare wake phrase is too short to judge, so the command
+    /// after it is checked instead.
+    private func needsSpeakerCheck(_ transcript: String, isWakeCheck: Bool) -> Bool {
+        guard speakerGate?.isActive == true else { return false }
+        guard isWakeCheck else { return true }
+        guard let match = flow.matcher.match(transcript) else { return false }
+        return !match.command.isEmpty
+    }
+
+    private func speakerAllows(_ samples: [Float]) async -> Bool {
+        guard let speakerGate, speakerGate.isActive else { return true }
+        return await speakerGate.check(samples) != .rejected
     }
 
     /// While waiting for the wake phrase only the opening seconds are transcribed; the full utterance

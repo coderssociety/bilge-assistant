@@ -1,8 +1,12 @@
+import AsistanCore
 import SwiftUI
 
 struct RecognitionSettingsView: View {
     @Bindable var settings: AssistantSettings
     let assistant: AssistantController
+    let speakerGate: SpeakerGate
+    @State private var enrolling = false
+    @State private var wasListening = false
 
     var body: some View {
         Form {
@@ -22,9 +26,39 @@ struct RecognitionSettingsView: View {
                 Text("Her iki motor da tamamen Mac'inde çalışır; ses kaydı saklanmaz.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section("Ses kimliği") {
+                if let stored = speakerGate.store.stored {
+                    Toggle("Yalnızca benim sesime yanıt ver", isOn: $settings.speakerCheckEnabled)
+                    Text("Sesin \(stored.created.formatted(date: .abbreviated, time: .omitted)) tarihinde kaydedildi. Televizyon ya da odadaki başkaları komut veremez ve onay veremez; “\(AppIdentity.name), dur” herkese açıktır.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    HStack {
+                        Button("Sesimi yeniden tanıt…") { startEnrollment() }
+                        Button("Ses kaydını sil", role: .destructive) {
+                            try? speakerGate.store.delete()
+                            settings.speakerCheckEnabled = false
+                        }
+                    }
+                } else {
+                    Text("Sesini tanıtırsan \(AppIdentity.name) yalnızca sana yanıt verir. Beş kısa cümle okuman yeterli.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Button("Sesimi tanıt…") { startEnrollment() }
+                }
+            }
         }
         .formStyle(.grouped)
+        .sheet(isPresented: $enrolling, onDismiss: {
+            if wasListening { assistant.start() }
+        }) {
+            VoiceEnrollmentView(enrollment: VoiceEnrollment(gate: speakerGate, settings: settings))
+        }
         .onChange(of: settings.recognizer) { assistant.restartIfRunning() }
+    }
+
+    /// The microphone is needed for the recordings, so listening pauses until the sheet closes.
+    private func startEnrollment() {
+        wasListening = assistant.isRunning
+        assistant.stop()
+        enrolling = true
     }
 }
 

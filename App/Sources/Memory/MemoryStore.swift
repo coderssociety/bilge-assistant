@@ -57,21 +57,9 @@ final class MemoryStore {
 
     private func save(_ book: MemoryBook) throws {
         guard let fileURL else { return }
-        let directory = fileURL.deletingLastPathComponent()
-        let temporary = directory.appending(path: ".memory-\(UUID().uuidString).json")
         do {
-            let data = try JSONEncoder().encode(book)
-            // Created with owner-only permissions, so the facts are never readable even briefly.
-            guard FileManager.default.createFile(atPath: temporary.path, contents: data, attributes: [.posixPermissions: 0o600]) else {
-                throw CocoaError(.fileWriteUnknown)
-            }
-            if FileManager.default.fileExists(atPath: fileURL.path) {
-                _ = try FileManager.default.replaceItemAt(fileURL, withItemAt: temporary)
-            } else {
-                try FileManager.default.moveItem(at: temporary, to: fileURL)
-            }
+            try PrivateFile.write(try JSONEncoder().encode(book), to: fileURL)
         } catch {
-            try? FileManager.default.removeItem(at: temporary)
             Log.brain.error("Could not save memory: \(error.localizedDescription, privacy: .public)")
             throw MemoryStoreError.notSaved
         }

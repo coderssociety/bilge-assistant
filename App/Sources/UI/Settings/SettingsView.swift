@@ -15,7 +15,7 @@ struct SettingsView: View {
                 VoiceSettingsView(settings: environment.settings, speech: environment.speech)
             }
             Tab("Tanıma", systemImage: "waveform") {
-                RecognitionSettingsView(settings: environment.settings, assistant: environment.assistant)
+                RecognitionSettingsView(settings: environment.settings, assistant: environment.assistant, speakerGate: environment.speakerGate)
             }
             Tab("İzinler", systemImage: "lock.shield") {
                 PermissionsView()
