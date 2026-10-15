@@ -5,6 +5,7 @@
 # NOTARY_PROFILE names a profile saved with `xcrun notarytool store-credentials`, notarized and stapled.
 # Without one the app is signed ad hoc and Gatekeeper warns on first open. The development certificate is
 # not used for a DMG that leaves this Mac: its name contains the Apple ID's e-mail address.
+# Copies of the app outside Applications sit in ".noindex" folders, so Spotlight and Launchpad don't offer them.
 set -euo pipefail
 
 root=${0:A:h:h}
@@ -40,7 +41,7 @@ if security find-identity -v -p codesigning | grep -q "Developer ID Application"
     distribution=true
 else
     print -u2 "Uyarı: Developer ID sertifikası yok; uygulama ad hoc imzalanacak."
-    app="$output/adhoc/Bilge.app"
+    app="$output/adhoc.noindex/Bilge.app"
     mkdir -p "${app:h}"
     ditto "$archive/Products/Applications/Bilge.app" "$app"
     codesign --force --deep --options runtime --entitlements App/Resources/Asistan.entitlements --sign - "$app"
