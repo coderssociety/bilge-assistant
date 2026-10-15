@@ -1,260 +1,271 @@
 <p align="center">
-  <img src="docs/images/logo.svg" width="128" height="128" alt="Bilge logosu">
+  <img src="docs/images/logo.svg" width="128" height="128" alt="Bilge logo">
 </p>
 
 <h1 align="center">Bilge</h1>
 
 <p align="center">
-  Mac için Türkçe ve İngilizce sesli asistan. Tamamen yerel çalışır: sesin ve komutların Mac'inden dışarı çıkmaz.
+  A voice assistant for the Mac that speaks Turkish and English. It runs entirely on your Mac:
+  your voice and your commands never leave it.
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/macOS-27%2B-black?logo=apple" alt="macOS 27+">
-  <img src="https://img.shields.io/badge/Apple%20Silicon-gerekli-555" alt="Apple Silicon gerekli">
+  <img src="https://img.shields.io/badge/Apple%20Silicon-required-555" alt="Apple Silicon required">
   <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
 </p>
 
 <p align="center">
-  <img src="docs/images/hud-confirm.png" width="760" alt="Bilge takvime etkinlik eklemeden önce onay istiyor">
+  <b>English</b> · <a href="README.tr.md">Türkçe</a>
 </p>
 
-“Bilge” dediğinde uyanır, ne istediğini anlar, işi Mac'te yapar ve sesle cevap verir. Konuşma tanıma,
-dil modelleri ve ses üretimi Mac'te çalışır; bulut hizmeti, hesap ya da abonelik yoktur. İnternet yalnızca
-hava durumu, döviz, haber gibi istediğin veriler ve modellerin ilk indirmesi için kullanılır.
+<p align="center">
+  <img src="docs/images/en/hud-confirm.png" width="760" alt="Bilge asks before adding an event to the calendar">
+</p>
 
-*A fully local voice assistant for macOS that speaks Turkish and English. Speech recognition,
-language models and speech synthesis all run on the Mac. See [English](#english) below.*
+Say “Bilge” and it wakes up, works out what you want, does it on your Mac and answers out loud. Speech
+recognition, the language models and speech synthesis all run locally; there is no cloud service, account
+or subscription. The internet is used only for data you ask for, such as weather, exchange rates and news,
+and for downloading models the first time.
 
-## İçindekiler
+“Bilge” means *wise* in Turkish and is pronounced *BIL-geh*. The wake word stays the same in English.
 
-- [Neler yapar](#neler-yapar)
-- [Ekran görüntüleri](#ekran-görüntüleri)
-- [Nasıl çalışır](#nasıl-çalışır)
-- [Kurulum](#kurulum)
-- [Kullanım](#kullanım)
-- [Modeller](#modeller)
-- [Dil](#dil)
-- [Gizlilik](#gizlilik)
-- [Sorun giderme](#sorun-giderme)
-- [Kaynaktan derleme](#kaynaktan-derleme)
-- [Lisans ve teşekkür](#lisans-ve-teşekkür)
-- [English](#english)
+## Contents
 
-## Neler yapar
+- [What it does](#what-it-does)
+- [Screenshots](#screenshots)
+- [How it works](#how-it-works)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Models](#models)
+- [Languages](#languages)
+- [Privacy](#privacy)
+- [Troubleshooting](#troubleshooting)
+- [Building from source](#building-from-source)
+- [License and credits](#license-and-credits)
+
+## What it does
 
 | | |
 |---|---|
-| **Mac komutları** | Uygulama açma ve kapatma, ses düzeyi, müzik, ekran görüntüsü, Wi-Fi, karanlık mod, Kestirmeler, dosya bulma ve açma, Çöp Kutusu'na taşıma |
-| **Takvim ve anımsatıcılar** | Sorma, ekleme, tamamlama; yaklaşan toplantıyı ve vakti gelen anımsatıcıyı kendiliğinden söyler |
-| **İletişim** | Kişi bulma, Mail ve Mesajlar ile gönderme. Gönderme her zaman açık bir “evet” ister |
-| **Excel** | “D3'e B2 ile B1'i topla”, “B sütununun toplamı kaç”, “geri al” |
-| **Bağlam** | Seçili metin, Finder'da seçili dosya ya da açık sayfa için “bunu özetle”, “bunu Ahmet'e gönder” |
-| **Tarayıcı** | Sekmeler arasında geçme, geri ve ileri, kaydırma, sayfada arama |
-| **Dikte** | Öndeki uygulamaya sesle yazma; “virgül”, “yeni satır”, “son cümleyi sil” |
-| **Günlük özet** | “Günaydın” dediğinde hava, bugünkü etkinlikler, anımsatıcılar ve okunmamış e-postalar |
-| **Hafıza** | “Şunu hatırla: …”, “bunu unut”. Hatırladıklarını Ayarlar'da görür ve silebilirsin |
-| **Ses kimliği** | Sesini tanıtırsan yalnızca senin komutlarına ve onaylarına uyar |
+| **Mac control** | Open and quit apps, volume, music, screenshots, Wi-Fi, dark mode, Shortcuts, finding and opening files, moving files to the Trash |
+| **Calendar and reminders** | Ask, add, complete; it tells you about upcoming meetings and due reminders on its own |
+| **Messages** | Find contacts, send with Mail and Messages. Sending always needs a clear “yes” |
+| **Excel** | “Put the sum of B1 and B2 into D3”, “what's the total of column B”, “undo” |
+| **Context** | “Summarize this” or “send this to Ahmet” for selected text, the file selected in Finder, or the open page |
+| **Browser** | Switch tabs, go back and forward, scroll, find on the page |
+| **Dictation** | Type into the front app by voice; “comma”, “new line”, “delete the last sentence” |
+| **Daily briefing** | Say “good morning” for the weather, today's events, reminders and unread mail |
+| **Memory** | “Remember that …”, “forget that”. You can see and delete what it remembers in Settings |
+| **Voice ID** | Enroll your voice and it only follows your commands and confirmations |
 
-Silme, gönderme ve ekleme gibi geri alınamayan işlerde önce sesli onay ister. Bilge konuşurken
-“Bilge, dur” diyerek sözünü kesebilirsin.
+Anything that can't be undone, like deleting, sending or adding, needs a spoken yes first. While Bilge
+is talking you can cut it off with “Bilge, stop”.
 
-## Ekran görüntüleri
+## Screenshots
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/onboarding.png" alt="Kurulum sihirbazı"></td>
-    <td width="50%"><img src="docs/images/settings-model.png" alt="Model ayarları"></td>
+    <td width="50%"><img src="docs/images/en/onboarding.png" alt="Setup, first step: choosing the language"></td>
+    <td width="50%"><img src="docs/images/en/settings-model.png" alt="Model settings"></td>
   </tr>
   <tr>
-    <td align="center">Kurulum sihirbazı izinleri ister, ses modellerini hazırlar.</td>
-    <td align="center">Sohbet modelini seç, indir ya da kendi MLX modelini ekle.</td>
+    <td align="center">Setup starts with the language: Türkçe or English.</td>
+    <td align="center">Pick a conversation model, download one, or add your own MLX model.</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/settings-general.png" alt="Genel ayarlar"></td>
-    <td width="50%"><img src="docs/images/hud-answer.png" alt="Bilge Excel sorusuna cevap veriyor"></td>
+    <td width="50%"><img src="docs/images/en/settings-general.png" alt="General settings"></td>
+    <td width="50%"><img src="docs/images/en/hud-answer.png" alt="Bilge answers a spreadsheet question"></td>
   </tr>
   <tr>
-    <td align="center">Uyandırma kelimesi, hassasiyet ve hatırlatmalar.</td>
-    <td align="center">Ekranın üstündeki durum paneli ne duyduğunu ve ne cevap verdiğini gösterir.</td>
+    <td align="center">Language, wake word, sensitivity and reminders.</td>
+    <td align="center">The status panel at the top of the screen shows what it heard and what it answered.</td>
   </tr>
 </table>
 
-## Nasıl çalışır
+## How it works
 
 <p align="center">
-  <img src="docs/images/how-it-works.svg" width="860" alt="Mikrofondan sesli yanıta Bilge'nin işleyişi">
+  <img src="docs/images/how-it-works-en.svg" width="860" alt="How Bilge goes from the microphone to a spoken reply">
 </p>
 
-1. Mikrofon açıktır ama ses yalnızca bellekte, kısa parçalar halinde işlenir. Konuşma yoksa hiçbir şey yapılmaz.
-2. Konuşmanın başında “Bilge” geçmiyorsa söylenen atılır.
-3. Komut yazıya çevrilir (Apple Dikte ya da Whisper) ve Apple'ın cihaz içi modeli hangi aracın çağrılacağına
-   karar verir. Sohbet ve genel bilgi sorularını istersen indirdiğin daha büyük bir model cevaplar.
-4. Araç işi yapar. Riskli bir işse önce sorar, “evet” demeden yapmaz.
-5. Cevap Supertonic-3 ile Mac'te seslendirilir.
+1. The microphone is on, but audio is only handled in memory, in short pieces. If nobody is speaking, nothing happens.
+2. If an utterance doesn't start with “Bilge”, it is thrown away.
+3. The command is transcribed (Apple dictation or Whisper) and Apple's on-device model decides which tool to call.
+   Conversation and general-knowledge questions can go to a larger model you download, if you want one.
+4. The tool does the job. If the job is risky, Bilge asks first and does nothing until you say yes.
+5. The reply is spoken with Supertonic-3, generated on the Mac.
 
-## Kurulum
+## Installation
 
-**Gerekenler**
+**Requirements**
 
-- Apple Silicon Mac, **macOS 27** ya da üstü.
-- **Apple Intelligence açık olmalı.** Komutları Apple'ın cihaz içi dil modeli anlar; bu model olmadan Bilge çalışmaz.
-- İlk kurulumda ses modelleri için küçük bir indirme (Whisper tanımayı seçersen ayrıca 1,5 GB).
-  İsteğe bağlı sohbet modeli için 16-19 GB indirme ve en az 32 GB bellek.
+- An Apple Silicon Mac with **macOS 27** or later.
+- **Apple Intelligence turned on.** Apple's on-device language model understands the commands; Bilge
+  doesn't work without it.
+- A small download for the voice models on first run (1.5 GB more for Whisper, the default in English).
+  The optional conversation model is a 16-19 GB download and needs at least 32 GB of memory.
 
-**Adımlar**
+**Steps**
 
-1. [Releases](../../releases) sayfasından son `Bilge-<sürüm>.dmg` dosyasını indir, Bilge'yi Uygulamalar klasörüne sürükle.
-2. Bilge'yi aç. Kurulum sihirbazı önce dili (Türkçe ya da English) sorar, sonra gereken izinleri (mikrofon, konuşma tanıma, Erişilebilirlik; istersen takvim
-   ve kişiler) ister, ses modellerini hazırlar ve sohbet modelini seçtirir.
-3. “Bilge, saat kaç?” diyerek dene.
+1. Download the latest `Bilge-<version>.dmg` from [Releases](../../releases) and drag Bilge into Applications.
+2. Open Bilge. Setup asks for the language (Türkçe or English), then the permissions it needs
+   (microphone, speech recognition, Accessibility; calendar and contacts if you want them), prepares the
+   voice models and lets you choose a conversation model.
+3. Try it: “Bilge, what time is it?”
 
-> Sürümler henüz Apple tarafından onaylanmış (notarize) değil. İlk açılışta macOS uyarı verirse
-> Sistem Ayarları > Gizlilik ve Güvenlik'te “Yine de Aç”a bas ya da kaynaktan kendin derle.
+> Releases are not notarized by Apple yet. If macOS warns you the first time, click “Open Anyway” in
+> System Settings > Privacy & Security, or build it yourself from source.
 
-Bilge menü çubuğunda çalışır, Dock'ta simgesi görünmez. Ayarlar'a ve kurulum rehberine menü çubuğundaki
-simgeden ulaşırsın.
+Bilge lives in the menu bar and has no Dock icon. Settings and the setup guide are in the menu bar menu.
 
-## Kullanım
+## Usage
 
-Her komutu “Bilge” ile başlat: “Bilge, Safari'yi aç”. Bilge cevap verdikten sonra birkaç saniye daha dinler;
-bu sırada devam sorusunu “Bilge” demeden sorabilirsin.
+Start every command with “Bilge”: “Bilge, open Safari”. After answering, Bilge keeps listening for a few
+seconds, so you can ask a follow-up without saying its name again.
 
 <details>
-<summary><b>Mac ve uygulamalar</b></summary>
+<summary><b>Mac and apps</b></summary>
 
-- Safari'yi aç / Spotify'ı kapat / Hangi uygulamalar açık
-- Sesi yüzde otuz yap / Müziği durdur / Sonraki şarkı
-- Ekranı kilitle / Karanlık modu aç / Pil durumu nedir
-- Masaüstündeki fatura dosyasını bul
-- Sabah rutini kestirmesini çalıştır
+- Open Safari / Close Spotify / What apps are open
+- Set the volume to 30 percent / Pause the music / Play Tarkan
+- Lock the screen / Turn wi-fi on / What's my battery level
+- Open my Downloads folder / Take a screenshot
+- Run the shortcut called Good Morning
 </details>
 
 <details>
-<summary><b>Takvim, anımsatıcı, zamanlayıcı</b></summary>
+<summary><b>Calendar, reminders, timers</b></summary>
 
-- Bugün kaç toplantım var
-- Yarın saat onda diş hekimi randevusu ekle
-- Ekmek almayı anımsatıcılarıma ekle
-- On dakikalık zamanlayıcı kur
+- What's on my calendar today
+- Add a dentist appointment tomorrow at 10
+- Add eggs to my shopping list
+- Set a timer for 10 minutes
 </details>
 
 <details>
 <summary><b>Excel</b></summary>
 
-Excel'de bir çalışma kitabı açıkken:
+With a workbook open in Excel:
 
-- D3'e B2 ile B1'i topla
-- C5'e 1250 yaz
-- B sütununun toplamı kaç
-- Geri al
+- Put the sum of B1 and B2 into D3
+- Write 1250 in C5
+- What's the total of column B
+- Undo
 </details>
 
 <details>
-<summary><b>Seçili metin, dosya ya da sayfa</b></summary>
+<summary><b>Selected text, files and pages</b></summary>
 
-- (Bir metni seçip) Bunu özetle
-- (Finder'da bir dosya seçip) Bunu Ahmet'e gönder
-- Ekranda ne yazıyor
+- (With text selected) Summarize this
+- Translate the selected text to Turkish
+- (With a file selected in Finder) Send this to Ahmet
+- What's on my screen
 </details>
 
 <details>
-<summary><b>Tarayıcı ve web</b></summary>
+<summary><b>Browser and web</b></summary>
 
-- YouTube sekmesine geç
-- Bu sayfada fiyat kelimesini ara
-- YouTube'da kedi videoları ara
-- Bugün hava nasıl / Dolar kaç / Haberleri oku
+- Switch to the YouTube tab
+- Find price on this page
+- Search YouTube for cat videos
+- What's the weather in London / How much is the dollar in lira
 </details>
 
 <details>
-<summary><b>Dikte</b></summary>
+<summary><b>Dictation</b></summary>
 
-- Dikteye başla, ardından konuş. “Virgül”, “nokta”, “yeni satır”, “son cümleyi sil” komut olarak işlenir.
-- Dikteyi bitir
+- Start dictation, then talk. “Comma”, “period”, “new line” and “delete the last sentence” work as commands.
+- Stop dictation
 </details>
 
 <details>
-<summary><b>Hafıza</b></summary>
+<summary><b>Memory</b></summary>
 
-- Şunu hatırla: kahvemi şekersiz içerim
-- Kahveyle ilgili bilgiyi unut
+- Remember that I take my coffee without sugar
+- Forget my coffee order
 </details>
 
-## Modeller
+## Models
 
-Komutları **her zaman** Apple'ın cihaz içi modeli yönlendirir: hızlıdır ve testlerde komutların hepsini
-doğru araca gönderdi. Sohbet, genel bilgi soruları ve ekran özetleri için istersen daha bilgili bir model
-indirebilirsin. Bilge bu modeli **kendi içinde, MLX ile** çalıştırır; LM Studio gibi ayrı bir program
-gerekmez. Model “Bilge” dediğinde yüklenir, konuşma bitince bellekten çıkar (bu süre ayarlanabilir).
+Commands are **always** routed by Apple's on-device model: it is fast, and in our tests it sent every
+Turkish command to the right tool. For conversation, general-knowledge questions and screen summaries you
+can download a more knowledgeable model. Bilge runs it **inside the app with MLX**; you don't need LM Studio
+or any other program. The model loads when you say “Bilge” and leaves memory after the conversation (the
+delay is adjustable).
 
-| Seçenek | İndirme | En az bellek | Not |
+| Option | Download | Minimum memory | Notes |
 |---|---|---|---|
-| Apple cihaz içi model | yok | - | Bütün komutlar, kısa sohbet. Genel bilgide daha sık yanılır, birbirine bağlı çok adımlı işleri planlayamaz. |
-| Qwen3.6 27B (4-bit) | 16,1 GB | 32 GB | Qwen 3.8'in bir önceki sürümü. |
-| Qwen3.8 27B (4-bit) | 16,1 GB | 32 GB | 20 Türkçe genel bilgi sorusunun 19'unu bildi (aynı konuşma içinde 20/20); ilk kelime ~2,2 sn. |
-| Gemma 4 31B (4-bit) | 18,4 GB | 32 GB | Aynı testte 19/20 (vMLX ile ölçüldü); ilk kelimeye çabuk başlar. |
+| Apple on-device model | none | - | All commands, small talk. More often wrong on general knowledge; can't plan linked multi-step tasks. |
+| Qwen3.6 27B (4-bit) | 16.1 GB | 32 GB | The previous version of Qwen 3.8. |
+| Qwen3.8 27B (4-bit) | 16.1 GB | 32 GB | Got 19 of 20 Turkish general-knowledge questions (20/20 within one conversation); first word in ~2.2 s. |
+| Gemma 4 31B (4-bit) | 18.4 GB | 32 GB | 19/20 on the same test (measured in vMLX); quick to start answering. |
 
-Ölçümler M5 Pro, 48 GB bellekte yapıldı. Qwen3.8 ölçümü aynı modelin bir topluluk türeviyle Bilge'nin
-içinde, Gemma ölçümü başka bir 4-bit sürümüyle vMLX'te yapıldı. Apple modeli aynı testte 14/20 bildi.
+Measured on an M5 Pro with 48 GB of memory. Qwen3.8 was measured inside Bilge with a community build of the
+same model, Gemma with another 4-bit build in vMLX. Apple's model got 14/20 on the same test.
 
-Listedeki modeller Hugging Face'ten belirli bir sürüme sabitlenerek indirilir, büyük dosyalar SHA-256 ile
-doğrulanır. Uzun talimatlar ve araç listesi bir kez okunup saklandığı için çok adımlı işlerde her adım
-birkaç saniye sürer. LM Studio ya da vMLX kullanıyorsan oradaki modelleri de Ayarlar > Model'den seçebilirsin.
+Listed models are downloaded from Hugging Face pinned to an exact revision, and large files are checked
+against their SHA-256. Long instructions and the tool list are read once and kept, so each step of a
+multi-step task takes a few seconds. If you use LM Studio or vMLX, you can pick their models in Settings > Model too.
 
-### Kendi modelin
+### Your own model
 
-Listede olmayan bir modeli de kullanabilirsin. Hugging Face'ten MLX biçiminde bir model indir
-(örneğin [mlx-community](https://huggingface.co/mlx-community)) ve klasörünü şuraya koy:
+You can use a model that isn't on the list. Download an MLX model from Hugging Face (for example from
+[mlx-community](https://huggingface.co/mlx-community)) and put its folder here:
 
 ```
-~/Library/Application Support/Asistan/Models/Kendi Modellerim/<model adı>/
+~/Library/Application Support/Asistan/Models/Kendi Modellerim/<model name>/
 ```
 
-Klasörde `config.json`, `tokenizer.json` (ya da `tokenizer.model`) ve `.safetensors` dosyaları olmalı.
-Ayarlar > Model'deki “Klasörü aç” düğmesi bu klasörü Finder'da açar, “Yenile” listeyi günceller. Modeli
-kopyalamak yerine başka yerdeki klasörüne (örneğin LM Studio'nunkine) bir sembolik bağ da koyabilirsin.
-Bilge'nin MLX sürümünün desteklemediği bir model türü açılamazsa o cevabı Apple modeli verir.
+The folder needs `config.json`, `tokenizer.json` (or `tokenizer.model`) and the `.safetensors` files.
+“Open Folder” in Settings > Model opens this folder in Finder and “Refresh” updates the list. Instead of
+copying a model you can also put a symbolic link to its folder elsewhere (LM Studio's, for instance). If
+Bilge's MLX version can't open a model type, Apple's model answers instead.
 
-## Dil
+## Languages
 
-Kurulumun ilk adımında Türkçe ya da İngilizce seçilir; Ayarlar > Genel'den değiştirilebilir (uygulama
-yeniden başlar). Bilge seçilen dilde dinler, konuşur ve menülerini gösterir. Komutlar, Excel, dikte,
-tarayıcı, hafıza ve günlük özet iki dilde de çalışır. İngilizcede:
+Turkish or English is chosen in the first setup step and can be changed in Settings > General (the app
+restarts). Bilge then listens, speaks and shows its menus in that language. Commands, Excel, dictation,
+the browser, memory and the daily briefing work in both.
 
-- Konuşma tanıma varsayılan olarak Whisper'dır (1,5 GB indirme). Apple Dikte İngilizce modunda Türkçe
-  söylenen “Bilge” adını neredeyse hiç tanımadı; Whisper 20 denemenin 17'sinde tanıdı.
-- Haberler BBC News'ten okunur; döviz sorularında hedef söylenmezse dolar alınır.
-- Bilge konuşurken araya girmek (“Bilge, stop”) Türkçedekinden daha az güvenilirdir: Whisper, Bilge'nin
-  kendi sesinin yankısı arasında uyandırma kelimesini daha sık kaçırır.
+Bilge was built for Turkish first. In English:
 
-## Gizlilik
+- Speech recognition defaults to Whisper (a 1.5 GB download). Apple dictation in English almost never
+  recognized a Turkish-pronounced “Bilge” (it wrote “Bill” or “Build”); Whisper got it in 17 of 20 tries.
+- News comes from BBC News, and exchange rates default to the dollar when you don't name a currency.
+- Cutting Bilge off while it talks (“Bilge, stop”) is less reliable than in Turkish: Whisper misses the wake
+  word more often over the echo of Bilge's own voice.
+- In tests English commands were routed correctly 75 of 76 times (37 of 40 on sentences never used in
+  development). They take a little longer than Turkish ones (~1.8 s), because the shortcut for the most common
+  Turkish commands has no English version yet.
 
-- Ses kaydı saklanmaz. Uyandırma kelimesinden öncesi dinlenmez.
-- Konuşma tanıma, dil modelleri ve ses üretimi Mac'te çalışır.
-- Ağ bağlantıları yalnızca istediğin veriler (hava durumu, döviz, haber, web sayfası) ve model indirmeleri
-  içindir. Web sayfası okurken yerel ağ adreslerine erişim engellenir.
-- Hafıza, ses kimliği ve işlem kaydı `~/Library/Application Support/Asistan` altında, yalnızca senin
-  okuyabileceğin dosyalarda durur.
+## Privacy
 
-## Sorun giderme
+- No audio is stored. Nothing before the wake word is listened to.
+- Speech recognition, the language models and speech synthesis run on the Mac.
+- Network connections are only for data you ask for (weather, exchange rates, news, web pages) and model
+  downloads. Local network addresses are blocked when reading web pages.
+- Memory, the voice ID and the action log are kept under `~/Library/Application Support/Asistan`, in files
+  only you can read.
 
-**“Bilge” dediğimde uyanmıyor.** Ayarlar > Genel'de hassasiyeti “Esnek”e doğru kaydır. Ayarlar > Tanıma'dan
-konuşma tanıma motorunu değiştirmeyi de dene.
+## Troubleshooting
 
-**Kendi kendine uyanıyor.** Hassasiyeti “Katı”ya doğru kaydır ya da Ayarlar > Tanıma > Ses kimliği'nden
-sesini tanıt; o zaman yalnızca senin sesine cevap verir.
+**It doesn't wake up when I say “Bilge”.** Move the sensitivity towards “Flexible” in Settings > General.
+You can also try the other speech recognition engine in Settings > Recognition.
 
-**“Dil modeli henüz hazır değil” diyor.** Sistem Ayarları > Apple Intelligence ve Siri'den Apple
-Intelligence'ı aç ve modelin inmesini bekle.
+**It wakes up by itself.** Move the sensitivity towards “Strict”, or enroll your voice under Settings >
+Recognition > Voice ID so it only answers you.
 
-**Bir uygulamayı kontrol edemiyor.** Sistem Ayarları > Gizlilik ve Güvenlik altında Erişilebilirlik ve
-Otomasyon'da Bilge'ye izin verildiğini kontrol et. İzinlerin durumunu Bilge'nin Ayarlar > İzinler sekmesinde
-de görebilirsin.
+**It says the language model isn't ready yet.** Turn on Apple Intelligence in System Settings > Apple
+Intelligence & Siri and wait for the model to download.
 
-## Kaynaktan derleme
+**It can't control an app.** Check that Bilge is allowed under Accessibility and Automation in System
+Settings > Privacy & Security. Bilge's own Settings > Permissions tab shows the status too.
 
-Gerekenler: Xcode 27, [XcodeGen](https://github.com/yonaskolb/XcodeGen) ve Xcode'un Metal araçları.
+## Building from source
+
+You need Xcode 27, [XcodeGen](https://github.com/yonaskolb/XcodeGen) and Xcode's Metal toolchain.
 
 ```bash
 brew install xcodegen
@@ -263,61 +274,46 @@ xcodegen generate
 open Asistan.xcodeproj
 ```
 
-İzinlerin her derlemede sıfırlanmaması için Apple ID'nle imzala: `Config/Signing.local.xcconfig`
-dosyasını oluşturup içine `DEVELOPMENT_TEAM = <takım kimliğin>` yaz (bu dosya git'e girmez).
+Sign with your Apple ID so permissions aren't reset on every build: create `Config/Signing.local.xcconfig`
+containing `DEVELOPMENT_TEAM = <your team ID>` (git ignores this file).
 
-Testler:
+Tests:
 
 ```bash
 cd Packages/AsistanKit && swift test
 ```
 
-Dağıtım paketi (`build/release/Bilge-<sürüm>.dmg`):
+Release package (`build/release/Bilge-<version>.dmg`):
 
 ```bash
 scripts/release.sh
 ```
 
-Developer ID sertifikası varsa uygulama dağıtım için imzalanır; `NOTARY_PROFILE` ortam değişkeni
-`xcrun notarytool store-credentials` ile kaydedilmiş bir profili gösteriyorsa Apple onayından da geçirilir.
-Sertifika yoksa DMG yalnızca geliştirme imzalıdır.
+With a Developer ID certificate the app is signed for distribution, and if `NOTARY_PROFILE` names a profile
+saved with `xcrun notarytool store-credentials`, it is notarized too. Without a certificate the DMG only has
+a development signature.
 
-**Proje yapısı**
+**Project layout**
 
-| Klasör | İçerik |
+| Folder | Contents |
 |---|---|
-| `App/Sources/Assistant` | Dinleme döngüsü, uyandırma, onay ve araya girme |
-| `App/Sources/Brain` | Komut yönlendirme, sohbet, çok adımlı işler, yerel modeller (MLX) |
-| `App/Sources/Tools` | Mac'te iş yapan araçlar (takvim, Excel, tarayıcı, dosyalar…) |
-| `App/Sources/UI` | Menü çubuğu, durum paneli, ayarlar, kurulum sihirbazı |
-| `Packages/AsistanKit` | Arayüzden bağımsız, testli çekirdek: Türkçe ayrıştırıcılar, sayı okuma, uyandırma eşleme |
-| `Bench` | Konuşma tanıma, komut yönlendirme ve uçtan uca ölçüm setleri |
+| `App/Sources/Assistant` | The listening loop, wake word, confirmations and interruptions |
+| `App/Sources/Brain` | Command routing, conversation, multi-step tasks, local models (MLX) |
+| `App/Sources/Tools` | The tools that act on the Mac (calendar, Excel, browser, files…) |
+| `App/Sources/UI` | Menu bar, status panel, settings, setup |
+| `Packages/AsistanKit` | The tested, UI-free core: Turkish and English parsers, number reading, wake word matching |
+| `Bench` | Speech recognition, routing and end-to-end test sets |
 
-## Lisans ve teşekkür
+## License and credits
 
-Bilge [GNU GPL 3.0](LICENSE) ile dağıtılır. Kullandığı açık kaynak bileşenler ve modeller,
-lisanslarıyla birlikte [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) dosyasında listelenir;
-aynı liste uygulamada Ayarlar > Hakkında'da da görünür. Özellikle:
+Bilge is released under the [GNU GPL 3.0](LICENSE). The open-source components and models it uses are
+listed with their licenses in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); the same list is in the
+app under Settings > About. In particular:
 
-- Ses algılama, Türkçe ses üretimi, yankı giderme ve ses kimliği [FluidAudio](https://github.com/FluidInference/FluidAudio)
-  (Apache 2.0) ile yapılır.
-- Konuşma tanıma [WhisperKit](https://github.com/argmaxinc/argmax-oss-swift) (MIT) ya da Apple Dikte ile yapılır.
-- Sohbet modelleri [MLX Swift](https://github.com/ml-explore/mlx-swift) ve
-  [mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm) (MIT) ile çalışır.
-- Türkçe ses [Supertonic-3](https://huggingface.co/Supertone/supertonic-3) modelidir (OpenRAIL-M);
-  kullanım kısıtları bildirim dosyasında yazılıdır.
-
-## English
-
-Bilge is a local voice assistant for the Mac. Choose English in the first setup step (or later in
-Settings > General); Bilge then listens, speaks and shows its menus in English. Say “Bilge” (as it is
-pronounced in Turkish: *BIL-geh*) followed by a command: “Bilge, what time is it?”, “Bilge, put the sum of
-B1 and B2 into D3”, “Bilge, summarize this”, “Bilge, start dictation”.
-
-- Requirements: Apple Silicon, macOS 27, Apple Intelligence turned on.
-- Speech recognition in English defaults to Whisper (about 1.5 GB download).
-- Optional larger conversation models (Qwen 3.6/3.8 27B, Gemma 4 31B) run inside the app with MLX, or
-  drop your own MLX model into `~/Library/Application Support/Asistan/Models/Kendi Modellerim/`.
-- Everything stays on your Mac; the internet is used only for weather, exchange rates, news, web pages you
-  ask for, and model downloads.
-- Licensed under GPL-3.0; third-party notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Voice activity detection, speech synthesis, echo cancellation and voice ID use
+  [FluidAudio](https://github.com/FluidInference/FluidAudio) (Apache 2.0).
+- Speech recognition uses [WhisperKit](https://github.com/argmaxinc/argmax-oss-swift) (MIT) or Apple dictation.
+- Conversation models run on [MLX Swift](https://github.com/ml-explore/mlx-swift) and
+  [mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm) (MIT).
+- The voice is the [Supertonic-3](https://huggingface.co/Supertone/supertonic-3) model (OpenRAIL-M); its use
+  restrictions are listed in the notices file.
