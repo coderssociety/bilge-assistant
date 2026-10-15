@@ -30,22 +30,24 @@ struct WindowTool: AssistantTool {
     private static func perform(_ arguments: Arguments) throws -> String {
         switch arguments.action {
         case .hideApp:
-            guard let app = runningApp(named: arguments.appName) else { return ToolReply.failure("Gizlenecek uygulamayı bulamadım.") }
+            guard let app = runningApp(named: arguments.appName) else {
+                return ToolReply.failure(String(localized: "Gizlenecek uygulamayı bulamadım."))
+            }
             app.hide()
-            return "\(app.localizedName ?? "Uygulama") gizlendi."
+            return String(localized: "\(app.localizedName ?? String(localized: "Uygulama")) gizlendi.")
         case .hideOthers:
             let front = AccessibilityControl.frontApplication()
             for app in regularApps() where app != front { app.hide() }
-            return "Diğer uygulamalar gizlendi."
+            return String(localized: "Diğer uygulamalar gizlendi.")
         case .showAll:
             regularApps().forEach { $0.unhide() }
-            return "Tüm uygulamalar gösteriliyor."
+            return String(localized: "Tüm uygulamalar gösteriliyor.")
         case .minimize:
             AccessibilityControl.set(try AccessibilityControl.focusedWindow(), kAXMinimizedAttribute, kCFBooleanTrue)
-            return "Pencere küçültüldü."
+            return String(localized: "Pencere küçültüldü.")
         case .fullScreen:
             AccessibilityControl.set(try AccessibilityControl.focusedWindow(), "AXFullScreen", kCFBooleanTrue)
-            return "Pencere tam ekran yapıldı."
+            return String(localized: "Pencere tam ekran yapıldı.")
         case .leftHalf, .rightHalf, .maximize:
             let window = try AccessibilityControl.focusedWindow()
             guard let screen = NSScreen.main, let primary = NSScreen.screens.first else { throw AccessibilityError.noWindow }
@@ -60,9 +62,9 @@ struct WindowTool: AssistantTool {
             if let position = AXValueCreate(.cgPoint, &origin) { AccessibilityControl.set(window, kAXPositionAttribute, position) }
             if let dimensions = AXValueCreate(.cgSize, &size) { AccessibilityControl.set(window, kAXSizeAttribute, dimensions) }
             return switch arguments.action {
-            case .leftHalf: "Pencere ekranın soluna yerleşti."
-            case .rightHalf: "Pencere ekranın sağına yerleşti."
-            default: "Pencere büyütüldü."
+            case .leftHalf: String(localized: "Pencere ekranın soluna yerleşti.")
+            case .rightHalf: String(localized: "Pencere ekranın sağına yerleşti.")
+            default: String(localized: "Pencere büyütüldü.")
             }
         }
     }
@@ -112,15 +114,15 @@ struct TypeTextTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         let text = TypedText.sanitized(arguments.text)
-        guard !text.isEmpty else { return ToolReply.failure("Ne yazacağımı anlayamadım.") }
+        guard !text.isEmpty else { return ToolReply.failure(String(localized: "Ne yazacağımı anlayamadım.")) }
         let front = await MainActor.run { AccessibilityControl.frontApplication() }
-        guard let front else { return ToolReply.failure("Yazı yazılacak bir uygulama önde değil.") }
+        guard let front else { return ToolReply.failure(String(localized: "Yazı yazılacak bir uygulama önde değil.")) }
         if await Self.refuses(front) {
-            return ToolReply.failure("Güvenlik için terminallere, kod düzenleyicilere, uzak masaüstüne ve parola yöneticilerine yazı yazmıyorum.")
+            return ToolReply.failure(String(localized: "Güvenlik için terminallere, kod düzenleyicilere, uzak masaüstüne ve parola yöneticilerine yazı yazmıyorum."))
         }
         do {
             try await AccessibilityControl.type(text, into: front.processIdentifier)
-            return "Yazdım."
+            return String(localized: "Yazdım.")
         } catch {
             return ToolReply.failure(error)
         }
@@ -143,7 +145,7 @@ struct ReadSelectionTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         do {
             let text = try await Self.selection()
-            guard let text, !text.isEmpty else { return ToolReply.failure("Seçili bir metin bulamadım.") }
+            guard let text, !text.isEmpty else { return ToolReply.failure(String(localized: "Seçili bir metin bulamadım.")) }
             return String(text.prefix(Self.maxCharacters))
         } catch {
             return ToolReply.failure(error)

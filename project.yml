@@ -1,6 +1,7 @@
 name: Asistan
 options:
   bundleIdPrefix: com.vrnsoft
+  developmentLanguage: tr
   deploymentTarget:
     macOS: "27.0"
   createIntermediateGroups: true
@@ -33,6 +34,8 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     MACOSX_DEPLOYMENT_TARGET: "27.0"
 
 targets:

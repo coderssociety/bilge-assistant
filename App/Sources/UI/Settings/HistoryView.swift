@@ -68,9 +68,9 @@ private struct HistoryRow: View {
 private extension ActionAuditLog.Decision {
     var label: String {
         switch self {
-        case .executed: "Yapıldı"
-        case .rejected: "Reddettin"
-        case .unconfirmed: "Onaysız, yapılmadı"
+        case .executed: String(localized: "Yapıldı")
+        case .rejected: String(localized: "Reddettin")
+        case .unconfirmed: String(localized: "Onaysız, yapılmadı")
         }
     }
 

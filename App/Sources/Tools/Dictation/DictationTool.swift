@@ -17,7 +17,7 @@ struct DictationTool: RuleRoutedTool {
 
     @MainActor
     func claims(_ command: String) -> Bool {
-        DictationCommand.isStart(command)
+        DictationCommand.isStart(command, language: AppLanguage.current)
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -28,14 +28,17 @@ struct DictationTool: RuleRoutedTool {
                 return ToolReply.failure(error)
             }
             guard let front = AccessibilityControl.frontApplication() else {
-                return ToolReply.failure("Yazı yazılacak bir uygulama önde değil.")
+                return ToolReply.failure(String(localized: "Yazı yazılacak bir uygulama önde değil."))
             }
             if TypeTextTool.refuses(front) {
-                return ToolReply.failure("Güvenlik için terminallere, kod düzenleyicilere, uzak masaüstüne ve parola yöneticilerine dikte etmiyorum.")
+                return ToolReply.failure(String(
+                    localized: "Güvenlik için terminallere, kod düzenleyicilere, uzak masaüstüne ve parola yöneticilerine dikte etmiyorum."))
             }
             session.begin(in: front)
-            let target = front.localizedName.map { "\($0) uygulamasına" } ?? "öndeki uygulamaya"
-            return "Dikte açık, \(target) yazıyorum. Bitirmek için 'dikteyi bitir' de."
+            guard let appName = front.localizedName else {
+                return String(localized: "Dikte açık, öndeki uygulamaya yazıyorum. Bitirmek için 'dikteyi bitir' de.")
+            }
+            return String(localized: "Dikte açık, \(appName) uygulamasına yazıyorum. Bitirmek için 'dikteyi bitir' de.")
         }
     }
 }

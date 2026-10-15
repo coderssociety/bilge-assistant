@@ -33,7 +33,8 @@ public struct ContextIntent: Equatable, Sendable {
     /// Words that point at something else than the screen: "bu akşam", "bu şarkı".
     private static let otherReferents = ["aksam", "sabah", "gece", "hafta", "ay", "yil", "sarki", "parca", "sefer", "kez"]
 
-    public static func parse(_ command: String) -> ContextIntent? {
+    public static func parse(_ command: String, language: AssistantLanguage = .turkish) -> ContextIntent? {
+        if language == .english { return EnglishContextWords.parse(command) }
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         guard let pointer = words.firstIndex(where: pointingWords.contains) else { return nil }
         if words.indices.contains(pointer + 1), otherReferents.contains(where: words[pointer + 1].hasPrefix) { return nil }
@@ -47,7 +48,8 @@ public struct ContextIntent: Equatable, Sendable {
     }
 
     /// Whether the command points at something ("bunu", "şu dosya"), so the screen is worth reading.
-    public static func points(_ command: String) -> Bool {
+    public static func points(_ command: String, language: AssistantLanguage = .turkish) -> Bool {
+        if language == .english { return EnglishContextWords.points(command) }
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         return words.indices.contains { index in
             pointingWords.contains(words[index])
@@ -56,12 +58,14 @@ public struct ContextIntent: Equatable, Sendable {
     }
 
     /// The kind a pointing phrase names: "bu linki" → page, "şu dosyayı" → file.
-    public static func wantedKind(in text: String) -> Kind? {
-        TurkishText.folded(text).split(separator: " ").lazy.compactMap { word in kindPrefixes.first { word.hasPrefix($0.0) }?.1 }.first
+    public static func wantedKind(in text: String, language: AssistantLanguage = .turkish) -> Kind? {
+        if language == .english { return EnglishContextWords.wantedKind(in: text) }
+        return TurkishText.folded(text).split(separator: " ").lazy.compactMap { word in kindPrefixes.first { word.hasPrefix($0.0) }?.1 }.first
     }
 
     /// A message body that only points at the screen ("bunu", "bu linki") rather than saying something.
-    public static func onlyPoints(_ text: String) -> Bool {
+    public static func onlyPoints(_ text: String, language: AssistantLanguage = .turkish) -> Bool {
+        if language == .english { return EnglishContextWords.onlyPoints(text) }
         let words = TurkishText.folded(text).split(separator: " ").map(String.init)
         guard let first = words.first else { return true }
         guard pointingWords.contains(first), words.count <= 2 else { return false }

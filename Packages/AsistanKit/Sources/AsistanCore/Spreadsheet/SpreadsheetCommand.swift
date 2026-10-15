@@ -26,7 +26,8 @@ public enum SpreadsheetCommand: Equatable, Sendable {
     private static let clearWords: Set<String> = ["sil", "silsene", "temizle", "bosalt"]
     private static let questionWords: Set<String> = ["kac", "ne", "nedir", "neymis"]
 
-    public static func parse(_ text: String) -> SpreadsheetCommand? {
+    public static func parse(_ text: String, language: AssistantLanguage = .turkish) -> SpreadsheetCommand? {
+        if language == .english { return EnglishSpreadsheetCommand.parse(text) }
         let folded = TurkishText.folded(text)
         let foldedWords = folded.split(separator: " ").map(String.init)
         if finishPhrases.contains(folded)
@@ -44,7 +45,8 @@ public enum SpreadsheetCommand: Equatable, Sendable {
 
     /// True when the command talks about cells at all ("D2'ye KDV'li fiyatı hesapla"), even if no rule
     /// understood it: in spreadsheet mode such requests go to the language model for a formula.
-    public static func mentionsCells(_ text: String) -> Bool {
+    public static func mentionsCells(_ text: String, language: AssistantLanguage = .turkish) -> Bool {
+        if language == .english { return EnglishSpreadsheetCommand.mentionsCells(text) }
         let tokens = SpreadsheetTokenizer.tokens(TurkishNumberParser.digitize(text))
         if tokens.contains(where: { $0.cell != nil || isColumn($0) }) { return true }
         return tokens.compactMap(\.word).contains { word in ["hucre", "sutun", "satir", "formul"].contains(where: word.hasPrefix) }

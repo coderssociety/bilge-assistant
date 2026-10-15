@@ -23,7 +23,9 @@ struct VolumeTool: AssistantTool {
         do {
             switch arguments.action {
             case .set:
-                guard let level = arguments.level else { return ToolReply.failure("Hedef seviye belirtilmedi.") }
+                guard let level = arguments.level else {
+                    return ToolReply.failure(String(localized: "Hedef seviye belirtilmedi."))
+                }
                 return try await apply("\(level)")
             case .increase:
                 return try await apply("\(currentLevel) + \(Self.step)")
@@ -31,10 +33,10 @@ struct VolumeTool: AssistantTool {
                 return try await apply("\(currentLevel) - \(Self.step)")
             case .mute:
                 _ = try await AppleScriptRunner.run("set volume with output muted")
-                return "Ses kapatıldı."
+                return String(localized: "Ses kapatıldı.")
             case .unmute:
                 let level = try await AppleScriptRunner.run("set volume without output muted\nreturn \(currentLevel)")
-                return "Ses açıldı, seviye yüzde \(level)."
+                return String(localized: "Ses açıldı, seviye yüzde \(level).")
             }
         } catch {
             return ToolReply.failure(error)
@@ -51,7 +53,7 @@ struct VolumeTool: AssistantTool {
         set volume output volume target
         return target
         """)
-        return "Ses seviyesi yüzde \(level)."
+        return String(localized: "Ses seviyesi yüzde \(level).")
     }
 }
 
@@ -84,12 +86,13 @@ struct MediaTool: AssistantTool {
         do {
             let output = try await AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(player))\n\(command)\nend tell")
             switch arguments.action {
-            case .nowPlaying: return output.isEmpty ? "Şu an çalan bir şey yok." : "Çalan: \(output)."
-            case .play: return "\(player) çalıyor."
-            case .pause: return "\(player) duraklatıldı."
-            case .toggle: return "\(player) oynat/duraklat yapıldı."
-            case .next: return "Sonraki şarkıya geçildi."
-            case .previous: return "Önceki şarkıya dönüldü."
+            case .nowPlaying:
+                return output.isEmpty ? String(localized: "Şu an çalan bir şey yok.") : String(localized: "Çalan: \(output).")
+            case .play: return String(localized: "\(player) çalıyor.")
+            case .pause: return String(localized: "\(player) duraklatıldı.")
+            case .toggle: return String(localized: "\(player) oynat/duraklat yapıldı.")
+            case .next: return String(localized: "Sonraki şarkıya geçildi.")
+            case .previous: return String(localized: "Önceki şarkıya dönüldü.")
             }
         } catch {
             return ToolReply.failure(error)
@@ -122,10 +125,10 @@ struct SystemActionTool: AssistantTool {
             switch arguments.action {
             case .lockScreen:
                 _ = try await ProcessRunner.run("/usr/bin/pmset", ["displaysleepnow"])
-                return "Ekran kapatıldı."
+                return String(localized: "Ekran kapatıldı.")
             case .sleep:
                 _ = try await ProcessRunner.run("/usr/bin/pmset", ["sleepnow"])
-                return "Mac uyku moduna alınıyor."
+                return String(localized: "Mac uyku moduna alınıyor.")
             case .darkModeOn, .darkModeOff, .toggleDarkMode:
                 let value = switch arguments.action {
                 case .darkModeOn: "true"
@@ -138,7 +141,9 @@ struct SystemActionTool: AssistantTool {
                 return dark mode
                 end tell
                 """)
-                return enabled == "true" ? "Karanlık mod açık." : "Karanlık mod kapalı."
+                return enabled == "true"
+                    ? String(localized: "Karanlık mod açık.")
+                    : String(localized: "Karanlık mod kapalı.")
             }
         } catch {
             return ToolReply.failure(error)

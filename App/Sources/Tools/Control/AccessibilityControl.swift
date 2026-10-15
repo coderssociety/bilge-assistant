@@ -9,11 +9,11 @@ enum AccessibilityError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notTrusted:
-            "Bunun için Erişilebilirlik izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Erişilebilirlik'ten Bilge'yi aç."
+            String(localized: "Bunun için Erişilebilirlik izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Erişilebilirlik'ten Bilge'yi aç.")
         case .noWindow:
-            "Öndeki pencereyi bulamadım."
+            String(localized: "Öndeki pencereyi bulamadım.")
         case .focusChanged:
-            "Yazarken öndeki uygulama değişti, yazmayı durdurdum."
+            String(localized: "Yazarken öndeki uygulama değişti, yazmayı durdurdum.")
         }
     }
 }

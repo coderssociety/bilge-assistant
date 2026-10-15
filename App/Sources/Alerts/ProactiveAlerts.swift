@@ -51,6 +51,6 @@ final class ProactiveAlerts {
         due.forEach { announced[$0.key] = now }
         Log.brain.info("Announcing \(due.count) calendar alert(s)")
         Earcon.wake.play()
-        await announce(UpcomingAlerts.message(for: due, now: now))
+        await announce(UpcomingAlerts.message(for: due, now: now, language: AppLanguage.current))
     }
 }

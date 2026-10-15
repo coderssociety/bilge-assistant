@@ -183,8 +183,9 @@ private struct FinishStep: View {
             Text("Hazırsın").font(.title.bold())
             Text("Şunları dene:").foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(["saat kaç?", "sesi yüzde otuz yap", "Safari'yi aç", "on dakikalık zamanlayıcı kur",
-                         "bugün takvimde ne var?"], id: \.self) { example in
+                ForEach([String(localized: "saat kaç?"), String(localized: "sesi yüzde otuz yap"),
+                         String(localized: "Safari'yi aç"), String(localized: "on dakikalık zamanlayıcı kur"),
+                         String(localized: "bugün takvimde ne var?")], id: \.self) { example in
                     Text("“\(AppIdentity.name), \(example)”").font(.body.monospaced())
                 }
             }

@@ -8,10 +8,10 @@ enum AudioError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .noInputDevice: "Kullanılabilir bir mikrofon bulunamadı."
-        case .converterUnavailable: "Ses dönüştürücü oluşturulamadı."
-        case let .conversionFailed(reason): "Ses dönüştürülemedi: \(reason)"
-        case .invalidFormat: "Desteklenmeyen ses biçimi."
+        case .noInputDevice: String(localized: "Kullanılabilir bir mikrofon bulunamadı.")
+        case .converterUnavailable: String(localized: "Ses dönüştürücü oluşturulamadı.")
+        case let .conversionFailed(reason): String(localized: "Ses dönüştürülemedi: \(reason)")
+        case .invalidFormat: String(localized: "Desteklenmeyen ses biçimi.")
         }
     }
 }
@@ -54,7 +54,7 @@ final class StreamingResampler: @unchecked Sendable {
             return buffer
         }
         if status == .error {
-            throw AudioError.conversionFailed(conversionError?.localizedDescription ?? "bilinmeyen hata")
+            throw AudioError.conversionFailed(conversionError?.localizedDescription ?? String(localized: "bilinmeyen hata"))
         }
         guard let channel = output.floatChannelData?[0] else { return [] }
         return Array(UnsafeBufferPointer(start: channel, count: Int(output.frameLength)))

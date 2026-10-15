@@ -23,8 +23,8 @@ struct BriefingTool: RuleRoutedTool {
 
     @MainActor
     func claims(_ command: String) -> Bool {
-        if BriefingIntent.isRequest(command) { return true }
-        guard BriefingIntent.isMorningGreeting(command), defaults.object(forKey: Self.enabledKey) as? Bool ?? true,
+        if BriefingIntent.isRequest(command, language: AppLanguage.current) { return true }
+        guard BriefingIntent.isMorningGreeting(command, language: AppLanguage.current), defaults.object(forKey: Self.enabledKey) as? Bool ?? true,
               Calendar.current.component(.hour, from: .now) < Self.morningEndHour else { return false }
         let last = defaults.object(forKey: Self.lastBriefingKey) as? Date
         return !(last.map { Calendar.current.isDateInToday($0) } ?? false)
@@ -44,7 +44,7 @@ struct BriefingTool: RuleRoutedTool {
         async let mail = Self.bounded { try await Self.unreadMail() }
         let briefing = DailyBriefing(now: now, weather: await weather ?? nil, events: await events ?? [],
                                      reminders: await reminders ?? [], unreadMail: await mail ?? nil)
-        return briefing.text()
+        return briefing.text(language: AppLanguage.current)
     }
 
     private static func weather() async throws -> String? {

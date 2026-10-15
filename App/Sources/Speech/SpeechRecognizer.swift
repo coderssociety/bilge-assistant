@@ -8,7 +8,7 @@ enum RecognizerEngine: String, CaseIterable, Codable, Sendable {
     var displayName: String {
         switch self {
         case .whisper: "Whisper large-v3 turbo"
-        case .appleDictation: "Apple Dikte"
+        case .appleDictation: String(localized: "Apple Dikte")
         }
     }
 }
@@ -28,10 +28,11 @@ enum RecognizerError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notPrepared: "Konuşma tanıma modeli henüz yüklenmedi."
-        case .localeUnsupported: "Bu Mac'te seçili dilde dikte desteklenmiyor."
-        case .permissionDenied: "Konuşma tanıma izni verilmedi. Sistem Ayarları > Gizlilik ve Güvenlik > Konuşma Tanıma."
-        case .audioFormatUnavailable: "Konuşma tanıma için uygun ses biçimi bulunamadı."
+        case .notPrepared: String(localized: "Konuşma tanıma modeli henüz yüklenmedi.")
+        case .localeUnsupported: String(localized: "Bu Mac'te seçili dilde dikte desteklenmiyor.")
+        case .permissionDenied:
+            String(localized: "Konuşma tanıma izni verilmedi. Sistem Ayarları > Gizlilik ve Güvenlik > Konuşma Tanıma.")
+        case .audioFormatUnavailable: String(localized: "Konuşma tanıma için uygun ses biçimi bulunamadı.")
         }
     }
 }

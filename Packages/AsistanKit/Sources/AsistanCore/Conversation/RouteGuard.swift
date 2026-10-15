@@ -25,11 +25,18 @@ public enum RouteGuard {
         "gunaydin", "merhaba", "selam", "aksamlar", "geceler", "gunler", "hosca", "kal", "nasilsin",
     ]
 
+    private static let englishAcknowledgementWords: Set<String> = [
+        "yes", "yeah", "no", "ok", "okay", "alright", "sure", "thanks", "thank", "you", "very", "much", "great",
+        "cool", "nice", "awesome", "perfect", "got", "it", "good", "morning", "evening", "night", "hello", "hi", "hey",
+        "bye", "goodbye", "see", "later",
+    ]
+
     /// Answers that need no model at all. A bare "Evet" in the follow-up window once made the model
     /// repeat the previous action with invented arguments, and "Günaydın" was once read as a time question.
-    public static func preRoute(_ command: String) -> String? {
+    public static func preRoute(_ command: String, language: AssistantLanguage = .turkish) -> String? {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
-        guard !words.isEmpty, words.count <= 3, words.allSatisfy(acknowledgementWords.contains) else { return nil }
+        let acknowledgements = language == .english ? englishAcknowledgementWords : acknowledgementWords
+        guard !words.isEmpty, words.count <= 3, words.allSatisfy(acknowledgements.contains) else { return nil }
         return "conversation"
     }
 

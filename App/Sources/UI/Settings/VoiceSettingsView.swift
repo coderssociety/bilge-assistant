@@ -9,7 +9,7 @@ struct VoiceSettingsView: View {
     @State private var previewError: String?
 
     private var sample: String {
-        "Merhaba, ben \(AppIdentity.name). Saat 14:30'da toplantın var, hatırlatmamı ister misin?"
+        String(localized: "Merhaba, ben \(AppIdentity.name). Saat 14:30'da toplantın var, hatırlatmamı ister misin?")
     }
 
     var body: some View {
@@ -71,7 +71,7 @@ struct VoiceSettingsView: View {
 
 extension Supertonic3Voice {
     var turkishLabel: String {
-        let number = rawValue.dropFirst()
-        return rawValue.hasPrefix("F") ? "Kadın \(number)" : "Erkek \(number)"
+        let number = String(rawValue.dropFirst())
+        return rawValue.hasPrefix("F") ? String(localized: "Kadın \(number)") : String(localized: "Erkek \(number)")
     }
 }

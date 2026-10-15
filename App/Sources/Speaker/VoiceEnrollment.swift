@@ -15,8 +15,9 @@ final class VoiceEnrollment {
     }
 
     static let prompts = [
-        "Bilge, saat kaç?", "Bilge, yarın hava nasıl olacak?", "Bilge, müziği biraz kıs.",
-        "Bilge, bugün takvimimde ne var?", "Bilge, Ahmet'e geç kalacağımı yaz.",
+        String(localized: "Bilge, saat kaç?"), String(localized: "Bilge, yarın hava nasıl olacak?"),
+        String(localized: "Bilge, müziği biraz kıs."), String(localized: "Bilge, bugün takvimimde ne var?"),
+        String(localized: "Bilge, Ahmet'e geç kalacağımı yaz."),
     ]
     private static let recordingSeconds = 3.5
     /// Below this the recordings do not sound like one voice: noise, distance or someone else speaking.
@@ -61,7 +62,8 @@ final class VoiceEnrollment {
     private func finish() throws {
         guard let voicePrint = VoicePrint(embeddings: embeddings) else { throw CocoaError(.featureUnsupported) }
         guard voicePrint.consistency >= Self.minimumConsistency else {
-            phase = .failed("Kayıtlar birbirine yeterince benzemiyor. Sessiz bir yerde, mikrofona yakın tekrar dener misin?")
+            phase = .failed(
+                String(localized: "Kayıtlar birbirine yeterince benzemiyor. Sessiz bir yerde, mikrofona yakın tekrar dener misin?"))
             return
         }
         try gate.store.save(voicePrint)

@@ -23,8 +23,16 @@ public struct ConversationFlow: Sendable {
     /// Both languages' phrases: none of them means anything else in the other language.
     private static let cancelPhrases: Set<String> = [
         "iptal", "iptal et", "vazgec", "vazgectim", "bos ver", "bosver", "bir sey yok", "yok bir sey", "unut gitsin",
-        "cancel", "never mind", "nevermind", "forget it", "nothing", "that s all", "thats all",
+        "cancel", "never mind", "nevermind", "forget it",
     ]
+    /// Also end a window, but are ordinary words while dictating, so a work session takes them as input.
+    private static let outsideWorkCancelPhrases: Set<String> = [
+        "nothing", "that s all", "thats all", "stop", "stop it", "be quiet", "quiet", "shut up", "enough",
+    ]
+
+    private static func cancels(_ key: String, inWork: Bool) -> Bool {
+        cancelPhrases.contains(key) || (!inWork && outsideWorkCancelPhrases.contains(key))
+    }
 
     /// A stretch of hands-free work, such as editing a spreadsheet: the window stays open longer, and
     /// without the wake phrase only what `accepts` recognizes is taken as a command, so talk in the
@@ -68,18 +76,20 @@ public struct ConversationFlow: Sendable {
                 phase = .awaitingCommand(deadline: now.addingTimeInterval(commandTimeout))
                 return .acknowledgeWake
             }
+            // "Bilge, stop" while nothing is going on has nothing to stop; it is not a command to route.
+            if Self.cancels(TurkishText.folded(match.command), inWork: false) { return .none }
             return run(match.command)
         case .awaitingCommand, .followUp:
             let wakeMatch = matcher.match(transcript)
             let command = wakeMatch?.command ?? transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             let key = TurkishText.folded(command)
             guard !key.isEmpty else { return .none }
-            if case .followUp = phase, let session, wakeMatch == nil, !Self.cancelPhrases.contains(key) {
+            if case .followUp = phase, let session, wakeMatch == nil, !Self.cancels(key, inWork: true) {
                 guard session.accepts(command) else { return .none }
                 phase = .processing
                 return .runWorkInput(command)
             }
-            if Self.cancelPhrases.contains(key) {
+            if Self.cancels(key, inWork: false) {
                 session = nil
                 phase = .listeningForWake
                 return .returnToIdle(timedOut: false)

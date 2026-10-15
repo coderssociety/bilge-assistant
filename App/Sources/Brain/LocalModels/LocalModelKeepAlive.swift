@@ -1,3 +1,5 @@
+import Foundation
+
 /// How long a large conversation model stays in memory after it was used.
 enum LocalModelKeepAlive: String, CaseIterable, Sendable {
     /// Loaded when the wake phrase is heard, freed as soon as the exchange is over.
@@ -18,10 +20,10 @@ enum LocalModelKeepAlive: String, CaseIterable, Sendable {
 
     var displayName: String {
         switch self {
-        case .untilConversationEnds: "Konuşma bitince kapat"
-        case .fiveMinutes: "5 dakika boşta kalınca kapat"
-        case .thirtyMinutes: "30 dakika boşta kalınca kapat"
-        case .always: "Hep açık tut"
+        case .untilConversationEnds: String(localized: "Konuşma bitince kapat")
+        case .fiveMinutes: String(localized: "5 dakika boşta kalınca kapat")
+        case .thirtyMinutes: String(localized: "30 dakika boşta kalınca kapat")
+        case .always: String(localized: "Hep açık tut")
         }
     }
 }

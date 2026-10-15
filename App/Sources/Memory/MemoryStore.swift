@@ -5,7 +5,7 @@ import Observation
 enum MemoryStoreError: LocalizedError {
     case notSaved
 
-    var errorDescription: String? { "Hafızaya kaydedemedim." }
+    var errorDescription: String? { String(localized: "Hafızaya kaydedemedim.") }
 }
 
 /// The facts the user asked the assistant to remember, kept in one JSON file on this Mac only

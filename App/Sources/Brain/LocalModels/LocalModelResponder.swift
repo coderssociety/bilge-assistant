@@ -18,7 +18,7 @@ final class LocalModelResponder {
     /// Covers a cold load after a restart (15–30 s); past this the turn falls back to Apple's model.
     private static let maximumWait: Duration = .seconds(30)
     private static let pollInterval: Duration = .milliseconds(100)
-    static let waitingNotice = "Bir saniye. "
+    static let waitingNotice = String(localized: "Bir saniye. ")
 
     private let lifecycle = LocalModelLifecycle()
     private var history = ChatHistory()

@@ -16,13 +16,13 @@ enum ScheduledMoment {
 
     static func describe(_ date: Date, now: Date = .now) -> String {
         let calendar = Calendar.current
-        let locale = Locale(identifier: "tr_TR")
+        let locale = AppLanguage.locale
         let time = date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(locale))
         let day: String
-        if calendar.isDateInToday(date) { day = "bugün" }
-        else if calendar.isDateInTomorrow(date) { day = "yarın" }
+        if calendar.isDateInToday(date) { day = String(localized: "bugün") }
+        else if calendar.isDateInTomorrow(date) { day = String(localized: "yarın") }
         else { day = date.formatted(.dateTime.day().month(.wide).weekday(.wide).locale(locale)) }
-        return "\(day) saat \(time)"
+        return String(localized: "\(day) saat \(time)")
     }
 
     private static let partOfDayWords = ["sabah", "ogle", "aksam", "gece"]
@@ -30,12 +30,14 @@ enum ScheduledMoment {
     /// Day and clock time stated in the text override the model's values. A model hour is kept only
     /// when the text names a part of day ("yarın akşam"); otherwise it was invented, so it is dropped.
     static func refine(dayOffset: Int?, hour: Int?, minute: Int?, command: String) -> (dayOffset: Int?, hour: Int?, minute: Int?) {
-        let day = RelativeDayParser.dayOffset(in: command, now: .now)
-        if let clock = TimerPhraseParser.parse(command), let parsedHour = clock.hour {
+        let english = AppLanguage.current == .english
+        let day = english ? EnglishTimeParser.dayOffset(in: command, now: .now) : RelativeDayParser.dayOffset(in: command, now: .now)
+        if let clock = english ? EnglishTimeParser.parse(command) : TimerPhraseParser.parse(command), let parsedHour = clock.hour {
             return (day, parsedHour, clock.minute)
         }
         let folded = TurkishText.folded(command)
-        let mentionsPartOfDay = partOfDayWords.contains { folded.contains($0) }
+        let partsOfDay = english ? Array(EnglishTimeParser.partOfDayWords) : partOfDayWords
+        let mentionsPartOfDay = partsOfDay.contains { folded.contains($0) }
         return mentionsPartOfDay ? (day, hour, minute) : (day, nil, nil)
     }
 }
@@ -60,6 +62,11 @@ struct CreateEventTool: AssistantTool {
         var durationMinutes: Int?
     }
 
+    /// The Turkish question starts with the date; the English one ("…for tomorrow at 10:00?") does not.
+    private static func sentenceStart(_ text: String) -> String {
+        AppLanguage.current == .english ? text : text.capitalizedFirst
+    }
+
     func refine(_ arguments: Arguments, command: String) -> Arguments {
         let moment = ScheduledMoment.refine(dayOffset: arguments.dayOffset, hour: arguments.hour,
                                             minute: arguments.minute, command: command)
@@ -70,17 +77,18 @@ struct CreateEventTool: AssistantTool {
 
     func confirmationQuestion(for arguments: Arguments) -> String {
         guard let start = ScheduledMoment.resolve(dayOffset: arguments.dayOffset, hour: arguments.hour, minute: arguments.minute)
-        else { return "'\(arguments.title)' etkinliğini ekleyeyim mi?" }
-        return "\(ScheduledMoment.describe(start).capitalizedFirst) için '\(arguments.title)' etkinliğini takvime ekleyeyim mi?"
+        else { return String(localized: "'\(arguments.title)' etkinliğini ekleyeyim mi?") }
+        return String(
+            localized: "\(Self.sentenceStart(ScheduledMoment.describe(start))) için '\(arguments.title)' etkinliğini takvime ekleyeyim mi?")
     }
 
     func call(arguments: Arguments) async throws -> String {
         guard let start = ScheduledMoment.resolve(dayOffset: arguments.dayOffset, hour: arguments.hour, minute: arguments.minute)
-        else { return ToolReply.failure("Etkinliğin günü ya da saati anlaşılamadı.") }
+        else { return ToolReply.failure(String(localized: "Etkinliğin günü ya da saati anlaşılamadı.")) }
         let duration = TimeInterval((arguments.durationMinutes ?? Self.defaultDurationMinutes) * 60)
         do {
             try await CalendarAccess.shared.addEvent(title: arguments.title, start: start, end: start.addingTimeInterval(duration))
-            return "Ekledim: \(ScheduledMoment.describe(start)), \(arguments.title)."
+            return String(localized: "Ekledim: \(ScheduledMoment.describe(start)), \(arguments.title).")
         } catch {
             return ToolReply.failure(error)
         }
@@ -114,15 +122,16 @@ struct CreateReminderTool: AssistantTool {
 
     func confirmationQuestion(for arguments: Arguments) -> String {
         guard let due = ScheduledMoment.resolve(dayOffset: arguments.dayOffset, hour: arguments.hour, minute: arguments.minute)
-        else { return "'\(arguments.title)' anımsatıcısını ekleyeyim mi?" }
-        return "'\(arguments.title)' anımsatıcısını \(ScheduledMoment.describe(due)) için ekleyeyim mi?"
+        else { return String(localized: "'\(arguments.title)' anımsatıcısını ekleyeyim mi?") }
+        return String(localized: "'\(arguments.title)' anımsatıcısını \(ScheduledMoment.describe(due)) için ekleyeyim mi?")
     }
 
     func call(arguments: Arguments) async throws -> String {
         let due = ScheduledMoment.resolve(dayOffset: arguments.dayOffset, hour: arguments.hour, minute: arguments.minute)
         do {
             try await CalendarAccess.shared.addReminder(title: arguments.title, due: due)
-            return due.map { "Ekledim, \(ScheduledMoment.describe($0)) hatırlatacağım." } ?? "'\(arguments.title)' anımsatıcılara eklendi."
+            return due.map { String(localized: "Ekledim, \(ScheduledMoment.describe($0)) hatırlatacağım.") }
+                ?? String(localized: "'\(arguments.title)' anımsatıcılara eklendi.")
         } catch {
             return ToolReply.failure(error)
         }
@@ -132,7 +141,7 @@ struct CreateReminderTool: AssistantTool {
 extension String {
     var capitalizedFirst: String {
         guard let first else { return self }
-        return String(first).uppercased(with: Locale(identifier: "tr_TR")) + dropFirst()
+        return String(first).uppercased(with: AppLanguage.locale) + dropFirst()
     }
 }
 
@@ -155,9 +164,9 @@ struct CompleteReminderTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         do {
             guard let title = try await CalendarAccess.shared.completeReminder(matching: arguments.title) else {
-                return ToolReply.failure("Anımsatıcılarında '\(arguments.title)' diye tamamlanmamış bir iş bulamadım.")
+                return ToolReply.failure(String(localized: "Anımsatıcılarında '\(arguments.title)' diye tamamlanmamış bir iş bulamadım."))
             }
-            return "'\(title)' tamamlandı olarak işaretlendi."
+            return String(localized: "'\(title)' tamamlandı olarak işaretlendi.")
         } catch {
             return ToolReply.failure(error)
         }

@@ -28,27 +28,27 @@ enum Permission: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .microphone: "Mikrofon"
-        case .speechRecognition: "Konuşma Tanıma"
-        case .calendar: "Takvim"
-        case .reminders: "Anımsatıcılar"
-        case .screenRecording: "Ekran Kaydı"
-        case .contacts: "Kişiler"
-        case .accessibility: "Erişilebilirlik"
-        case .automation: "Otomasyon (Müzik, Notlar, Sistem Olayları)"
+        case .microphone: String(localized: "Mikrofon")
+        case .speechRecognition: String(localized: "Konuşma Tanıma")
+        case .calendar: String(localized: "Takvim")
+        case .reminders: String(localized: "Anımsatıcılar")
+        case .screenRecording: String(localized: "Ekran Kaydı")
+        case .contacts: String(localized: "Kişiler")
+        case .accessibility: String(localized: "Erişilebilirlik")
+        case .automation: String(localized: "Otomasyon (Müzik, Notlar, Sistem Olayları)")
         }
     }
 
     var purpose: String {
         switch self {
-        case .microphone: "Uyandırma kelimesini ve komutlarını duymak için. Zorunlu."
-        case .speechRecognition: "Türkçe konuşmayı cihaz üzerinde yazıya dökmek için. Zorunlu."
-        case .calendar: "Takvimi okumak ve onayınla etkinlik eklemek için."
-        case .reminders: "Anımsatıcıları okumak ve onayınla eklemek için."
-        case .screenRecording: "“Ekranda ne yazıyor?” için. Görüntü kaydedilmez, sadece okunur."
-        case .contacts: "Birinin numarasını ya da e-postasını bulmak ve onayınla mesaj göndermek için."
-        case .accessibility: "Dikte edileni yazmak, seçili metni okumak ve pencereleri düzenlemek için."
-        case .automation: "Müzik kontrolü, not oluşturma ve karanlık mod için. İlk kullanımda sorulur."
+        case .microphone: String(localized: "Uyandırma kelimesini ve komutlarını duymak için. Zorunlu.")
+        case .speechRecognition: String(localized: "Türkçe konuşmayı cihaz üzerinde yazıya dökmek için. Zorunlu.")
+        case .calendar: String(localized: "Takvimi okumak ve onayınla etkinlik eklemek için.")
+        case .reminders: String(localized: "Anımsatıcıları okumak ve onayınla eklemek için.")
+        case .screenRecording: String(localized: "“Ekranda ne yazıyor?” için. Görüntü kaydedilmez, sadece okunur.")
+        case .contacts: String(localized: "Birinin numarasını ya da e-postasını bulmak ve onayınla mesaj göndermek için.")
+        case .accessibility: String(localized: "Dikte edileni yazmak, seçili metni okumak ve pencereleri düzenlemek için.")
+        case .automation: String(localized: "Müzik kontrolü, not oluşturma ve karanlık mod için. İlk kullanımda sorulur.")
         }
     }
 

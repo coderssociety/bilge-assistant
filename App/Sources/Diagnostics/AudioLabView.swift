@@ -64,6 +64,7 @@ struct AudioLabView: View {
 
     private static func label(for voice: Supertonic3Voice) -> String {
         let raw = voice.rawValue
-        return raw.hasPrefix("F") ? "Kadın \(raw.dropFirst())" : "Erkek \(raw.dropFirst())"
+        let number = String(raw.dropFirst())
+        return raw.hasPrefix("F") ? String(localized: "Kadın \(number)") : String(localized: "Erkek \(number)")
     }
 }

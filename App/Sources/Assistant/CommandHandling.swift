@@ -28,7 +28,7 @@ extension CommandHandling {
 final class EchoCommandHandler: CommandHandling {
     func respond(to command: String) -> AsyncThrowingStream<String, any Error> {
         AsyncThrowingStream { continuation in
-            continuation.yield("Şunu duydum: \(command)")
+            continuation.yield(String(localized: "Şunu duydum: \(command)"))
             continuation.finish()
         }
     }

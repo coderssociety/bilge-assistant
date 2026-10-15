@@ -1,11 +1,11 @@
 # Bilge
 
-Mac için tamamen yerel çalışan Türkçe sesli asistan. “Bilge” dediğinde uyanır, komutunu anlar,
-Mac'te işi yapar ve Türkçe sesle cevap verir. Sesin ve komutların Mac'inden dışarı çıkmaz; internet
+Mac için tamamen yerel çalışan Türkçe ve İngilizce sesli asistan. “Bilge” dediğinde uyanır, komutunu
+anlar, Mac'te işi yapar ve sesle cevap verir. Sesin ve komutların Mac'inden dışarı çıkmaz; internet
 yalnızca hava durumu, döviz, haber gibi veriler ve modellerin ilk indirmesi için kullanılır.
 
-*A fully local Turkish voice assistant for macOS. Speech recognition, language models and speech
-synthesis all run on the Mac.*
+*A fully local voice assistant for macOS that speaks Turkish and English. Speech recognition,
+language models and speech synthesis all run on the Mac. See [English](#english) below.*
 
 ## Neler yapar
 
@@ -81,6 +81,18 @@ Listedeki modeller Hugging Face'ten, belirli bir sürüme sabitlenerek indirilir
 SHA-256 ile doğrulanır. Uzun talimatlar ve araç listesi bir kez okunup saklandığı için çok adımlı
 işlerde her adım birkaç saniye sürer. LM Studio ya da vMLX kullanıyorsan oradaki modelleri de Ayarlar > Model'den seçebilirsin.
 
+## Dil
+
+Kurulumun ilk adımında Türkçe ya da İngilizce seçilir; Ayarlar > Genel'den değiştirilebilir (uygulama
+yeniden başlar). Bilge seçilen dilde dinler, konuşur ve menülerini gösterir. Komutlar, Excel, dikte,
+tarayıcı, hafıza ve günlük özet iki dilde de çalışır. İngilizcede:
+
+- Konuşma tanıma varsayılan olarak Whisper'dır (1,5 GB indirme). Apple Dikte İngilizce modunda Türkçe
+  söylenen “Bilge” adını neredeyse hiç tanımadı; Whisper 20 denemenin 17'sinde tanıdı.
+- Haberler BBC News'ten okunur; döviz sorularında hedef söylenmezse dolar alınır.
+- Bilge konuşurken araya girmek (“Bilge, stop”) Türkçedekinden daha az güvenilirdir: Whisper, Bilge'nin
+  kendi sesinin yankısı arasında uyandırma kelimesini daha sık kaçırır.
+
 ## Gizlilik
 
 - Ses kaydı saklanmaz. Uyandırma kelimesinden öncesi dinlenmez.
@@ -133,3 +145,18 @@ aynı liste uygulamada Ayarlar > Hakkında'da da görünür. Özellikle:
   [mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm) (MIT) ile çalışır.
 - Türkçe ses [Supertonic-3](https://huggingface.co/Supertone/supertonic-3) modelidir (OpenRAIL-M);
   kullanım kısıtları bildirim dosyasında yazılıdır.
+
+## English
+
+Bilge is a local voice assistant for the Mac. Choose English in the first setup step (or later in
+Settings > General); Bilge then listens, speaks and shows its menus in English. Say “Bilge” (as it is
+pronounced in Turkish: *BIL-geh*) followed by a command: “Bilge, what time is it?”, “Bilge, put the sum of
+B1 and B2 into D3”, “Bilge, summarize this”, “Bilge, start dictation”.
+
+- Requirements: Apple Silicon, macOS 27, Apple Intelligence turned on.
+- Speech recognition in English defaults to Whisper (about 1.5 GB download).
+- Optional larger conversation models (Qwen 3.6/3.8 27B, Gemma 4 31B) run inside the app with MLX, or
+  drop your own MLX model into `~/Library/Application Support/Asistan/Models/Kendi Modellerim/`.
+- Everything stays on your Mac; the internet is used only for weather, exchange rates, news, web pages you
+  ask for, and model downloads.
+- Licensed under GPL-3.0; third-party notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

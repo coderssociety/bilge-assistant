@@ -12,15 +12,15 @@ enum AppleScriptError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .compilationFailed:
-            "Betik derlenemedi."
+            String(localized: "Betik derlenemedi.")
         case let .executionFailed(code, _) where code == Self.timedOutCode:
-            "Uygulama zamanında yanıt vermedi."
+            String(localized: "Uygulama zamanında yanıt vermedi.")
         case let .executionFailed(code, _) where code == Self.notAuthorizedCode:
-            "Bu uygulamayı kontrol etme izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon'dan izin verilmeli."
+            String(localized: "Bu uygulamayı kontrol etme izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon'dan izin verilmeli.")
         case let .executionFailed(_, message):
             message
         case .processFailed:
-            "Uygulama zamanında yanıt vermedi."
+            String(localized: "Uygulama zamanında yanıt vermedi.")
         }
     }
 }

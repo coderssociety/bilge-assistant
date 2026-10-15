@@ -22,15 +22,18 @@ enum ShortcutsCatalog {
     static func run(_ name: String) async throws -> String {
         let output = try await ProcessRunner.run(executable, ["run", name], timeout: .seconds(60))
         guard output.status == 0 else {
-            return ToolReply.failure(output.standardError.isEmpty ? "'\(name)' kestirmesi çalışmadı." : output.standardError)
+            return ToolReply.failure(
+                output.standardError.isEmpty ? String(localized: "'\(name)' kestirmesi çalışmadı.") : output.standardError)
         }
-        return output.standardOutput.isEmpty ? "'\(name)' kestirmesi çalıştı." : "'\(name)' sonucu: \(output.standardOutput.prefix(300))"
+        return output.standardOutput.isEmpty
+            ? String(localized: "'\(name)' kestirmesi çalıştı.")
+            : String(localized: "'\(name)' sonucu: \(String(output.standardOutput.prefix(300)))")
     }
 
     enum ShortcutsError: LocalizedError {
         case listFailed(String)
         var errorDescription: String? {
-            if case let .listFailed(detail) = self { "Kestirmeler okunamadı. \(detail)" } else { nil }
+            if case let .listFailed(detail) = self { String(localized: "Kestirmeler okunamadı. \(detail)") } else { nil }
         }
     }
 }
@@ -48,8 +51,8 @@ struct ListShortcutsTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         do {
             let names = try await ShortcutsCatalog.names()
-            guard !names.isEmpty else { return "Hiç kestirmen yok." }
-            return "\(names.count) kestirmen var: " + names.prefix(Self.maxNames).joined(separator: ", ")
+            guard !names.isEmpty else { return String(localized: "Hiç kestirmen yok.") }
+            return String(localized: "\(names.count) kestirmen var: \(names.prefix(Self.maxNames).joined(separator: ", "))")
         } catch {
             return ToolReply.failure(error)
         }
@@ -75,18 +78,18 @@ struct RunShortcutTool: AssistantTool {
             return .unavailable(name, message: error.localizedDescription)
         }
         guard let shortcut = resolved else {
-            return .unavailable(name, message: "'\(arguments.shortcutName)' adında bir kestirme bulamadım.")
+            return .unavailable(name, message: String(localized: "'\(arguments.shortcutName)' adında bir kestirme bulamadım."))
         }
         return PreparedToolCall(
             toolName: name,
             argumentsDescription: shortcut,
             risk: risk,
-            confirmationQuestion: "'\(shortcut)' kestirmesini çalıştırayım mı?",
+            confirmationQuestion: String(localized: "'\(shortcut)' kestirmesini çalıştırayım mı?"),
             execute: { try await ShortcutsCatalog.run(shortcut) })
     }
 
     /// Only the confirmed path from `makeCall` runs shortcuts.
     func call(arguments: Arguments) async throws -> String {
-        ToolReply.failure("Kestirmeler yalnızca sesli onayla çalıştırılabilir.")
+        ToolReply.failure(String(localized: "Kestirmeler yalnızca sesli onayla çalıştırılabilir."))
     }
 }

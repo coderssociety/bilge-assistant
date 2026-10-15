@@ -45,7 +45,7 @@ extension AssistantTool {
     func arguments(fromCommand command: String) -> Arguments? { nil }
     func refine(_ arguments: Arguments, command: String) -> Arguments { arguments }
     func prefersConversation(for arguments: Arguments) -> Bool { false }
-    func confirmationQuestion(for arguments: Arguments) -> String { "Bunu yapmamı onaylıyor musun?" }
+    func confirmationQuestion(for arguments: Arguments) -> String { String(localized: "Bunu yapmamı onaylıyor musun?") }
 
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
         PreparedToolCall(
@@ -105,7 +105,7 @@ enum ToolReply {
     /// Turns a tool result into what the assistant says out loud.
     static func spoken(_ result: String) -> String {
         guard result.hasPrefix(failurePrefix) else { return result }
-        return "Bunu yapamadım. " + result.dropFirst(failurePrefix.count)
+        return String(localized: "Bunu yapamadım. ") + result.dropFirst(failurePrefix.count)
     }
 
     static func failure(_ error: any Error) -> String {

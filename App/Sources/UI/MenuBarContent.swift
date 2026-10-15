@@ -45,15 +45,15 @@ struct MenuBarContent: View {
 extension AssistantController.Status {
     var title: String {
         switch self {
-        case .off: "Kapalı"
+        case .off: String(localized: "Kapalı")
         case let .loading(message): message
-        case .listening: "Dinliyor — “\(AppIdentity.name)” de"
-        case .awake: "Seni dinliyorum…"
-        case .transcribing: "Anlıyorum…"
-        case .thinking: "Düşünüyor…"
-        case .speaking: "Konuşuyor…"
-        case .confirming: "Onayını bekliyorum — evet ya da hayır de"
-        case let .failed(message): "Hata: \(message)"
+        case .listening: String(localized: "Dinliyor — “\(AppIdentity.name)” de")
+        case .awake: String(localized: "Seni dinliyorum…")
+        case .transcribing: String(localized: "Anlıyorum…")
+        case .thinking: String(localized: "Düşünüyor…")
+        case .speaking: String(localized: "Konuşuyor…")
+        case .confirming: String(localized: "Onayını bekliyorum — evet ya da hayır de")
+        case let .failed(message): String(localized: "Hata: \(message)")
         }
     }
 

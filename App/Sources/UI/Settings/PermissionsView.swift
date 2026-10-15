@@ -84,10 +84,10 @@ private extension Permission.State {
 
     var label: String {
         switch self {
-        case .granted: "İzin verildi"
-        case .denied: "İzin reddedildi"
-        case .notAsked: "Henüz sorulmadı"
-        case .askedOnUse: "Kullanımda sorulur"
+        case .granted: String(localized: "İzin verildi")
+        case .denied: String(localized: "İzin reddedildi")
+        case .notAsked: String(localized: "Henüz sorulmadı")
+        case .askedOnUse: String(localized: "Kullanımda sorulur")
         }
     }
 }

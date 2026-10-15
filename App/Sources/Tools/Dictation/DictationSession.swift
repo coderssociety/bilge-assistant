@@ -36,27 +36,27 @@ final class DictationSession {
         guard isActive, let target else { return "" }
         guard NSWorkspace.shared.frontmostApplication?.processIdentifier == target.processIdentifier else {
             end()
-            return "Öndeki uygulama değişti, dikteyi bitirdim."
+            return String(localized: "Öndeki uygulama değişti, dikteyi bitirdim.")
         }
         do {
-            switch DictationCommand.parse(input) {
+            switch DictationCommand.parse(input, language: AppLanguage.current) {
             case .finish:
                 end()
-                return "Dikte bitti."
+                return String(localized: "Dikte bitti.")
             case .newLine:
                 try newLine()
             case .newParagraph:
                 try newLine()
                 try newLine()
             case .deleteLast:
-                guard let last = typed.popLast() else { return "Silinecek bir şey yok." }
+                guard let last = typed.popLast() else { return String(localized: "Silinecek bir şey yok.") }
                 // Paced like typing, so the deletes never overtake text the app has not drawn yet.
                 for _ in 0..<last.count {
                     try AccessibilityControl.press(Key.delete)
                     try await Task.sleep(for: Self.keyPause)
                 }
             case nil:
-                let text = TypedText.sanitized(DictationText.format(input, after: typed.joined()))
+                let text = TypedText.sanitized(DictationText.format(input, after: typed.joined(), language: AppLanguage.current))
                 guard !text.isEmpty else { return "" }
                 try await AccessibilityControl.type(text, into: target.processIdentifier)
                 remember(text)

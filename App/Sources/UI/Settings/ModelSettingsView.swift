@@ -133,7 +133,7 @@ struct ModelSettingsView: View {
             lmStudioModels = try await lmStudio.chatModels()
             lmStudioError = nil
         } catch {
-            lmStudioError = "LM Studio sunucusu kapalı."
+            lmStudioError = String(localized: "LM Studio sunucusu kapalı.")
         }
     }
 }
@@ -148,11 +148,11 @@ private extension LocalModelKeepAlive {
     var explanation: String {
         switch self {
         case .untilConversationEnds:
-            "“\(AppIdentity.name)” dediğinde yüklenmeye başlar, sen konuşurken büyük ölçüde hazır olur (Qwen ~4 sn, Gemma ~6 sn). Yanıt bitip devam sorusu gelmezse bellekten çıkar. Gecikirse “Bir saniye” der."
+            String(localized: "“\(AppIdentity.name)” dediğinde yüklenmeye başlar, sen konuşurken büyük ölçüde hazır olur (Qwen ~4 sn, Gemma ~6 sn). Yanıt bitip devam sorusu gelmezse bellekten çıkar. Gecikirse “Bir saniye” der.")
         case .fiveMinutes, .thirtyMinutes:
-            "Arka arkaya konuşmalarda yeniden yüklemeyi bekletmez; süre dolunca bellekten çıkar."
+            String(localized: "Arka arkaya konuşmalarda yeniden yüklemeyi bekletmez; süre dolunca bellekten çıkar.")
         case .always:
-            "Uygulama açılınca yüklenir ve kapanana kadar bellekte kalır. En hızlı yanıt, en çok bellek."
+            String(localized: "Uygulama açılınca yüklenir ve kapanana kadar bellekte kalır. En hızlı yanıt, en çok bellek.")
         }
     }
 }

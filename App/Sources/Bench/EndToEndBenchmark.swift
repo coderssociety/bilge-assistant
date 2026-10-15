@@ -20,6 +20,21 @@ enum EndToEndBenchmark {
 
     private static let maxInterruptLatency = 3.0
 
+    private static let englishScript: [Line] = [
+        Line(pauseBefore: 1.5, text: "The weather is lovely today, let's go out.", expectsReply: false),
+        Line(pauseBefore: 2.0, text: "Bilge, what time is it?", expectsReply: true),
+        Line(pauseBefore: 9.0, text: "Bilge.", expectsReply: false),
+        Line(pauseBefore: 1.0, text: "What's my battery level?", expectsReply: true),
+        Line(pauseBefore: 7.0, text: "Bilge, what is 18 percent of 125?", expectsReply: true),
+        Line(pauseBefore: 7.0, text: "Thank you.", expectsReply: true),
+        Line(pauseBefore: 9.0, text: "Bilge, add a dentist appointment tomorrow at ten.", expectsReply: true),
+        Line(pauseBefore: 8.0, text: "No.", expectsReply: true),
+        Line(pauseBefore: 6.0, text: "Bilge, tell me about the history of London.", expectsReply: true),
+        Line(pauseBefore: 5.0, text: "Bilge, stop.", expectsReply: false, interrupts: true),
+        Line(pauseBefore: 8.0, text: "Bilge, tell me about New York.", expectsReply: true),
+        Line(pauseBefore: 5.0, text: "Bilge, what time is it?", expectsReply: true, interrupts: true),
+    ]
+
     private static let script: [Line] = [
         Line(pauseBefore: 1.5, text: "Bugün hava çok güzel, dışarı çıkalım.", expectsReply: false),
         Line(pauseBefore: 2.0, text: "Bilge, saat kaç?", expectsReply: true),
@@ -35,21 +50,23 @@ enum EndToEndBenchmark {
         Line(pauseBefore: 5.0, text: "Bilge, saat kaç?", expectsReply: true, interrupts: true),
     ]
 
-    static func run() async -> Int32 {
+    /// `--language en` plays an English script; the wake word stays Turkish-pronounced, as a user would say it.
+    static func run(arguments: [String]) async -> Int32 {
         setvbuf(stdout, nil, _IOLBF, 0)
+        let language = ASRBenchmark.languageArgument(arguments)
         do {
             print("Senaryo sesi üretiliyor…")
-            let (audio, endTimes) = try await synthesizeScript()
+            let (audio, endTimes) = try await synthesizeScript(language == .english ? englishScript : script, language: language)
             let defaults = UserDefaults(suiteName: "com.vrnsoft.asistan.bench")!
             defaults.removePersistentDomain(forName: "com.vrnsoft.asistan.bench")
             let settings = AssistantSettings(defaults: defaults)
-            let speech = SpeechOutput(voice: .f1)
+            let speech = SpeechOutput(voice: .f1, language: language)
             speech.isMuted = true
-            let tools = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }).makeTools()
+            let tools = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }, language: language).makeTools()
             // A laptop speaker leaking into its own microphone: 60 ms late, half as loud.
             let source = ScriptedAudioSource(
                 samples: audio, echo: .init(timeline: speech.playbackTimeline, delay: 0.06, gain: 0.5))
-            let brain = AssistantBrain(tools: tools)
+            let brain = AssistantBrain(tools: tools, language: language)
             brain.prewarm()
             let assistant = AssistantController(settings: settings, speech: speech, handler: brain, audioSource: source)
             brain.confirmer = assistant
@@ -150,7 +167,17 @@ enum EndToEndBenchmark {
         }
     }
 
-    private static func synthesizeScript() async throws -> ([Float], [(Double, Line)]) {
+    private static let silenceLevel: Float = 0.01
+    /// Keeps a short margin so word onsets are not clipped.
+    private static let keptMargin = 800
+
+    private static func trimmed(_ samples: [Float]) -> [Float] {
+        guard let first = samples.firstIndex(where: { abs($0) > silenceLevel }),
+              let last = samples.lastIndex(where: { abs($0) > silenceLevel }) else { return samples }
+        return Array(samples[max(0, first - keptMargin)...min(samples.count - 1, last + keptMargin)])
+    }
+
+    private static func synthesizeScript(_ script: [Line], language: AssistantLanguage) async throws -> ([Float], [(Double, Line)]) {
         let manager = try await Supertonic3Manager.downloadAndCreate()
         let style = try await Supertonic3ResourceDownloader.loadVoiceStyle(.m1)
         let converter = AudioConverter()
@@ -159,9 +186,18 @@ enum EndToEndBenchmark {
         var endTimes: [(Double, Line)] = []
         for line in script {
             audio += [Float](repeating: 0, count: Int(line.pauseBefore * rate))
-            let spoken = TurkishSpeechNormalizer.normalize(line.text)
-            let result = try await manager.synthesize(text: spoken, language: AssistantLanguage.turkish.code, style: style)
-            audio += try converter.resample(result.samples, from: SpeechOutput.sampleRate)
+            var pieces = [(line.text, language)]
+            if language == .english, line.text.hasPrefix(AppIdentity.name) {
+                let rest = line.text.dropFirst(AppIdentity.name.count).drop { $0 == "," || $0 == "." || $0 == " " }
+                pieces = [(AppIdentity.name, .turkish)] + (rest.isEmpty ? [] : [(String(rest), .english)])
+            }
+            for (text, pieceLanguage) in pieces {
+                let spoken = SpokenText.normalize(text, language: pieceLanguage)
+                let result = try await manager.synthesize(text: spoken, language: pieceLanguage.code, style: style)
+                let samples = try converter.resample(result.samples, from: SpeechOutput.sampleRate)
+                // Pieces of one sentence are joined without their own silences, as a person says them in one breath.
+                audio += pieces.count > 1 ? trimmed(samples) : samples
+            }
             endTimes.append((Double(audio.count) / rate, line))
         }
         audio += [Float](repeating: 0, count: Int(tailSilence * rate))

@@ -40,7 +40,7 @@ enum PCMBuffers {
             return buffer
         }
         if status == .error {
-            throw AudioError.conversionFailed(conversionError?.localizedDescription ?? "bilinmeyen hata")
+            throw AudioError.conversionFailed(conversionError?.localizedDescription ?? String(localized: "bilinmeyen hata"))
         }
         return output
     }

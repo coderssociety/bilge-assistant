@@ -31,10 +31,14 @@ public enum ConfirmationParser {
 
     private static let english = Words(
         yes: [
-            "yes", "yeah", "yep", "yup", "sure", "ok", "okay", "confirm", "confirmed", "send", "go", "proceed",
-            "absolutely", "definitely", "certainly", "delete", "add", "run", "please",
+            "yes", "yeah", "yep", "yup", "sure", "ok", "okay", "confirm", "confirmed", "send", "ahead", "proceed",
+            "absolutely", "definitely", "certainly", "delete", "add", "run",
         ],
-        no: ["no", "nope", "nah", "cancel", "stop", "dont", "abort", "negative", "never"],
+        // Hesitation counts as no: "I'm not sure" or "wait" must never run the action.
+        no: [
+            "no", "nope", "nah", "cancel", "stop", "dont", "abort", "negative", "never", "not", "cant", "wont", "wait",
+            "hold", "hang", "later", "maybe", "unsure",
+        ],
         strictYes: ["yes", "confirm", "confirmed", "send"],
         noPhrases: ["never mind", "not now", "forget it", "do not"])
 

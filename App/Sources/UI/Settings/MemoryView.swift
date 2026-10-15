@@ -30,7 +30,7 @@ struct MemoryView: View {
             }
             Divider()
             HStack {
-                Text(errorMessage ?? "Bilgiler yalnızca bu Mac'te saklanır.")
+                Text(errorMessage ?? String(localized: "Bilgiler yalnızca bu Mac'te saklanır."))
                     .font(.caption).foregroundStyle(errorMessage == nil ? Color.secondary : Color.red)
                 Spacer()
                 Button("Tümünü sil", role: .destructive) { confirmingClear = true }

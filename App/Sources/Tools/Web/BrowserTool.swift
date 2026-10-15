@@ -35,7 +35,7 @@ struct BrowserTool: RuleRoutedTool {
 
     @MainActor
     func claims(_ command: String) -> Bool {
-        BrowserCommand.parse(command) != nil
+        BrowserCommand.parse(command, language: AppLanguage.current) != nil
     }
 
     func arguments(fromCommand command: String) -> Arguments? {
@@ -43,8 +43,8 @@ struct BrowserTool: RuleRoutedTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
-        guard let command = BrowserCommand.parse(arguments.command) else {
-            return ToolReply.failure("Tarayıcıda ne yapmamı istediğini anlayamadım.")
+        guard let command = BrowserCommand.parse(arguments.command, language: AppLanguage.current) else {
+            return ToolReply.failure(String(localized: "Tarayıcıda ne yapmamı istediğini anlayamadım."))
         }
         do {
             return try await Self.perform(command)
@@ -56,13 +56,19 @@ struct BrowserTool: RuleRoutedTool {
     @MainActor
     private static func perform(_ command: BrowserCommand) async throws -> String {
         switch command {
-        case .scrollDown: try AccessibilityControl.press(Key.pageDown); return "Aşağı kaydırdım."
-        case .scrollUp: try AccessibilityControl.press(Key.pageUp); return "Yukarı kaydırdım."
-        case .bottom: try AccessibilityControl.press(Key.down, flags: .maskCommand); return "Sonuna indim."
-        case .top: try AccessibilityControl.press(Key.up, flags: .maskCommand); return "Başına çıktım."
+        case .scrollDown: try AccessibilityControl.press(Key.pageDown); return String(localized: "Aşağı kaydırdım.")
+        case .scrollUp: try AccessibilityControl.press(Key.pageUp); return String(localized: "Yukarı kaydırdım.")
+        case .bottom:
+            try AccessibilityControl.press(Key.down, flags: .maskCommand)
+            return String(localized: "Sonuna indim.")
+        case .top:
+            try AccessibilityControl.press(Key.up, flags: .maskCommand)
+            return String(localized: "Başına çıktım.")
         default: break
         }
-        guard let browser = await frontBrowser() else { return ToolReply.failure("Açık bir tarayıcı yok.") }
+        guard let browser = await frontBrowser() else {
+            return ToolReply.failure(String(localized: "Açık bir tarayıcı yok."))
+        }
         switch command {
         case .nextTab: try AccessibilityControl.press(Key.tab, flags: .maskControl)
         case .previousTab: try AccessibilityControl.press(Key.tab, flags: [.maskControl, .maskShift])
@@ -77,7 +83,7 @@ struct BrowserTool: RuleRoutedTool {
             try await Task.sleep(for: findFieldDelay)
             try await AccessibilityControl.type(TypedText.sanitized(text), into: browser.processIdentifier)
             try AccessibilityControl.press(Key.returnKey)
-            return "Sayfada '\(text)' arıyorum."
+            return String(localized: "Sayfada '\(text)' arıyorum.")
         case let .tab(index):
             return try await selectTab(index, in: browser)
         case .lastTab:
@@ -92,15 +98,15 @@ struct BrowserTool: RuleRoutedTool {
 
     private static func reply(for command: BrowserCommand) -> String {
         switch command {
-        case .nextTab: "Sonraki sekme."
-        case .previousTab: "Önceki sekme."
-        case .newTab: "Yeni sekme açtım."
-        case .closeTab: "Sekmeyi kapattım."
-        case .reopenTab: "Kapattığın sekmeyi geri açtım."
-        case .back: "Geri gittim."
-        case .forward: "İleri gittim."
-        case .reload: "Sayfayı yeniledim."
-        default: "Tamam."
+        case .nextTab: String(localized: "Sonraki sekme.")
+        case .previousTab: String(localized: "Önceki sekme.")
+        case .newTab: String(localized: "Yeni sekme açtım.")
+        case .closeTab: String(localized: "Sekmeyi kapattım.")
+        case .reopenTab: String(localized: "Kapattığın sekmeyi geri açtım.")
+        case .back: String(localized: "Geri gittim.")
+        case .forward: String(localized: "İleri gittim.")
+        case .reload: String(localized: "Sayfayı yeniledim.")
+        default: String(localized: "Tamam.")
         }
     }
 
@@ -125,25 +131,27 @@ struct BrowserTool: RuleRoutedTool {
     @MainActor
     private static func selectTab(_ index: Int?, in browser: NSRunningApplication) async throws -> String {
         guard let identifier = browser.bundleIdentifier, BrowserPage.isScriptable(identifier) else {
-            return ToolReply.failure("Bu tarayıcıda sekmelere numarayla geçemiyorum.")
+            return ToolReply.failure(String(localized: "Bu tarayıcıda sekmelere numarayla geçemiyorum."))
         }
         let count = try await BrowserPage.tabTitles(in: identifier).count
         let target = index ?? count
-        guard (1...max(count, 1)).contains(target), count > 0 else { return ToolReply.failure("Bu pencerede \(count) sekme var.") }
+        guard (1...max(count, 1)).contains(target), count > 0 else {
+            return ToolReply.failure(String(localized: "Bu pencerede \(count) sekme var."))
+        }
         try await BrowserPage.selectTab(target, in: identifier)
-        return "\(target). sekme."
+        return String(localized: "\(target). sekme.")
     }
 
     @MainActor
     private static func selectTab(named title: String, in browser: NSRunningApplication) async throws -> String {
         guard let identifier = browser.bundleIdentifier, BrowserPage.isScriptable(identifier) else {
-            return ToolReply.failure("Bu tarayıcıda sekmelere adıyla geçemiyorum.")
+            return ToolReply.failure(String(localized: "Bu tarayıcıda sekmelere adıyla geçemiyorum."))
         }
         let titles = try await BrowserPage.tabTitles(in: identifier)
         guard let match = PhraseMatcher.bestMatch(for: title, in: titles), let index = titles.firstIndex(of: match) else {
-            return ToolReply.failure("'\(title)' adında bir sekme bulamadım.")
+            return ToolReply.failure(String(localized: "'\(title)' adında bir sekme bulamadım."))
         }
         try await BrowserPage.selectTab(index + 1, in: identifier)
-        return "\(match) sekmesi."
+        return String(localized: "\(match) sekmesi.")
     }
 }

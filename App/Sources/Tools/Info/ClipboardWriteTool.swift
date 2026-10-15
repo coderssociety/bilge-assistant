@@ -25,12 +25,12 @@ struct CopyToClipboardTool: AssistantTool {
         let given = arguments.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let fallback = await MainActor.run { context.lastReply }
         guard let text = given.isEmpty ? fallback : given, !text.isEmpty else {
-            return ToolReply.failure("Panoya ne kopyalayacağımı anlayamadım.")
+            return ToolReply.failure(String(localized: "Panoya ne kopyalayacağımı anlayamadım."))
         }
         await MainActor.run {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(text, forType: .string)
         }
-        return "Panoya kopyaladım."
+        return String(localized: "Panoya kopyaladım.")
     }
 }

@@ -55,7 +55,7 @@ struct LMStudioClient: Sendable {
         try await startServerIfNeeded()
         guard let models = try? await chatModels() else { throw LocalModelServerError.serverUnavailable("LM Studio") }
         guard let model = models.first(where: { $0.id == id }) else {
-            throw LocalModelServerError.loadFailed("\(id) LM Studio'da yok.")
+            throw LocalModelServerError.loadFailed(String(localized: "\(id) LM Studio'da yok."))
         }
         let endpoint = Self.endpoint(for: model)
         if model.isLoaded { return (endpoint, false) }

@@ -46,7 +46,7 @@ enum BrowserPage {
     static func text(of url: URL) async throws -> String {
         let html = try await WebFetch.text(from: url)
         let text = HTMLText.extract(html)
-        guard !text.isEmpty else { return ToolReply.failure("Sayfada okunabilir yazı yok.") }
+        guard !text.isEmpty else { return ToolReply.failure(String(localized: "Sayfada okunabilir yazı yok.")) }
         let title = HTMLText.title(html).map { "Başlık: \($0)\n" } ?? ""
         return title + String(text.prefix(maxCharacters))
     }

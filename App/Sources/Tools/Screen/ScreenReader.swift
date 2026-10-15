@@ -10,9 +10,9 @@ enum ScreenReaderError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionMissing:
-            "Ekranı okumak için Ekran Kaydı izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Ekran ve Sistem Sesi Kaydı'ndan Bilge'ye izin ver."
+            String(localized: "Ekranı okumak için Ekran Kaydı izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Ekran ve Sistem Sesi Kaydı'ndan Bilge'ye izin ver.")
         case .nothingToCapture:
-            "Okunacak bir pencere bulamadım."
+            String(localized: "Okunacak bir pencere bulamadım.")
         }
     }
 }

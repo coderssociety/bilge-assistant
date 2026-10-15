@@ -19,7 +19,8 @@ public enum MemoryIntent: Equatable, Sendable {
         "ilgili", "hakkindaki", "bilgiyi", "bilgileri", "bilgi", "kaydi", "seyi", "olan", "musun", "misin", "artik",
     ]
 
-    public static func parse(_ command: String) -> MemoryIntent? {
+    public static func parse(_ command: String, language: AssistantLanguage = .turkish) -> MemoryIntent? {
+        if language == .english { return EnglishMemoryIntent.parse(command) }
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         if words.contains(where: { $0.hasPrefix("hatirlat") }) { return nil }
         let mentionsMemory = words.contains { $0.hasPrefix("hafiza") }
@@ -38,7 +39,8 @@ public enum MemoryIntent: Equatable, Sendable {
     }
 
     /// "Her şeyi unut" → all, "Bunu unut" → the latest fact, "Kahveyle ilgili bilgiyi unut" → "Kahveyle".
-    public static func forgetTarget(from command: String) -> ForgetTarget {
+    public static func forgetTarget(from command: String, language: AssistantLanguage = .turkish) -> ForgetTarget {
+        if language == .english { return EnglishMemoryIntent.forgetTarget(from: command) }
         let tokens = command.split(whereSeparator: \.isWhitespace).map(String.init)
         let words = tokens.map { TurkishText.folded($0) }
         let clearsMemory = words.contains { $0.hasPrefix("hafiza") } && words.contains(where: clearVerbs.contains)
@@ -52,7 +54,8 @@ public enum MemoryIntent: Equatable, Sendable {
 
     /// The fact itself, without the request words: "Şunu hatırla: kapı şifresi değişti" → "kapı şifresi değişti".
     /// nil when nothing is left ("Bunu hatırla" refers to something said before).
-    public static func fact(from command: String) -> String? {
+    public static func fact(from command: String, language: AssistantLanguage = .turkish) -> String? {
+        if language == .english { return EnglishMemoryIntent.fact(from: command) }
         let tokens = command.split(whereSeparator: \.isWhitespace).map(String.init)
         var kept: [String] = []
         var previous = ""

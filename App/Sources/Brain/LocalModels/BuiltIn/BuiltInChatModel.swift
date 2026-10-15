@@ -47,7 +47,7 @@ struct BuiltInChatModel: LoadedChatModel {
         switch choice.server {
         case .builtIn:
             guard let model = ModelCatalog.model(id: choice.modelID) else {
-                throw LocalModelServerError.loadFailed("\(choice.modelID) tanınmıyor.")
+                throw LocalModelServerError.loadFailed(String(localized: "\(choice.modelID) tanınmıyor."))
             }
             guard ModelDownloads.isDownloaded(model) else { throw LocalModelServerError.notInstalled(model.name) }
             return try ModelDownloads.folder(for: model)

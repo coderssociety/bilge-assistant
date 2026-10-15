@@ -22,25 +22,27 @@ final class AssistantBrain: CommandHandling {
     private let spreadsheet: SpreadsheetSession
     private let dictation: DictationSession
     private let tools: [any AssistantTool]
+    let language: AssistantLanguage
     private let localModel = LocalModelResponder()
     /// Asks the user before `.needsConfirmation` tools run; without it those tools never run.
     weak var confirmer: (any ConfirmationProviding)?
 
     init(tools: [any AssistantTool], context: ConversationContext = ConversationContext(),
          memory: MemoryStore = MemoryStore(fileURL: nil), spreadsheet: SpreadsheetSession = SpreadsheetSession(),
-         dictation: DictationSession = DictationSession()) {
+         dictation: DictationSession = DictationSession(), language: AssistantLanguage = .turkish) {
+        self.language = language
         self.context = context
         self.memory = memory
         self.spreadsheet = spreadsheet
         self.dictation = dictation
         self.tools = tools
         do {
-            router = try CommandRouter(tools: tools, model: model)
+            router = try CommandRouter(tools: tools, language: language, model: model)
             routerError = nil
         } catch {
             Log.brain.fault("Router schema failed: \(String(describing: error), privacy: .public)")
             router = nil
-            routerError = "Komut yönlendirici başlatılamadı."
+            routerError = String(localized: "Komut yönlendirici başlatılamadı.")
         }
     }
 
@@ -52,10 +54,10 @@ final class AssistantBrain: CommandHandling {
             return nil
         case let .unavailable(reason):
             return switch reason {
-            case .deviceNotEligible: "Bu Mac, Apple'ın cihaz içi dil modelini desteklemiyor."
-            case .appleIntelligenceNotEnabled: "Apple Intelligence kapalı. Sistem Ayarları'ndan açman gerekiyor."
-            case .modelNotReady: "Dil modeli henüz hazır değil, sistem indiriyor olabilir."
-            @unknown default: "Cihaz içi dil modeli şu an kullanılamıyor."
+            case .deviceNotEligible: String(localized: "Bu Mac, Apple'ın cihaz içi dil modelini desteklemiyor.")
+            case .appleIntelligenceNotEnabled: String(localized: "Apple Intelligence kapalı. Sistem Ayarları'ndan açman gerekiyor.")
+            case .modelNotReady: String(localized: "Dil modeli henüz hazır değil, sistem indiriyor olabilir.")
+            @unknown default: String(localized: "Cihaz içi dil modeli şu an kullanılamıyor.")
             }
         }
     }
@@ -112,8 +114,9 @@ final class AssistantBrain: CommandHandling {
     var workSession: ConversationFlow.WorkSession? {
         if dictation.isActive { return ConversationFlow.WorkSession(window: DictationSession.window) { _ in true } }
         guard spreadsheet.isActive else { return nil }
+        let language = language
         return ConversationFlow.WorkSession(window: SpreadsheetSession.window) { command in
-            SpreadsheetCommand.parse(TurkishNumberParser.digitize(command)) != nil || SpreadsheetCommand.mentionsCells(command)
+            SpreadsheetTool.command(in: command) != nil || SpreadsheetCommand.mentionsCells(command, language: language)
         }
     }
 
@@ -143,18 +146,18 @@ final class AssistantBrain: CommandHandling {
 
     private func handle(_ command: String, continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
         guard let router, unavailableReason == nil else {
-            continuation.yield(unavailableReason ?? "Dil modeli kullanılamıyor.")
+            continuation.yield(unavailableReason ?? String(localized: "Dil modeli kullanılamıyor."))
             return
         }
         // "Bilge, dikteyi bitir" said with the wake phrase still controls dictation.
-        if dictation.isActive, DictationCommand.parse(command) != nil {
+        if dictation.isActive, DictationCommand.parse(command, language: language) != nil {
             let reply = await dictation.handle(command)
             if !reply.isEmpty { continuation.yield(reply) }
             return
         }
         // "Bunu Ahmet'e gönder": what was on screen when the command was heard, read only when it points.
-        context.screen = ContextIntent.points(command) ? await ScreenContextReader.snapshot() : nil
-        if let parts = CompoundCommand.split(command) {
+        context.screen = ContextIntent.points(command, language: language) ? await ScreenContextReader.snapshot() : nil
+        if let parts = CompoundCommand.split(command, language: language) {
             try await handleCompound(command, parts: parts, router: router, continuation: continuation)
             return
         }
@@ -170,8 +173,8 @@ final class AssistantBrain: CommandHandling {
         router: CommandRouter,
         continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws {
-        if localModel.isEnabled, CompoundCommand.hasDependentParts(parts) {
-            continuation.yield("Tamam, sırayla yapıyorum. ")
+        if localModel.isEnabled, CompoundCommand.hasDependentParts(parts, language: language) {
+            continuation.yield(String(localized: "Tamam, sırayla yapıyorum. "))
             do {
                 let outcome = try await multiStepAgent(for: command, continuation: continuation).run(command)
                 previousTurn = .init(command: command, action: "multiStep",
@@ -197,6 +200,7 @@ final class AssistantBrain: CommandHandling {
         MultiStepAgent(
             tools: tools,
             memory: memory.promptLines,
+            language: language,
             complete: { [localModel] messages in
                 try await localModel.complete(messages, maxTokens: MultiStepAgent.maxReplyTokens, announcingWaitTo: continuation)
             },
@@ -237,14 +241,16 @@ final class AssistantBrain: CommandHandling {
         if call.risk == .needsConfirmation {
             guard let confirmer, let question = call.confirmationQuestion else {
                 await ActionAuditLog.shared.record(command: command, call: call, decision: .unconfirmed, result: nil)
-                return "Bu işlem için onay gerekiyor ama şu an onay alamıyorum, bu yüzden yapmadım."
+                return String(localized: "Bu işlem için onay gerekiyor ama şu an onay alamıyorum, bu yüzden yapmadım.")
             }
             let answer = await confirmer.confirm(question, strict: call.requiresExplicitYes)
             try Task.checkCancellation()
             guard answer == .confirmed else {
                 let decision: ActionAuditLog.Decision = answer == .rejected ? .rejected : .unconfirmed
                 await ActionAuditLog.shared.record(command: command, call: call, decision: decision, result: nil)
-                return answer == .rejected ? "Tamam, yapmadım." : "Net bir onay duymadım, bu yüzden yapmadım."
+                return answer == .rejected
+                    ? String(localized: "Tamam, yapmadım.")
+                    : String(localized: "Net bir onay duymadım, bu yüzden yapmadım.")
             }
         }
         Log.tools.info("Running \(call.toolName, privacy: .public) \(call.argumentsDescription, privacy: .private)")
@@ -262,12 +268,12 @@ final class AssistantBrain: CommandHandling {
         let prompt = "Kullanıcının isteği: \(command)\n\nMetin:\n<<<\n\(material)\n>>>"
         if localModel.isEnabled {
             do {
-                return try await localModel.answer(prompt, instructions: BrainInstructions.material(), into: continuation)
+                return try await localModel.answer(prompt, instructions: BrainInstructions.material(language: language), into: continuation)
             } catch {
                 try Self.rethrowIfCancelled(error)
             }
         }
-        let session = LanguageModelSession(model: model, instructions: BrainInstructions.material())
+        let session = LanguageModelSession(model: model, instructions: BrainInstructions.material(language: language))
         let options = GenerationOptions(temperature: 0.3, maximumResponseTokens: Self.maximumResponseTokens)
         var emitted = ""
         for try await snapshot in session.streamResponse(to: prompt, options: options) {
@@ -324,7 +330,7 @@ final class AssistantBrain: CommandHandling {
     }
 
     private func conversationInstructions() -> String {
-        BrainInstructions.make(memory: memory.promptLines)
+        BrainInstructions.make(memory: memory.promptLines, language: language)
     }
 
     /// A local-model failure falls back to Apple's model for this turn; cancellation must not.
@@ -335,13 +341,14 @@ final class AssistantBrain: CommandHandling {
 
     private static func spokenMessage(for error: any Error) -> String {
         guard let error = error as? LanguageModelError else {
-            return "Üzgünüm, bir sorun oluştu. Tekrar dener misin?"
+            return String(localized: "Üzgünüm, bir sorun oluştu. Tekrar dener misin?")
         }
         return switch error {
-        case .guardrailViolation, .refusal: "Bu isteğe yardımcı olamıyorum."
-        case .unsupportedLanguageOrLocale: "Dil modeli Türkçeyi şu an desteklemiyor. Apple Intelligence dilinin Türkçe olduğunu kontrol et."
-        case .timeout: "Yanıt çok uzun sürdü. Tekrar dener misin?"
-        default: "Üzgünüm, bunu yapamadım. Tekrar dener misin?"
+        case .guardrailViolation, .refusal: String(localized: "Bu isteğe yardımcı olamıyorum.")
+        case .unsupportedLanguageOrLocale:
+            String(localized: "Dil modeli Türkçeyi şu an desteklemiyor. Apple Intelligence dilinin Türkçe olduğunu kontrol et.")
+        case .timeout: String(localized: "Yanıt çok uzun sürdü. Tekrar dener misin?")
+        default: String(localized: "Üzgünüm, bunu yapamadım. Tekrar dener misin?")
         }
     }
 }

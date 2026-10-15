@@ -7,16 +7,23 @@ public enum BriefingIntent {
         "brifing", "bugunun ozeti",
     ]
 
-    public static func isRequest(_ text: String) -> Bool {
+    private static let englishPhrases = [
+        "daily briefing", "morning briefing", "brief me", "summary of my day", "summary of the day", "my day look like",
+        "my day like", "todays summary", "plan for today",
+    ]
+
+    public static func isRequest(_ text: String, language: AssistantLanguage = .turkish) -> Bool {
         let folded = TurkishText.folded(text)
-        return phrases.contains { folded.contains($0) }
+        return (language == .english ? englishPhrases : phrases).contains { folded.contains($0) }
     }
 
     /// "Günaydın" with nothing else to ask; "günaydın, saat kaç" is a question.
-    public static func isMorningGreeting(_ text: String, wakePhrase: String = AppIdentity.defaultWakePhrase) -> Bool {
+    public static func isMorningGreeting(
+        _ text: String, wakePhrase: String = AppIdentity.defaultWakePhrase, language: AssistantLanguage = .turkish
+    ) -> Bool {
         let wake = TurkishText.folded(wakePhrase)
         let words = TurkishText.folded(text).split(separator: " ").map(String.init).filter { $0 != wake }
-        return words == ["gunaydin"]
+        return words == (language == .english ? ["good", "morning"] : ["gunaydin"])
     }
 }
 
@@ -53,7 +60,8 @@ public struct DailyBriefing: Sendable {
         self.unreadMail = unreadMail
     }
 
-    public func text(calendar: Calendar = .current) -> String {
+    public func text(calendar: Calendar = .current, language: AssistantLanguage = .turkish) -> String {
+        if language == .english { return englishText(calendar: calendar) }
         let locale = Locale(identifier: "tr_TR")
         var format = Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, calendar: calendar, timeZone: calendar.timeZone)
         format = format.day().month(.wide).weekday(.wide)
@@ -88,6 +96,46 @@ public struct DailyBriefing: Sendable {
         guard !reminders.isEmpty else { return nil }
         if reminders.count == 1 { return "Bugünkü anımsatıcın: \(reminders[0])." }
         return "\(reminders.count) anımsatıcın var: \(Self.list(Array(reminders.prefix(Self.listedReminders)), total: reminders.count))."
+    }
+
+    private func englishText(calendar: Calendar) -> String {
+        var format = Date.FormatStyle(date: .omitted, time: .omitted, locale: AssistantLanguage.english.locale,
+                                      calendar: calendar, timeZone: calendar.timeZone)
+        format = format.weekday(.wide).month(.wide).day()
+        let greeting = switch calendar.component(.hour, from: now) {
+        case 5..<12: "Good morning."
+        case 12..<18: "Good afternoon."
+        default: "Good evening."
+        }
+        var sentences = [greeting, "Today is \(now.formatted(format))."]
+        if let weather { sentences.append(weather) }
+        if events.isEmpty {
+            sentences.append("You have nothing else on your calendar today.")
+        } else {
+            let time = Date.FormatStyle(date: .omitted, time: .shortened, locale: AssistantLanguage.english.locale,
+                                        calendar: calendar, timeZone: calendar.timeZone)
+            let listed = events.prefix(Self.listedEvents).map { "\($0.title) at \($0.start.formatted(time))" }
+            let noun = events.count == 1 ? "event" : "events"
+            sentences.append("You have \(events.count) \(noun) today: \(Self.englishList(listed, total: events.count)).")
+        }
+        if reminders.count == 1 {
+            sentences.append("Today's reminder: \(reminders[0]).")
+        } else if reminders.count > 1 {
+            let listed = Array(reminders.prefix(Self.listedReminders))
+            sentences.append("You have \(reminders.count) reminders: \(Self.englishList(listed, total: reminders.count)).")
+        }
+        if let unreadMail, unreadMail > 0 {
+            sentences.append("You have \(unreadMail) unread \(unreadMail == 1 ? "email" : "emails").")
+        }
+        return sentences.joined(separator: " ")
+    }
+
+    /// "a, b, c and 3 more".
+    private static func englishList(_ items: [String], total: Int) -> String {
+        let rest = total - items.count
+        if rest > 0 { return items.joined(separator: ", ") + " and \(rest) more" }
+        guard items.count > 1 else { return items.first ?? "" }
+        return items.dropLast().joined(separator: ", ") + " and " + items[items.count - 1]
     }
 
     /// "a, b, c ve 3 tane daha".

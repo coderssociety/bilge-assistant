@@ -20,26 +20,28 @@ struct CalendarQueryTool: AssistantTool {
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: .now)
         let (start, days, label): (Date, Int, String) = switch arguments.range {
-        case .today: (startOfToday, 1, "Bugün")
-        case .tomorrow: (calendar.date(byAdding: .day, value: 1, to: startOfToday)!, 1, "Yarın")
-        case .thisWeek: (startOfToday, 7, "Önümüzdeki 7 günde")
+        case .today: (startOfToday, 1, String(localized: "Bugün"))
+        case .tomorrow: (calendar.date(byAdding: .day, value: 1, to: startOfToday)!, 1, String(localized: "Yarın"))
+        case .thisWeek: (startOfToday, 7, String(localized: "Önümüzdeki 7 günde"))
         }
         let end = calendar.date(byAdding: .day, value: days, to: start)!
         do {
             let events = try await CalendarAccess.shared.events(from: start, to: end)
-            guard !events.isEmpty else { return "\(label) takvimde etkinlik yok." }
+            guard !events.isEmpty else { return String(localized: "\(label) takvimde etkinlik yok.") }
             let lines = events.prefix(Self.maxEvents).map { Self.describe($0, includeDay: days > 1) }
-            return "\(label) \(events.count) etkinlik var: " + lines.joined(separator: "; ")
+            return String(localized: "\(label) \(events.count) etkinlik var: \(lines.joined(separator: "; "))")
         } catch {
             return ToolReply.failure(error)
         }
     }
 
     private static func describe(_ event: CalendarEventSummary, includeDay: Bool) -> String {
-        let locale = Locale(identifier: "tr_TR")
+        let locale = AppLanguage.locale
         let title = event.title
         if event.isAllDay {
-            return includeDay ? "\(event.start.formatted(.dateTime.weekday(.wide).locale(locale))) tüm gün: \(title)" : "tüm gün: \(title)"
+            return includeDay
+                ? String(localized: "\(event.start.formatted(.dateTime.weekday(.wide).locale(locale))) tüm gün: \(title)")
+                : String(localized: "tüm gün: \(title)")
         }
         let format: Date.FormatStyle = includeDay
             ? .dateTime.weekday(.wide).hour().minute().locale(locale)
@@ -61,8 +63,8 @@ struct RemindersQueryTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         do {
             let titles = try await CalendarAccess.shared.incompleteReminderTitles()
-            guard !titles.isEmpty else { return "Bekleyen anımsatıcı yok." }
-            return "\(titles.count) anımsatıcı var: " + titles.prefix(Self.maxReminders).joined(separator: "; ")
+            guard !titles.isEmpty else { return String(localized: "Bekleyen anımsatıcı yok.") }
+            return String(localized: "\(titles.count) anımsatıcı var: \(titles.prefix(Self.maxReminders).joined(separator: "; "))")
         } catch {
             return ToolReply.failure(error)
         }

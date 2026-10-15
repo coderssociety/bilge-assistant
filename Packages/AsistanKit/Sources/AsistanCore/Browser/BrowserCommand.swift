@@ -15,7 +15,8 @@ public enum BrowserCommand: Equatable, Sendable {
     ]
     private static let apostrophes: Set<Character> = ["'", "’", "‘", "`", "´"]
 
-    public static func parse(_ text: String) -> BrowserCommand? {
+    public static func parse(_ text: String, language: AssistantLanguage = .turkish) -> BrowserCommand? {
+        if language == .english { return EnglishBrowserCommand.parse(text) }
         let words = TurkishText.folded(text).split(separator: " ").map(String.init)
         guard !words.isEmpty else { return nil }
         func has(_ word: String) -> Bool { words.contains(word) }

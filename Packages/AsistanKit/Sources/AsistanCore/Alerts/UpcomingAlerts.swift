@@ -40,13 +40,19 @@ public enum UpcomingAlerts {
             .sorted { $0.date < $1.date }
     }
 
-    public static func message(for alerts: [AlertCandidate], now: Date) -> String {
+    public static func message(for alerts: [AlertCandidate], now: Date, language: AssistantLanguage = .turkish) -> String {
         alerts.map { alert in
+            let minutes = Int((alert.date.timeIntervalSince(now) / 60).rounded(.up))
+            if language == .english {
+                switch alert.kind {
+                case .reminder: return "Reminder: \(alert.title)."
+                case .event: return minutes <= 1 ? "\(alert.title) is starting now." : "\(alert.title) starts in \(minutes) minutes."
+                }
+            }
             switch alert.kind {
             case .reminder:
                 return "Hatırlatma: \(alert.title)."
             case .event:
-                let minutes = Int((alert.date.timeIntervalSince(now) / 60).rounded(.up))
                 return minutes <= 1 ? "\(alert.title) şimdi başlıyor." : "\(minutes) dakika sonra \(alert.title) var."
             }
         }.joined(separator: " ")

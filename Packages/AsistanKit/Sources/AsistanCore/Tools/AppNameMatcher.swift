@@ -12,7 +12,7 @@ public struct AppNameMatcher: Sendable {
 
     public static let minimumScore = 0.72
     private static let maxSuffixLength = 4
-    private static let noiseWords: Set<String> = ["uygulamasi", "uygulamasini", "uygulama", "programi", "programini", "app"]
+    private static let noiseWords: Set<String> = ["uygulamasi", "uygulamasini", "uygulama", "programi", "programini", "app", "application", "the"]
 
     private let entries: [(app: App, keys: [String])]
 

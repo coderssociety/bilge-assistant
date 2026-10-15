@@ -13,16 +13,17 @@ struct DateTimeTool: AssistantTool {
     func emptyArguments() -> Arguments? { Arguments() }
 
     func call(arguments: Arguments) async throws -> String {
-        let locale = Locale(identifier: "tr_TR")
+        let locale = AppLanguage.locale
         let time = Date.now.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(locale))
         let day = Date.now.formatted(.dateTime.day().month(.wide).year().weekday(.wide).locale(locale))
-        return "Saat \(time). Bugün \(day)."
+        return String(localized: "Saat \(time). Bugün \(day).")
     }
 }
 
 struct CalculatorTool: AssistantTool {
     let name = "calculate"
     let description = "Aritmetik hesap yapar. Yüzde hesabını çarpma/bölmeye çevir: '125'in yüzde 18'i' → '125 * 18 / 100'."
+    var language = AssistantLanguage.turkish
 
     @Generable
     struct Arguments {
@@ -34,9 +35,14 @@ struct CalculatorTool: AssistantTool {
     /// number in it was actually said (it once computed "125 * 18 / 100" for a bare "Evet").
     func refine(_ arguments: Arguments, command: String) -> Arguments {
         var refined = arguments
-        if let parsed = TurkishArithmeticParser.expression(from: command) {
+        let parsed = language == .english
+            ? EnglishArithmeticParser.expression(from: command) : TurkishArithmeticParser.expression(from: command)
+        let grounded = language == .english
+            ? EnglishArithmeticParser.isGrounded(arguments.expression, in: command)
+            : TurkishArithmeticParser.isGrounded(arguments.expression, in: command)
+        if let parsed {
             refined.expression = parsed
-        } else if !TurkishArithmeticParser.isGrounded(arguments.expression, in: command) {
+        } else if !grounded {
             refined.expression = ""
         }
         return refined
@@ -48,13 +54,13 @@ struct CalculatorTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         guard !arguments.expression.isEmpty else {
-            return ToolReply.failure("Hesabı tam anlayamadım, sayılarla tekrar söyler misin?")
+            return ToolReply.failure(String(localized: "Hesabı tam anlayamadım, sayılarla tekrar söyler misin?"))
         }
         do {
             let value = try ArithmeticEvaluator.evaluate(arguments.expression)
-            return "Sonuç \(ArithmeticEvaluator.display(value))."
+            return String(localized: "Sonuç \(ArithmeticEvaluator.display(value, language: language)).")
         } catch {
-            return ToolReply.failure("'\(arguments.expression)' hesaplanamadı.")
+            return ToolReply.failure(String(localized: "'\(arguments.expression)' hesaplanamadı."))
         }
     }
 }
@@ -74,11 +80,13 @@ struct BatteryTool: AssistantTool {
               let source = sources.first,
               let details = IOPSGetPowerSourceDescription(info, source)?.takeUnretainedValue() as? [String: Any],
               let capacity = details[kIOPSCurrentCapacityKey] as? Int
-        else { return "Bu Mac'te pil yok, prize bağlı çalışıyor." }
+        else { return String(localized: "Bu Mac'te pil yok, prize bağlı çalışıyor.") }
         let charging = details[kIOPSIsChargingKey] as? Bool ?? false
         let onPower = (details[kIOPSPowerSourceStateKey] as? String) == kIOPSACPowerValue
-        let state = charging ? "şarj oluyor" : onPower ? "prize bağlı" : "pilden çalışıyor"
-        return "Pil yüzde \(capacity), \(state)."
+        let state = charging
+            ? String(localized: "şarj oluyor")
+            : onPower ? String(localized: "prize bağlı") : String(localized: "pilden çalışıyor")
+        return String(localized: "Pil yüzde \(capacity), \(state).")
     }
 }
 
@@ -95,9 +103,9 @@ struct ClipboardReadTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         let text = await MainActor.run { NSPasteboard.general.string(forType: .string) }
         guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return "Panoda metin yok."
+            return String(localized: "Panoda metin yok.")
         }
         let clipped = text.count > Self.maxCharacters ? String(text.prefix(Self.maxCharacters)) + "…" : text
-        return "Panodaki metin: \(clipped)"
+        return String(localized: "Panodaki metin: \(clipped)")
     }
 }

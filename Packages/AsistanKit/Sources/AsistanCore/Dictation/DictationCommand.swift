@@ -12,12 +12,29 @@ public enum DictationCommand: Equatable, Sendable {
         "dikte modunu kapat": .finish, "yazmayi bitir": .finish, "bitti": .finish,
     ]
 
-    public static func parse(_ text: String) -> DictationCommand? {
-        phrases[TurkishText.folded(text)]
+    private static let englishPhrases: [String: DictationCommand] = [
+        "new line": .newLine, "next line": .newLine, "line break": .newLine,
+        "new paragraph": .newParagraph, "next paragraph": .newParagraph,
+        "delete that": .deleteLast, "scratch that": .deleteLast, "delete the last sentence": .deleteLast,
+        "delete last sentence": .deleteLast, "undo that": .deleteLast, "remove that": .deleteLast,
+        "stop dictation": .finish, "end dictation": .finish, "finish dictation": .finish, "dictation off": .finish,
+        "stop dictating": .finish, "im done": .finish, "done": .finish, "turn off dictation": .finish,
+        "turn dictation off": .finish, "disable dictation": .finish, "dictation mode off": .finish,
+    ]
+
+    public static func parse(_ text: String, language: AssistantLanguage = .turkish) -> DictationCommand? {
+        (language == .english ? englishPhrases : phrases)[TurkishText.folded(text)]
     }
 
-    /// "Dikte modunu başlat", "dikteye başla", "yazdırmaya başla".
-    public static func isStart(_ text: String) -> Bool {
+    /// "Dikte modunu başlat", "dikteye başla", "yazdırmaya başla"; "start dictation", "dictate".
+    public static func isStart(_ text: String, language: AssistantLanguage = .turkish) -> Bool {
+        if language == .english {
+            let words = TurkishText.folded(text).split(separator: " ").map(String.init)
+            let mentions = words.contains { $0.hasPrefix("dictat") }
+            let starts = words.contains { ["start", "begin", "turn", "enable", "take"].contains($0) } || words.first == "dictate"
+            let stops = words.contains { ["off", "stop", "end", "disable", "finish"].contains($0) }
+            return mentions && starts && !stops
+        }
         let words = TurkishText.folded(text).split(separator: " ").map(String.init)
         let mentions = words.contains { $0.hasPrefix("dikte") || $0.hasPrefix("yazdirma") }
         let starts = words.contains { $0.hasPrefix("basla") || $0.hasPrefix("baslat") || $0 == "ac" }

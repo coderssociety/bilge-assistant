@@ -26,7 +26,9 @@ struct ScreenshotTool: AssistantTool {
         case .wholeScreen: break
         case .selection: options.append("-i")
         case .frontWindow:
-            guard let windowID = await Self.frontWindowID() else { return ToolReply.failure("Öndeki pencereyi bulamadım.") }
+            guard let windowID = await Self.frontWindowID() else {
+                return ToolReply.failure(String(localized: "Öndeki pencereyi bulamadım."))
+            }
             options.append("-l\(windowID)")
         }
         let file = Self.destination()
@@ -34,12 +36,14 @@ struct ScreenshotTool: AssistantTool {
         do {
             let timeout = arguments.area == .selection ? Self.selectionTimeout : ProcessRunner.defaultTimeout
             let output = try await ProcessRunner.run("/usr/sbin/screencapture", options, timeout: timeout)
-            guard output.status == 0 else { return ToolReply.failure("Ekran görüntüsü alınamadı.") }
-            if arguments.toClipboard { return "Ekran görüntüsü panoya kopyalandı." }
-            guard FileManager.default.fileExists(atPath: file.path(percentEncoded: false)) else {
-                return "Ekran görüntüsü alınmadı."
+            guard output.status == 0 else {
+                return ToolReply.failure(String(localized: "Ekran görüntüsü alınamadı."))
             }
-            return "Ekran görüntüsü Masaüstü'ne kaydedildi."
+            if arguments.toClipboard { return String(localized: "Ekran görüntüsü panoya kopyalandı.") }
+            guard FileManager.default.fileExists(atPath: file.path(percentEncoded: false)) else {
+                return String(localized: "Ekran görüntüsü alınmadı.")
+            }
+            return String(localized: "Ekran görüntüsü Masaüstü'ne kaydedildi.")
         } catch {
             return ToolReply.failure(error)
         }

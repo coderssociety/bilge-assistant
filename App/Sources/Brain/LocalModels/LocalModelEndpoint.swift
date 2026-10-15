@@ -9,10 +9,10 @@ enum LocalModelServerError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case let .notInstalled(server): "\(server) bulunamadı."
-        case let .serverUnavailable(server): "\(server) sunucusu başlatılamadı."
-        case let .loadFailed(detail): "Model yüklenemedi: \(detail)"
-        case let .badResponse(status): "Model sunucusu beklenmeyen bir yanıt verdi (\(status))."
+        case let .notInstalled(server): String(localized: "\(server) bulunamadı.")
+        case let .serverUnavailable(server): String(localized: "\(server) sunucusu başlatılamadı.")
+        case let .loadFailed(detail): String(localized: "Model yüklenemedi: \(detail)")
+        case let .badResponse(status): String(localized: "Model sunucusu beklenmeyen bir yanıt verdi (\(status)).")
         }
     }
 }

@@ -7,7 +7,7 @@ struct EnglishLanguageTests {
     @Test("yes and no in English", arguments: [
         ("Yes, send it", ConfirmationParser.Answer.confirmed), ("yeah sure", .confirmed), ("go ahead", .confirmed),
         ("No", .rejected), ("cancel that", .rejected), ("never mind", .rejected), ("don't", .rejected),
-        ("maybe later", .unclear), ("yes no", .unclear),
+        ("maybe later", .rejected), ("yes no", .unclear),
     ])
     func confirmation(text: String, expected: ConfirmationParser.Answer) {
         #expect(ConfirmationParser.parse(text, language: .english) == expected)
@@ -33,6 +33,7 @@ struct EnglishLanguageTests {
         #expect(detector.evaluate(heard: "stop", speaking: "The weather is fine") == .stop)
         #expect(detector.evaluate(heard: "okay stop now", speaking: "The weather is fine") == .stop)
         #expect(detector.evaluate(heard: "please", speaking: "The weather is fine") == .none)
+        #expect(detector.evaluate(heard: "No.", speaking: "Shall I add the event?") == .stop)
         #expect(detector.evaluate(heard: "Bilge, stop", speaking: "The weather is fine") == .stop)
         #expect(detector.evaluate(heard: "Bilge, what time is it", speaking: "Sunny and warm today")
             == .command("what time is it"))
@@ -51,6 +52,13 @@ struct EnglishLanguageTests {
         let now = Date()
         _ = flow.heard("Bilge", at: now)
         #expect(flow.heard("never mind", at: now.addingTimeInterval(1)) == .returnToIdle(timedOut: false))
+    }
+
+    @Test("a cancel phrase with the wake word does nothing when idle", arguments: ["Bilge, stop", "Bilge iptal"])
+    func idleCancel(text: String) {
+        var flow = ConversationFlow(matcher: WakePhraseMatcher(phrase: "bilge"))
+        #expect(flow.heard(text, at: Date()) == .none)
+        #expect(flow.phase == .listeningForWake)
     }
 
     @Test("English abbreviations do not end a sentence")

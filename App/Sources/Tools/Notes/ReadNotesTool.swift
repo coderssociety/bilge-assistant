@@ -1,3 +1,4 @@
+import Foundation
 import FoundationModels
 
 /// "Alışveriş notumda ne yazıyor?", "son notumu oku". Note text is user content, but it is still
@@ -32,7 +33,9 @@ struct ReadNotesTool: AssistantTool {
             end tell
             """)
             guard !text.isEmpty else {
-                return ToolReply.failure(query.isEmpty ? "Hiç not bulamadım." : "'\(query)' geçen bir not bulamadım.")
+                return ToolReply.failure(query.isEmpty
+                    ? String(localized: "Hiç not bulamadım.")
+                    : String(localized: "'\(query)' geçen bir not bulamadım."))
             }
             return String(text.prefix(Self.maxCharacters))
         } catch {

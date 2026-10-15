@@ -1,0 +1,6012 @@
+{
+  "sourceLanguage": "tr",
+  "strings": {
+    "": {},
+    " Bunlar en yenileri, %lld bilgi daha var.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " These are the most recent; there are %lld more."
+          }
+        }
+      }
+    },
+    " artı ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " plus "
+          }
+        }
+      }
+    },
+    " bölü ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " divided by "
+          }
+        }
+      }
+    },
+    " eksi ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " minus "
+          }
+        }
+      }
+    },
+    " ile ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " to "
+          }
+        }
+      }
+    },
+    " Öndeki: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " In front: %@."
+          }
+        }
+      }
+    },
+    " çarpı ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " times "
+          }
+        }
+      }
+    },
+    "\"Bilge, eşimin adının Ayşe olduğunu hatırla\" dediğinde bilgi burada görünür.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When you say \"Bilge, remember that my partner's name is Ayşe,\" it shows up here."
+          }
+        }
+      }
+    },
+    "%@ %@ %@ %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ is %3$@ %4$@."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$@ %3$@ %4$@."
+          }
+        }
+      }
+    },
+    "%@ %@ %@ Yapayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ %3$@ Shall I go ahead?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$@ %3$@ Yapayım mı?"
+          }
+        }
+      }
+    },
+    "%@ %lld etkinlik var: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ you have %2$lld events: %3$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$lld etkinlik var: %3$@"
+          }
+        }
+      }
+    },
+    "%@ '%@' adında bir klasör zaten var.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's already a folder named '%2$@' %1$@."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ '%2$@' adında bir klasör zaten var."
+          }
+        }
+      }
+    },
+    "%@ '%@' klasörünü oluşturdum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I created the folder '%2$@' %1$@."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ '%2$@' klasörünü oluşturdum."
+          }
+        }
+      }
+    },
+    "%@ LM Studio'da yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ isn't in LM Studio."
+          }
+        }
+      }
+    },
+    "%@ ayarlarını açtım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I opened %@ settings."
+          }
+        }
+      }
+    },
+    "%@ açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open %@."
+          }
+        }
+      }
+    },
+    "%@ açıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is open."
+          }
+        }
+      }
+    },
+    "%@ açılıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opening %@."
+          }
+        }
+      }
+    },
+    "%@ bozuk indi; tekrar dene.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ downloaded corrupted; please try again."
+          }
+        }
+      }
+    },
+    "%@ boş.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is empty."
+          }
+        }
+      }
+    },
+    "%@ bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't find %@."
+          }
+        }
+      }
+    },
+    "%@ dolu, içinde %@ var. Üzerine yazayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ already contains %2$@. Shall I overwrite it?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ dolu, içinde %2$@ var. Üzerine yazayım mı?"
+          }
+        }
+      }
+    },
+    "%@ duraklatıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is paused."
+          }
+        }
+      }
+    },
+    "%@ erişim izni yok. Sistem Ayarları > Gizlilik ve Güvenlik bölümünden izin verilmeli.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No access to %@. You need to allow it in System Settings > Privacy & Security."
+          }
+        }
+      }
+    },
+    "%@ gizlendi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is hidden."
+          }
+        }
+      }
+    },
+    "%@ hata veriyor: %@. İstersen geri al de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ shows an error: %2$@. Say undo if you want to revert it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ hata veriyor: %2$@. İstersen geri al de."
+          }
+        }
+      }
+    },
+    "%@ hoş geldin": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to %@"
+          }
+        }
+      }
+    },
+    "%@ hücresine %@ formülünü yazayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I put the formula %2$@ in cell %1$@?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ hücresine %2$@ formülünü yazayım mı?"
+          }
+        }
+      }
+    },
+    "%@ indirilemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't download %@."
+          }
+        }
+      }
+    },
+    "%@ indirme · en az %lld GB bellek · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ download · at least %2$lld GB memory · %3$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ indirme · en az %2$lld GB bellek · %3$@"
+          }
+        }
+      }
+    },
+    "%@ için '%@' etkinliğini takvime ekleyeyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I add '%2$@' to your calendar for %1$@?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ için '%2$@' etkinliğini takvime ekleyeyim mi?"
+          }
+        }
+      }
+    },
+    "%@ için kayıtlı bir e-posta adresi bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a saved email address for %@."
+          }
+        }
+      }
+    },
+    "%@ için kayıtlı bir telefon ya da e-posta bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a saved phone number or email for %@."
+          }
+        }
+      }
+    },
+    "%@ içindeki '%@' dosyasını çöp kutusuna taşıyayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I move '%2$@' in %1$@ to the Trash?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ içindeki '%2$@' dosyasını çöp kutusuna taşıyayım mı?"
+          }
+        }
+      }
+    },
+    "%@ kapatılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't quit %@."
+          }
+        }
+      }
+    },
+    "%@ kapatılıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitting %@."
+          }
+        }
+      }
+    },
+    "%@ oynat/duraklat yapıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toggled play/pause in %@."
+          }
+        }
+      }
+    },
+    "%@ saat %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ at %2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ saat %2$@"
+          }
+        }
+      }
+    },
+    "%@ sekmesi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The %@ tab."
+          }
+        }
+      }
+    },
+    "%@ sunucusu başlatılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't start the %@ server."
+          }
+        }
+      }
+    },
+    "%@ takvimde etkinlik yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ there's nothing on your calendar."
+          }
+        }
+      }
+    },
+    "%@ tanınmıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ isn't recognized."
+          }
+        }
+      }
+    },
+    "%@ tüm gün: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ all day: %2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ tüm gün: %2$@"
+          }
+        }
+      }
+    },
+    "%@ ve %lld dosya daha": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ and %2$lld more files"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ ve %2$lld dosya daha"
+          }
+        }
+      }
+    },
+    "%@ zaten kapalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is already closed."
+          }
+        }
+      }
+    },
+    "%@ · tür: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · type: %2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ · tür: %2$@"
+          }
+        }
+      }
+    },
+    "%@ · vMLX": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · vMLX"
+          }
+        }
+      }
+    },
+    "%@ çalıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is playing."
+          }
+        }
+      }
+    },
+    "%@ çalıştırılabilir bir dosya; güvenlik için açmadım, Finder'da gösterdim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is an executable file, so for safety I didn't open it. I showed it in Finder instead."
+          }
+        }
+      }
+    },
+    "%@ özgür yazılımdır: GNU GPL 3.0 koşullarıyla kullanabilir, değiştirebilir ve dağıtabilirsin. Hiçbir garanti verilmez.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is free software: you can use, modify and distribute it under the terms of the GNU GPL 3.0. It comes with no warranty."
+          }
+        }
+      }
+    },
+    "%@, %@ adresine \"%@\" konulu e-postayı gönderiyorum%@%@. Göndermem için evet ya da gönder de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm sending the email \"%3$@\" to %1$@ at %2$@%4$@%5$@. Say yes or send to send it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@, %2$@ adresine \"%3$@\" konulu e-postayı gönderiyorum%4$@%5$@. Göndermem için evet ya da gönder de."
+          }
+        }
+      }
+    },
+    "%@, %@ için iMessage ile %@ dosyasını gönderiyorum. Göndermem için evet ya da gönder de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm sending %1$@ (%2$@) the file %3$@ by iMessage. Say yes or send to send it."
+          }
+        }
+      }
+    },
+    "%@, %@ için iMessage ile %@ dosyasını şunu gönderiyorum: %@. Göndermem için evet ya da gönder de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm sending %1$@ (%2$@) the file %3$@ by iMessage with this message: %4$@. Say yes or send to send it."
+          }
+        }
+      }
+    },
+    "%@, %@ için iMessage ile gönderiyorum. Göndermem için evet ya da gönder de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm sending a message to %1$@ (%2$@) by iMessage. Say yes or send to send it."
+          }
+        }
+      }
+    },
+    "%@, %@ için iMessage ile şunu gönderiyorum: %@. Göndermem için evet ya da gönder de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm sending %1$@ (%2$@) this by iMessage: %3$@. Say yes or send to send it."
+          }
+        }
+      }
+    },
+    "%@. Yerel IP adresin %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@. Your local IP address is %2$@."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@. Yerel IP adresin %2$@."
+          }
+        }
+      }
+    },
+    "%@; ağ bağlantısı görünmüyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@; there's no network connection."
+          }
+        }
+      }
+    },
+    "%lld / %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld / %2$lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "%lld GB belleğin yaklaşık %lld GB'ı kullanımda.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %2$lld GB of your %1$lld GB of memory is in use."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld GB belleğin yaklaşık %2$lld GB'ı kullanımda."
+          }
+        }
+      }
+    },
+    "%lld anımsatıcı var: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have %1$lld reminders: %2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld anımsatıcı var: %2$@"
+          }
+        }
+      }
+    },
+    "%lld dakika": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld minutes"
+          }
+        }
+      }
+    },
+    "%lld dosya açılıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opening %lld files."
+          }
+        }
+      }
+    },
+    "%lld gün": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days"
+          }
+        }
+      }
+    },
+    "%lld kestirmen var: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have %1$lld shortcuts: %2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld kestirmen var: %2$@"
+          }
+        }
+      }
+    },
+    "%lld saat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld hours"
+          }
+        }
+      }
+    },
+    "%lld zamanlayıcı iptal edildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canceled %lld timers."
+          }
+        }
+      }
+    },
+    "%lld. sekme.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab %lld."
+          }
+        }
+      }
+    },
+    "'%@' adında bir kestirme bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a shortcut named '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında bir sekme bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a tab named '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında bir uygulama bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no app named '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında okunabilir bir belge bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a readable document named '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında yüklü bir uygulama bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no installed app named '%@'."
+          }
+        }
+      }
+    },
+    "'%@' anımsatıcılara eklendi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added '%@' to Reminders."
+          }
+        }
+      }
+    },
+    "'%@' anımsatıcısını %@ için ekleyeyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I add the reminder '%1$@' for %2$@?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "'%1$@' anımsatıcısını %2$@ için ekleyeyim mi?"
+          }
+        }
+      }
+    },
+    "'%@' anımsatıcısını ekleyeyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I add the reminder '%@'?"
+          }
+        }
+      }
+    },
+    "'%@' başlıklı not oluşturuldu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Created a note titled '%@'."
+          }
+        }
+      }
+    },
+    "'%@' bilgisini unutayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I forget '%@'?"
+          }
+        }
+      }
+    },
+    "'%@' diye bir yer bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a place called '%@'."
+          }
+        }
+      }
+    },
+    "'%@' etkinliğini ekleyeyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I add the event '%@'?"
+          }
+        }
+      }
+    },
+    "'%@' geçen bir not bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a note that mentions '%@'."
+          }
+        }
+      }
+    },
+    "'%@' geçerli bir web adresi değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'%@' isn't a valid web address."
+          }
+        }
+      }
+    },
+    "'%@' hesaplanamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't calculate '%@'."
+          }
+        }
+      }
+    },
+    "'%@' ile eşleşen dosya bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No files match '%@'."
+          }
+        }
+      }
+    },
+    "'%@' içinde okunabilir yazı yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no readable text in '%@'."
+          }
+        }
+      }
+    },
+    "'%@' kestirmesi çalışmadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shortcut '%@' didn't run."
+          }
+        }
+      }
+    },
+    "'%@' kestirmesi çalıştı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shortcut '%@' ran."
+          }
+        }
+      }
+    },
+    "'%@' kestirmesini çalıştırayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I run the shortcut '%@'?"
+          }
+        }
+      }
+    },
+    "'%@' sonucu: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'%1$@' result: %2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "'%1$@' sonucu: %2$@"
+          }
+        }
+      }
+    },
+    "'%@' tamamlandı olarak işaretlendi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marked '%@' as completed."
+          }
+        }
+      }
+    },
+    "'%@' çalma listesini çalıyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing the playlist '%@'."
+          }
+        }
+      }
+    },
+    "'%@' çöp kutusuna taşındı. Gerekirse oradan geri alabilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved '%@' to the Trash. You can restore it from there if you need to."
+          }
+        }
+      }
+    },
+    ", ekinde %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ", with %@ attached"
+          }
+        }
+      }
+    },
+    "30 dakika boşta kalınca kapat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unload after 30 minutes idle"
+          }
+        }
+      }
+    },
+    "5 dakika boşta kalınca kapat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unload after 5 minutes idle"
+          }
+        }
+      }
+    },
+    "Adım %lld / %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %1$lld of %2$lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Adım %1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "Anadolu Ajansı'ndan son başlıklar. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latest headlines from Anadolu Agency. "
+          }
+        }
+      }
+    },
+    "Anlıyorum…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understanding…"
+          }
+        }
+      }
+    },
+    "Anımsatıcılar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders"
+          }
+        }
+      }
+    },
+    "Anımsatıcılara": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders"
+          }
+        }
+      }
+    },
+    "Anımsatıcıları okumak ve onayınla eklemek için.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To read reminders and add new ones with your approval."
+          }
+        }
+      }
+    },
+    "Anımsatıcılarında '%@' diye tamamlanmamış bir iş bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find an incomplete reminder called '%@'."
+          }
+        }
+      }
+    },
+    "Apple Dikte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Dictation"
+          }
+        }
+      }
+    },
+    "Apple Intelligence kapalı. Sistem Ayarları'ndan açman gerekiyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence is turned off. You need to turn it on in System Settings."
+          }
+        }
+      }
+    },
+    "Apple cihaz içi model": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple on-device model"
+          }
+        }
+      }
+    },
+    "Apple cihaz içi model hazır.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Apple on-device model is ready."
+          }
+        }
+      }
+    },
+    "Arama adresi oluşturulamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't build the search address."
+          }
+        }
+      }
+    },
+    "Aranacak dosya adı belirtilmedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No file name was given to search for."
+          }
+        }
+      }
+    },
+    "Arka arkaya konuşmalarda yeniden yüklemeyi bekletmez; süre dolunca bellekten çıkar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No reload wait between back-to-back conversations; it's unloaded from memory when the time runs out."
+          }
+        }
+      }
+    },
+    "Asistanın sesi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assistant's voice"
+          }
+        }
+      }
+    },
+    "Asistanın yaptığı ve onay bekleyen işler burada listelenir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Things the assistant has done and actions waiting for your approval are listed here."
+          }
+        }
+      }
+    },
+    "Avustralya doları": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Australian dollars"
+          }
+        }
+      }
+    },
+    "Ayar bölümü açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open that settings section."
+          }
+        }
+      }
+    },
+    "Ayarları aç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        }
+      }
+    },
+    "Ayarlar…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings…"
+          }
+        }
+      }
+    },
+    "Ayrıntı: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details: %@."
+          }
+        }
+      }
+    },
+    "Açık bir tarayıcı yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no browser open."
+          }
+        }
+      }
+    },
+    "Açık uygulamalar: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open apps: %@."
+          }
+        }
+      }
+    },
+    "Açılacak dosya adı belirtilmedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No file name was given to open."
+          }
+        }
+      }
+    },
+    "Ağ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network"
+          }
+        }
+      }
+    },
+    "Aşağı kaydırdım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrolled down."
+          }
+        }
+      }
+    },
+    "Bana şunları söylemiştin: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You told me: %@."
+          }
+        }
+      }
+    },
+    "Başka programla çalışan modeller": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Models that run in other apps"
+          }
+        }
+      }
+    },
+    "Başlangıç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Startup"
+          }
+        }
+      }
+    },
+    "Başlıksız": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Untitled"
+          }
+        }
+      }
+    },
+    "Baştan dene": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start over"
+          }
+        }
+      }
+    },
+    "Başına çıktım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrolled to the top."
+          }
+        }
+      }
+    },
+    "Bekleyen anımsatıcı yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have no pending reminders."
+          }
+        }
+      }
+    },
+    "Belge: %@\n%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Document: %1$@\n%2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Belge: %1$@\n%2$@"
+          }
+        }
+      }
+    },
+    "Belgeler'de": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in Documents"
+          }
+        }
+      }
+    },
+    "Bellek": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memory"
+          }
+        }
+      }
+    },
+    "Betik derlenemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't compile the script."
+          }
+        }
+      }
+    },
+    "Bildirimler": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        }
+      }
+    },
+    "Bilge seni bu dilde dinler, bu dilde konuşur ve menüleri bu dilde gösterir.\nBilge listens, speaks and shows its menus in this language.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilge listens to you, speaks and shows its menus in this language.\nBilge seni bu dilde dinler, bu dilde konuşur ve menüleri bu dilde gösterir."
+          }
+        }
+      }
+    },
+    "Bilge yalnızca kendi yüklediği modeli kapatır; LM Studio'da ya da vMLX'te senin açtığın modele dokunmaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilge only unloads models it loaded itself; it never touches a model you opened in LM Studio or vMLX."
+          }
+        }
+      }
+    },
+    "Bilge, Ahmet'e geç kalacağımı yaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilge, text Ahmet that I'll be late."
+          }
+        }
+      }
+    },
+    "Bilge, bugün takvimimde ne var?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilge, what's on my calendar today?"
+          }
+        }
+      }
+    },
+    "Bilge, müziği biraz kıs.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilge, turn the music down a bit."
+          }
+        }
+      }
+    },
+    "Bilge, saat kaç?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilge, what time is it?"
+          }
+        }
+      }
+    },
+    "Bilge, yarın hava nasıl olacak?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilge, what's the weather tomorrow?"
+          }
+        }
+      }
+    },
+    "Bilgiler yalnızca bu Mac'te saklanır.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This information is stored only on this Mac."
+          }
+        }
+      }
+    },
+    "Bir etkinlik": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An event"
+          }
+        }
+      }
+    },
+    "Bir saniye. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One moment. "
+          }
+        }
+      }
+    },
+    "Birinin numarasını ya da e-postasını bulmak ve onayınla mesaj göndermek için.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To find someone's number or email and send messages with your approval."
+          }
+        }
+      }
+    },
+    "Bu Mac'in belleği bu model için yetmez.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac doesn't have enough memory for this model."
+          }
+        }
+      }
+    },
+    "Bu Mac'in belleği için büyük olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This may be too large for this Mac's memory."
+          }
+        }
+      }
+    },
+    "Bu Mac'te %@ çalışıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac is running %@."
+          }
+        }
+      }
+    },
+    "Bu Mac'te %lld GB bellek var.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac has %lld GB of memory."
+          }
+        }
+      }
+    },
+    "Bu Mac'te Wi-Fi bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Wi-Fi was found on this Mac."
+          }
+        }
+      }
+    },
+    "Bu Mac'te pil yok, prize bağlı çalışıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac has no battery; it runs on power from the outlet."
+          }
+        }
+      }
+    },
+    "Bu Mac'te seçili dilde dikte desteklenmiyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictation isn't supported in the selected language on this Mac."
+          }
+        }
+      }
+    },
+    "Bu Mac, Apple'ın cihaz içi dil modelini desteklemiyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac doesn't support Apple's on-device language model."
+          }
+        }
+      }
+    },
+    "Bu adla klasör oluşturamam.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't create a folder with that name."
+          }
+        }
+      }
+    },
+    "Bu adresi açamam.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't open that address."
+          }
+        }
+      }
+    },
+    "Bu aralık sesle hesaplamak için çok büyük.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That range is too big to calculate by voice."
+          }
+        }
+      }
+    },
+    "Bu bilgiyi sil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete This Memory"
+          }
+        }
+      }
+    },
+    "Bu hatırlamak için fazla uzun, daha kısa söyler misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That's too long to remember. Could you say it more briefly?"
+          }
+        }
+      }
+    },
+    "Bu isteğe yardımcı olamıyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't help with that request."
+          }
+        }
+      }
+    },
+    "Bu isteği adım adım tamamlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't complete that request step by step."
+          }
+        }
+      }
+    },
+    "Bu işlem için onay gerekiyor ama şu an onay alamıyorum, bu yüzden yapmadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This needs your approval, but I can't ask for it right now, so I didn't do it."
+          }
+        }
+      }
+    },
+    "Bu kur bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find that currency."
+          }
+        }
+      }
+    },
+    "Bu pencerede %lld sekme var.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This window has %lld tabs."
+          }
+        }
+      }
+    },
+    "Bu tarayıcıda sekmelere adıyla geçemiyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't switch tabs by name in this browser."
+          }
+        }
+      }
+    },
+    "Bu tarayıcıda sekmelere numarayla geçemiyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't switch tabs by number in this browser."
+          }
+        }
+      }
+    },
+    "Bu uygulamayı kontrol etme izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon'dan izin verilmeli.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't have permission to control this app. You need to allow it in System Settings > Privacy & Security > Automation."
+          }
+        }
+      }
+    },
+    "Bugün": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
+    "Bulunan dosyalar: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files found: %@"
+          }
+        }
+      }
+    },
+    "Bunu hesaplayamadım; hücrelerde sayı olmayabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't calculate that; the cells may not contain numbers."
+          }
+        }
+      }
+    },
+    "Bunu tabloda nasıl yapacağımı anlayamadım. Örneğin 'D3'e B2 ile B1'i topla' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't figure out how to do that in the spreadsheet. For example, you can say 'put B2 plus B1 in D3'."
+          }
+        }
+      }
+    },
+    "Bunu yapamadım. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't do that. "
+          }
+        }
+      }
+    },
+    "Bunu yapmamı onaylıyor musun?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do you want me to do this?"
+          }
+        }
+      }
+    },
+    "Bunu zaten biliyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already know that."
+          }
+        }
+      }
+    },
+    "Bunun için Erişilebilirlik izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Erişilebilirlik'ten Bilge'yi aç.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This needs Accessibility permission. Turn on Bilge in System Settings > Privacy & Security > Accessibility."
+          }
+        }
+      }
+    },
+    "Bütün Mac komutları: uygulamalar, takvim, anımsatıcı, müzik, dosyalar, Excel, dikte, tarayıcı, mesaj ve e-posta": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All Mac commands: apps, calendar, reminders, music, files, Excel, dictation, browser, messages and email"
+          }
+        }
+      }
+    },
+    "Cihaz içi dil modeli şu an kullanılamıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The on-device language model isn't available right now."
+          }
+        }
+      }
+    },
+    "Danimarka kronu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Danish kroner"
+          }
+        }
+      }
+    },
+    "Depolama": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Storage"
+          }
+        }
+      }
+    },
+    "Desteklenmeyen ses biçimi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsupported audio format."
+          }
+        }
+      }
+    },
+    "Devam": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "Dikkat, bu adım okuduğum bir içeriğe dayanıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heads up: this step is based on content I read."
+          }
+        }
+      }
+    },
+    "Dikte açık, %@ uygulamasına yazıyorum. Bitirmek için 'dikteyi bitir' de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictation is on; I'm typing into %@. Say 'stop dictation' to finish."
+          }
+        }
+      }
+    },
+    "Dikte açık, öndeki uygulamaya yazıyorum. Bitirmek için 'dikteyi bitir' de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictation is on; I'm typing into the front app. Say 'stop dictation' to finish."
+          }
+        }
+      }
+    },
+    "Dikte bitti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictation ended."
+          }
+        }
+      }
+    },
+    "Dikte edileni yazmak, seçili metni okumak ve pencereleri düzenlemek için.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To type what you dictate, read selected text and arrange windows."
+          }
+        }
+      }
+    },
+    "Dil modeli Türkçeyi şu an desteklemiyor. Apple Intelligence dilinin Türkçe olduğunu kontrol et.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The language model doesn't support English right now. Check that your Apple Intelligence language is set to English."
+          }
+        }
+      }
+    },
+    "Dil modeli henüz hazır değil, sistem indiriyor olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The language model isn't ready yet; the system may still be downloading it."
+          }
+        }
+      }
+    },
+    "Dil modeli kullanılamıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The language model isn't available."
+          }
+        }
+      }
+    },
+    "Dil · Language": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language · Dil"
+          }
+        }
+      }
+    },
+    "Dinle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen"
+          }
+        }
+      }
+    },
+    "Dinleme başladı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening started"
+          }
+        }
+      }
+    },
+    "Dinleme durdu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening stopped"
+          }
+        }
+      }
+    },
+    "Dinlemeye başla": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start listening"
+          }
+        }
+      }
+    },
+    "Dinlemeyi aç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on listening"
+          }
+        }
+      }
+    },
+    "Dinlemeyi başlat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start listening"
+          }
+        }
+      }
+    },
+    "Dinlemeyi durdur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop listening"
+          }
+        }
+      }
+    },
+    "Dinlemeyi kapat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn off listening"
+          }
+        }
+      }
+    },
+    "Dinliyor — “%@” de": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening — say “%@”"
+          }
+        }
+      }
+    },
+    "Dinliyorum…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening…"
+          }
+        }
+      }
+    },
+    "Disk bilgisini okuyamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't read the disk info."
+          }
+        }
+      }
+    },
+    "Diskte %lld GB boş yer var, toplam %lld GB.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have %lld GB free on your disk, out of %lld GB."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Diskte %1$lld GB boş yer var, toplam %2$lld GB."
+          }
+        }
+      }
+    },
+    "Diskte yer yok; %@ boş alan gerekiyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enough disk space; %@ of free space is needed."
+          }
+        }
+      }
+    },
+    "Diğer uygulamalar gizlendi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other apps are hidden."
+          }
+        }
+      }
+    },
+    "Dosya silme yalnızca sesli onayla yapılabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files can only be deleted with voice confirmation."
+          }
+        }
+      }
+    },
+    "Durdur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
+    "Duvar Kağıdı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wallpaper"
+          }
+        }
+      }
+    },
+    "Duyulan: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heard: %@"
+          }
+        }
+      }
+    },
+    "Döviz kuru alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get the exchange rate. %@"
+          }
+        }
+      }
+    },
+    "Düğmeye bastıktan sonra cümleyi normal sesinle oku.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After pressing the button, read the sentence in your normal voice."
+          }
+        }
+      }
+    },
+    "Düşünüyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thinking…"
+          }
+        }
+      }
+    },
+    "E-posta %@ kişisine gönderildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email sent to %@."
+          }
+        }
+      }
+    },
+    "E-posta yalnızca onayla gönderilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emails are only sent after you confirm."
+          }
+        }
+      }
+    },
+    "E-postada ne göndermemi istediğini anlayamadım. Bir metni ya da dosyayı seçip 'bunu gönder' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell what you want me to send in the email. You can select some text or a file and say 'send this'."
+          }
+        }
+      }
+    },
+    "Ekledim, %@ hatırlatacağım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added. I'll remind you %@."
+          }
+        }
+      }
+    },
+    "Ekledim: %@, %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added: %@, %@."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Ekledim: %1$@, %2$@."
+          }
+        }
+      }
+    },
+    "Ekran Kaydı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen Recording"
+          }
+        }
+      }
+    },
+    "Ekran görüntüsü Masaüstü'ne kaydedildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screenshot saved to the Desktop."
+          }
+        }
+      }
+    },
+    "Ekran görüntüsü alınamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't take a screenshot."
+          }
+        }
+      }
+    },
+    "Ekran görüntüsü alınmadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No screenshot was taken."
+          }
+        }
+      }
+    },
+    "Ekran görüntüsü panoya kopyalandı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screenshot copied to the clipboard."
+          }
+        }
+      }
+    },
+    "Ekran kapatıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display turned off."
+          }
+        }
+      }
+    },
+    "Ekranda durum panelini göster": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show status panel on screen"
+          }
+        }
+      }
+    },
+    "Ekranda okunabilir bir yazı bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find any readable text on the screen."
+          }
+        }
+      }
+    },
+    "Ekranlar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Displays"
+          }
+        }
+      }
+    },
+    "Ekranı okumak için Ekran Kaydı izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Ekran ve Sistem Sesi Kaydı'ndan Bilge'ye izin ver.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To read the screen, I need Screen Recording permission. Allow Bilge in System Settings > Privacy & Security > Screen & System Audio Recording."
+          }
+        }
+      }
+    },
+    "En az %lld harf ve en fazla %lld kelime olmalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It must be at least %lld letters and at most %lld words."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "En az %1$lld harf ve en fazla %2$lld kelime olmalı."
+          }
+        }
+      }
+    },
+    "Erişilebilirlik": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessibility"
+          }
+        }
+      }
+    },
+    "Erkek %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Male %@"
+          }
+        }
+      }
+    },
+    "Esnek": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flexible"
+          }
+        }
+      }
+    },
+    "Esnek ayar kelimeyi daha kolay yakalar ama başka konuşmalarda yanlışlıkla uyanma ihtimali artar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The flexible setting catches the word more easily, but makes accidental wake-ups during other conversations more likely."
+          }
+        }
+      }
+    },
+    "Etkinliğin günü ya da saati anlaşılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't figure out the event's day or time."
+          }
+        }
+      }
+    },
+    "Evet, yap": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yes, do it"
+          }
+        }
+      }
+    },
+    "Excel açık değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excel isn't open."
+          }
+        }
+      }
+    },
+    "Excel modundan çıktım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I've left Excel mode."
+          }
+        }
+      }
+    },
+    "Excel'de açık bir tablo yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no open spreadsheet in Excel."
+          }
+        }
+      }
+    },
+    "Fare": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mouse"
+          }
+        }
+      }
+    },
+    "Genel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
+          }
+        }
+      }
+    },
+    "Genel bilgi sorularında daha sık yanılır, uzun metinleri daha kısa özetler": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More often wrong on general-knowledge questions; gives shorter summaries of long texts"
+          }
+        }
+      }
+    },
+    "Geri": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "Geri aldım, %@ yine boş.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undone. %@ is empty again."
+          }
+        }
+      }
+    },
+    "Geri aldım, %@: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undone. %@: %@."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Geri aldım, %1$@: %2$@."
+          }
+        }
+      }
+    },
+    "Geri alınacak bir değişikliğim yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't have any changes to undo."
+          }
+        }
+      }
+    },
+    "Geri gittim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Went back."
+          }
+        }
+      }
+    },
+    "Geçmiş": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        }
+      }
+    },
+    "Giriş öğesi ayarlanamadı: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't set up the login item: %@"
+          }
+        }
+      }
+    },
+    "Gizlenecek uygulamayı bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find the app to hide."
+          }
+        }
+      }
+    },
+    "Gizlilik ve Güvenlik": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy & Security"
+          }
+        }
+      }
+    },
+    "Görünüm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
+    "Günlük dosyasını Finder'da göster": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Log File in Finder"
+          }
+        }
+      }
+    },
+    "Günün ilk “günaydın”ında günün özetini söyle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Give a daily briefing at the first “good morning” of the day"
+          }
+        }
+      }
+    },
+    "Güvenlik için '%@' gibi programları sesle açmıyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For security, I don't open programs like '%@' by voice."
+          }
+        }
+      }
+    },
+    "Güvenlik için terminallere, kod düzenleyicilere, uzak masaüstüne ve parola yöneticilerine dikte etmiyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For security, I don't dictate into terminals, code editors, remote desktops, or password managers."
+          }
+        }
+      }
+    },
+    "Güvenlik için terminallere, kod düzenleyicilere, uzak masaüstüne ve parola yöneticilerine yazı yazmıyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For security, I don't type into terminals, code editors, remote desktops, or password managers."
+          }
+        }
+      }
+    },
+    "Güvenlik için yerel ağdaki ya da bu Mac'teki adresleri okumuyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For security, I don't read addresses on your local network or on this Mac."
+          }
+        }
+      }
+    },
+    "Haber başlığı bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No headlines found."
+          }
+        }
+      }
+    },
+    "Haber kaynağı açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open the news source."
+          }
+        }
+      }
+    },
+    "Haberler alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get the news. %@"
+          }
+        }
+      }
+    },
+    "Hafıza": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memory"
+          }
+        }
+      }
+    },
+    "Hafıza boş": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memory is empty"
+          }
+        }
+      }
+    },
+    "Hafızamda '%@' ile ilgili bir bilgi bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't have anything in memory about '%@'."
+          }
+        }
+      }
+    },
+    "Hafızamda bir şey yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's nothing in my memory."
+          }
+        }
+      }
+    },
+    "Hafızamda zaten bir şey yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My memory is already empty."
+          }
+        }
+      }
+    },
+    "Hafızamı temizledim, %lld bilgiyi sildim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I cleared my memory and deleted %lld items."
+          }
+        }
+      }
+    },
+    "Hafızaya kaydedemedim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't save that to memory."
+          }
+        }
+      }
+    },
+    "Hakkında": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        }
+      }
+    },
+    "Hangi para birimini çevireceğimi anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which currency to convert."
+          }
+        }
+      }
+    },
+    "Hassasiyet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sensitivity"
+          }
+        }
+      }
+    },
+    "Hata: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error: %@"
+          }
+        }
+      }
+    },
+    "Hatırladığım %lld bilginin hepsini sileyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I delete all %lld things I remember?"
+          }
+        }
+      }
+    },
+    "Hatırlanan tüm bilgiler silinsin mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete everything Bilge remembers?"
+          }
+        }
+      }
+    },
+    "Hatırlatma: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminder: %@."
+          }
+        }
+      }
+    },
+    "Hatırlatmalar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders"
+          }
+        }
+      }
+    },
+    "Hava durumu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weather"
+          }
+        }
+      }
+    },
+    "Hava durumu alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get the weather. %@"
+          }
+        }
+      }
+    },
+    "Hayır": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No"
+          }
+        }
+      }
+    },
+    "Hazırlık": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setup"
+          }
+        }
+      }
+    },
+    "Hazırsın": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're All Set"
+          }
+        }
+      }
+    },
+    "Hedef seviye belirtilmedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No target level was given."
+          }
+        }
+      }
+    },
+    "Henüz bir işlem yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Activity Yet"
+          }
+        }
+      }
+    },
+    "Henüz hatırlamamı istediğin bir şey yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You haven't asked me to remember anything yet."
+          }
+        }
+      }
+    },
+    "Henüz sorulmadı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not asked yet"
+          }
+        }
+      }
+    },
+    "Hep açık tut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always keep loaded"
+          }
+        }
+      }
+    },
+    "Her iki motor da tamamen Mac'inde çalışır; ses kaydı saklanmaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Both engines run entirely on your Mac; no audio recordings are stored."
+          }
+        }
+      }
+    },
+    "Her şey hazır.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everything's ready."
+          }
+        }
+      }
+    },
+    "Hesabı tam anlayamadım, sayılarla tekrar söyler misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't quite catch the calculation. Could you say it again with the numbers?"
+          }
+        }
+      }
+    },
+    "Hiç kestirmen yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You don't have any shortcuts."
+          }
+        }
+      }
+    },
+    "Hiç not bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find any notes."
+          }
+        }
+      }
+    },
+    "Hugging Face'ten MLX biçiminde bir model indir (örneğin mlx-community'den) ve klasörünü buraya koy. Klasörde config.json, tokenizer ve .safetensors dosyaları olmalı. Desteklenmeyen bir model türü açılamazsa cevabı Apple modeli verir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download a model in MLX format from Hugging Face (for example, from mlx-community) and put its folder here. The folder should contain config.json, the tokenizer, and .safetensors files. If an unsupported model type can't be loaded, the Apple model answers instead."
+          }
+        }
+      }
+    },
+    "Hız": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed"
+          }
+        }
+      }
+    },
+    "Kadın %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Female %@"
+          }
+        }
+      }
+    },
+    "Kanada doları": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canadian dollar"
+          }
+        }
+      }
+    },
+    "Kapalı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "Kapat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "Kapattığın sekmeyi geri açtım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I reopened the tab you closed."
+          }
+        }
+      }
+    },
+    "Karanlık mod açık.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark Mode is on."
+          }
+        }
+      }
+    },
+    "Karanlık mod kapalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark Mode is off."
+          }
+        }
+      }
+    },
+    "Katı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strict"
+          }
+        }
+      }
+    },
+    "Kaydet ve oku": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record and Read"
+          }
+        }
+      }
+    },
+    "Kayıtlar birbirine yeterince benzemiyor. Sessiz bir yerde, mikrofona yakın tekrar dener misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The recordings aren't similar enough. Could you try again somewhere quiet, close to the microphone?"
+          }
+        }
+      }
+    },
+    "Kendi modellerin": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Models"
+          }
+        }
+      }
+    },
+    "Kestirmeler okunamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't read your shortcuts. %@"
+          }
+        }
+      }
+    },
+    "Kestirmeler yalnızca sesli onayla çalıştırılabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shortcuts can only be run with voice confirmation."
+          }
+        }
+      }
+    },
+    "Kilit Ekranı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock Screen"
+          }
+        }
+      }
+    },
+    "Kişiler": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contacts"
+          }
+        }
+      }
+    },
+    "Kişilere erişim izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Kişiler'den Bilge'ye izin ver.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't have access to Contacts. Allow Bilge in System Settings > Privacy & Security > Contacts."
+          }
+        }
+      }
+    },
+    "Kişilerinde '%@' adında birini bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find anyone named '%@' in your contacts."
+          }
+        }
+      }
+    },
+    "Klasörü aç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Folder"
+          }
+        }
+      }
+    },
+    "Klavye": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard"
+          }
+        }
+      }
+    },
+    "Komut yönlendirici başlatılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't start the command router."
+          }
+        }
+      }
+    },
+    "Komutlar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commands"
+          }
+        }
+      }
+    },
+    "Komutları anlamak ve Mac'te iş yapmak için her zaman bu model kullanılır: hızlıdır ve testlerimizde komutların hepsini doğru yönlendirdi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This model is always used to understand commands and get things done on your Mac: it's fast, and in our tests it routed every command correctly."
+          }
+        }
+      }
+    },
+    "Komutları her zaman Apple'ın cihaz içi modeli anlar. Sohbet, genel sorular ve ekran özetleri için istersen daha bilgili bir model indirebilirsin; Bilge onu kendi içinde çalıştırır, başka program gerekmez. Sonra Ayarlar > Model'den değiştirebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's on-device model always handles commands. For chat, general questions, and screen summaries, you can download a more knowledgeable model if you like; Bilge runs it by itself, no other app needed. You can change this later in Settings > Model."
+          }
+        }
+      }
+    },
+    "Konuşma Tanıma": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech Recognition"
+          }
+        }
+      }
+    },
+    "Konuşma algılandı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech detected"
+          }
+        }
+      }
+    },
+    "Konuşma bitince kapat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unload when the conversation ends"
+          }
+        }
+      }
+    },
+    "Konuşma bitti": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech ended"
+          }
+        }
+      }
+    },
+    "Konuşma bitti (%@ sn)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech ended (%@ s)"
+          }
+        }
+      }
+    },
+    "Konuşma durduruldu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech stopped"
+          }
+        }
+      }
+    },
+    "Konuşma hızı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speaking rate"
+          }
+        }
+      }
+    },
+    "Konuşma olasılığı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech probability"
+          }
+        }
+      }
+    },
+    "Konuşma tanıma izni verilmedi. Sistem Ayarları > Gizlilik ve Güvenlik > Konuşma Tanıma.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech recognition permission wasn't granted. System Settings > Privacy & Security > Speech Recognition."
+          }
+        }
+      }
+    },
+    "Konuşma tanıma için uygun ses biçimi bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't find a suitable audio format for speech recognition."
+          }
+        }
+      }
+    },
+    "Konuşma tanıma modeli henüz yüklenmedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The speech recognition model hasn't loaded yet."
+          }
+        }
+      }
+    },
+    "Konuşma tanıma modeli yükleniyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading the speech recognition model…"
+          }
+        }
+      }
+    },
+    "Konuşma tanıma motoru": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech recognition engine"
+          }
+        }
+      }
+    },
+    "Konuşma var": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech"
+          }
+        }
+      }
+    },
+    "Konuşurken sözünü kesebileyim (“%@, dur”)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow interrupting while it's speaking (“%@, stop”)"
+          }
+        }
+      }
+    },
+    "Konuşuyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speaking…"
+          }
+        }
+      }
+    },
+    "Kullanıcılar ve Gruplar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Users & Groups"
+          }
+        }
+      }
+    },
+    "Kullanılabilir bir mikrofon bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No usable microphone was found."
+          }
+        }
+      }
+    },
+    "Kullanılamıyor: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable: %@."
+          }
+        }
+      }
+    },
+    "Kullanılan açık kaynak bileşenler ve modeller": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open-source components and models used"
+          }
+        }
+      }
+    },
+    "Kullanımda sorulur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asked on first use"
+          }
+        }
+      }
+    },
+    "Kurulu zamanlayıcı yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There are no timers set."
+          }
+        }
+      }
+    },
+    "Kurulum rehberi…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setup Guide…"
+          }
+        }
+      }
+    },
+    "Kısa sohbet, hesap, hava durumu, döviz, haberler": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small talk, math, weather, currency, news"
+          }
+        }
+      }
+    },
+    "LM Studio sunucusu kapalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The LM Studio server is off."
+          }
+        }
+      }
+    },
+    "LM Studio'yu başlat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start LM Studio"
+          }
+        }
+      }
+    },
+    "Lisans bildirimleri bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "License notices couldn't be found."
+          }
+        }
+      }
+    },
+    "Mac %@ önce açıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Mac started up %@ ago."
+          }
+        }
+      }
+    },
+    "Mac açıldığında uygulamayı başlat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Bilge when your Mac starts up"
+          }
+        }
+      }
+    },
+    "Mac uyku moduna alınıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Putting your Mac to sleep."
+          }
+        }
+      }
+    },
+    "Mac'inde sesle iş yaptırabileceğin Türkçe asistanın.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your voice assistant for getting things done on your Mac."
+          }
+        }
+      }
+    },
+    "Masaüstü ve Dock": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desktop & Dock"
+          }
+        }
+      }
+    },
+    "Masaüstü'nde": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "on the Desktop"
+          }
+        }
+      }
+    },
+    "Merhaba! Saat 14:30'da toplantın var; pilin %80 dolu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hi! You have a meeting at 2:30 PM; your battery is at 80%."
+          }
+        }
+      }
+    },
+    "Merhaba, ben %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hi, I'm %@"
+          }
+        }
+      }
+    },
+    "Merhaba, ben %@. Saat 14:30'da toplantın var, hatırlatmamı ister misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hi, I'm %@. You have a meeting at 2:30 PM. Want me to remind you?"
+          }
+        }
+      }
+    },
+    "Mesaj %@ kişisine gönderildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Message sent to %@."
+          }
+        }
+      }
+    },
+    "Mesaj yalnızca onayla gönderilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages are only sent after you confirm."
+          }
+        }
+      }
+    },
+    "Mesajda ne göndermemi istediğini anlayamadım. Bir metni ya da dosyayı seçip 'bunu gönder' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell what you want me to send in the message. You can select some text or a file and say 'send this'."
+          }
+        }
+      }
+    },
+    "Mikrofon": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone"
+          }
+        }
+      }
+    },
+    "Mikrofon izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Mikrofon bölümünden izin ver.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No microphone access. Allow it in System Settings > Privacy & Security > Microphone."
+          }
+        }
+      }
+    },
+    "Mikrofon izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Mikrofon.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No microphone access. System Settings > Privacy & Security > Microphone."
+          }
+        }
+      }
+    },
+    "Mikrofon ve konuşma algılama": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone and speech detection"
+          }
+        }
+      }
+    },
+    "Model": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model"
+          }
+        }
+      }
+    },
+    "Model adı geçersiz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid model name."
+          }
+        }
+      }
+    },
+    "Model açılamazsa o yanıt Apple modeliyle verilir. Her şey Mac'inde kalır.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the model can't be loaded, the Apple model gives that answer instead. Everything stays on your Mac."
+          }
+        }
+      }
+    },
+    "Model dosyaları listelenemedi (%lld).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't list the model files (%lld)."
+          }
+        }
+      }
+    },
+    "Model kapalı; “%@” dediğinde açılır.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The model is unloaded; it loads when you say “%@”."
+          }
+        }
+      }
+    },
+    "Model sunucusu beklenmeyen bir yanıt verdi (%lld).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The model server returned an unexpected response (%lld)."
+          }
+        }
+      }
+    },
+    "Model yüklenemedi: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load the model: %@"
+          }
+        }
+      }
+    },
+    "Model şu an açık.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The model is loaded right now."
+          }
+        }
+      }
+    },
+    "Modelde indirilecek dosya bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No files to download were found for this model."
+          }
+        }
+      }
+    },
+    "Motor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Engine"
+          }
+        }
+      }
+    },
+    "Müzik kitaplığında '%@' bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find '%@' in your music library."
+          }
+        }
+      }
+    },
+    "Müzik kontrolü, not oluşturma ve karanlık mod için. İlk kullanımda sorulur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For controlling music, creating notes, and Dark Mode. You'll be asked the first time it's used."
+          }
+        }
+      }
+    },
+    "Ne yazacağımı anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch what you want me to type."
+          }
+        }
+      }
+    },
+    "Ne çalmamı istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch what you want me to play."
+          }
+        }
+      }
+    },
+    "Net bir onay duymadım, bu yüzden yapmadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't hear a clear yes, so I didn't do it."
+          }
+        }
+      }
+    },
+    "Neyi hatırlamamı istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch what you want me to remember."
+          }
+        }
+      }
+    },
+    "Neyi kastettiğini bulamadım. Bir metni seç, dosyayı Finder'da işaretle ya da sayfayı aç.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell what you meant. Select some text, select the file in Finder, or open the page."
+          }
+        }
+      }
+    },
+    "Norveç kronu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Norwegian krone"
+          }
+        }
+      }
+    },
+    "Odak": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus"
+          }
+        }
+      }
+    },
+    "Okunacak bir pencere bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a window to read."
+          }
+        }
+      }
+    },
+    "Okunmamış e-posta sayısı: ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unread emails: "
+          }
+        }
+      }
+    },
+    "Olaylar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Events"
+          }
+        }
+      }
+    },
+    "Onaysız, yapılmadı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not confirmed, not done"
+          }
+        }
+      }
+    },
+    "Onayını bekliyorum — evet ya da hayır de": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for your confirmation — say yes or no"
+          }
+        }
+      }
+    },
+    "OpenAI Whisper'ın Mac'e uyarlanmış sürümü. İlk seçimde yaklaşık 1,5 GB indirilir ve hazırlanması birkaç dakika sürer. Testlerimizde daha yavaş ve daha az doğruydu (%6, 0,35 sn); aksanlı konuşmada denemeye değer.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A version of OpenAI Whisper adapted for the Mac. The first time you choose it, about 1.5 GB is downloaded and setup takes a few minutes. In our tests it was slower and less accurate (6%, 0.35 s); worth trying for accented speech."
+          }
+        }
+      }
+    },
+    "Otomasyon (Müzik, Notlar, Sistem Olayları)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automation (Music, Notes, System Events)"
+          }
+        }
+      }
+    },
+    "Panoda metin yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no text on the clipboard."
+          }
+        }
+      }
+    },
+    "Panodaki metin: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clipboard text: %@"
+          }
+        }
+      }
+    },
+    "Panoya kopyaladım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied to the clipboard."
+          }
+        }
+      }
+    },
+    "Panoya ne kopyalayacağımı anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch what you want me to copy to the clipboard."
+          }
+        }
+      }
+    },
+    "Pencere büyütüldü.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window zoomed."
+          }
+        }
+      }
+    },
+    "Pencere ekranın sağına yerleşti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved the window to the right side of the screen."
+          }
+        }
+      }
+    },
+    "Pencere ekranın soluna yerleşti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved the window to the left side of the screen."
+          }
+        }
+      }
+    },
+    "Pencere küçültüldü.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window minimized."
+          }
+        }
+      }
+    },
+    "Pencere tam ekran yapıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window is now full screen."
+          }
+        }
+      }
+    },
+    "Pil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery"
+          }
+        }
+      }
+    },
+    "Pil yüzde %lld, %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Battery at %1$lld percent, %2$@."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Pil yüzde %1$lld, %2$@."
+          }
+        }
+      }
+    },
+    "Reddettin": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You declined"
+          }
+        }
+      }
+    },
+    "Saat %@. Bugün %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's %1$@. Today is %2$@."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Saat %1$@. Bugün %2$@."
+          }
+        }
+      }
+    },
+    "Safari'yi aç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Safari"
+          }
+        }
+      }
+    },
+    "Sayfa okunamayacak kadar büyük.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The page is too large to read."
+          }
+        }
+      }
+    },
+    "Sayfada '%@' arıyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searching the page for '%@'."
+          }
+        }
+      }
+    },
+    "Sayfada okunabilir yazı yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no readable text on the page."
+          }
+        }
+      }
+    },
+    "Sayfayı yeniledim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I reloaded the page."
+          }
+        }
+      }
+    },
+    "Sekmeyi kapattım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I closed the tab."
+          }
+        }
+      }
+    },
+    "Seni dinliyorum…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm listening…"
+          }
+        }
+      }
+    },
+    "Ses": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice"
+          }
+        }
+      }
+    },
+    "Ses Laboratuvarı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Lab"
+          }
+        }
+      }
+    },
+    "Ses Laboratuvarı…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Lab…"
+          }
+        }
+      }
+    },
+    "Ses algılama hazırlanıyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing voice detection…"
+          }
+        }
+      }
+    },
+    "Ses algılama modeli yükleniyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading the voice detection model…"
+          }
+        }
+      }
+    },
+    "Ses algılama, konuşma tanıma ve Türkçe ses modelleri hazırlanıyor. İlk seferde birkaç dakika sürebilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing the voice detection, speech recognition, and Turkish voice models. The first time can take a few minutes."
+          }
+        }
+      }
+    },
+    "Ses açıldı, seviye yüzde %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound is on, volume at %@ percent."
+          }
+        }
+      }
+    },
+    "Ses dönüştürücü oluşturulamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't create the audio converter."
+          }
+        }
+      }
+    },
+    "Ses dönüştürülemedi: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't convert the audio: %@"
+          }
+        }
+      }
+    },
+    "Ses hazırlanıyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing the voice…"
+          }
+        }
+      }
+    },
+    "Ses kapatıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound muted."
+          }
+        }
+      }
+    },
+    "Ses kaydı saklanmaz; yalnızca sesinin sayısal özeti bu Mac'te tutulur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No recording is kept; only a numeric summary of your voice is stored on this Mac."
+          }
+        }
+      }
+    },
+    "Ses kaydını sil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete voice profile"
+          }
+        }
+      }
+    },
+    "Ses kimliği": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice ID"
+          }
+        }
+      }
+    },
+    "Ses seviyesi yüzde %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume is at %@ percent."
+          }
+        }
+      }
+    },
+    "Ses tamamen Mac'inde, Supertonic-3 modeliyle üretilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The voice is generated entirely on your Mac with the Supertonic-3 model."
+          }
+        }
+      }
+    },
+    "Sesimi tanıt…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teach my voice…"
+          }
+        }
+      }
+    },
+    "Sesimi yeniden tanıt…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teach my voice again…"
+          }
+        }
+      }
+    },
+    "Sesin %@ tarihinde kaydedildi. Televizyon ya da odadaki başkaları komut veremez ve onay veremez; “%@, dur” herkese açıktır.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your voice was saved on %1$@. The TV or other people in the room can't give commands or confirmations; anyone can say “%2$@, stop”."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Sesin %1$@ tarihinde kaydedildi. Televizyon ya da odadaki başkaları komut veremez ve onay veremez; “%2$@, dur” herkese açıktır."
+          }
+        }
+      }
+    },
+    "Sesin kaydedildi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your voice is saved"
+          }
+        }
+      }
+    },
+    "Sesini tanıt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teach your voice"
+          }
+        }
+      }
+    },
+    "Sesini tanıtırsan %@ yalnızca sana yanıt verir. Beş kısa cümle okuman yeterli.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you teach %@ your voice, it will respond only to you. Just read five short sentences."
+          }
+        }
+      }
+    },
+    "Seslendir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speak"
+          }
+        }
+      }
+    },
+    "Sessiz": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silent"
+          }
+        }
+      }
+    },
+    "Seçili ama indirilmedi; şimdilik Apple modeli yanıt veriyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected but not downloaded; the Apple model is answering for now."
+          }
+        }
+      }
+    },
+    "Seçili bir metin bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find any selected text."
+          }
+        }
+      }
+    },
+    "Seçili değil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None selected"
+          }
+        }
+      }
+    },
+    "Seçili dosyalardan okuyabileceğim bir belge yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None of the selected files is a document I can read."
+          }
+        }
+      }
+    },
+    "Seçili metin açılacak bir şey değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The selected text isn't something I can open."
+          }
+        }
+      }
+    },
+    "Sil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "Silinecek bir şey yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's nothing to delete."
+          }
+        }
+      }
+    },
+    "Silme, ekleme gibi önemli işlerde önce sesli onay ister.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asks for spoken confirmation before important actions like deleting or adding."
+          }
+        }
+      }
+    },
+    "Sistem Ayarları açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open System Settings."
+          }
+        }
+      }
+    },
+    "Sistemle gelir ve çok hızlıdır, ama İngilizce testlerimizde “%@” adını neredeyse hiç tanımadı (“Bill”, “Build” diye duydu). Uyandırma kelimesini İngilizce bir kelimeyle değiştirirsen deneyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built into the system and very fast, but in our English tests it almost never recognized the name “%@” (it heard “Bill” or “Build”). Worth a try if you change the wake word to an English word."
+          }
+        }
+      }
+    },
+    "Site beni sürekli başka adrese yönlendiriyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The site keeps redirecting me somewhere else."
+          }
+        }
+      }
+    },
+    "Site zamanında yanıt vermedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The site didn't respond in time."
+          }
+        }
+      }
+    },
+    "Sitenin gönderdiği yanıtı okuyamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't read the site's response."
+          }
+        }
+      }
+    },
+    "Siteye bağlanamadım. İnternet bağlantını kontrol eder misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't connect to the site. Could you check your internet connection?"
+          }
+        }
+      }
+    },
+    "Sohbet modeli": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chat model"
+          }
+        }
+      }
+    },
+    "Sohbet ve ekran yanıtları": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chat and screen answers"
+          }
+        }
+      }
+    },
+    "Sonraki sekme.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next tab."
+          }
+        }
+      }
+    },
+    "Sonraki şarkıya geçildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skipped to the next song."
+          }
+        }
+      }
+    },
+    "Sonuna indim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrolled to the bottom."
+          }
+        }
+      }
+    },
+    "Sonuç %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The result is %@."
+          }
+        }
+      }
+    },
+    "Sunucu yanıt vermedi (%lld).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server didn't respond (%lld)."
+          }
+        }
+      }
+    },
+    "Söylenecek metin": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text to speak"
+          }
+        }
+      }
+    },
+    "Sürdür": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume"
+          }
+        }
+      }
+    },
+    "Süre ya da saat anlaşılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch the duration or time."
+          }
+        }
+      }
+    },
+    "Sürüm %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        }
+      }
+    },
+    "Takvim": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendar"
+          }
+        }
+      }
+    },
+    "Takvime": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendar"
+          }
+        }
+      }
+    },
+    "Takvimi okumak ve onayınla etkinlik eklemek için.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To read your calendar and add events with your approval."
+          }
+        }
+      }
+    },
+    "Tamam, hatırlayacağım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK, I'll remember that."
+          }
+        }
+      }
+    },
+    "Tamam, hatırlayacağım. Yer açmak için en eski bilgiyi unuttum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK, I'll remember that. I forgot the oldest item to make room."
+          }
+        }
+      }
+    },
+    "Tamam, saat %@ için kurdum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK, I set it for %@."
+          }
+        }
+      }
+    },
+    "Tamam, sırayla yapıyorum. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK, doing them one at a time. "
+          }
+        }
+      }
+    },
+    "Tamam, yapmadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK, I didn't do it."
+          }
+        }
+      }
+    },
+    "Tamam, yarın saat %@ için kurdum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK, I set it for %@ tomorrow."
+          }
+        }
+      }
+    },
+    "Tamam.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK."
+          }
+        }
+      }
+    },
+    "Tamamen yerel: sesin ve komutların Mac'inden dışarı çıkmaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fully local: your voice and commands never leave your Mac."
+          }
+        }
+      }
+    },
+    "Tanıma": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recognition"
+          }
+        }
+      }
+    },
+    "Tarayıcı açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open the browser."
+          }
+        }
+      }
+    },
+    "Tarayıcıda '%@' araması açıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opened a search for '%@' in the browser."
+          }
+        }
+      }
+    },
+    "Tarayıcıda açık bir sayfa bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find an open page in the browser."
+          }
+        }
+      }
+    },
+    "Tarayıcıda ne yapmamı istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch what you want me to do in the browser."
+          }
+        }
+      }
+    },
+    "Tekrar dene": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
+    },
+    "Toplantıdan önce": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Before meetings"
+          }
+        }
+      }
+    },
+    "Tutarlılık %@. Artık yalnızca senin sesine yanıt vereceğim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consistency: %@. From now on I'll respond only to your voice."
+          }
+        }
+      }
+    },
+    "Tüm uygulamalar gösteriliyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Showing all apps."
+          }
+        }
+      }
+    },
+    "Tümünü sil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete all"
+          }
+        }
+      }
+    },
+    "Türkçe konuşmayı cihaz üzerinde yazıya dökmek için. Zorunlu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To transcribe Turkish speech on the device. Required."
+          }
+        }
+      }
+    },
+    "Türkçe seslendirme": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turkish voice"
+          }
+        }
+      }
+    },
+    "Unuttum: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forgotten: %@."
+          }
+        }
+      }
+    },
+    "Uyandırma": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake"
+          }
+        }
+      }
+    },
+    "Uyandırma kelimesi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake word"
+          }
+        }
+      }
+    },
+    "Uyandırma kelimesini ve komutlarını duymak için. Zorunlu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To hear the wake word and your commands. Required."
+          }
+        }
+      }
+    },
+    "Uygula ve yeniden başlat · Apply and restart": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply and restart · Uygula ve yeniden başlat"
+          }
+        }
+      }
+    },
+    "Uygulama": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app"
+          }
+        }
+      }
+    },
+    "Uygulama açılınca dinlemeye başla": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start listening when the app opens"
+          }
+        }
+      }
+    },
+    "Uygulama açılınca yüklenir ve kapanana kadar bellekte kalır. En hızlı yanıt, en çok bellek.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loads when the app opens and stays in memory until it quits. Fastest replies, most memory."
+          }
+        }
+      }
+    },
+    "Uygulama her açıldığında dinlemeye başla": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start listening every time the app opens"
+          }
+        }
+      }
+    },
+    "Uygulama zamanında yanıt vermedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app didn't respond in time."
+          }
+        }
+      }
+    },
+    "Vazgeç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Wi-Fi açık": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wi-Fi is on"
+          }
+        }
+      }
+    },
+    "Wi-Fi açıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wi-Fi turned on."
+          }
+        }
+      }
+    },
+    "Wi-Fi değiştirilemedi. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't change Wi-Fi. %@"
+          }
+        }
+      }
+    },
+    "Wi-Fi durumu okunamadı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't read Wi-Fi status"
+          }
+        }
+      }
+    },
+    "Wi-Fi kapalı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wi-Fi is off"
+          }
+        }
+      }
+    },
+    "Wi-Fi kapatıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wi-Fi turned off."
+          }
+        }
+      }
+    },
+    "Wi-Fi'ı kapatırsam internet bağlantın kesilir. Kapatayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If I turn off Wi-Fi, you'll lose your internet connection. Shall I turn it off?"
+          }
+        }
+      }
+    },
+    "Yaklaşan toplantıları ve vakti gelen anımsatıcıları sesli söyle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Announce upcoming meetings and due reminders out loud"
+          }
+        }
+      }
+    },
+    "Yalnızca benim sesime yanıt ver": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Respond only to my voice"
+          }
+        }
+      }
+    },
+    "Yalnızca dinleme açıkken ve Takvim/Anımsatıcılar izni verilmişse çalışır.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Works only while listening is on and Calendar/Reminders access is granted."
+          }
+        }
+      }
+    },
+    "Yankı iptali hazırlanıyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing echo cancellation…"
+          }
+        }
+      }
+    },
+    "Yankı iptaliyle asistanın kendi sesini süzer. Kulaklıkla en iyi sonucu verir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses echo cancellation to filter out the assistant's own voice. Works best with headphones."
+          }
+        }
+      }
+    },
+    "Yanıt çok uzun sürdü. Tekrar dener misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The reply took too long. Could you try again?"
+          }
+        }
+      }
+    },
+    "Yanıt: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reply: %@"
+          }
+        }
+      }
+    },
+    "Yanıttan sonra kelimesiz devam sorusu dinle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen for a follow-up without the wake word after replying"
+          }
+        }
+      }
+    },
+    "Yanıttan sonraki birkaç saniye içinde uyandırma kelimesi olmadan devam edebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For a few seconds after a reply, you can keep going without the wake word."
+          }
+        }
+      }
+    },
+    "Yanıtı durdur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop reply"
+          }
+        }
+      }
+    },
+    "Yapabildiğim adımları tamamladım ama isteğin hepsini bitiremedim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I finished the steps I could, but I couldn't complete your whole request."
+          }
+        }
+      }
+    },
+    "Yapıldı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "Yarım kalanı sil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete partial download"
+          }
+        }
+      }
+    },
+    "Yarın": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tomorrow"
+          }
+        }
+      }
+    },
+    "Yazarken öndeki uygulama değişti, yazmayı durdurdum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The front app changed while I was typing, so I stopped."
+          }
+        }
+      }
+    },
+    "Yazdım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done typing."
+          }
+        }
+      }
+    },
+    "Yazı yazılacak bir uygulama önde değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no app in front to type into."
+          }
+        }
+      }
+    },
+    "Yazıcılar ve Tarayıcılar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Printers & Scanners"
+          }
+        }
+      }
+    },
+    "Yazılım Güncelleme": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Software Update"
+          }
+        }
+      }
+    },
+    "Yeni sekme açtım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I opened a new tab."
+          }
+        }
+      }
+    },
+    "Yenile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
+          }
+        }
+      }
+    },
+    "Yukarı kaydırdım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrolled up."
+          }
+        }
+      }
+    },
+    "Yıldızlı olanlar zorunlu; diğerlerini istersen sonra da verebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starred ones are required; you can grant the others later if you like."
+          }
+        }
+      }
+    },
+    "Zamanlayıcı doldu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timer's up."
+          }
+        }
+      }
+    },
+    "Zamanlayıcılar: ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timers: "
+          }
+        }
+      }
+    },
+    "bilinmeyen hata": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "unknown error"
+          }
+        }
+      }
+    },
+    "bugün": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "today"
+          }
+        }
+      }
+    },
+    "bugün takvimde ne var?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "what's on my calendar today?"
+          }
+        }
+      }
+    },
+    "dolar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "dollars"
+          }
+        }
+      }
+    },
+    "e-postası %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "email %@"
+          }
+        }
+      }
+    },
+    "euro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "euros"
+          }
+        }
+      }
+    },
+    "eşittir ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "equals "
+          }
+        }
+      }
+    },
+    "kayıtlı e-postası yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no email on file"
+          }
+        }
+      }
+    },
+    "kayıtlı telefonu yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no phone on file"
+          }
+        }
+      }
+    },
+    "lira": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "lira"
+          }
+        }
+      }
+    },
+    "on dakikalık zamanlayıcı kur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "set a ten-minute timer"
+          }
+        }
+      }
+    },
+    "pilden çalışıyor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "running on battery"
+          }
+        }
+      }
+    },
+    "prize bağlı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "plugged in"
+          }
+        }
+      }
+    },
+    "saat kaç?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "what time is it?"
+          }
+        }
+      }
+    },
+    "sesi yüzde otuz yap": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "set the volume to thirty percent"
+          }
+        }
+      }
+    },
+    "settings.pane.sound": {
+      "comment": "System Settings pane name",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses"
+          }
+        }
+      }
+    },
+    "sterlin": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pounds"
+          }
+        }
+      }
+    },
+    "telefonu %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "phone %@"
+          }
+        }
+      }
+    },
+    "tüm gün: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "all day: %@"
+          }
+        }
+      }
+    },
+    "vMLX şu an başka bir model sunuyor (%@).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vMLX is currently serving a different model (%@)."
+          }
+        }
+      }
+    },
+    "yarın": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tomorrow"
+          }
+        }
+      }
+    },
+    "yen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "yen"
+          }
+        }
+      }
+    },
+    "yuan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "yuan"
+          }
+        }
+      }
+    },
+    "·": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "·"
+          }
+        }
+      }
+    },
+    "Çalan: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now playing: %@."
+          }
+        }
+      }
+    },
+    "Çalıyorum: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing %@."
+          }
+        }
+      }
+    },
+    "Çıkış": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit"
+          }
+        }
+      }
+    },
+    "Önceki sekme.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous tab."
+          }
+        }
+      }
+    },
+    "Önceki şarkıya dönüldü.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Went back to the previous song."
+          }
+        }
+      }
+    },
+    "Öndeki pencereyi bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find the front window."
+          }
+        }
+      }
+    },
+    "Öndeki uygulama değişti, dikteyi bitirdim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The front app changed, so I stopped dictation."
+          }
+        }
+      }
+    },
+    "Önerilen. Sistemle gelir, indirme gerektirmez. Türkçe testlerimizde en doğru ve en hızlı sonucu verdi (hata oranı %2, 0,06 sn).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recommended. Built into the system, no download needed. In our Turkish tests it was the most accurate and the fastest (2% error rate, 0.06 s)."
+          }
+        }
+      }
+    },
+    "Önerilen. İlk seçimde yaklaşık 1,5 GB indirilir. İngilizce testlerimizde Türkçe söylenen “%@” adını 20 denemenin 17'sinde doğru duydu (0,35 sn).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recommended. About 1.5 GB is downloaded the first time you choose it. In our English tests it correctly heard the Turkish name “%@” in 17 of 20 tries (0.35 s)."
+          }
+        }
+      }
+    },
+    "Önümüzdeki 7 günde": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the next 7 days"
+          }
+        }
+      }
+    },
+    "Üzgünüm, bir sorun oluştu. Tekrar dener misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorry, something went wrong. Could you try again?"
+          }
+        }
+      }
+    },
+    "Üzgünüm, bunu yapamadım. Tekrar dener misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorry, I couldn't do that. Could you try again?"
+          }
+        }
+      }
+    },
+    "İleri gittim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Went forward."
+          }
+        }
+      }
+    },
+    "İndir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download"
+          }
+        }
+      }
+    },
+    "İndirilenler klasörü boş.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Downloads folder is empty."
+          }
+        }
+      }
+    },
+    "İndirilenler'de": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in Downloads"
+          }
+        }
+      }
+    },
+    "İndirilenler'de okunabilir bir belge bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a readable document in Downloads."
+          }
+        }
+      }
+    },
+    "İndirme yok · sistemle gelir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No download · built into macOS"
+          }
+        }
+      }
+    },
+    "İniyor · %%%lld · bitene kadar Apple modeli yanıt verir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading · %lld%% · the Apple model answers until it's done"
+          }
+        }
+      }
+    },
+    "İptal edilecek zamanlayıcı yoktu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There was no timer to cancel."
+          }
+        }
+      }
+    },
+    "İsveç kronu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swedish krona"
+          }
+        }
+      }
+    },
+    "İsviçre frangı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swiss franc"
+          }
+        }
+      }
+    },
+    "İzin reddedildi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permission denied"
+          }
+        }
+      }
+    },
+    "İzin ver": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow"
+          }
+        }
+      }
+    },
+    "İzin verildi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allowed"
+          }
+        }
+      }
+    },
+    "İzinler": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permissions"
+          }
+        }
+      }
+    },
+    "İzinler yalnızca istediğin işler için kullanılır. Bir izni geri almak için Sistem Ayarları > Gizlilik ve Güvenlik.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permissions are used only for the tasks you ask for. To revoke a permission, go to System Settings > Privacy & Security."
+          }
+        }
+      }
+    },
+    "İzleme Dörtgeni": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trackpad"
+          }
+        }
+      }
+    },
+    "Şehir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "City"
+          }
+        }
+      }
+    },
+    "Şehir söylemediğinde hava durumu bu şehir için verilir. Şehir adı Open-Meteo'ya gönderilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When you don't name a city, you get the weather for this one. The city name is sent to Open-Meteo."
+          }
+        }
+      }
+    },
+    "Şu an çalan bir şey yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing is playing right now."
+          }
+        }
+      }
+    },
+    "Şunları dene:": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try these:"
+          }
+        }
+      }
+    },
+    "Şunu duydum: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I heard: %@"
+          }
+        }
+      }
+    },
+    "Şunu hatırlayayım mı: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I remember this: %@"
+          }
+        }
+      }
+    },
+    "şarj oluyor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "charging"
+          }
+        }
+      }
+    },
+    "“%@, %@”": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@, %2$@”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "“%1$@, %2$@”"
+          }
+        }
+      }
+    },
+    "“%@”": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@”"
+          }
+        }
+      }
+    },
+    "“%@” dediğinde uyanır, öncesini dinlemez ve kaydetmez.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wakes when you say “%@”; it doesn't listen to or record anything before that."
+          }
+        }
+      }
+    },
+    "“%@” dediğinde yüklenmeye başlar, sen konuşurken büyük ölçüde hazır olur (Qwen ~4 sn, Gemma ~6 sn). Yanıt bitip devam sorusu gelmezse bellekten çıkar. Gecikirse “Bir saniye” der.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starts loading when you say “%@” and is mostly ready while you're still talking (Qwen ~4 s, Gemma ~6 s). It's unloaded from memory once the reply ends and no follow-up comes. If it's slow, it says “One moment.”"
+          }
+        }
+      }
+    },
+    "“Ahmet'in numarasını bul ve ona mesaj at” gibi birbirine bağlı işleri planlayamaz, parçaları ayrı ayrı yapar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't plan linked tasks like “find Ahmet's number and text him”; it does each part separately"
+          }
+        }
+      }
+    },
+    "“Ekranda ne yazıyor?” için. Görüntü kaydedilmez, sadece okunur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For “What does the screen say?”. The image is only read, never saved."
+          }
+        }
+      }
+    },
+    "… (devamı var).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "… (there's more)."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

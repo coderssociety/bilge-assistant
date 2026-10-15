@@ -26,15 +26,15 @@ struct SpreadsheetTool: RuleRoutedTool {
     /// then says so.
     @MainActor
     func claims(_ command: String) -> Bool {
-        switch SpreadsheetCommand.parse(TurkishNumberParser.digitize(command)) {
+        switch Self.command(in: command) {
         case .undo?, .finish?: return session.isActive
         case .some: return true
-        case nil: return session.isActive && SpreadsheetCommand.mentionsCells(command)
+        case nil: return session.isActive && SpreadsheetCommand.mentionsCells(command, language: AppLanguage.current)
         }
     }
 
     func arguments(fromCommand command: String) -> Arguments? {
-        guard SpreadsheetCommand.parse(TurkishNumberParser.digitize(command)) != nil else { return nil }
+        guard Self.command(in: command) != nil else { return nil }
         return Arguments(command: command, target: nil, formula: nil)
     }
 
@@ -43,10 +43,17 @@ struct SpreadsheetTool: RuleRoutedTool {
     }
 
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
-        if let command = SpreadsheetCommand.parse(TurkishNumberParser.digitize(arguments.command)) {
+        if let command = Self.command(in: arguments.command) {
             return await call(for: command)
         }
         return await modelFormulaCall(arguments)
+    }
+
+    /// Turkish number words become digits first ("bin iki yüz elli"); English is read as said, since the
+    /// Turkish rules would turn "on" and "one" into 10.
+    static func command(in text: String) -> SpreadsheetCommand? {
+        let language = AppLanguage.current
+        return SpreadsheetCommand.parse(language == .turkish ? TurkishNumberParser.digitize(text) : text, language: language)
     }
 
     private func call(for command: SpreadsheetCommand) async -> PreparedToolCall {
@@ -54,22 +61,22 @@ struct SpreadsheetTool: RuleRoutedTool {
         case .finish:
             return safe("finish") {
                 await MainActor.run { session.end() }
-                return "Excel modundan çıktım."
+                return String(localized: "Excel modundan çıktım.")
             }
         case .undo:
             guard let change = await MainActor.run(body: { session.takeLastChange() }) else {
-                return .unavailable(name, message: "Geri alınacak bir değişikliğim yok.")
+                return .unavailable(name, message: String(localized: "Geri alınacak bir değişikliğim yok."))
             }
-            guard await ExcelBridge.isRunning() else { return .unavailable(name, message: "Excel açık değil.") }
+            guard await ExcelBridge.isRunning() else { return .unavailable(name, message: String(localized: "Excel açık değil.")) }
             return safe("undo") { await undo(change) }
         default:
             break
         }
-        guard await ExcelBridge.isRunning() else { return .unavailable(name, message: "Excel açık değil.") }
+        guard await ExcelBridge.isRunning() else { return .unavailable(name, message: String(localized: "Excel açık değil.")) }
         let location: ExcelBridge.Location
         do {
             guard let found = try await ExcelBridge.activeLocation() else {
-                return .unavailable(name, message: "Excel'de açık bir tablo yok.")
+                return .unavailable(name, message: String(localized: "Excel'de açık bir tablo yok."))
             }
             location = found
         } catch {
@@ -95,7 +102,7 @@ struct SpreadsheetTool: RuleRoutedTool {
         case let .read(cell):
             return safe("read") {
                 let value = try await ExcelBridge.displayedValue(of: cell, at: location)
-                return value.isEmpty ? "\(cell.address) boş." : "\(cell.address): \(value)."
+                return value.isEmpty ? String(localized: "\(cell.address) boş.") : "\(cell.address): \(value)."
             }
         case let .evaluate(formula):
             return safe("evaluate") {
@@ -104,9 +111,9 @@ struct SpreadsheetTool: RuleRoutedTool {
                     values[reference] = try await ExcelBridge.values(of: reference, at: location)
                 }
                 guard let result = SpreadsheetEvaluator.evaluate(formula, values: values) else {
-                    return ToolReply.failure("Bunu hesaplayamadım; hücrelerde sayı olmayabilir.")
+                    return ToolReply.failure(String(localized: "Bunu hesaplayamadım; hücrelerde sayı olmayabilir."))
                 }
-                return "Sonuç \(Self.spokenNumber(result))."
+                return String(localized: "Sonuç \(Self.spokenNumber(result)).")
             }
         case .undo, .finish:
             return .unavailable(name, message: "")
@@ -133,28 +140,28 @@ struct SpreadsheetTool: RuleRoutedTool {
             }
             let shown = try await ExcelBridge.displayedValue(of: cell, at: location)
             if Self.isExcelError(shown) {
-                return "\(cell.address) hata veriyor: \(shown). İstersen geri al de."
+                return String(localized: "\(cell.address) hata veriyor: \(shown). İstersen geri al de.")
             }
-            return shown.isEmpty ? "\(cell.address) boş." : "\(cell.address): \(shown)."
+            return shown.isEmpty ? String(localized: "\(cell.address) boş.") : "\(cell.address): \(shown)."
         }
         guard confirmsOverwrite, !previous.isEmpty else {
             return PreparedToolCall(toolName: name, argumentsDescription: description, risk: .safe,
                                     confirmationQuestion: nil, execute: execute)
         }
+        let question = String(localized: "\(cell.address) dolu, içinde \(Self.spoken(previous)) var. Üzerine yazayım mı?")
         return PreparedToolCall(toolName: name, argumentsDescription: description, risk: .needsConfirmation,
-                                confirmationQuestion: "\(cell.address) dolu, içinde \(Self.spoken(previous)) var. Üzerine yazayım mı?",
-                                execute: execute)
+                                confirmationQuestion: question, execute: execute)
     }
 
     private func undo(_ change: SpreadsheetSession.Change) async -> String {
         do {
             if change.previous.isEmpty {
                 try await ExcelBridge.clear(change.cell, at: change.location)
-                return "Geri aldım, \(change.cell.address) yine boş."
+                return String(localized: "Geri aldım, \(change.cell.address) yine boş.")
             }
             try await ExcelBridge.setFormula(change.previous, in: change.cell, at: change.location)
             let shown = try await ExcelBridge.displayedValue(of: change.cell, at: change.location)
-            return "Geri aldım, \(change.cell.address): \(shown)."
+            return String(localized: "Geri aldım, \(change.cell.address): \(shown).")
         } catch {
             return ToolReply.failure(error)
         }
@@ -165,16 +172,18 @@ struct SpreadsheetTool: RuleRoutedTool {
         guard let target = arguments.target.flatMap({ CellReference($0.trimmingCharacters(in: .whitespaces)) }),
               let formula = arguments.formula?.trimmingCharacters(in: .whitespaces), SpreadsheetFormula.isSafe(formula)
         else {
-            return .unavailable(name, message: "Bunu tabloda nasıl yapacağımı anlayamadım. Örneğin 'D3'e B2 ile B1'i topla' diyebilirsin.")
+            return .unavailable(name, message: String(
+                localized: "Bunu tabloda nasıl yapacağımı anlayamadım. Örneğin 'D3'e B2 ile B1'i topla' diyebilirsin."))
         }
         do {
             guard let location = try await ExcelBridge.activeLocation() else {
-                return .unavailable(name, message: "Excel'de açık bir tablo yok.")
+                return .unavailable(name, message: String(localized: "Excel'de açık bir tablo yok."))
             }
             let call = await writing(target, at: location, description: formula, confirmsOverwrite: false) {
                 try await ExcelBridge.setFormula(formula, in: target, at: location)
             }
-            return call.requiringConfirmation("\(target.address) hücresine \(Self.spoken(formula)) formülünü yazayım mı?")
+            return call.requiringConfirmation(
+                String(localized: "\(target.address) hücresine \(Self.spoken(formula)) formülünü yazayım mı?"))
         } catch {
             return .unavailable(name, message: error.localizedDescription)
         }
@@ -190,9 +199,12 @@ struct SpreadsheetTool: RuleRoutedTool {
     private static func spoken(_ content: String) -> String {
         let short = content.count <= maxSpokenContent ? content : String(content.prefix(maxSpokenContent)) + "…"
         guard short.hasPrefix("=") else { return "'\(short)'" }
-        let words: [(String, String)] = [("=", "eşittir "), ("+", " artı "), ("-", " eksi "), ("*", " çarpı "), ("/", " bölü "), (":", " ile ")]
-        let decimalComma = short.replacing(/(\d)\.(\d)/) { "\($0.1),\($0.2)" }
-        return words.reduce(decimalComma) { $0.replacingOccurrences(of: $1.0, with: $1.1) }
+        let words: [(String, String)] = [
+            ("=", String(localized: "eşittir ")), ("+", String(localized: " artı ")), ("-", String(localized: " eksi ")),
+            ("*", String(localized: " çarpı ")), ("/", String(localized: " bölü ")), (":", String(localized: " ile ")),
+        ]
+        let decimals = AppLanguage.current == .turkish ? short.replacing(/(\d)\.(\d)/) { "\($0.1),\($0.2)" } : short
+        return words.reduce(decimals) { $0.replacingOccurrences(of: $1.0, with: $1.1) }
     }
 
     /// Excel shows errors as "#DIV/0!", "#NAME?" and the like.
@@ -201,6 +213,6 @@ struct SpreadsheetTool: RuleRoutedTool {
     }
 
     private static func spokenNumber(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...2)).locale(Locale(identifier: "tr_TR")))
+        value.formatted(.number.precision(.fractionLength(0...2)).locale(AppLanguage.locale))
     }
 }

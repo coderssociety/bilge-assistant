@@ -9,7 +9,7 @@ struct AboutView: View {
     private let paragraphs: [String] = {
         guard let url = Bundle.main.url(forResource: noticesFile, withExtension: "md"),
               let text = try? String(contentsOf: url, encoding: .utf8)
-        else { return ["Lisans bildirimleri bulunamadı."] }
+        else { return [String(localized: "Lisans bildirimleri bulunamadı.")] }
         return text.components(separatedBy: "\n\n")
     }()
 

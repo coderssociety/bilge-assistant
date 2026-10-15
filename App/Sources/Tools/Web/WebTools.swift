@@ -32,12 +32,16 @@ struct WebSearchTool: AssistantTool {
             components = URLComponents(string: "https://maps.apple.com/")!
             components.queryItems = [URLQueryItem(name: "q", value: arguments.query)]
         case .wikipedia:
-            components = URLComponents(string: "https://tr.wikipedia.org/w/index.php")!
+            components = URLComponents(string: "https://\(AppLanguage.current.code).wikipedia.org/w/index.php")!
             components.queryItems = [URLQueryItem(name: "search", value: arguments.query)]
         }
-        guard let url = components.url else { return ToolReply.failure("Arama adresi oluşturulamadı.") }
+        guard let url = components.url else {
+            return ToolReply.failure(String(localized: "Arama adresi oluşturulamadı."))
+        }
         let opened = await MainActor.run { NSWorkspace.shared.open(url) }
-        return opened ? "Tarayıcıda '\(arguments.query)' araması açıldı." : ToolReply.failure("Tarayıcı açılamadı.")
+        return opened
+            ? String(localized: "Tarayıcıda '\(arguments.query)' araması açıldı.")
+            : ToolReply.failure(String(localized: "Tarayıcı açılamadı."))
     }
 }
 
@@ -53,10 +57,11 @@ struct OpenWebsiteTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         guard let url = Self.webURL(from: arguments.address) else {
-            return ToolReply.failure("'\(arguments.address)' geçerli bir web adresi değil.")
+            return ToolReply.failure(String(localized: "'\(arguments.address)' geçerli bir web adresi değil."))
         }
         let opened = await MainActor.run { NSWorkspace.shared.open(url) }
-        return opened ? "\(url.host() ?? arguments.address) açıldı." : ToolReply.failure("Tarayıcı açılamadı.")
+        let host = url.host() ?? arguments.address
+        return opened ? String(localized: "\(host) açıldı.") : ToolReply.failure(String(localized: "Tarayıcı açılamadı."))
     }
 
     /// Only http(s) URLs with a host; blocks file:, javascript: and custom schemes.

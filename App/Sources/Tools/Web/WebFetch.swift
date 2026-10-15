@@ -13,14 +13,14 @@ enum WebFetchError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case let .badStatus(status): "Sunucu yanıt vermedi (\(status))."
-        case .tooLarge: "Sayfa okunamayacak kadar büyük."
-        case .unsupportedAddress: "Bu adresi açamam."
-        case .localAddress: "Güvenlik için yerel ağdaki ya da bu Mac'teki adresleri okumuyorum."
-        case .timedOut: "Site zamanında yanıt vermedi."
-        case .tooManyRedirects: "Site beni sürekli başka adrese yönlendiriyor."
-        case .unreachable: "Siteye bağlanamadım. İnternet bağlantını kontrol eder misin?"
-        case .unreadable: "Sitenin gönderdiği yanıtı okuyamadım."
+        case let .badStatus(status): String(localized: "Sunucu yanıt vermedi (\(status)).")
+        case .tooLarge: String(localized: "Sayfa okunamayacak kadar büyük.")
+        case .unsupportedAddress: String(localized: "Bu adresi açamam.")
+        case .localAddress: String(localized: "Güvenlik için yerel ağdaki ya da bu Mac'teki adresleri okumuyorum.")
+        case .timedOut: String(localized: "Site zamanında yanıt vermedi.")
+        case .tooManyRedirects: String(localized: "Site beni sürekli başka adrese yönlendiriyor.")
+        case .unreachable: String(localized: "Siteye bağlanamadım. İnternet bağlantını kontrol eder misin?")
+        case .unreadable: String(localized: "Sitenin gönderdiği yanıtı okuyamadım.")
         }
     }
 }
@@ -36,7 +36,7 @@ enum WebFetch {
     private static let maxBytes = 3_000_000
     private static let maxRedirects = 5
     private static let allowedPorts: Set<Int> = [80, 443]
-    private static let headers = [("User-Agent", "Mozilla/5.0 (Macintosh) Bilge/0.1"), ("Accept-Language", "tr,en;q=0.8")]
+    private static let headers = [("User-Agent", "Mozilla/5.0 (Macintosh) Bilge/0.1"), ("Accept-Language", AppLanguage.current == .english ? "en,tr;q=0.8" : "tr,en;q=0.8")]
 
     private static let transientStatuses: Set<Int> = [502, 503, 504]
     private static let retryDelay: Duration = .milliseconds(400)

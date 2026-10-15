@@ -13,7 +13,7 @@ struct Recipient: Sendable {
 
     /// The question reads the text aloud; a long body is cut so it stays listenable.
     static func preview(_ text: String) -> String {
-        text.count <= previewCharacters ? text : String(text.prefix(previewCharacters)) + "… (devamı var)."
+        text.count <= previewCharacters ? text : String(text.prefix(previewCharacters)) + String(localized: "… (devamı var).")
     }
 
     static func resolve(_ spoken: String, as kind: Kind) async throws -> Recipient? {
@@ -44,9 +44,9 @@ struct MessageContent: Sendable {
 
     static func resolve(_ said: String, context: ConversationContext) async -> MessageContent? {
         let trimmed = said.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard ContextIntent.onlyPoints(trimmed) else { return MessageContent(body: trimmed, attachments: []) }
+        guard ContextIntent.onlyPoints(trimmed, language: AppLanguage.current) else { return MessageContent(body: trimmed, attachments: []) }
         let item = await MainActor.run {
-            context.screen.flatMap { ContextResolver.resolve(ContextIntent.wantedKind(in: trimmed), in: $0) }
+            context.screen.flatMap { ContextResolver.resolve(ContextIntent.wantedKind(in: trimmed, language: AppLanguage.current), in: $0) }
         }
         switch item {
         case let .text(text)?:
@@ -66,7 +66,9 @@ struct MessageContent: Sendable {
     /// "rapor.pdf" or "rapor.pdf ve 2 dosya daha", for the confirmation question.
     var spokenAttachments: String? {
         guard let first = attachments.first else { return nil }
-        return attachments.count == 1 ? first.lastPathComponent : "\(first.lastPathComponent) ve \(attachments.count - 1) dosya daha"
+        return attachments.count == 1
+            ? first.lastPathComponent
+            : String(localized: "\(first.lastPathComponent) ve \(attachments.count - 1) dosya daha")
     }
 }
 
@@ -89,7 +91,7 @@ struct SendEmailTool: AssistantTool {
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
         guard let content = await MessageContent.resolve(arguments.body, context: context),
               !content.body.isEmpty || !content.attachments.isEmpty else {
-            return .unavailable(name, message: "E-postada ne göndermemi istediğini anlayamadım. Bir metni ya da dosyayı seçip 'bunu gönder' diyebilirsin.")
+            return .unavailable(name, message: String(localized: "E-postada ne göndermemi istediğini anlayamadım. Bir metni ya da dosyayı seçip 'bunu gönder' diyebilirsin."))
         }
         let body = content.body
         let recipient: Recipient?
@@ -99,23 +101,23 @@ struct SendEmailTool: AssistantTool {
             return .unavailable(name, message: error.localizedDescription)
         }
         guard let recipient else {
-            return .unavailable(name, message: "\(arguments.recipient) için kayıtlı bir e-posta adresi bulamadım.")
+            return .unavailable(name, message: String(localized: "\(arguments.recipient) için kayıtlı bir e-posta adresi bulamadım."))
         }
         let subject = arguments.subject?.trimmingCharacters(in: .whitespaces).nilIfEmpty
             ?? (body.isEmpty ? content.attachments.first?.deletingPathExtension().lastPathComponent ?? "" : Self.subject(from: body))
-        let attached = content.spokenAttachments.map { ", ekinde \($0)" } ?? ""
+        let attached = content.spokenAttachments.map { String(localized: ", ekinde \($0)") } ?? ""
         let preview = body.isEmpty ? "" : ": \(Recipient.preview(body))"
         return PreparedToolCall(
             toolName: name,
             argumentsDescription: "to: \(recipient.address), subject: \(subject), attachments: \(content.attachments.count)",
             risk: risk,
-            confirmationQuestion: "\(recipient.name), \(recipient.address) adresine \"\(subject)\" konulu e-postayı gönderiyorum\(attached)\(preview). Göndermem için evet ya da gönder de.",
+            confirmationQuestion: String(localized: "\(recipient.name), \(recipient.address) adresine \"\(subject)\" konulu e-postayı gönderiyorum\(attached)\(preview). Göndermem için evet ya da gönder de."),
             requiresExplicitYes: true,
             execute: { await Self.send(to: recipient, subject: subject, body: body, attachments: content.attachments) })
     }
 
     func call(arguments: Arguments) async throws -> String {
-        ToolReply.failure("E-posta yalnızca onayla gönderilir.")
+        ToolReply.failure(String(localized: "E-posta yalnızca onayla gönderilir."))
     }
 
     /// Mail needs a moment to take in attachments before it sends.
@@ -137,7 +139,7 @@ struct SendEmailTool: AssistantTool {
             send newMessage
             end tell
             """)
-            return "E-posta \(recipient.name) kişisine gönderildi."
+            return String(localized: "E-posta \(recipient.name) kişisine gönderildi.")
         } catch {
             return ToolReply.failure(error)
         }
@@ -166,7 +168,7 @@ struct SendMessageTool: AssistantTool {
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
         guard let content = await MessageContent.resolve(arguments.text, context: context),
               !content.body.isEmpty || !content.attachments.isEmpty else {
-            return .unavailable(name, message: "Mesajda ne göndermemi istediğini anlayamadım. Bir metni ya da dosyayı seçip 'bunu gönder' diyebilirsin.")
+            return .unavailable(name, message: String(localized: "Mesajda ne göndermemi istediğini anlayamadım. Bir metni ya da dosyayı seçip 'bunu gönder' diyebilirsin."))
         }
         let text = content.body
         let recipient: Recipient?
@@ -176,19 +178,36 @@ struct SendMessageTool: AssistantTool {
             return .unavailable(name, message: error.localizedDescription)
         }
         guard let recipient else {
-            return .unavailable(name, message: "\(arguments.recipient) için kayıtlı bir telefon ya da e-posta bulamadım.")
+            return .unavailable(
+                name, message: String(localized: "\(arguments.recipient) için kayıtlı bir telefon ya da e-posta bulamadım."))
         }
         return PreparedToolCall(
             toolName: name,
             argumentsDescription: "to: \(recipient.address)",
             risk: risk,
-            confirmationQuestion: "\(recipient.name), \(recipient.address) için iMessage ile \(content.spokenAttachments.map { "\($0) dosyasını " } ?? "")\(text.isEmpty ? "" : "şunu ")gönderiyorum\(text.isEmpty ? "" : ": \(Recipient.preview(text))"). Göndermem için evet ya da gönder de.",
+            confirmationQuestion: Self.question(to: recipient, text: text, attachments: content.spokenAttachments),
             requiresExplicitYes: true,
             execute: { await Self.send(to: recipient, text: text, attachments: content.attachments) })
     }
 
+    /// Whole sentences per case, so each language can order the parts its own way.
+    private static func question(to recipient: Recipient, text: String, attachments: String?) -> String {
+        let (name, address) = (recipient.name, recipient.address)
+        let preview = Recipient.preview(text)
+        switch (attachments, text.isEmpty) {
+        case let (file?, false):
+            return String(localized: "\(name), \(address) için iMessage ile \(file) dosyasını şunu gönderiyorum: \(preview). Göndermem için evet ya da gönder de.")
+        case let (file?, true):
+            return String(localized: "\(name), \(address) için iMessage ile \(file) dosyasını gönderiyorum. Göndermem için evet ya da gönder de.")
+        case (nil, false):
+            return String(localized: "\(name), \(address) için iMessage ile şunu gönderiyorum: \(preview). Göndermem için evet ya da gönder de.")
+        case (nil, true):
+            return String(localized: "\(name), \(address) için iMessage ile gönderiyorum. Göndermem için evet ya da gönder de.")
+        }
+    }
+
     func call(arguments: Arguments) async throws -> String {
-        ToolReply.failure("Mesaj yalnızca onayla gönderilir.")
+        ToolReply.failure(String(localized: "Mesaj yalnızca onayla gönderilir."))
     }
 
     private static func send(to recipient: Recipient, text: String, attachments: [URL]) async -> String {
@@ -202,7 +221,7 @@ struct SendMessageTool: AssistantTool {
             \(sends.joined(separator: "\n"))
             end tell
             """)
-            return "Mesaj \(recipient.name) kişisine gönderildi."
+            return String(localized: "Mesaj \(recipient.name) kişisine gönderildi.")
         } catch {
             return ToolReply.failure(error)
         }
@@ -230,7 +249,7 @@ struct ReadMailTool: AssistantTool {
             tell application "Mail"
             set unread to (messages of inbox whose read status is false\(filter))
             set total to count of unread
-            set output to "Okunmamış e-posta sayısı: " & total
+            set output to \(AppleScriptRunner.quoted(String(localized: "Okunmamış e-posta sayısı: "))) & total
             repeat with i from 1 to (total)
             if i > \(Self.maxMessages) then exit repeat
             set m to item i of unread

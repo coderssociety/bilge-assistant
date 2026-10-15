@@ -33,8 +33,8 @@ enum WiFiControl {
 
         var errorDescription: String? {
             switch self {
-            case .noDevice: "Bu Mac'te Wi-Fi bulunamadı."
-            case let .failed(detail): "Wi-Fi değiştirilemedi. \(detail)"
+            case .noDevice: String(localized: "Bu Mac'te Wi-Fi bulunamadı.")
+            case let .failed(detail): String(localized: "Wi-Fi değiştirilemedi. \(detail)")
             }
         }
     }
@@ -62,14 +62,16 @@ struct WiFiTool: AssistantTool {
             toolName: name,
             argumentsDescription: String(describing: arguments),
             risk: turningOff ? .needsConfirmation : .safe,
-            confirmationQuestion: turningOff ? "Wi-Fi'ı kapatırsam internet bağlantın kesilir. Kapatayım mı?" : nil,
+            confirmationQuestion: turningOff
+                ? String(localized: "Wi-Fi'ı kapatırsam internet bağlantın kesilir. Kapatayım mı?")
+                : nil,
             execute: { try await call(arguments: arguments) })
     }
 
     func call(arguments: Arguments) async throws -> String {
         do {
             try await WiFiControl.setPower(arguments.power == .on)
-            return arguments.power == .on ? "Wi-Fi açıldı." : "Wi-Fi kapatıldı."
+            return arguments.power == .on ? String(localized: "Wi-Fi açıldı.") : String(localized: "Wi-Fi kapatıldı.")
         } catch {
             return ToolReply.failure(error)
         }

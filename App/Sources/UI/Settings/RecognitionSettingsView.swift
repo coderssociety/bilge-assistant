@@ -66,13 +66,13 @@ private extension RecognizerEngine {
     func explanation(for language: AssistantLanguage) -> String {
         switch (self, language) {
         case (.appleDictation, .turkish):
-            "Önerilen. Sistemle gelir, indirme gerektirmez. Türkçe testlerimizde en doğru ve en hızlı sonucu verdi (hata oranı %2, 0,06 sn)."
+            String(localized: "Önerilen. Sistemle gelir, indirme gerektirmez. Türkçe testlerimizde en doğru ve en hızlı sonucu verdi (hata oranı %2, 0,06 sn).")
         case (.whisper, .turkish):
-            "OpenAI Whisper'ın Mac'e uyarlanmış sürümü. İlk seçimde yaklaşık 1,5 GB indirilir ve hazırlanması birkaç dakika sürer. Testlerimizde daha yavaş ve daha az doğruydu (%6, 0,35 sn); aksanlı konuşmada denemeye değer."
+            String(localized: "OpenAI Whisper'ın Mac'e uyarlanmış sürümü. İlk seçimde yaklaşık 1,5 GB indirilir ve hazırlanması birkaç dakika sürer. Testlerimizde daha yavaş ve daha az doğruydu (%6, 0,35 sn); aksanlı konuşmada denemeye değer.")
         case (.whisper, .english):
-            "Önerilen. İlk seçimde yaklaşık 1,5 GB indirilir. İngilizce testlerimizde Türkçe söylenen “\(AppIdentity.name)” adını 20 denemenin 17'sinde doğru duydu (0,35 sn)."
+            String(localized: "Önerilen. İlk seçimde yaklaşık 1,5 GB indirilir. İngilizce testlerimizde Türkçe söylenen “\(AppIdentity.name)” adını 20 denemenin 17'sinde doğru duydu (0,35 sn).")
         case (.appleDictation, .english):
-            "Sistemle gelir ve çok hızlıdır, ama İngilizce testlerimizde “\(AppIdentity.name)” adını neredeyse hiç tanımadı (“Bill”, “Build” diye duydu). Uyandırma kelimesini İngilizce bir kelimeyle değiştirirsen deneyebilirsin."
+            String(localized: "Sistemle gelir ve çok hızlıdır, ama İngilizce testlerimizde “\(AppIdentity.name)” adını neredeyse hiç tanımadı (“Bill”, “Build” diye duydu). Uyandırma kelimesini İngilizce bir kelimeyle değiştirirsen deneyebilirsin.")
         }
     }
 }

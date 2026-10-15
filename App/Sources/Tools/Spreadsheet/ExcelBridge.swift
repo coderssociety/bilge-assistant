@@ -4,7 +4,7 @@ import AsistanCore
 enum SpreadsheetError: LocalizedError {
     case rangeTooLarge
 
-    var errorDescription: String? { "Bu aralık sesle hesaplamak için çok büyük." }
+    var errorDescription: String? { String(localized: "Bu aralık sesle hesaplamak için çok büyük.") }
 }
 
 /// Microsoft Excel through AppleScript. Cell addresses are validated `CellReference`s; every other

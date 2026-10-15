@@ -25,7 +25,7 @@ final class AssistantSettings {
         static let eventAlertLeadMinutes = "eventAlertLeadMinutes"
         static let morningBriefingEnabled = BriefingTool.enabledKey
         static let speakerCheckEnabled = "speakerCheckEnabled"
-        static let language = "assistantLanguage"
+        static let language = AppLanguage.defaultsKey
         /// The system key that picks the app's localization; set together with `language`.
         static let appleLanguages = "AppleLanguages"
     }
@@ -69,7 +69,7 @@ final class AssistantSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        language = Self.storedLanguage(in: defaults)
+        language = AppLanguage.resolve(arguments: CommandLine.arguments, defaults: defaults)
         wakePhrase = defaults.string(forKey: Key.wakePhrase) ?? AppIdentity.defaultWakePhrase
         wakeSensitivity = defaults.object(forKey: Key.wakeSensitivity) as? Double ?? 0.5
         recognizer = defaults.string(forKey: Key.recognizer).flatMap(RecognizerEngine.init(rawValue:))
@@ -102,13 +102,6 @@ final class AssistantSettings {
         defaults.set([language.code], forKey: Key.appleLanguages)
         // The best recognizer differs by language (see `RecognizerFactory.defaultEngine`).
         defaults.removeObject(forKey: Key.recognizer)
-    }
-
-    /// Before languages existed everyone who finished setup used Turkish; a new user starts with the Mac's language.
-    private static func storedLanguage(in defaults: UserDefaults) -> AssistantLanguage {
-        if let stored = defaults.string(forKey: Key.language).flatMap(AssistantLanguage.init(rawValue:)) { return stored }
-        if defaults.bool(forKey: Key.onboardingCompleted) { return .turkish }
-        return AssistantLanguage.preferred(from: Locale.preferredLanguages)
     }
 
     func makeWakeMatcher() -> WakePhraseMatcher {

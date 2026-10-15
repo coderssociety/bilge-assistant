@@ -1,4 +1,5 @@
 import AsistanCore
+import Foundation
 import FoundationModels
 
 /// Plays a song, artist, album or playlist from the Music library. Apple Music catalog and Spotify
@@ -15,11 +16,13 @@ struct PlayMusicTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         let query = arguments.query.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return ToolReply.failure("Ne çalmamı istediğini anlayamadım.") }
+        guard !query.isEmpty else {
+            return ToolReply.failure(String(localized: "Ne çalmamı istediğini anlayamadım."))
+        }
         do {
             if let playlist = try await matchingPlaylist(query) {
                 _ = try await AppleScriptRunner.run("tell application \"Music\" to play playlist \(AppleScriptRunner.quoted(playlist))")
-                return "'\(playlist)' çalma listesini çalıyorum."
+                return String(localized: "'\(playlist)' çalma listesini çalıyorum.")
             }
             let playing = try await AppleScriptRunner.run("""
             tell application "Music"
@@ -31,9 +34,9 @@ struct PlayMusicTool: AssistantTool {
             end tell
             """)
             guard !playing.isEmpty else {
-                return ToolReply.failure("Müzik kitaplığında '\(query)' bulamadım.")
+                return ToolReply.failure(String(localized: "Müzik kitaplığında '\(query)' bulamadım."))
             }
-            return "Çalıyorum: \(playing)."
+            return String(localized: "Çalıyorum: \(playing).")
         } catch {
             return ToolReply.failure(error)
         }

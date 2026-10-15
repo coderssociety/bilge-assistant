@@ -21,26 +21,26 @@ struct TrashFileTool: AssistantTool {
             return .unavailable(name, message: error.localizedDescription)
         }
         guard let file = match else {
-            return .unavailable(name, message: "'\(arguments.query)' ile eşleşen dosya bulunamadı.")
+            return .unavailable(name, message: String(localized: "'\(arguments.query)' ile eşleşen dosya bulunamadı."))
         }
         let location = FileSearch.describeLocation(file)
         return PreparedToolCall(
             toolName: name,
             argumentsDescription: file.path,
             risk: risk,
-            confirmationQuestion: "\(location) içindeki '\(file.lastPathComponent)' dosyasını çöp kutusuna taşıyayım mı?",
+            confirmationQuestion: String(localized: "\(location) içindeki '\(file.lastPathComponent)' dosyasını çöp kutusuna taşıyayım mı?"),
             execute: { Self.trash(file) })
     }
 
     /// Only the confirmed path from `makeCall` may trash a file; a direct call never does.
     func call(arguments: Arguments) async throws -> String {
-        ToolReply.failure("Dosya silme yalnızca sesli onayla yapılabilir.")
+        ToolReply.failure(String(localized: "Dosya silme yalnızca sesli onayla yapılabilir."))
     }
 
     private static func trash(_ file: URL) -> String {
         do {
             try FileManager.default.trashItem(at: file, resultingItemURL: nil)
-            return "'\(file.lastPathComponent)' çöp kutusuna taşındı. Gerekirse oradan geri alabilirsin."
+            return String(localized: "'\(file.lastPathComponent)' çöp kutusuna taşındı. Gerekirse oradan geri alabilirsin.")
         } catch {
             return ToolReply.failure(error)
         }

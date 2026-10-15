@@ -23,20 +23,20 @@ struct CreateFolderTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         let name = arguments.name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, !name.hasPrefix("."), !name.contains("/"), !name.contains(":") else {
-            return ToolReply.failure("Bu adla klasör oluşturamam.")
+            return ToolReply.failure(String(localized: "Bu adla klasör oluşturamam."))
         }
         let (parent, place): (URL, String) = switch arguments.location {
-        case .desktop: (.desktopDirectory, "Masaüstü'nde")
-        case .documents: (.documentsDirectory, "Belgeler'de")
-        case .downloads: (.downloadsDirectory, "İndirilenler'de")
+        case .desktop: (.desktopDirectory, String(localized: "Masaüstü'nde"))
+        case .documents: (.documentsDirectory, String(localized: "Belgeler'de"))
+        case .downloads: (.downloadsDirectory, String(localized: "İndirilenler'de"))
         }
         let folder = parent.appending(path: name, directoryHint: .isDirectory)
         guard !FileManager.default.fileExists(atPath: folder.path(percentEncoded: false)) else {
-            return "\(place) '\(name)' adında bir klasör zaten var."
+            return String(localized: "\(place) '\(name)' adında bir klasör zaten var.")
         }
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
-            return "\(place) '\(name)' klasörünü oluşturdum."
+            return String(localized: "\(place) '\(name)' klasörünü oluşturdum.")
         } catch {
             return ToolReply.failure(error)
         }
@@ -61,12 +61,14 @@ struct ReadDocumentTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         do {
             guard let file = try await Self.locate(arguments.query) else {
-                return ToolReply.failure(arguments.query.map { "'\($0)' adında okunabilir bir belge bulamadım." }
-                    ?? "İndirilenler'de okunabilir bir belge bulamadım.")
+                return ToolReply.failure(arguments.query.map { String(localized: "'\($0)' adında okunabilir bir belge bulamadım.") }
+                    ?? String(localized: "İndirilenler'de okunabilir bir belge bulamadım."))
             }
             let text = try Self.text(of: file).trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !text.isEmpty else { return ToolReply.failure("'\(file.lastPathComponent)' içinde okunabilir yazı yok.") }
-            return "Belge: \(file.lastPathComponent)\n\(text.prefix(Self.maxCharacters))"
+            guard !text.isEmpty else {
+                return ToolReply.failure(String(localized: "'\(file.lastPathComponent)' içinde okunabilir yazı yok."))
+            }
+            return String(localized: "Belge: \(file.lastPathComponent)\n\(String(text.prefix(Self.maxCharacters)))")
         } catch {
             return ToolReply.failure(error)
         }

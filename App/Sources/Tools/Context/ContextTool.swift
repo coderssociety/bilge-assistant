@@ -22,7 +22,7 @@ struct ContextTool: RuleRoutedTool {
     /// the command is routed as before (a screen reading, for instance).
     @MainActor
     func claims(_ command: String) -> Bool {
-        guard let intent = ContextIntent.parse(command), let screen = context.screen else { return false }
+        guard let intent = ContextIntent.parse(command, language: AppLanguage.current), let screen = context.screen else { return false }
         return ContextResolver.resolve(intent.wanted, in: screen) != nil
     }
 
@@ -36,9 +36,9 @@ struct ContextTool: RuleRoutedTool {
 
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
         let screen = await MainActor.run { context.screen }
-        guard let intent = ContextIntent.parse(arguments.command), let screen,
+        guard let intent = ContextIntent.parse(arguments.command, language: AppLanguage.current), let screen,
               let item = ContextResolver.resolve(intent.wanted, in: screen) else {
-            return .unavailable(name, message: "Neyi kastettiğini bulamadım. Bir metni seç, dosyayı Finder'da işaretle ya da sayfayı aç.")
+            return .unavailable(name, message: String(localized: "Neyi kastettiğini bulamadım. Bir metni seç, dosyayı Finder'da işaretle ya da sayfayı aç."))
         }
         if intent.action == .open {
             return PreparedToolCall(toolName: name, argumentsDescription: "open", risk: .safe, confirmationQuestion: nil,
@@ -58,7 +58,7 @@ struct ContextTool: RuleRoutedTool {
             return try document(url)
         case let .files(urls):
             guard let readable = urls.first(where: { ReadDocumentTool.readableExtensions.contains($0.pathExtension.lowercased()) }) else {
-                return ToolReply.failure("Seçili dosyalardan okuyabileceğim bir belge yok.")
+                return ToolReply.failure(String(localized: "Seçili dosyalardan okuyabileceğim bir belge yok."))
             }
             return try document(readable)
         }
@@ -66,8 +66,8 @@ struct ContextTool: RuleRoutedTool {
 
     private static func document(_ url: URL) throws -> String {
         let text = try ReadDocumentTool.text(of: url).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return ToolReply.failure("'\(url.lastPathComponent)' içinde okunabilir yazı yok.") }
-        return "Belge: \(url.lastPathComponent)\n\(text.prefix(maxCharacters))"
+        guard !text.isEmpty else { return ToolReply.failure(String(localized: "'\(url.lastPathComponent)' içinde okunabilir yazı yok.")) }
+        return String(localized: "Belge: \(url.lastPathComponent)\n\(String(text.prefix(maxCharacters)))")
     }
 
     /// Opens documents and pages; never apps, scripts or other programs, which opening would run.
@@ -79,12 +79,14 @@ struct ContextTool: RuleRoutedTool {
         case let .page(url, _): [url]
         case .text: []
         }
-        guard !urls.isEmpty else { return ToolReply.failure("Seçili metin açılacak bir şey değil.") }
+        guard !urls.isEmpty else { return ToolReply.failure(String(localized: "Seçili metin açılacak bir şey değil.")) }
         if let program = urls.first(where: isProgram) {
-            return ToolReply.failure("Güvenlik için '\(program.lastPathComponent)' gibi programları sesle açmıyorum.")
+            return ToolReply.failure(String(localized: "Güvenlik için '\(program.lastPathComponent)' gibi programları sesle açmıyorum."))
         }
         urls.forEach { NSWorkspace.shared.open($0) }
-        return urls.count == 1 ? "\(urls[0].lastPathComponent) açılıyor." : "\(urls.count) dosya açılıyor."
+        return urls.count == 1
+            ? String(localized: "\(urls[0].lastPathComponent) açılıyor.")
+            : String(localized: "\(urls.count) dosya açılıyor.")
     }
 
     private static func isProgram(_ url: URL) -> Bool {

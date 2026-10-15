@@ -55,9 +55,9 @@ struct WeatherTool: AssistantTool {
             ?? Self.fallbackCity
         do {
             var geocoding = URLComponents(string: "https://geocoding-api.open-meteo.com/v1/search")!
-            geocoding.queryItems = [.init(name: "name", value: city), .init(name: "count", value: "1"), .init(name: "language", value: "tr")]
+            geocoding.queryItems = [.init(name: "name", value: city), .init(name: "count", value: "1"), .init(name: "language", value: AppLanguage.current.code)]
             guard let place = try await WebFetch.json(Places.self, from: geocoding.url!).results?.first else {
-                return ToolReply.failure("'\(city)' diye bir yer bulamadım.")
+                return ToolReply.failure(String(localized: "'\(city)' diye bir yer bulamadım."))
             }
             var forecast = URLComponents(string: "https://api.open-meteo.com/v1/forecast")!
             forecast.queryItems = [
@@ -68,24 +68,26 @@ struct WeatherTool: AssistantTool {
             ]
             let weather = try await WebFetch.json(Forecast.self, from: forecast.url!)
             guard let day = arguments.dayOffset, day < weather.daily.time.count else {
-                return WeatherReport.current(city: place.name, temperature: weather.current.temperature_2m, code: weather.current.weather_code)
+                return WeatherReport.current(city: place.name, temperature: weather.current.temperature_2m, code: weather.current.weather_code,
+                                             language: AppLanguage.current)
             }
             let daily = weather.daily
             return WeatherReport.daily(city: place.name, dayName: Self.dayName(offset: day), minimum: daily.temperature_2m_min[day],
                                        maximum: daily.temperature_2m_max[day], code: daily.weather_code[day],
-                                       rainChance: daily.precipitation_probability_max[day])
+                                       rainChance: daily.precipitation_probability_max[day], language: AppLanguage.current)
         } catch {
-            return ToolReply.failure("Hava durumu alınamadı. \(error.localizedDescription)")
+            return ToolReply.failure(String(localized: "Hava durumu alınamadı. \(error.localizedDescription)"))
         }
     }
 
     private static func dayName(offset: Int) -> String {
         switch offset {
-        case 0: return "bugün"
-        case 1: return "yarın"
+        case 0: return String(localized: "bugün")
+        case 1: return String(localized: "yarın")
         default:
             let date = Calendar.current.date(byAdding: .day, value: offset, to: .now) ?? .now
-            return date.formatted(.dateTime.weekday(.wide).locale(Locale(identifier: "tr_TR")))
+            let weekday = date.formatted(.dateTime.weekday(.wide).locale(AppLanguage.locale))
+            return AppLanguage.current == .english ? "on \(weekday)" : weekday
         }
     }
 }
@@ -115,20 +117,21 @@ struct ExchangeRateTool: AssistantTool {
             }
         }
 
-        var turkishName: String {
+        /// Spoken name, in the assistant's language.
+        var spokenName: String {
             switch self {
-            case .lira: "lira"
-            case .dollar: "dolar"
-            case .euro: "euro"
-            case .pound: "sterlin"
-            case .swissFranc: "İsviçre frangı"
-            case .yen: "yen"
-            case .yuan: "yuan"
-            case .canadianDollar: "Kanada doları"
-            case .australianDollar: "Avustralya doları"
-            case .swedishKrona: "İsveç kronu"
-            case .norwegianKrone: "Norveç kronu"
-            case .danishKrone: "Danimarka kronu"
+            case .lira: String(localized: "lira")
+            case .dollar: String(localized: "dolar")
+            case .euro: String(localized: "euro")
+            case .pound: String(localized: "sterlin")
+            case .swissFranc: String(localized: "İsviçre frangı")
+            case .yen: String(localized: "yen")
+            case .yuan: String(localized: "yuan")
+            case .canadianDollar: String(localized: "Kanada doları")
+            case .australianDollar: String(localized: "Avustralya doları")
+            case .swedishKrona: String(localized: "İsveç kronu")
+            case .norwegianKrone: String(localized: "Norveç kronu")
+            case .danishKrone: String(localized: "Danimarka kronu")
             }
         }
     }
@@ -143,6 +146,19 @@ struct ExchangeRateTool: AssistantTool {
         var amount: Double?
     }
 
+    /// The model fills an unsaid target with lira, as the description tells it to for Turkish users;
+    /// in English the dollar (or the euro, when converting dollars) is the expected default.
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        guard AppLanguage.current == .english, arguments.to == .lira else { return arguments }
+        let folded = TurkishText.folded(command)
+        guard !["lira", "try", "tl", "turkish"].contains(where: { folded.split(separator: " ").contains(Substring($0)) }) else {
+            return arguments
+        }
+        var refined = arguments
+        refined.to = arguments.from == .dollar ? .euro : .dollar
+        return refined
+    }
+
     private struct Rates: Decodable {
         let date: String
         let rates: [String: Double]
@@ -150,22 +166,27 @@ struct ExchangeRateTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         let target = arguments.from == arguments.to ? Currency.lira : arguments.to
-        guard arguments.from != target else { return ToolReply.failure("Hangi para birimini çevireceğimi anlayamadım.") }
+        guard arguments.from != target else {
+            return ToolReply.failure(String(localized: "Hangi para birimini çevireceğimi anlayamadım."))
+        }
         let amount = max(arguments.amount ?? 1, 0)
         var url = URLComponents(string: "https://api.frankfurter.app/latest")!
         url.queryItems = [.init(name: "from", value: arguments.from.code), .init(name: "to", value: target.code),
                           .init(name: "amount", value: String(amount))]
         do {
             let result = try await WebFetch.json(Rates.self, from: url.url!)
-            guard let value = result.rates[target.code] else { return ToolReply.failure("Bu kur bulunamadı.") }
-            return "\(Self.format(amount)) \(arguments.from.turkishName) \(Self.format(value)) \(target.turkishName)."
+            guard let value = result.rates[target.code] else {
+                return ToolReply.failure(String(localized: "Bu kur bulunamadı."))
+            }
+            let (source, converted) = (Self.format(amount), Self.format(value))
+            return String(localized: "\(source) \(arguments.from.spokenName) \(converted) \(target.spokenName).")
         } catch {
-            return ToolReply.failure("Döviz kuru alınamadı. \(error.localizedDescription)")
+            return ToolReply.failure(String(localized: "Döviz kuru alınamadı. \(error.localizedDescription)"))
         }
     }
 
     private static func format(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...2)).locale(Locale(identifier: "tr_TR")))
+        value.formatted(.number.precision(.fractionLength(0...2)).locale(AppLanguage.locale))
     }
 }
 
@@ -178,13 +199,27 @@ struct NewsTool: AssistantTool {
     enum Category {
         case general, economy, sports, world, technology
 
-        var feed: String {
-            switch self {
-            case .general: "guncel"
-            case .economy: "ekonomi"
-            case .sports: "spor"
-            case .world: "dunya"
-            case .technology: "bilim-teknoloji"
+        /// Anadolu Ajansı for Turkish, BBC News for English.
+        var feedURL: URL? {
+            switch AppLanguage.current {
+            case .turkish:
+                let slug = switch self {
+                case .general: "guncel"
+                case .economy: "ekonomi"
+                case .sports: "spor"
+                case .world: "dunya"
+                case .technology: "bilim-teknoloji"
+                }
+                return URL(string: "https://www.aa.com.tr/tr/rss/default?cat=\(slug)")
+            case .english:
+                let path = switch self {
+                case .general: "news/rss.xml"
+                case .economy: "news/business/rss.xml"
+                case .sports: "sport/rss.xml"
+                case .world: "news/world/rss.xml"
+                case .technology: "news/technology/rss.xml"
+                }
+                return URL(string: "https://feeds.bbci.co.uk/\(path)")
             }
         }
     }
@@ -196,15 +231,20 @@ struct NewsTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
-        guard let url = URL(string: "https://www.aa.com.tr/tr/rss/default?cat=\(arguments.category.feed)") else {
-            return ToolReply.failure("Haber kaynağı açılamadı.")
+        guard let url = arguments.category.feedURL else {
+            return ToolReply.failure(String(localized: "Haber kaynağı açılamadı."))
         }
         do {
             let headlines = RSSHeadlines.parse(try await WebFetch.data(from: url), limit: Self.headlineCount)
-            guard !headlines.isEmpty else { return ToolReply.failure("Haber başlığı bulunamadı.") }
-            return "Anadolu Ajansı'ndan son başlıklar. " + headlines.map { $0.hasSuffix(".") ? $0 : $0 + "." }.joined(separator: " ")
+            guard !headlines.isEmpty else {
+                return ToolReply.failure(String(localized: "Haber başlığı bulunamadı."))
+            }
+            let source = AppLanguage.current == .english
+                ? "Latest headlines from BBC News. " : String(localized: "Anadolu Ajansı'ndan son başlıklar. ")
+            return source
+                + headlines.map { $0.hasSuffix(".") ? $0 : $0 + "." }.joined(separator: " ")
         } catch {
-            return ToolReply.failure("Haberler alınamadı. \(error.localizedDescription)")
+            return ToolReply.failure(String(localized: "Haberler alınamadı. \(error.localizedDescription)"))
         }
     }
 }
@@ -225,7 +265,7 @@ struct ReadWebPageTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         do {
             guard let url = try await Self.target(arguments.address) else {
-                return ToolReply.failure("Tarayıcıda açık bir sayfa bulamadım.")
+                return ToolReply.failure(String(localized: "Tarayıcıda açık bir sayfa bulamadım."))
             }
             return try await BrowserPage.text(of: url)
         } catch {

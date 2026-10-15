@@ -12,7 +12,7 @@ enum ContactsAccessError: LocalizedError {
     case denied
 
     var errorDescription: String? {
-        "Kişilere erişim izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Kişiler'den Bilge'ye izin ver."
+        String(localized: "Kişilere erişim izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Kişiler'den Bilge'ye izin ver.")
     }
 }
 
@@ -78,14 +78,16 @@ struct FindContactTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         do {
             guard let contact = try await ContactsAccess.shared.find(arguments.name) else {
-                return ToolReply.failure("Kişilerinde '\(arguments.name)' adında birini bulamadım.")
+                return ToolReply.failure(String(localized: "Kişilerinde '\(arguments.name)' adında birini bulamadım."))
             }
             var parts: [String] = []
             if arguments.detail != .email {
-                parts.append(contact.phones.first.map { "telefonu \($0)" } ?? "kayıtlı telefonu yok")
+                parts.append(contact.phones.first.map { String(localized: "telefonu \($0)") }
+                             ?? String(localized: "kayıtlı telefonu yok"))
             }
             if arguments.detail != .phone {
-                parts.append(contact.emails.first.map { "e-postası \($0)" } ?? "kayıtlı e-postası yok")
+                parts.append(contact.emails.first.map { String(localized: "e-postası \($0)") }
+                             ?? String(localized: "kayıtlı e-postası yok"))
             }
             return "\(contact.name): \(parts.joined(separator: ", "))."
         } catch {

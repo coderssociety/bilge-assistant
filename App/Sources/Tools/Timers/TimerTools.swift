@@ -24,7 +24,9 @@ struct SetTimerTool: AssistantTool {
     /// The model reliably picks this tool but sometimes garbles numbers ("20:00" → 19), so precise
     /// times and durations come from the text itself.
     func refine(_ arguments: Arguments, command: String) -> Arguments {
-        guard let parsed = TimerPhraseParser.parse(command) else { return arguments }
+        let parsed = AppLanguage.current == .english
+            ? EnglishTimeParser.parse(command, appointment: false) : TimerPhraseParser.parse(command)
+        guard let parsed else { return arguments }
         var refined = arguments
         if let hour = parsed.hour {
             refined.hour = hour
@@ -43,11 +45,12 @@ struct SetTimerTool: AssistantTool {
     func call(arguments: Arguments) async throws -> String {
         guard let fireDate = TimerSchedule.fireDate(minutes: arguments.minutes, seconds: arguments.seconds,
                                                     hour: arguments.hour, minute: arguments.minute, now: .now)
-        else { return ToolReply.failure("Süre ya da saat anlaşılamadı.") }
+        else { return ToolReply.failure(String(localized: "Süre ya da saat anlaşılamadı.")) }
         let timer = await service.schedule(at: fireDate, label: TimerSchedule.cleanLabel(arguments.label))
-        let time = timer.fireDate.formatted(.dateTime.hour().minute().locale(Locale(identifier: "tr_TR")))
-        let day = Calendar.current.isDateInToday(timer.fireDate) ? "" : "yarın "
-        return "Tamam, \(day)saat \(time) için kurdum."
+        let time = timer.fireDate.formatted(.dateTime.hour().minute().locale(AppLanguage.locale))
+        return Calendar.current.isDateInToday(timer.fireDate)
+            ? String(localized: "Tamam, saat \(time) için kurdum.")
+            : String(localized: "Tamam, yarın saat \(time) için kurdum.")
     }
 }
 
@@ -70,13 +73,15 @@ struct ManageTimersTool: AssistantTool {
         switch arguments.action {
         case .list:
             let timers = await service.timers
-            guard !timers.isEmpty else { return "Kurulu zamanlayıcı yok." }
-            let locale = Locale(identifier: "tr_TR")
+            guard !timers.isEmpty else { return String(localized: "Kurulu zamanlayıcı yok.") }
+            let locale = AppLanguage.locale
             let lines = timers.map { "\($0.fireDate.formatted(.dateTime.hour().minute().locale(locale)))\($0.label.map { " \($0)" } ?? "")" }
-            return "Zamanlayıcılar: " + lines.joined(separator: "; ")
+            return String(localized: "Zamanlayıcılar: ") + lines.joined(separator: "; ")
         case .cancelAll:
             let count = await service.cancelAll()
-            return count == 0 ? "İptal edilecek zamanlayıcı yoktu." : "\(count) zamanlayıcı iptal edildi."
+            return count == 0
+                ? String(localized: "İptal edilecek zamanlayıcı yoktu.")
+                : String(localized: "\(count) zamanlayıcı iptal edildi.")
         }
     }
 }

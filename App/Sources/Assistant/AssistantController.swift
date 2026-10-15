@@ -144,7 +144,7 @@ final class AssistantController {
 
     private func run() async {
         guard await microphone.requestPermission() else {
-            fail("Mikrofon izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Mikrofon bölümünden izin ver.")
+            fail(String(localized: "Mikrofon izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Mikrofon bölümünden izin ver."))
             listenTask = nil
             return
         }
@@ -177,7 +177,7 @@ final class AssistantController {
     }
 
     private func loadModels() async throws -> VoiceActivityMonitor {
-        status = .loading("Ses algılama hazırlanıyor…")
+        status = .loading(String(localized: "Ses algılama hazırlanıyor…"))
         let vad: VoiceActivityMonitor
         if let existing = self.vad {
             vad = existing
@@ -188,13 +188,13 @@ final class AssistantController {
         }
 
         if recognizer?.engine != settings.recognizer {
-            status = .loading("Konuşma tanıma modeli yükleniyor…")
+            status = .loading(String(localized: "Konuşma tanıma modeli yükleniyor…"))
             let recognizer = RecognizerFactory.make(settings.recognizer, language: settings.language)
             try await recognizer.prepare()
             self.recognizer = recognizer
         }
 
-        status = .loading("Ses hazırlanıyor…")
+        status = .loading(String(localized: "Ses hazırlanıyor…"))
         speech.speed = settings.speechSpeed
         try await speech.setVoice(settings.voice)
         try await speech.prepare()
@@ -206,7 +206,7 @@ final class AssistantController {
     private func loadBargeIn() async {
         bargeIn = nil
         guard settings.bargeInEnabled, let recognizer else { return }
-        status = .loading("Yankı iptali hazırlanıyor…")
+        status = .loading(String(localized: "Yankı iptali hazırlanıyor…"))
         do {
             bargeIn = try await BargeInListener(
                 timeline: speech.playbackTimeline, recognizer: recognizer,
@@ -449,6 +449,7 @@ extension AssistantController: ConfirmationProviding {
     func confirm(_ question: String, strict: Bool) async -> ConfirmationParser.Answer {
         lastReply = question
         status = .speaking
+        stoppedByUser = false
         do {
             try await speech.speak(question)
         } catch {
@@ -456,6 +457,20 @@ extension AssistantController: ConfirmationProviding {
             return .unclear
         }
         guard !Task.isCancelled else { return .rejected }
+        // A "no" that started while the question was still playing is decided only now.
+        await settleBargeIn()
+        // "No" said before the question ended cuts it off; it is the answer. An early yes is not taken:
+        // agreeing by mistake costs more than asking again.
+        if stoppedByUser, let heard = lastHeard,
+           ConfirmationParser.parse(heard, strict: strict, language: settings.language) == .rejected {
+            stoppedByUser = false
+            lastReply = ""
+            status = .thinking
+            Log.tools.info("Confirmation answered during the question: rejected")
+            return .rejected
+        }
+        // Any other cut-in during the question is not about the reply that follows.
+        stoppedByUser = false
         await vad?.reset()
         segmenter.reset()
         pendingConfirmation = question

@@ -1,3 +1,4 @@
+import AsistanCore
 import FoundationModels
 
 /// Builds the tool set handed to the language model. Kept small on purpose: every tool's schema
@@ -11,6 +12,7 @@ struct ToolRegistry {
     var memory = MemoryStore(fileURL: nil)
     var spreadsheet = SpreadsheetSession()
     var dictation = DictationSession()
+    var language = AssistantLanguage.turkish
 
     func makeTools() -> [any AssistantTool] {
         [
@@ -20,7 +22,7 @@ struct ToolRegistry {
             WebSearchTool(),
             OpenWebsiteTool(),
             DateTimeTool(),
-            CalculatorTool(),
+            CalculatorTool(language: language),
             BatteryTool(),
             ClipboardReadTool(),
             VolumeTool(),
@@ -59,8 +61,8 @@ struct ToolRegistry {
             ReadMailTool(),
             SendEmailTool(context: context),
             SendMessageTool(context: context),
-            RememberTool(memory: memory, context: context),
-            ForgetTool(memory: memory),
+            RememberTool(memory: memory, context: context, language: language),
+            ForgetTool(memory: memory, language: language),
             ListMemoriesTool(memory: memory),
             SpreadsheetTool(session: spreadsheet),
             ContextTool(context: context),

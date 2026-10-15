@@ -23,9 +23,9 @@ public enum ArithmeticEvaluator {
         return value
     }
 
-    public static func display(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...maxFractionDigits)).grouping(.never)
-            .locale(Locale(identifier: "tr_TR")))
+    /// Decimal comma in Turkish ("22,5"), point in English ("22.5").
+    public static func display(_ value: Double, language: AssistantLanguage = .turkish) -> String {
+        value.formatted(.number.precision(.fractionLength(0...maxFractionDigits)).grouping(.never).locale(language.locale))
     }
 
     private enum Token: Equatable {

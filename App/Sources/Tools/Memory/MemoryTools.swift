@@ -1,4 +1,5 @@
 import AsistanCore
+import Foundation
 import FoundationModels
 
 /// "Eşimin adının Ayşe olduğunu hatırla". The fact is taken from the command as spoken, so nothing
@@ -9,6 +10,7 @@ struct RememberTool: AssistantTool {
     let description = "Kullanıcının hatırlamanı istediği bir bilgiyi kalıcı olarak kaydeder ('…olduğunu hatırla', 'unutma', 'aklında tut')."
     let memory: MemoryStore
     let context: ConversationContext
+    var language = AssistantLanguage.turkish
 
     @Generable
     struct Arguments {
@@ -17,7 +19,7 @@ struct RememberTool: AssistantTool {
     }
 
     func arguments(fromCommand command: String) -> Arguments? {
-        Arguments(fact: MemoryIntent.fact(from: command))
+        Arguments(fact: MemoryIntent.fact(from: command, language: language))
     }
 
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
@@ -27,11 +29,11 @@ struct RememberTool: AssistantTool {
                                     execute: { await store(given) })
         }
         guard let previous = await MainActor.run(body: { context.lastReply }), !previous.isEmpty else {
-            return .unavailable(name, message: "Neyi hatırlamamı istediğini anlayamadım.")
+            return .unavailable(name, message: String(localized: "Neyi hatırlamamı istediğini anlayamadım."))
         }
         let fact = String(previous.prefix(MemoryBook.maxEntryLength))
         return PreparedToolCall(toolName: name, argumentsDescription: "previous reply", risk: .needsConfirmation,
-                                confirmationQuestion: "Şunu hatırlayayım mı: \(fact)",
+                                confirmationQuestion: String(localized: "Şunu hatırlayayım mı: \(fact)"),
                                 execute: { await store(fact) })
     }
 
@@ -43,10 +45,10 @@ struct RememberTool: AssistantTool {
         do {
             let outcome = try await MainActor.run { try memory.remember(fact) }
             return switch outcome {
-            case .added: "Tamam, hatırlayacağım."
-            case .addedDroppingOldest: "Tamam, hatırlayacağım. Yer açmak için en eski bilgiyi unuttum."
-            case .duplicate: "Bunu zaten biliyorum."
-            case .rejected: ToolReply.failure("Bu hatırlamak için fazla uzun, daha kısa söyler misin?")
+            case .added: String(localized: "Tamam, hatırlayacağım.")
+            case .addedDroppingOldest: String(localized: "Tamam, hatırlayacağım. Yer açmak için en eski bilgiyi unuttum.")
+            case .duplicate: String(localized: "Bunu zaten biliyorum.")
+            case .rejected: ToolReply.failure(String(localized: "Bu hatırlamak için fazla uzun, daha kısa söyler misin?"))
             }
         } catch {
             return ToolReply.failure(error)
@@ -60,6 +62,7 @@ struct ForgetTool: AssistantTool {
     let name = "forget"
     let description = "Hafızaya kaydedilmiş bir bilgiyi ya da tüm hafızayı siler ('…unut', 'hafızanı temizle')."
     let memory: MemoryStore
+    var language = AssistantLanguage.turkish
 
     @Generable
     struct Arguments {
@@ -70,7 +73,7 @@ struct ForgetTool: AssistantTool {
     }
 
     func arguments(fromCommand command: String) -> Arguments? {
-        switch MemoryIntent.forgetTarget(from: command) {
+        switch MemoryIntent.forgetTarget(from: command, language: language) {
         case .all: Arguments(about: nil, everything: true)
         case .latest: Arguments(about: nil, everything: false)
         case let .matching(query): Arguments(about: query, everything: false)
@@ -80,18 +83,20 @@ struct ForgetTool: AssistantTool {
     func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
         if arguments.everything {
             let count = await MainActor.run { memory.book.entries.count }
-            guard count > 0 else { return .unavailable(name, message: "Hafızamda zaten bir şey yok.") }
+            guard count > 0 else { return .unavailable(name, message: String(localized: "Hafızamda zaten bir şey yok.")) }
             return PreparedToolCall(toolName: name, argumentsDescription: "everything", risk: .needsConfirmation,
-                                    confirmationQuestion: "Hatırladığım \(count) bilginin hepsini sileyim mi?",
+                                    confirmationQuestion: String(localized: "Hatırladığım \(count) bilginin hepsini sileyim mi?"),
                                     execute: { await forgetAll() })
         }
         let about = arguments.about?.trimmingCharacters(in: .whitespaces) ?? ""
         let entry = await MainActor.run { about.isEmpty ? memory.book.latest : memory.entry(matching: about) }
         guard let entry else {
-            return .unavailable(name, message: about.isEmpty ? "Hafızamda bir şey yok." : "Hafızamda '\(about)' ile ilgili bir bilgi bulamadım.")
+            return .unavailable(name, message: about.isEmpty
+                ? String(localized: "Hafızamda bir şey yok.")
+                : String(localized: "Hafızamda '\(about)' ile ilgili bir bilgi bulamadım."))
         }
         return PreparedToolCall(toolName: name, argumentsDescription: "one fact", risk: .needsConfirmation,
-                                confirmationQuestion: "'\(entry.text)' bilgisini unutayım mı?",
+                                confirmationQuestion: String(localized: "'\(entry.text)' bilgisini unutayım mı?"),
                                 execute: { await forget(entry) })
     }
 
@@ -102,7 +107,7 @@ struct ForgetTool: AssistantTool {
     private func forget(_ entry: MemoryEntry) async -> String {
         do {
             try await MainActor.run { try memory.forget(id: entry.id) }
-            return "Unuttum: \(entry.text)."
+            return String(localized: "Unuttum: \(entry.text).")
         } catch {
             return ToolReply.failure(error)
         }
@@ -111,7 +116,7 @@ struct ForgetTool: AssistantTool {
     private func forgetAll() async -> String {
         do {
             let count = try await MainActor.run { try memory.forgetAll() }
-            return "Hafızamı temizledim, \(count) bilgiyi sildim."
+            return String(localized: "Hafızamı temizledim, \(count) bilgiyi sildim.")
         } catch {
             return ToolReply.failure(error)
         }
@@ -132,10 +137,10 @@ struct ListMemoriesTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         let entries = await MainActor.run { memory.book.entries }
-        guard !entries.isEmpty else { return "Henüz hatırlamamı istediğin bir şey yok." }
+        guard !entries.isEmpty else { return String(localized: "Henüz hatırlamamı istediğin bir şey yok.") }
         let newest = entries.suffix(Self.spokenCount).reversed().map(\.text)
         let rest = entries.count - newest.count
-        let more = rest > 0 ? " Bunlar en yenileri, \(rest) bilgi daha var." : ""
-        return "Bana şunları söylemiştin: \(newest.joined(separator: "; "))." + more
+        let more = rest > 0 ? String(localized: " Bunlar en yenileri, \(rest) bilgi daha var.") : ""
+        return String(localized: "Bana şunları söylemiştin: \(newest.joined(separator: "; ")).") + more
     }
 }

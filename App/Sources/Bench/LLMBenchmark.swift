@@ -1,7 +1,7 @@
 import Foundation
 import FoundationModels
 
-/// Headless routing benchmark: `Asistan --bench-llm <commands.tsv> <output-dir>`.
+/// Headless routing benchmark: `Asistan --bench-llm <commands.tsv> <output-dir> [--paced] [--language en]`.
 /// Each line is "command<TAB>expected action[,alternative]"; "conversation" means no tool.
 /// Tools are prepared (arguments extracted) but never executed.
 @MainActor
@@ -30,8 +30,9 @@ enum LLMBenchmark {
         let outputURL = URL(filePath: arguments[index + 2], directoryHint: .isDirectory)
         do {
             let cases = try loadCases(URL(filePath: arguments[index + 1]))
-            let tools = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }).makeTools()
-            let router = try CommandRouter(tools: tools)
+            let language = ASRBenchmark.languageArgument(arguments)
+            let tools = ToolRegistry(catalog: AppCatalog(), timers: TimerService { _ in }, language: language).makeTools()
+            let router = try CommandRouter(tools: tools, language: language)
             let paced = arguments.contains(pacedFlag)
             router.prewarm()
             var results: [CaseResult] = []

@@ -17,7 +17,7 @@ final class AudioLabModel {
     var isListening = false
     var isSpeechActive = false
     var speechProbability: Float = 0
-    var text = "Merhaba! Saat 14:30'da toplantın var; pilin %80 dolu."
+    var text = String(localized: "Merhaba! Saat 14:30'da toplantın var; pilin %80 dolu.")
     var voice: Supertonic3Voice = .f1
     var speed: Float = 1.05
     var isSpeaking = false
@@ -50,9 +50,9 @@ final class AudioLabModel {
                 try await speech.setVoice(voice)
                 let started = Date()
                 try await speech.speak(text)
-                append("Konuşma bitti (\(Self.seconds(since: started)) sn)")
+                append(String(localized: "Konuşma bitti (\(Self.seconds(since: started)) sn)"))
             } catch is CancellationError {
-                append("Konuşma durduruldu")
+                append(String(localized: "Konuşma durduruldu"))
             } catch {
                 report(error)
             }
@@ -67,14 +67,14 @@ final class AudioLabModel {
     private func startListening() {
         listenTask = Task {
             guard await MicrophoneCapture.requestPermission() else {
-                statusMessage = "Mikrofon izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Mikrofon."
+                statusMessage = String(localized: "Mikrofon izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Mikrofon.")
                 return
             }
             do {
                 let detector = try await loadDetector()
                 let stream = try microphone.start()
                 isListening = true
-                append("Dinleme başladı")
+                append(String(localized: "Dinleme başladı"))
                 for await chunk in stream {
                     for frame in try await detector.process(chunk.samples) { apply(frame) }
                 }
@@ -89,7 +89,7 @@ final class AudioLabModel {
         listenTask?.cancel()
         listenTask = nil
         microphone.stop()
-        if isListening { append("Dinleme durdu") }
+        if isListening { append(String(localized: "Dinleme durdu")) }
         isListening = false
         isSpeechActive = false
         speechProbability = 0
@@ -100,7 +100,7 @@ final class AudioLabModel {
             await detector.reset()
             return detector
         }
-        statusMessage = "Ses algılama modeli yükleniyor…"
+        statusMessage = String(localized: "Ses algılama modeli yükleniyor…")
         let loaded = try await VoiceActivityMonitor()
         detector = loaded
         statusMessage = nil
@@ -112,10 +112,10 @@ final class AudioLabModel {
         switch update.event {
         case .speechStarted:
             isSpeechActive = true
-            append("Konuşma algılandı")
+            append(String(localized: "Konuşma algılandı"))
         case .speechEnded:
             isSpeechActive = false
-            append("Konuşma bitti")
+            append(String(localized: "Konuşma bitti"))
         case nil:
             break
         }
@@ -123,7 +123,7 @@ final class AudioLabModel {
 
     private func report(_ error: Error) {
         statusMessage = error.localizedDescription
-        append("Hata: \(error.localizedDescription)")
+        append(String(localized: "Hata: \(error.localizedDescription)"))
     }
 
     private func append(_ message: String) {

@@ -82,7 +82,7 @@ struct GeneralSettingsView: View {
         let phrase = wakePhraseDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         let words = phrase.split(separator: " ")
         guard phrase.count >= Self.minWakeCharacters, (1...Self.maxWakeWords).contains(words.count) else {
-            wakePhraseError = "En az \(Self.minWakeCharacters) harf ve en fazla \(Self.maxWakeWords) kelime olmalı."
+            wakePhraseError = String(localized: "En az \(Self.minWakeCharacters) harf ve en fazla \(Self.maxWakeWords) kelime olmalı.")
             return
         }
         wakePhraseError = nil
@@ -96,7 +96,7 @@ struct GeneralSettingsView: View {
             try LoginItem.setEnabled(enabled)
             loginItemError = nil
         } catch {
-            loginItemError = "Giriş öğesi ayarlanamadı: \(error.localizedDescription)"
+            loginItemError = String(localized: "Giriş öğesi ayarlanamadı: \(error.localizedDescription)")
             launchAtLogin = LoginItem.isEnabled
         }
     }

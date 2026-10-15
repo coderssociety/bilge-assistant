@@ -67,7 +67,8 @@ final class VMLXServer {
         try Task.checkCancellation()
         if let running {
             guard running.contains(id) else {
-                throw LocalModelServerError.loadFailed("vMLX şu an başka bir model sunuyor (\(running.joined(separator: ", "))).")
+                let served = running.joined(separator: ", ")
+                throw LocalModelServerError.loadFailed(String(localized: "vMLX şu an başka bir model sunuyor (\(served))."))
             }
             do {
                 try await admin("wake")
@@ -186,7 +187,7 @@ final class VMLXServer {
         }
         let folder = Self.modelsDirectory.appending(path: id)
         guard FileManager.default.fileExists(atPath: folder.path(percentEncoded: false)) else {
-            throw LocalModelServerError.loadFailed("\(id) bulunamadı.")
+            throw LocalModelServerError.loadFailed(String(localized: "\(id) bulunamadı."))
         }
         return folder
     }

@@ -51,5 +51,5 @@ public struct BargeInDetector: Sendable {
         { words.contains($0) && !fillerOnly.contains($0) }
     }
 
-    private static let fillerOnly: Set<String> = ["artik", "please", "now", "okay", "ok", "no"]
+    private static let fillerOnly: Set<String> = ["artik", "please", "now"]
 }

@@ -6,13 +6,14 @@ struct AsistanApp: App {
     @State private var environment = AppEnvironment()
 
     init() {
+        AppLanguage.alignLocalization()
         let arguments = CommandLine.arguments
         if arguments.contains(ASRBenchmark.flag) {
             Task { @MainActor in exit(await ASRBenchmark.run(arguments: arguments)) }
         } else if arguments.contains(LLMBenchmark.flag) {
             Task { @MainActor in exit(await LLMBenchmark.run(arguments: arguments)) }
         } else if arguments.contains(EndToEndBenchmark.flag) {
-            Task { @MainActor in exit(await EndToEndBenchmark.run()) }
+            Task { @MainActor in exit(await EndToEndBenchmark.run(arguments: arguments)) }
         } else if arguments.contains(ChatBenchmark.flag) {
             Task { @MainActor in exit(await ChatBenchmark.run(arguments: arguments)) }
         } else if arguments.contains(ToolCheck.flag) {
@@ -79,9 +80,9 @@ final class AppEnvironment {
         let announcer = Announcer()
         let timers = TimerService { await announcer.target?.announce($0) }
         let memory = MemoryStore()
-        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory)
+        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory, language: settings.language)
         let brain = AssistantBrain(tools: registry.makeTools(), context: registry.context, memory: memory,
-                                   spreadsheet: registry.spreadsheet, dictation: registry.dictation)
+                                   spreadsheet: registry.spreadsheet, dictation: registry.dictation, language: settings.language)
         let assistant = AssistantController(settings: settings, speech: speech, handler: brain)
         announcer.target = assistant
         brain.confirmer = assistant

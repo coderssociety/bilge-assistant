@@ -3,7 +3,9 @@
 public enum PhraseMatcher {
     public static let minimumScore = 0.6
     private static let maxSuffixLength = 4
-    private static let stopWords: Set<String> = ["ve", "ile", "bir", "bu", "su", "icin", "de", "da", "the"]
+    private static let stopWords: Set<String> = [
+        "ve", "ile", "bir", "bu", "su", "icin", "de", "da", "the", "a", "an", "my", "of", "and", "with",
+    ]
 
     public static func bestMatch(for query: String, in titles: [String]) -> String? {
         let queryWords = words(query)

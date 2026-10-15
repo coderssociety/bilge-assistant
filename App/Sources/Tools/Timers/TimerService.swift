@@ -43,7 +43,8 @@ final class TimerService {
         timers.removeAll { $0.id == timer.id }
         tasks[timer.id] = nil
         Earcon.wake.play()
-        let message = timer.label.map { "Hatırlatma: \($0)." } ?? "Zamanlayıcı doldu."
+        let message = timer.label.map { String(localized: "Hatırlatma: \($0).") }
+            ?? String(localized: "Zamanlayıcı doldu.")
         await announce(message)
     }
 }

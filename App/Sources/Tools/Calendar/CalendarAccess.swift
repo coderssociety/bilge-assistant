@@ -6,7 +6,8 @@ enum CalendarAccessError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case let .denied(what): "\(what) erişim izni yok. Sistem Ayarları > Gizlilik ve Güvenlik bölümünden izin verilmeli."
+        case let .denied(what):
+            String(localized: "\(what) erişim izni yok. Sistem Ayarları > Gizlilik ve Güvenlik bölümünden izin verilmeli.")
         }
     }
 }
@@ -28,7 +29,7 @@ actor CalendarAccess {
         let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
         return store.events(matching: predicate)
             .sorted { $0.startDate < $1.startDate }
-            .map { CalendarEventSummary(title: $0.title ?? "Başlıksız", start: $0.startDate, isAllDay: $0.isAllDay) }
+            .map { CalendarEventSummary(title: $0.title ?? String(localized: "Başlıksız"), start: $0.startDate, isAllDay: $0.isAllDay) }
     }
 
     func incompleteReminderTitles() async throws -> [String] {
@@ -88,7 +89,7 @@ actor CalendarAccess {
                 .filter { event in event.attendees?.first(where: \.isCurrentUser)?.participantStatus != .declined }
                 .map { event in
                     AlertCandidate(key: "event:\(event.calendarItemIdentifier):\(event.startDate.timeIntervalSince1970)",
-                                   title: event.title ?? "Bir etkinlik", date: event.startDate, kind: .event)
+                                   title: event.title ?? String(localized: "Bir etkinlik"), date: event.startDate, kind: .event)
                 }
         }
         guard EKEventStore.authorizationStatus(for: .reminder) == .fullAccess else { return candidates }
@@ -134,9 +135,9 @@ actor CalendarAccess {
         switch EKEventStore.authorizationStatus(for: .event) {
         case .fullAccess: return
         case .notDetermined:
-            guard try await store.requestFullAccessToEvents() else { throw CalendarAccessError.denied("Takvime") }
+            guard try await store.requestFullAccessToEvents() else { throw CalendarAccessError.denied(String(localized: "Takvime")) }
         default:
-            throw CalendarAccessError.denied("Takvime")
+            throw CalendarAccessError.denied(String(localized: "Takvime"))
         }
     }
 
@@ -144,9 +145,11 @@ actor CalendarAccess {
         switch EKEventStore.authorizationStatus(for: .reminder) {
         case .fullAccess: return
         case .notDetermined:
-            guard try await store.requestFullAccessToReminders() else { throw CalendarAccessError.denied("Anımsatıcılara") }
+            guard try await store.requestFullAccessToReminders() else {
+                throw CalendarAccessError.denied(String(localized: "Anımsatıcılara"))
+            }
         default:
-            throw CalendarAccessError.denied("Anımsatıcılara")
+            throw CalendarAccessError.denied(String(localized: "Anımsatıcılara"))
         }
     }
 }

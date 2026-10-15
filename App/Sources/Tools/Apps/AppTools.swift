@@ -14,13 +14,13 @@ struct OpenAppTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         guard let app = await catalog.resolve(arguments.appName) else {
-            return ToolReply.failure("'\(arguments.appName)' adında yüklü bir uygulama bulunamadı.")
+            return ToolReply.failure(String(localized: "'\(arguments.appName)' adında yüklü bir uygulama bulunamadı."))
         }
         do {
             let configuration = NSWorkspace.OpenConfiguration()
             configuration.activates = true
             _ = try await NSWorkspace.shared.openApplication(at: app.url, configuration: configuration)
-            return "\(app.displayName) açıldı."
+            return String(localized: "\(app.displayName) açıldı.")
         } catch {
             return ToolReply.failure(error)
         }
@@ -40,15 +40,17 @@ struct QuitAppTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         guard let app = await catalog.resolve(arguments.appName) else {
-            return ToolReply.failure("'\(arguments.appName)' adında bir uygulama bulunamadı.")
+            return ToolReply.failure(String(localized: "'\(arguments.appName)' adında bir uygulama bulunamadı."))
         }
         return await MainActor.run {
             let running = NSWorkspace.shared.runningApplications.filter {
                 $0.bundleURL == app.url || ($0.bundleIdentifier != nil && $0.bundleIdentifier == app.bundleIdentifier)
             }
-            guard !running.isEmpty else { return "\(app.displayName) zaten kapalı." }
+            guard !running.isEmpty else { return String(localized: "\(app.displayName) zaten kapalı.") }
             let requested = running.map { $0.terminate() }.contains(true)
-            return requested ? "\(app.displayName) kapatılıyor." : ToolReply.failure("\(app.displayName) kapatılamadı.")
+            return requested
+                ? String(localized: "\(app.displayName) kapatılıyor.")
+                : ToolReply.failure(String(localized: "\(app.displayName) kapatılamadı."))
         }
     }
 }
@@ -67,8 +69,8 @@ struct RunningAppsTool: AssistantTool {
             let apps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }
             let names = apps.compactMap(\.localizedName)
             let front = NSWorkspace.shared.frontmostApplication?.localizedName
-            var reply = "Açık uygulamalar: \(names.joined(separator: ", "))."
-            if let front { reply += " Öndeki: \(front)." }
+            var reply = String(localized: "Açık uygulamalar: \(names.joined(separator: ", ")).")
+            if let front { reply += String(localized: " Öndeki: \(front).") }
             return reply
         }
     }

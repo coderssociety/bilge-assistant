@@ -30,18 +30,20 @@ struct FileTool: AssistantTool {
         do {
             switch arguments.action {
             case .find:
-                guard let query = arguments.query else { return ToolReply.failure("Aranacak dosya adı belirtilmedi.") }
+                guard let query = arguments.query else { return ToolReply.failure(String(localized: "Aranacak dosya adı belirtilmedi.")) }
                 let results = try await FileSearch.find(query, limit: Self.maxResults)
-                guard !results.isEmpty else { return "'\(query)' ile eşleşen dosya bulunamadı." }
+                guard !results.isEmpty else { return String(localized: "'\(query)' ile eşleşen dosya bulunamadı.") }
                 let list = results.map { "\($0.lastPathComponent) (\(FileSearch.describeLocation($0)))" }
-                return "Bulunan dosyalar: " + list.joined(separator: "; ")
+                return String(localized: "Bulunan dosyalar: \(list.joined(separator: "; "))")
             case .openFound:
-                guard let query = arguments.query else { return ToolReply.failure("Açılacak dosya adı belirtilmedi.") }
-                guard let file = try await FileSearch.find(query, limit: Self.maxResults).first else { return "'\(query)' ile eşleşen dosya bulunamadı." }
+                guard let query = arguments.query else { return ToolReply.failure(String(localized: "Açılacak dosya adı belirtilmedi.")) }
+                guard let file = try await FileSearch.find(query, limit: Self.maxResults).first else {
+                    return String(localized: "'\(query)' ile eşleşen dosya bulunamadı.")
+                }
                 return await open(file)
             case .openLatestDownload:
                 guard let latest = try Self.latestFile(in: Self.url(for: .downloads)) else {
-                    return "İndirilenler klasörü boş."
+                    return String(localized: "İndirilenler klasörü boş.")
                 }
                 return await open(latest)
             case .openFolder:
@@ -58,11 +60,11 @@ struct FileTool: AssistantTool {
     private func open(_ url: URL) -> String {
         if Self.isExecutable(url) {
             NSWorkspace.shared.activateFileViewerSelecting([url])
-            return "\(url.lastPathComponent) çalıştırılabilir bir dosya; güvenlik için açmadım, Finder'da gösterdim."
+            return String(localized: "\(url.lastPathComponent) çalıştırılabilir bir dosya; güvenlik için açmadım, Finder'da gösterdim.")
         }
         return NSWorkspace.shared.open(url)
-            ? "\(url.lastPathComponent) açıldı."
-            : ToolReply.failure("\(url.lastPathComponent) açılamadı.")
+            ? String(localized: "\(url.lastPathComponent) açıldı.")
+            : ToolReply.failure(String(localized: "\(url.lastPathComponent) açılamadı."))
     }
 
     private static let executableExtensions: Set<String> = [

@@ -22,7 +22,7 @@ struct SystemInfoTool: AssistantTool {
         case .disk: Self.disk()
         case .memory: Self.memory()
         case .uptime: Self.uptime()
-        case .osVersion: "Bu Mac'te \(Self.osVersion()) çalışıyor."
+        case .osVersion: String(localized: "Bu Mac'te \(Self.osVersion()) çalışıyor.")
         case .network: await Self.network()
         }
     }
@@ -31,8 +31,8 @@ struct SystemInfoTool: AssistantTool {
         let keys: Set<URLResourceKey> = [.volumeAvailableCapacityForImportantUsageKey, .volumeTotalCapacityKey]
         guard let values = try? URL(filePath: "/").resourceValues(forKeys: keys),
               let free = values.volumeAvailableCapacityForImportantUsage, let total = values.volumeTotalCapacity
-        else { return ToolReply.failure("Disk bilgisini okuyamadım.") }
-        return "Diskte \(gigabytes(free)) GB boş yer var, toplam \(gigabytes(Int64(total))) GB."
+        else { return ToolReply.failure(String(localized: "Disk bilgisini okuyamadım.")) }
+        return String(localized: "Diskte \(gigabytes(free)) GB boş yer var, toplam \(gigabytes(Int64(total))) GB.")
     }
 
     private static func memory() -> String {
@@ -42,17 +42,22 @@ struct SystemInfoTool: AssistantTool {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { host_statistics64(mach_host_self(), HOST_VM_INFO64, $0, &count) }
         }
         let total = Int64(ProcessInfo.processInfo.physicalMemory)
-        guard result == KERN_SUCCESS else { return "Bu Mac'te \(gibibytes(total)) GB bellek var." }
+        guard result == KERN_SUCCESS else { return String(localized: "Bu Mac'te \(gibibytes(total)) GB bellek var.") }
         let page = Int64(getpagesize())
         let used = (Int64(stats.active_count) + Int64(stats.wire_count) + Int64(stats.compressor_page_count)) * page
-        return "\(gibibytes(total)) GB belleğin yaklaşık \(gibibytes(used)) GB'ı kullanımda."
+        return String(localized: "\(gibibytes(total)) GB belleğin yaklaşık \(gibibytes(used)) GB'ı kullanımda.")
     }
 
     private static func uptime() -> String {
         let minutes = Int(ProcessInfo.processInfo.systemUptime / 60)
         let (days, hours, rest) = (minutes / 1440, minutes % 1440 / 60, minutes % 60)
-        let parts = [days > 0 ? "\(days) gün" : nil, hours > 0 ? "\(hours) saat" : nil, days == 0 && rest > 0 ? "\(rest) dakika" : nil]
-        return "Mac \(parts.compactMap { $0 }.joined(separator: " ")) önce açıldı."
+        let parts = [
+            days > 0 ? String(localized: "\(days) gün") : nil,
+            hours > 0 ? String(localized: "\(hours) saat") : nil,
+            days == 0 && rest > 0 ? String(localized: "\(rest) dakika") : nil,
+        ]
+        let elapsed = parts.compactMap { $0 }.joined(separator: " ")
+        return String(localized: "Mac \(elapsed) önce açıldı.")
     }
 
     static func osVersion() -> String {
@@ -62,9 +67,12 @@ struct SystemInfoTool: AssistantTool {
 
     private static func network() async -> String {
         let wifi = await WiFiControl.isPoweredOn()
-        let wifiText = wifi.map { $0 ? "Wi-Fi açık" : "Wi-Fi kapalı" } ?? "Wi-Fi durumu okunamadı"
-        guard let address = localIPv4Address() else { return "\(wifiText); ağ bağlantısı görünmüyor." }
-        return "\(wifiText). Yerel IP adresin \(address)."
+        let wifiText = wifi.map { $0 ? String(localized: "Wi-Fi açık") : String(localized: "Wi-Fi kapalı") }
+            ?? String(localized: "Wi-Fi durumu okunamadı")
+        guard let address = localIPv4Address() else {
+            return String(localized: "\(wifiText); ağ bağlantısı görünmüyor.")
+        }
+        return String(localized: "\(wifiText). Yerel IP adresin \(address).")
     }
 
     private static func localIPv4Address() -> String? {

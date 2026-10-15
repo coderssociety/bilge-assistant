@@ -12,13 +12,13 @@ enum ModelDownloadError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidModel: "Model adı geçersiz."
-        case let .listingFailed(status): "Model dosyaları listelenemedi (\(status))."
-        case .nothingToDownload: "Modelde indirilecek dosya bulunamadı."
+        case .invalidModel: String(localized: "Model adı geçersiz.")
+        case let .listingFailed(status): String(localized: "Model dosyaları listelenemedi (\(status)).")
+        case .nothingToDownload: String(localized: "Modelde indirilecek dosya bulunamadı.")
         case let .notEnoughSpace(needed):
-            "Diskte yer yok; \(needed.formatted(.byteCount(style: .file))) boş alan gerekiyor."
-        case let .transferFailed(file): "\(file) indirilemedi."
-        case let .corrupted(file): "\(file) bozuk indi; tekrar dene."
+            String(localized: "Diskte yer yok; \(needed.formatted(.byteCount(style: .file))) boş alan gerekiyor.")
+        case let .transferFailed(file): String(localized: "\(file) indirilemedi.")
+        case let .corrupted(file): String(localized: "\(file) bozuk indi; tekrar dene.")
         }
     }
 }

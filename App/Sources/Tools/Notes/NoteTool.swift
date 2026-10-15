@@ -1,3 +1,4 @@
+import Foundation
 import FoundationModels
 
 struct CreateNoteTool: AssistantTool {
@@ -20,7 +21,7 @@ struct CreateNoteTool: AssistantTool {
             make new note at default account with properties {body:\(AppleScriptRunner.quoted(html))}
             end tell
             """)
-            return "'\(arguments.title)' başlıklı not oluşturuldu."
+            return String(localized: "'\(arguments.title)' başlıklı not oluşturuldu.")
         } catch {
             return ToolReply.failure(error)
         }
