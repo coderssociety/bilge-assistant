@@ -54,7 +54,7 @@ final class AssistantController {
     private var bargeIn: BargeInListener?
     /// A request the user made by cutting in; it runs once the interrupted reply has wound down.
     private var pendingBargeCommand: String?
-    /// "Bilge, dur" means silence: no follow-up window, or the rest of the sentence gets answered.
+    /// "Bilge, dur" (stop) means silence: no follow-up window, or the rest of the sentence gets answered.
     private var stoppedByUser = false
 
     var bargeInDiagnostics: [String] { bargeIn?.diagnostics ?? [] }

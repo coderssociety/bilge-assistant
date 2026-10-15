@@ -79,7 +79,7 @@ private struct LanguageStep: View {
 private struct WelcomeStep: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Image(systemName: "waveform.circle.fill").font(.system(size: 48)).foregroundStyle(.tint)
+            Image(nsImage: NSApplication.shared.applicationIconImage).resizable().frame(width: 72, height: 72)
             Text("Merhaba, ben \(AppIdentity.name)").font(.largeTitle.bold())
             Text("Mac'inde sesle iş yaptırabileceğin Türkçe asistanın.").font(.title3).foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 10) {

@@ -59,7 +59,7 @@ public enum EnglishTimeParser {
         let words = words(text)
         if words.contains("noon") || words.contains("midday") { return (12, 0) }
         if words.contains("midnight") { return (0, 0) }
-        // "at ten", "at 7": afternoon for 1–6, as appointments rarely start before 7 in the morning.
+        // "at ten", "at 7": afternoon for 1-6, as appointments rarely start before 7 in the morning.
         // Only a real number counts: "at a meeting" is not one o'clock.
         let bareHour = words.indices.lazy.compactMap { index -> (Int, Int)? in
             guard words[index] == "at", index + 1 < words.count, !["a", "an"].contains(words[index + 1]),

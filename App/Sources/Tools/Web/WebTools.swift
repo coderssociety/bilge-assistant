@@ -1,7 +1,7 @@
 import AppKit
 import FoundationModels
 
-/// Opens pages in the default browser. The assistant itself never reads the web (fully local brain).
+/// Opens a search in the default browser for the user to read; the results are never read back.
 struct WebSearchTool: AssistantTool {
     let name = "searchWeb"
     let description = "Kullanıcı açıkça aramamı istediğinde ('Google\'da ara', 'YouTube\'da bul') tarayıcıda arama sayfasını açar. Soruları yanıtlamak için kullanılmaz."

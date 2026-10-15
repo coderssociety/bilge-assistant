@@ -34,7 +34,7 @@ struct LocalModelEndpoint: LoadedChatModel, Hashable {
 
     private static let requestTimeout: TimeInterval = 60
 
-    /// Streams the reply text. A separate `reasoning_content` field is ignored.
+    /// A separate `reasoning_content` field is ignored.
     func streamReply(messages: [ChatMessage], temperature: Double, maxTokens: Int) -> AsyncThrowingStream<String, any Error> {
         AsyncThrowingStream { continuation in
             let task = Task {

@@ -4,7 +4,7 @@ import MLXLMCommon
 
 /// Keeps the model's state after reading a long system prompt (instructions, the multi-step tool list), so
 /// later replies only read what follows it. Without this every planner step re-read about four thousand
-/// tokens: 11–16 s per step on a 27B model, against under 2 s with a server's prompt cache.
+/// tokens: 11-16 s per step on a 27B model, against under 2 s with a server's prompt cache.
 ///
 /// Only used inside a model turn (`BuiltInChatModel.turns`), which is why plain mutable state is safe here.
 final class PromptPrefixCache: @unchecked Sendable {

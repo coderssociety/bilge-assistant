@@ -51,7 +51,6 @@ enum BrowserPage {
         return title + String(text.prefix(maxCharacters))
     }
 
-    /// The titles of the front window's tabs, in order.
     static func tabTitles(in bundleIdentifier: String) async throws -> [String] {
         guard let browser = scriptable[bundleIdentifier] else { return [] }
         let property = browser.isSafari ? "name" : "title"

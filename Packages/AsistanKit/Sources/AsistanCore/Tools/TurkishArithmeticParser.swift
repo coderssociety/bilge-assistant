@@ -2,7 +2,7 @@ import Foundation
 
 /// Turns common spoken Turkish arithmetic (already digitized by TurkishNumberParser) into an
 /// expression for ArithmeticEvaluator, and checks that a model-written expression only uses numbers
-/// the user actually said — the model has invented whole calculations for a bare "Evet".
+/// the user actually said. The model has invented whole calculations for a bare "Evet".
 public enum TurkishArithmeticParser {
     private static let number = #"(\d+(?:[.,]\d+)?)"#
     private static let suffix = #"(?:'\p{L}+)?"#

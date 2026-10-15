@@ -89,6 +89,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vrnsoft.asistan
         PRODUCT_NAME: Bilge
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_HARDENED_RUNTIME: YES
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: App/Resources/Asistan.entitlements

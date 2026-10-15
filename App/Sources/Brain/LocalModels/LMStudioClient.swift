@@ -49,7 +49,7 @@ struct LMStudioClient: Sendable {
         throw LocalModelServerError.serverUnavailable("LM Studio")
     }
 
-    /// Starts the server and loads the model when needed (15–30 s for a large model).
+    /// Starts the server and loads the model when needed (15-30 s for a large model).
     /// `loadedByUs` tells the caller whether it should unload the model when switching away.
     func prepare(_ id: String) async throws -> (endpoint: LocalModelEndpoint, loadedByUs: Bool) {
         try await startServerIfNeeded()

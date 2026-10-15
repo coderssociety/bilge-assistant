@@ -102,7 +102,6 @@ enum ToolReply {
         result.hasPrefix(failurePrefix)
     }
 
-    /// Turns a tool result into what the assistant says out loud.
     static func spoken(_ result: String) -> String {
         guard result.hasPrefix(failurePrefix) else { return result }
         return String(localized: "Bunu yapamadım. ") + result.dropFirst(failurePrefix.count)

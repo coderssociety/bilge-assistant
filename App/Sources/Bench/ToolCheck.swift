@@ -289,7 +289,7 @@ enum ToolCheck {
         _ = try? await AppleScriptRunner.run("tell application \"Microsoft Excel\" to close active workbook saving no")
     }
 
-    /// What "bu" refers to, with the screen given rather than read, so the check does not depend on
+    /// What "bu" ("this") refers to, with the screen given rather than read, so the check does not depend on
     /// which app happens to be in front.
     private static func checkContext(_ router: CommandRouter, _ context: ConversationContext, _ report: inout Report) async {
         let document = FileManager.default.temporaryDirectory.appending(path: "bilge-baglam-denemesi.txt")

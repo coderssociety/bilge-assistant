@@ -27,7 +27,7 @@ public struct BargeInDetector: Sendable {
     public func evaluate(heard: String, speaking reply: String) -> Decision {
         let echoWords = Set(TurkishText.folded(reply).split(separator: " ").map(String.init))
         let originalWords = heard.split(whereSeparator: \.isWhitespace).map(String.init)
-        // Drop every word the assistant is saying right now — its own "Tamam" or "Ben Bilge" must
+        // Drop every word the assistant is saying right now; its own "Tamam" or "Ben Bilge" must
         // not cut it off. The user's words that differ from the reply are what remains.
         let remaining = originalWords.filter { word in
             let key = TurkishText.folded(word)

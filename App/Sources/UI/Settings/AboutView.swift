@@ -15,7 +15,8 @@ struct AboutView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(spacing: 10) {
+                Image(nsImage: NSApplication.shared.applicationIconImage).resizable().frame(width: 44, height: 44)
                 Text(AppIdentity.name).font(.title2.bold())
                 Text("Sürüm \(Self.version)").foregroundStyle(.secondary)
             }

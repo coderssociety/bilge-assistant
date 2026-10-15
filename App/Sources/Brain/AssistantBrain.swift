@@ -149,13 +149,13 @@ final class AssistantBrain: CommandHandling {
             continuation.yield(unavailableReason ?? String(localized: "Dil modeli kullanılamıyor."))
             return
         }
-        // "Bilge, dikteyi bitir" said with the wake phrase still controls dictation.
+        // "Bilge, dikteyi bitir" (end dictation) said with the wake phrase still controls dictation.
         if dictation.isActive, DictationCommand.parse(command, language: language) != nil {
             let reply = await dictation.handle(command)
             if !reply.isEmpty { continuation.yield(reply) }
             return
         }
-        // "Bunu Ahmet'e gönder": what was on screen when the command was heard, read only when it points.
+        // "Bunu Ahmet'e gönder" (send this to Ahmet): what was on screen when the command was heard, read only when it points.
         context.screen = ContextIntent.points(command, language: language) ? await ScreenContextReader.snapshot() : nil
         if let parts = CompoundCommand.split(command, language: language) {
             try await handleCompound(command, parts: parts, router: router, continuation: continuation)
