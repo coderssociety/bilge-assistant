@@ -23,6 +23,8 @@ struct MLXModelFolderTests {
             == .missing("tokenizer dosyası yok"))
         #expect(MLXModelFolder.inspect(fileNames: files, config: Data("{}".utf8)) == .missing("config.json'da model_type yok"))
         #expect(MLXModelFolder.inspect(fileNames: files, config: Data("not json".utf8)) == .missing("config.json'da model_type yok"))
+        #expect(MLXModelFolder.inspect(fileNames: files + ["jang_config.json"], config: config)
+            == .missing("JANG biçimi yalnızca vMLX'te çalışır"))
     }
 
     @Test("folder names stay inside the models folder", arguments: [

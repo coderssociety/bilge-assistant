@@ -202,6 +202,21 @@ Listedeki modeller Hugging Face'ten belirli bir sürüme sabitlenerek indirilir,
 doğrulanır. Uzun talimatlar ve araç listesi bir kez okunup saklandığı için çok adımlı işlerde her adım
 birkaç saniye sürer. LM Studio ya da vMLX kullanıyorsan oradaki modelleri de Ayarlar > Model'den seçebilirsin.
 
+### Mac'inde zaten olan modeller
+
+Bilge elindeki MLX modellerini kendisi bulur ve “Bu Mac'teki modeller” başlığı altında, nerede bulduğunu
+yazarak listeler:
+
+- LM Studio'nun model klasörü (`~/.lmstudio/models` ya da taşıdığın yer),
+- mlx-lm gibi araçların indirdiği Hugging Face önbelleği (`~/.cache/huggingface/hub` ya da `HF_HOME` /
+  `HF_HUB_CACHE`),
+- “Klasör ekle…” ile eklediğin her klasör (üç seviye derinliğe kadar).
+
+Bu modeller bulundukları yerden Bilge'nin içinde çalışır: hiçbir şey kopyalanmaz ya da yeniden indirilmez,
+LM Studio'nun açık olması da gerekmez. GGUF modeller yalnızca LM Studio'nun kendisinde çalışır; onlar için
+Ayarlar > Model'de sunucu olarak LM Studio'yu seç. vMLX'in JANG biçimindeki modeller listede görünür ama
+yalnızca vMLX'te çalıştığı belirtilir.
+
 ### Kendi modelin
 
 Listede olmayan bir modeli de kullanabilirsin. Hugging Face'ten MLX biçiminde bir model indir
@@ -212,7 +227,7 @@ Listede olmayan bir modeli de kullanabilirsin. Hugging Face'ten MLX biçiminde b
 ```
 
 Klasörde `config.json`, `tokenizer.json` (ya da `tokenizer.model`) ve `.safetensors` dosyaları olmalı.
-Ayarlar > Model'deki “Klasörü aç” düğmesi bu klasörü Finder'da açar, “Yenile” listeyi günceller. Modeli
+Ayarlar > Model'deki “Bilge'nin klasörünü aç” düğmesi bu klasörü Finder'da açar, “Yenile” listeyi günceller. Modeli
 kopyalamak yerine başka yerdeki klasörüne (örneğin LM Studio'nunkine) bir sembolik bağ da koyabilirsin.
 Bilge'nin MLX sürümünün desteklemediği bir model türü açılamazsa o cevabı Apple modeli verir.
 

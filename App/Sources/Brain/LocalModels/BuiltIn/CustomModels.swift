@@ -9,7 +9,10 @@ enum CustomModels {
         let name: String
         let bytes: Int64
         let status: MLXModelFolder.Status
-        var id: String { name }
+        /// Where a model outside Bilge's own folder was found, and its folder.
+        var source: String?
+        var folder: URL?
+        var id: String { folder.map(ModelLibrary.path(of:)) ?? name }
     }
 
     private static let folderName = "Kendi Modellerim"
@@ -47,17 +50,18 @@ enum CustomModels {
         NSWorkspace.shared.activateFileViewerSelecting([directory])
     }
 
-    private static func inspect(_ folder: URL) -> MLXModelFolder.Status {
+    static func inspect(_ folder: URL) -> MLXModelFolder.Status {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path(percentEncoded: false))) ?? []
         let config = try? Data(contentsOf: folder.appending(path: "config.json"))
         return MLXModelFolder.inspect(fileNames: names, config: config)
     }
 
-    private static func size(of folder: URL) -> Int64 {
+    static func size(of folder: URL) -> Int64 {
         let files = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: [.fileSizeKey])
         var total: Int64 = 0
         while let file = files?.nextObject() as? URL {
-            total += Int64((try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+            // Files in the Hugging Face cache are links to blobs; the size is the blob's.
+            total += Int64((try? file.resolvingSymlinksInPath().resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
         }
         return total
     }

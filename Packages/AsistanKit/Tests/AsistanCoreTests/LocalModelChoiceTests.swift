@@ -8,6 +8,7 @@ struct LocalModelChoiceTests {
         LocalModelChoice(server: .vmlx, modelID: "dealignai/Gemma-4-31B-JANG_4M-Uncensored"),
         LocalModelChoice(server: .builtIn, modelID: "mlx-community/Qwen3.8-27B-4bit"),
         LocalModelChoice(server: .custom, modelID: "Benim Modelim"),
+        LocalModelChoice(server: .folder, modelID: "/Users/ayse/.lmstudio/models/orcarouter/Qwen3.8-27B-Uncensored-MLX"),
     ])
     func roundTrip(choice: LocalModelChoice) {
         #expect(LocalModelChoice(storageKey: choice.storageKey) == choice)
@@ -22,5 +23,11 @@ struct LocalModelChoiceTests {
     @Test("rejects empty or unknown values", arguments: ["", "vmlx:", "ollama:llama3", ":x"])
     func invalid(key: String) {
         #expect(LocalModelChoice(storageKey: key) == nil)
+    }
+
+    @Test("only models Bilge runs itself count as in-app")
+    func inApp() {
+        #expect(LocalModelChoice.Server.folder.isInApp)
+        #expect(!LocalModelChoice.Server.lmStudio.isInApp)
     }
 }

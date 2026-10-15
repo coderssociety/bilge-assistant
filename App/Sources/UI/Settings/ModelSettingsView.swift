@@ -101,7 +101,7 @@ struct ModelSettingsView: View {
             }
         case .vmlx:
             readiness(vmlxRunning.contains(settings.localModel?.modelID ?? ""))
-        case .builtIn, .custom, nil:
+        case .builtIn, .custom, .folder, nil:
             EmptyView()
         }
     }
@@ -117,7 +117,7 @@ struct ModelSettingsView: View {
         return switch choice.server {
         case .lmStudio: lmStudioModels.contains { $0.id == choice.modelID }
         case .vmlx: vmlxModels.contains(choice.modelID)
-        case .builtIn, .custom: true
+        case .builtIn, .custom, .folder: true
         }
     }
 

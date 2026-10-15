@@ -163,7 +163,7 @@ final class LocalModelLifecycle {
             return (endpoint, loadedByUs ? .lmStudioModel(choice.modelID) : nil)
         case .vmlx:
             return (try await VMLXServer.shared.prepare(choice.modelID), .vmlx)
-        case .builtIn, .custom:
+        case .builtIn, .custom, .folder:
             return (try await BuiltInChatModel.load(choice), .builtIn)
         }
     }

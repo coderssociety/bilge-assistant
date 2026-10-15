@@ -7,6 +7,9 @@ public struct LocalModelChoice: Sendable, Hashable {
         case builtIn = "builtin"
         /// An MLX model the user put in Bilge's own models folder; the id is its folder name.
         case custom = "mlx"
+        /// An MLX model found elsewhere on the Mac (LM Studio, the Hugging Face cache, a folder the user added),
+        /// run inside the app from where it is; the id is the model folder's absolute path.
+        case folder
     }
 
     public let server: Server
@@ -34,5 +37,5 @@ public struct LocalModelChoice: Sendable, Hashable {
 
 extension LocalModelChoice.Server {
     /// Runs inside Bilge rather than behind another program's server.
-    public var isInApp: Bool { self == .builtIn || self == .custom }
+    public var isInApp: Bool { self == .builtIn || self == .custom || self == .folder }
 }

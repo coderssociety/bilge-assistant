@@ -6036,6 +6036,166 @@
           }
         }
       }
+    },
+    "config.json yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no config.json"
+          }
+        }
+      }
+    },
+    ".safetensors dosyası yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no .safetensors file"
+          }
+        }
+      }
+    },
+    "tokenizer dosyası yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no tokenizer file"
+          }
+        }
+      }
+    },
+    "config.json'da model_type yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no model_type in config.json"
+          }
+        }
+      }
+    },
+    "JANG biçimi yalnızca vMLX'te çalışır": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the JANG format only runs in vMLX"
+          }
+        }
+      }
+    },
+    "Hugging Face önbelleği": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hugging Face cache"
+          }
+        }
+      }
+    },
+    "Ekle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
+    "MLX modellerinin bulunduğu klasörü seç.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a folder that contains MLX models."
+          }
+        }
+      }
+    },
+    "Bu Mac'te MLX modeli bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No MLX models found on this Mac."
+          }
+        }
+      }
+    },
+    "Bu Mac'teki modeller": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Models on this Mac"
+          }
+        }
+      }
+    },
+    "Klasör ekle…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Folder…"
+          }
+        }
+      }
+    },
+    "LM Studio'nun, Hugging Face önbelleğinin ve eklediğin klasörlerin içindeki MLX modelleri. Kopyalanmaz, bulundukları yerden uygulamanın içinde çalışır; LM Studio'nun açık olması gerekmez. GGUF modeller burada görünmez. Desteklenmeyen bir model türü açılamazsa cevabı Apple modeli verir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MLX models in LM Studio, the Hugging Face cache and folders you added. They aren't copied: they run inside the app from where they are, and LM Studio doesn't need to be open. GGUF models aren't shown here. If a model type isn't supported, Apple's model answers instead."
+          }
+        }
+      }
+    },
+    "Kaldır": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "Bir modeli Bilge'nin kendi klasörüne de koyabilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can also put a model in Bilge's own folder."
+          }
+        }
+      }
+    },
+    "Bilge'nin klasörünü aç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Bilge's Folder"
+          }
+        }
+      }
+    },
+    "%@ · tür: %@%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · type: %2$@%3$@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

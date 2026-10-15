@@ -53,6 +53,8 @@ struct BuiltInChatModel: LoadedChatModel {
             return try ModelDownloads.folder(for: model)
         case .custom:
             return try CustomModels.folder(named: choice.modelID)
+        case .folder:
+            return try ModelLibrary.folder(path: choice.modelID)
         case .lmStudio, .vmlx:
             throw LocalModelServerError.loadFailed(choice.modelID)
         }

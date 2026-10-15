@@ -8,6 +8,8 @@ struct ModelChoiceList: View {
     let downloads: ModelDownloads
     let brain: AssistantBrain
     @State private var customModels: [CustomModels.Model] = []
+    @State private var foundModels: [CustomModels.Model] = []
+    @State private var searchFolders: [URL] = []
 
     private let physicalMemory = ProcessInfo.processInfo.physicalMemory
 
@@ -26,12 +28,17 @@ struct ModelChoiceList: View {
                     cancel: { downloads.cancel(model) },
                     delete: { delete(model) })
             }
-            CustomModelsHeader(refresh: refreshCustomModels)
+            LocalModelsHeader(refresh: refreshCustomModels, addFolder: addFolder)
             ForEach(customModels) { model in
-                let choice = LocalModelChoice(server: .custom, modelID: model.name)
-                CustomModelRow(model: model, isSelected: settings.localModelID == choice.storageKey,
-                               tooLarge: UInt64(max(model.bytes, 0)) > physicalMemory / 4 * 3) { use(choice) }
+                row(for: model, choice: LocalModelChoice(server: .custom, modelID: model.name))
             }
+            ForEach(foundModels) { model in
+                row(for: model, choice: LocalModelChoice(server: .folder, modelID: model.id))
+            }
+            if customModels.isEmpty, foundModels.isEmpty {
+                Text("Bu Mac'te MLX modeli bulunamadı.").font(.caption).foregroundStyle(.secondary)
+            }
+            SearchFoldersFooter(folders: searchFolders, remove: removeFolder)
         }
         .task { refreshCustomModels() }
     }
@@ -40,8 +47,24 @@ struct ModelChoiceList: View {
         LocalModelChoice(server: .builtIn, modelID: model.id)
     }
 
+    private func row(for model: CustomModels.Model, choice: LocalModelChoice) -> some View {
+        CustomModelRow(model: model, isSelected: settings.localModelID == choice.storageKey,
+                       tooLarge: UInt64(max(model.bytes, 0)) > physicalMemory / 4 * 3) { use(choice) }
+    }
+
     private func refreshCustomModels() {
         customModels = CustomModels.scan()
+        foundModels = ModelLibrary.scan()
+        searchFolders = ModelLibrary.userFolders
+    }
+
+    private func addFolder() {
+        if ModelLibrary.addFolder() { refreshCustomModels() }
+    }
+
+    private func removeFolder(_ folder: URL) {
+        ModelLibrary.removeFolder(folder)
+        refreshCustomModels()
     }
 
     /// A model still downloading can be chosen: Apple's model answers until it is in place.
@@ -154,22 +177,48 @@ private struct DownloadableModelRow: View {
     }
 }
 
-private struct CustomModelsHeader: View {
+private struct LocalModelsHeader: View {
     let refresh: () -> Void
+    let addFolder: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("Kendi modellerin").font(.headline)
+                Text("Bu Mac'teki modeller").font(.headline)
                 Spacer()
                 Button("Yenile", action: refresh)
-                Button("Klasörü aç") { CustomModels.revealInFinder() }
+                Button("Klasör ekle…", action: addFolder)
             }
-            Text("Hugging Face'ten MLX biçiminde bir model indir (örneğin mlx-community'den) ve klasörünü buraya koy. Klasörde config.json, tokenizer ve .safetensors dosyaları olmalı. Desteklenmeyen bir model türü açılamazsa cevabı Apple modeli verir.")
+            Text("LM Studio'nun, Hugging Face önbelleğinin ve eklediğin klasörlerin içindeki MLX modelleri. Kopyalanmaz, bulundukları yerden uygulamanın içinde çalışır; LM Studio'nun açık olması gerekmez. GGUF modeller burada görünmez. Desteklenmeyen bir model türü açılamazsa cevabı Apple modeli verir.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, 6)
+    }
+}
+
+private struct SearchFoldersFooter: View {
+    let folders: [URL]
+    let remove: (URL) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(folders, id: \.self) { folder in
+                HStack {
+                    Label(folder.path(percentEncoded: false), systemImage: "folder")
+                        .lineLimit(1).truncationMode(.middle)
+                    Spacer()
+                    Button("Kaldır") { remove(folder) }
+                }
+                .font(.caption)
+            }
+            HStack {
+                Text("Bir modeli Bilge'nin kendi klasörüne de koyabilirsin.")
+                Spacer()
+                Button("Bilge'nin klasörünü aç") { CustomModels.revealInFinder() }
+            }
+            .font(.caption).foregroundStyle(.secondary)
+        }
     }
 }
 
@@ -189,14 +238,14 @@ private struct CustomModelRow: View {
                 Text(model.name).font(.headline)
                 switch model.status {
                 case let .ready(modelType):
-                    Text("\(model.bytes.formatted(.byteCount(style: .file))) · tür: \(modelType)")
+                    Text("\(model.bytes.formatted(.byteCount(style: .file))) · tür: \(modelType)\(model.source.map { " · \($0)" } ?? "")")
                         .font(.caption).foregroundStyle(.secondary)
                     if tooLarge {
                         Label("Bu Mac'in belleği için büyük olabilir.", systemImage: "memorychip")
                             .font(.caption).foregroundStyle(.orange)
                     }
                 case let .missing(reason):
-                    Label("Kullanılamıyor: \(reason).", systemImage: "exclamationmark.triangle")
+                    Label("Kullanılamıyor: \(String(localized: String.LocalizationValue(reason))).", systemImage: "exclamationmark.triangle")
                         .font(.caption).foregroundStyle(.orange)
                 }
             }

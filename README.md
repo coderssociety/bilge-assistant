@@ -209,6 +209,20 @@ Listed models are downloaded from Hugging Face pinned to an exact revision, and 
 against their SHA-256. Long instructions and the tool list are read once and kept, so each step of a
 multi-step task takes a few seconds. If you use LM Studio or vMLX, you can pick their models in Settings > Model too.
 
+### Models already on your Mac
+
+Bilge looks for MLX models you already have and lists them under “Models on this Mac”, with where each
+was found:
+
+- LM Studio's models folder (`~/.lmstudio/models`, or wherever you moved it),
+- the Hugging Face cache (`~/.cache/huggingface/hub`, or `HF_HOME` / `HF_HUB_CACHE`), where mlx-lm and
+  similar tools download,
+- any folder you add with “Add Folder…” (searched three levels deep).
+
+These models run inside Bilge from where they are: nothing is copied or downloaded again, and LM Studio
+doesn't need to be open. GGUF models only run in LM Studio itself; for those, pick LM Studio as the server
+in Settings > Model. Models in vMLX's JANG format are listed but marked as vMLX-only.
+
 ### Your own model
 
 You can use a model that isn't on the list. Download an MLX model from Hugging Face (for example from
@@ -219,7 +233,7 @@ You can use a model that isn't on the list. Download an MLX model from Hugging F
 ```
 
 The folder needs `config.json`, `tokenizer.json` (or `tokenizer.model`) and the `.safetensors` files.
-“Open Folder” in Settings > Model opens this folder in Finder and “Refresh” updates the list. Instead of
+“Open Bilge's Folder” in Settings > Model opens this folder in Finder and “Refresh” updates the list. Instead of
 copying a model you can also put a symbolic link to its folder elsewhere (LM Studio's, for instance). If
 Bilge's MLX version can't open a model type, Apple's model answers instead.
 
