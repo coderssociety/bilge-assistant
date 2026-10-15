@@ -1,66 +1,204 @@
-# Bilge
+<p align="center">
+  <img src="docs/images/logo.svg" width="128" height="128" alt="Bilge logosu">
+</p>
 
-Mac için tamamen yerel çalışan Türkçe sesli asistan. “Bilge” dediğinde uyanır, komutunu anlar,
-Mac'te işi yapar ve Türkçe sesle cevap verir. Sesin ve komutların Mac'inden dışarı çıkmaz; internet
-yalnızca hava durumu, döviz, haber gibi veriler ve modellerin ilk indirmesi için kullanılır.
+<h1 align="center">Bilge</h1>
+
+<p align="center">
+  Mac için Türkçe sesli asistan. Tamamen yerel çalışır: sesin ve komutların Mac'inden dışarı çıkmaz.
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
+  <img src="https://img.shields.io/badge/macOS-27%2B-black?logo=apple" alt="macOS 27+">
+  <img src="https://img.shields.io/badge/Apple%20Silicon-gerekli-555" alt="Apple Silicon gerekli">
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
+</p>
+
+<p align="center">
+  <img src="docs/images/hud-confirm.png" width="760" alt="Bilge takvime etkinlik eklemeden önce onay istiyor">
+</p>
+
+“Bilge” dediğinde uyanır, ne istediğini anlar, işi Mac'te yapar ve sesle cevap verir. Konuşma tanıma,
+dil modelleri ve ses üretimi Mac'te çalışır; bulut hizmeti, hesap ya da abonelik yoktur. İnternet yalnızca
+hava durumu, döviz, haber gibi istediğin veriler ve modellerin ilk indirmesi için kullanılır.
 
 *A fully local Turkish voice assistant for macOS. Speech recognition, language models and speech
 synthesis all run on the Mac.*
 
+## İçindekiler
+
+- [Neler yapar](#neler-yapar)
+- [Ekran görüntüleri](#ekran-görüntüleri)
+- [Nasıl çalışır](#nasıl-çalışır)
+- [Kurulum](#kurulum)
+- [Kullanım](#kullanım)
+- [Modeller](#modeller)
+- [Gizlilik](#gizlilik)
+- [Sorun giderme](#sorun-giderme)
+- [Kaynaktan derleme](#kaynaktan-derleme)
+- [Lisans ve teşekkür](#lisans-ve-teşekkür)
+
 ## Neler yapar
 
-- **Mac komutları:** uygulama açma/kapatma, ses düzeyi, müzik, ekran görüntüsü, Wi-Fi, karanlık mod,
-  Kestirmeler, dosya bulma ve açma, Çöp Kutusu'na taşıma.
-- **Takvim ve anımsatıcılar:** sorma, ekleme, tamamlama; yaklaşan etkinlikleri kendiliğinden hatırlatma.
-- **İletişim:** kişi bulma, Mail ve Mesajlar ile gönderme (gönderme her zaman açık bir “evet” ister).
-- **Excel:** “D3'e B2 ile B1'i topla”, “B sütununun toplamı kaç”, “geri al”.
-- **Bağlam:** seçili metin, Finder'da seçili dosya ya da açık sayfa için “bunu özetle”, “bunu Ahmet'e gönder”.
-- **Tarayıcı:** sekmeler arasında geçme, geri/ileri, kaydırma, sayfada arama.
-- **Dikte:** öndeki uygulamaya sesle yazma; “virgül”, “yeni satır”, “son cümleyi sil”.
-- **Günlük özet:** hava, bugünkü etkinlikler, anımsatıcılar, okunmamış e-postalar.
-- **Hafıza:** “bunu hatırla”, “unut”; hatırladıklarını Ayarlar'da görürsün.
-- **Ses kimliği:** sesini tanıtırsan yalnızca senin komutlarına ve onaylarına uyar.
+| | |
+|---|---|
+| **Mac komutları** | Uygulama açma ve kapatma, ses düzeyi, müzik, ekran görüntüsü, Wi-Fi, karanlık mod, Kestirmeler, dosya bulma ve açma, Çöp Kutusu'na taşıma |
+| **Takvim ve anımsatıcılar** | Sorma, ekleme, tamamlama; yaklaşan toplantıyı ve vakti gelen anımsatıcıyı kendiliğinden söyler |
+| **İletişim** | Kişi bulma, Mail ve Mesajlar ile gönderme. Gönderme her zaman açık bir “evet” ister |
+| **Excel** | “D3'e B2 ile B1'i topla”, “B sütununun toplamı kaç”, “geri al” |
+| **Bağlam** | Seçili metin, Finder'da seçili dosya ya da açık sayfa için “bunu özetle”, “bunu Ahmet'e gönder” |
+| **Tarayıcı** | Sekmeler arasında geçme, geri ve ileri, kaydırma, sayfada arama |
+| **Dikte** | Öndeki uygulamaya sesle yazma; “virgül”, “yeni satır”, “son cümleyi sil” |
+| **Günlük özet** | “Günaydın” dediğinde hava, bugünkü etkinlikler, anımsatıcılar ve okunmamış e-postalar |
+| **Hafıza** | “Şunu hatırla: …”, “bunu unut”. Hatırladıklarını Ayarlar'da görür ve silebilirsin |
+| **Ses kimliği** | Sesini tanıtırsan yalnızca senin komutlarına ve onaylarına uyar |
 
-Silme, gönderme ve ekleme gibi geri alınamayan işlerde her zaman önce sesli onay ister.
+Silme, gönderme ve ekleme gibi geri alınamayan işlerde önce sesli onay ister. Bilge konuşurken
+“Bilge, dur” diyerek sözünü kesebilirsin.
 
-## Gereksinimler
+## Ekran görüntüleri
 
-- Apple Silicon Mac, **macOS 27** veya üstü.
-- **Apple Intelligence açık olmalı.** Komutları Apple'ın cihaz içi dil modeli anlar; bu model
-  olmadan Bilge çalışmaz.
-- İlk kurulumda ses modelleri için küçük bir indirme (Whisper tanımayı seçersen ayrıca 1,5 GB).
-  İsteğe bağlı sohbet modeli için 16–19 GB indirme ve en az 32 GB bellek.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/onboarding.png" alt="Kurulum sihirbazı"></td>
+    <td width="50%"><img src="docs/images/settings-model.png" alt="Model ayarları"></td>
+  </tr>
+  <tr>
+    <td align="center">Kurulum sihirbazı izinleri ister, ses modellerini hazırlar.</td>
+    <td align="center">Sohbet modelini seç, indir ya da kendi MLX modelini ekle.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/settings-general.png" alt="Genel ayarlar"></td>
+    <td width="50%"><img src="docs/images/hud-answer.png" alt="Bilge Excel sorusuna cevap veriyor"></td>
+  </tr>
+  <tr>
+    <td align="center">Uyandırma kelimesi, hassasiyet ve hatırlatmalar.</td>
+    <td align="center">Ekranın üstündeki durum paneli ne duyduğunu ve ne cevap verdiğini gösterir.</td>
+  </tr>
+</table>
+
+## Nasıl çalışır
+
+<p align="center">
+  <img src="docs/images/how-it-works.svg" width="860" alt="Mikrofondan sesli yanıta Bilge'nin işleyişi">
+</p>
+
+1. Mikrofon açıktır ama ses yalnızca bellekte, kısa parçalar halinde işlenir. Konuşma yoksa hiçbir şey yapılmaz.
+2. Konuşmanın başında “Bilge” geçmiyorsa söylenen atılır.
+3. Komut yazıya çevrilir (Apple Dikte ya da Whisper) ve Apple'ın cihaz içi modeli hangi aracın çağrılacağına
+   karar verir. Sohbet ve genel bilgi sorularını istersen indirdiğin daha büyük bir model cevaplar.
+4. Araç işi yapar. Riskli bir işse önce sorar, “evet” demeden yapmaz.
+5. Cevap Supertonic-3 ile Mac'te seslendirilir.
 
 ## Kurulum
 
-1. [Releases](../../releases) sayfasından son `Bilge-<sürüm>.dmg` dosyasını indir, Bilge'yi
-   Uygulamalar klasörüne sürükle.
-2. Açınca kurulum sihirbazı gereken izinleri (mikrofon, konuşma tanıma, Erişilebilirlik ve
-   istersen takvim, kişiler) ister, ses modellerini hazırlar ve sohbet modelini seçtirir.
+**Gerekenler**
+
+- Apple Silicon Mac, **macOS 27** ya da üstü.
+- **Apple Intelligence açık olmalı.** Komutları Apple'ın cihaz içi dil modeli anlar; bu model olmadan Bilge çalışmaz.
+- İlk kurulumda ses modelleri için küçük bir indirme (Whisper tanımayı seçersen ayrıca 1,5 GB).
+  İsteğe bağlı sohbet modeli için 16-19 GB indirme ve en az 32 GB bellek.
+
+**Adımlar**
+
+1. [Releases](../../releases) sayfasından son `Bilge-<sürüm>.dmg` dosyasını indir, Bilge'yi Uygulamalar klasörüne sürükle.
+2. Bilge'yi aç. Kurulum sihirbazı gereken izinleri (mikrofon, konuşma tanıma, Erişilebilirlik; istersen takvim
+   ve kişiler) ister, ses modellerini hazırlar ve sohbet modelini seçtirir.
 3. “Bilge, saat kaç?” diyerek dene.
 
 > Sürümler henüz Apple tarafından onaylanmış (notarize) değil. İlk açılışta macOS uyarı verirse
-> Sistem Ayarları > Gizlilik ve Güvenlik'te “Yine de Aç”a bas. İstersen kaynaktan kendin derleyebilirsin.
+> Sistem Ayarları > Gizlilik ve Güvenlik'te “Yine de Aç”a bas ya da kaynaktan kendin derle.
 
-Bilge menü çubuğunda çalışır; Dock'ta simgesi görünmez.
+Bilge menü çubuğunda çalışır, Dock'ta simgesi görünmez. Ayarlar'a ve kurulum rehberine menü çubuğundaki
+simgeden ulaşırsın.
+
+## Kullanım
+
+Her komutu “Bilge” ile başlat: “Bilge, Safari'yi aç”. Bilge cevap verdikten sonra birkaç saniye daha dinler;
+bu sırada devam sorusunu “Bilge” demeden sorabilirsin.
+
+<details>
+<summary><b>Mac ve uygulamalar</b></summary>
+
+- Safari'yi aç / Spotify'ı kapat / Hangi uygulamalar açık
+- Sesi yüzde otuz yap / Müziği durdur / Sonraki şarkı
+- Ekranı kilitle / Karanlık modu aç / Pil durumu nedir
+- Masaüstündeki fatura dosyasını bul
+- Sabah rutini kestirmesini çalıştır
+</details>
+
+<details>
+<summary><b>Takvim, anımsatıcı, zamanlayıcı</b></summary>
+
+- Bugün kaç toplantım var
+- Yarın saat onda diş hekimi randevusu ekle
+- Ekmek almayı anımsatıcılarıma ekle
+- On dakikalık zamanlayıcı kur
+</details>
+
+<details>
+<summary><b>Excel</b></summary>
+
+Excel'de bir çalışma kitabı açıkken:
+
+- D3'e B2 ile B1'i topla
+- C5'e 1250 yaz
+- B sütununun toplamı kaç
+- Geri al
+</details>
+
+<details>
+<summary><b>Seçili metin, dosya ya da sayfa</b></summary>
+
+- (Bir metni seçip) Bunu özetle
+- (Finder'da bir dosya seçip) Bunu Ahmet'e gönder
+- Ekranda ne yazıyor
+</details>
+
+<details>
+<summary><b>Tarayıcı ve web</b></summary>
+
+- YouTube sekmesine geç
+- Bu sayfada fiyat kelimesini ara
+- YouTube'da kedi videoları ara
+- Bugün hava nasıl / Dolar kaç / Haberleri oku
+</details>
+
+<details>
+<summary><b>Dikte</b></summary>
+
+- Dikteye başla, ardından konuş. “Virgül”, “nokta”, “yeni satır”, “son cümleyi sil” komut olarak işlenir.
+- Dikteyi bitir
+</details>
+
+<details>
+<summary><b>Hafıza</b></summary>
+
+- Şunu hatırla: kahvemi şekersiz içerim
+- Kahveyle ilgili bilgiyi unut
+</details>
 
 ## Modeller
 
-Komutları **her zaman** Apple'ın cihaz içi modeli yönlendirir: hızlıdır ve testlerde komutların
-hepsini doğru araca gönderdi. Sohbet, genel bilgi soruları ve ekran özetleri için istersen daha
-bilgili bir model indirebilirsin. Bilge bu modeli **kendi içinde, MLX ile** çalıştırır; LM Studio
-gibi ayrı bir program gerekmez. Model “Bilge” dediğinde yüklenir, konuşma bitince bellekten çıkar
-(bu süre ayarlanabilir).
+Komutları **her zaman** Apple'ın cihaz içi modeli yönlendirir: hızlıdır ve testlerde komutların hepsini
+doğru araca gönderdi. Sohbet, genel bilgi soruları ve ekran özetleri için istersen daha bilgili bir model
+indirebilirsin. Bilge bu modeli **kendi içinde, MLX ile** çalıştırır; LM Studio gibi ayrı bir program
+gerekmez. Model “Bilge” dediğinde yüklenir, konuşma bitince bellekten çıkar (bu süre ayarlanabilir).
 
 | Seçenek | İndirme | En az bellek | Not |
 |---|---|---|---|
-| Apple cihaz içi model | yok | – | Bütün komutlar, kısa sohbet. Genel bilgide daha sık yanılır, birbirine bağlı çok adımlı işleri planlayamaz. |
+| Apple cihaz içi model | yok | - | Bütün komutlar, kısa sohbet. Genel bilgide daha sık yanılır, birbirine bağlı çok adımlı işleri planlayamaz. |
 | Qwen3.6 27B (4-bit) | 16,1 GB | 32 GB | Qwen 3.8'in bir önceki sürümü. |
 | Qwen3.8 27B (4-bit) | 16,1 GB | 32 GB | 20 Türkçe genel bilgi sorusunun 19'unu bildi (aynı konuşma içinde 20/20); ilk kelime ~2,2 sn. |
 | Gemma 4 31B (4-bit) | 18,4 GB | 32 GB | Aynı testte 19/20 (vMLX ile ölçüldü); ilk kelimeye çabuk başlar. |
 
-Ölçümler M5 Pro, 48 GB bellekte yapıldı. Qwen3.8 ölçümü aynı modelin bir topluluk türeviyle
-Bilge'nin içinde, Gemma ölçümü başka bir 4-bit sürümüyle vMLX'te yapıldı. Apple modeli aynı testte 14/20 bildi.
+Ölçümler M5 Pro, 48 GB bellekte yapıldı. Qwen3.8 ölçümü aynı modelin bir topluluk türeviyle Bilge'nin
+içinde, Gemma ölçümü başka bir 4-bit sürümüyle vMLX'te yapıldı. Apple modeli aynı testte 14/20 bildi.
+
+Listedeki modeller Hugging Face'ten belirli bir sürüme sabitlenerek indirilir, büyük dosyalar SHA-256 ile
+doğrulanır. Uzun talimatlar ve araç listesi bir kez okunup saklandığı için çok adımlı işlerde her adım
+birkaç saniye sürer. LM Studio ya da vMLX kullanıyorsan oradaki modelleri de Ayarlar > Model'den seçebilirsin.
 
 ### Kendi modelin
 
@@ -71,24 +209,34 @@ Listede olmayan bir modeli de kullanabilirsin. Hugging Face'ten MLX biçiminde b
 ~/Library/Application Support/Asistan/Models/Kendi Modellerim/<model adı>/
 ```
 
-Klasörde `config.json`, `tokenizer.json` (ya da `tokenizer.model`) ve `.safetensors` dosyaları
-olmalı. Ayarlar > Model'deki “Klasörü aç” düğmesi bu klasörü Finder'da açar, “Yenile” listeyi
-günceller. Modeli kopyalamak yerine başka yerdeki klasörüne (örneğin LM Studio'nunkine) bir
-kısayol (sembolik bağ) da koyabilirsin. Bilge'nin MLX sürümünün desteklemediği bir model türü
-açılamazsa o cevabı Apple modeli verir.
-
-Listedeki modeller Hugging Face'ten, belirli bir sürüme sabitlenerek indirilir ve büyük dosyalar
-SHA-256 ile doğrulanır. Uzun talimatlar ve araç listesi bir kez okunup saklandığı için çok adımlı
-işlerde her adım birkaç saniye sürer. LM Studio ya da vMLX kullanıyorsan oradaki modelleri de Ayarlar > Model'den seçebilirsin.
+Klasörde `config.json`, `tokenizer.json` (ya da `tokenizer.model`) ve `.safetensors` dosyaları olmalı.
+Ayarlar > Model'deki “Klasörü aç” düğmesi bu klasörü Finder'da açar, “Yenile” listeyi günceller. Modeli
+kopyalamak yerine başka yerdeki klasörüne (örneğin LM Studio'nunkine) bir sembolik bağ da koyabilirsin.
+Bilge'nin MLX sürümünün desteklemediği bir model türü açılamazsa o cevabı Apple modeli verir.
 
 ## Gizlilik
 
 - Ses kaydı saklanmaz. Uyandırma kelimesinden öncesi dinlenmez.
 - Konuşma tanıma, dil modelleri ve ses üretimi Mac'te çalışır.
-- Ağ bağlantıları yalnızca istediğin veriler (hava durumu, döviz, haber, web sayfası) ve model
-  indirmeleri içindir. Web sayfası okurken yerel ağ adreslerine erişim engellenir.
+- Ağ bağlantıları yalnızca istediğin veriler (hava durumu, döviz, haber, web sayfası) ve model indirmeleri
+  içindir. Web sayfası okurken yerel ağ adreslerine erişim engellenir.
 - Hafıza, ses kimliği ve işlem kaydı `~/Library/Application Support/Asistan` altında, yalnızca senin
   okuyabileceğin dosyalarda durur.
+
+## Sorun giderme
+
+**“Bilge” dediğimde uyanmıyor.** Ayarlar > Genel'de hassasiyeti “Esnek”e doğru kaydır. Ayarlar > Tanıma'dan
+konuşma tanıma motorunu değiştirmeyi de dene.
+
+**Kendi kendine uyanıyor.** Hassasiyeti “Katı”ya doğru kaydır ya da Ayarlar > Tanıma > Ses kimliği'nden
+sesini tanıt; o zaman yalnızca senin sesine cevap verir.
+
+**“Dil modeli henüz hazır değil” diyor.** Sistem Ayarları > Apple Intelligence ve Siri'den Apple
+Intelligence'ı aç ve modelin inmesini bekle.
+
+**Bir uygulamayı kontrol edemiyor.** Sistem Ayarları > Gizlilik ve Güvenlik altında Erişilebilirlik ve
+Otomasyon'da Bilge'ye izin verildiğini kontrol et. İzinlerin durumunu Bilge'nin Ayarlar > İzinler sekmesinde
+de görebilirsin.
 
 ## Kaynaktan derleme
 
@@ -117,10 +265,21 @@ scripts/release.sh
 ```
 
 Developer ID sertifikası varsa uygulama dağıtım için imzalanır; `NOTARY_PROFILE` ortam değişkeni
-`xcrun notarytool store-credentials` ile kaydedilmiş bir profili gösteriyorsa Apple onayından da
-geçirilir. Sertifika yoksa DMG yalnızca geliştirme imzalıdır.
+`xcrun notarytool store-credentials` ile kaydedilmiş bir profili gösteriyorsa Apple onayından da geçirilir.
+Sertifika yoksa DMG yalnızca geliştirme imzalıdır.
 
-## Lisans
+**Proje yapısı**
+
+| Klasör | İçerik |
+|---|---|
+| `App/Sources/Assistant` | Dinleme döngüsü, uyandırma, onay ve araya girme |
+| `App/Sources/Brain` | Komut yönlendirme, sohbet, çok adımlı işler, yerel modeller (MLX) |
+| `App/Sources/Tools` | Mac'te iş yapan araçlar (takvim, Excel, tarayıcı, dosyalar…) |
+| `App/Sources/UI` | Menü çubuğu, durum paneli, ayarlar, kurulum sihirbazı |
+| `Packages/AsistanKit` | Arayüzden bağımsız, testli çekirdek: Türkçe ayrıştırıcılar, sayı okuma, uyandırma eşleme |
+| `Bench` | Konuşma tanıma, komut yönlendirme ve uçtan uca ölçüm setleri |
+
+## Lisans ve teşekkür
 
 Bilge [GNU GPL 3.0](LICENSE) ile dağıtılır. Kullandığı açık kaynak bileşenler ve modeller,
 lisanslarıyla birlikte [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) dosyasında listelenir;
