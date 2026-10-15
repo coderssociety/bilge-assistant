@@ -52,8 +52,8 @@ targets:
       path: App/Resources/Info.plist
       properties:
         CFBundleDisplayName: Bilge
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "0.2.0"
+        CFBundleVersion: "2"
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.productivity
         NSMicrophoneUsageDescription: Bilge, uyandırma kelimesini ve komutlarını duymak için mikrofonu kullanır. Ses kaydı saklanmaz ve Mac'inden dışarı çıkmaz.
