@@ -1,7 +1,7 @@
 import AsistanCore
 import Foundation
 
-/// "Yalnızca benim sesime yanıt ver": checks that a command was spoken by the enrolled voice.
+/// "Yalnızca benim sesime yanıt ver" (only answer my voice): checks that a command was spoken by the enrolled voice.
 /// Off until a voice is enrolled and the user turns it on.
 @MainActor
 final class SpeakerGate {

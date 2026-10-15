@@ -56,7 +56,7 @@ final class AssistantSettings {
     /// Speak upcoming calendar events and reminders that come due, while listening is on.
     var proactiveAlertsEnabled: Bool { didSet { defaults.set(proactiveAlertsEnabled, forKey: Key.proactiveAlertsEnabled) } }
     var eventAlertLeadMinutes: Int { didSet { defaults.set(eventAlertLeadMinutes, forKey: Key.eventAlertLeadMinutes) } }
-    /// The first "günaydın" of the day is answered with the day's summary.
+    /// The first "günaydın" (good morning) of the day is answered with the day's summary.
     var morningBriefingEnabled: Bool { didSet { defaults.set(morningBriefingEnabled, forKey: Key.morningBriefingEnabled) } }
     /// Only the enrolled voice can give commands and answer confirmations.
     var speakerCheckEnabled: Bool { didSet { defaults.set(speakerCheckEnabled, forKey: Key.speakerCheckEnabled) } }

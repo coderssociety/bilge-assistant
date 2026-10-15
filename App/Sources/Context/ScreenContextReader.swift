@@ -1,7 +1,7 @@
 import AppKit
 import AsistanCore
 
-/// Reads what is on screen when a command points at something ("bunu Ahmet'e gönder"): the selection
+/// Reads what is on screen when a command points at something ("bunu Ahmet'e gönder", send this to Ahmet): the selection
 /// in the front app, files selected in Finder, the browser page, the document in the front window.
 /// Nothing is read for other commands.
 @MainActor

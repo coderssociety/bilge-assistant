@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Everything the assistant did, refused or was told not to do — read from the local audit log.
+/// Everything the assistant did, refused or was told not to do, read from the local audit log.
 struct HistoryView: View {
     private static let maxEntries = 200
     @State private var entries: [ActionAuditLog.Entry] = []

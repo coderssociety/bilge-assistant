@@ -20,8 +20,8 @@ final class CommandRouter {
     }
 
     nonisolated static let conversationAction = "conversation"
-    /// Chosen by `MemoryIntent` only. Offering them to the model risked "…hatırlat" reminders being
-    /// stored as memories, since "hatırla" and "hatırlat" differ by one letter.
+    /// Chosen by `MemoryIntent` only. Offering them to the model risked "…hatırlat" (remind) reminders being
+    /// stored as memories, since "hatırla" (remember) and "hatırlat" differ by one letter.
     private static let ruleRoutedActions: [MemoryIntent: String] = [.remember: "remember", .forget: "forget", .list: "listMemories"]
     private static let actionProperty = "action"
 
@@ -67,7 +67,7 @@ final class CommandRouter {
         }
         if let intent = MemoryIntent.parse(command), let tool = Self.ruleRoutedActions[intent].flatMap({ tools[$0] }) {
             Log.brain.info("Memory request: \(tool.name, privacy: .public)")
-            // The spoken words are kept as said: digitizing would turn "sabah yedide" into "07:00".
+            // The spoken words are kept as said: digitizing would turn "sabah yedide" (at seven in the morning) into "07:00".
             return try await prepare(tool, prompt: Self.prompt(command, previous: previous), resolvedCommand: command)
         }
         let resolved = TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(command))

@@ -2,9 +2,10 @@ import AsistanCore
 import Foundation
 import FoundationModels
 
-/// Carries out a request that needs several tools ("yarın 3'te toplantı ekle ve Ahmet'e haber ver")
-/// with the large local model choosing one tool call at a time. Every call goes through the same
-/// preparation, confirmation and audit as a single command; the model never acts directly.
+/// Carries out a request that needs several tools ("yarın 3'te toplantı ekle ve Ahmet'e haber ver",
+/// add a meeting at 3 tomorrow and tell Ahmet) with the large local model choosing one tool call at a
+/// time. Every call goes through the same preparation, confirmation and audit as a single command; the
+/// model never acts directly.
 @MainActor
 struct MultiStepAgent {
     static let maxSteps = 8
@@ -15,7 +16,8 @@ struct MultiStepAgent {
     /// which could carry injected instructions.
     private static let caution = "Dikkat, bu adım okuduğum bir içeriğe dayanıyor."
 
-    // Once text someone else may have written enters the plan, it is treated as possibly hostile:
+    // Once text someone else may have written enters the plan, it is treated as possibly hostile.
+    // From then on, tools that are neither refused nor free (below) need a spoken yes, even normally safe ones.
     /// Tools whose results contain such text, besides those answered by a language model.
     private static let untrustedOutputTools: Set<String> = [
         "readClipboard", "readCalendar", "readReminders", "files", "findContact", "listShortcuts", "listRunningApps",
@@ -31,7 +33,6 @@ struct MultiStepAgent {
         "readDocument", "readNotes", "readScreen", "readSelection", "readClipboard", "readCalendar", "readReminders",
         "findContact", "readMail", "listShortcuts", "listRunningApps", "listMemories",
     ]
-    /// Everything else then needs a spoken yes, even if it is normally safe.
 
     struct Outcome {
         let summary: String
@@ -123,12 +124,12 @@ struct MultiStepAgent {
 
     private static let openVerbs: Set<String> = ["ac", "acar", "goster", "baslat", "getir"]
 
-    /// Actions whose result only confirms they were done. Others report something ("dosya bulunamadı",
-    /// "iptal edilecek zamanlayıcı yoktu") without marking it a failure, so the model must see it.
+    /// Actions whose result only confirms they were done. Others report something ("dosya bulunamadı", file not found;
+    /// "iptal edilecek zamanlayıcı yoktu", no timer to cancel) without marking it a failure, so the model must see it.
     private static let finishableTools: Set<String> = ["copyToClipboard", "createNote", "createFolder", "setVolume", "setTimer"]
 
     /// A closing message written before the step ran may be spoken only for those actions, and only when
-    /// they ran without asking: a confirmed step may have been declined ("Tamam, yapmadım" is no failure).
+    /// they ran without asking: a confirmed step may have been declined ("Tamam, yapmadım", OK, I didn't, is no failure).
     private static func canFinish(with call: PreparedToolCall, result: String) -> Bool {
         finishableTools.contains(call.toolName) && call.risk == .safe && !ToolReply.isFailure(result)
     }

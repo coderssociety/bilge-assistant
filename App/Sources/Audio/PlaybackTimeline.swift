@@ -1,6 +1,6 @@
 import Synchronization
 
-/// What the speaker played, at 16 kHz, keyed by host time — the echo-cancellation reference.
+/// What the speaker played, at 16 kHz, keyed by host time; the echo-cancellation reference.
 /// Written from the player's render tap thread, read from the microphone pipeline.
 final class PlaybackTimeline: Sendable {
     static let sampleRate = 16_000.0

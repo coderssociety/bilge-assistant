@@ -15,7 +15,7 @@ enum LocalModelError: Error {
 final class LocalModelResponder {
     /// A turn waits this long in silence for a model that is still loading, then says so.
     private static let silentWait: Duration = .milliseconds(1500)
-    /// Covers a cold load after a restart (15–30 s); past this the turn falls back to Apple's model.
+    /// Covers a cold load after a restart (15-30 s); past this the turn falls back to Apple's model.
     private static let maximumWait: Duration = .seconds(30)
     private static let pollInterval: Duration = .milliseconds(100)
     static let waitingNotice = "Bir saniye. "
@@ -137,7 +137,7 @@ final class LocalModelResponder {
         return emitted
     }
 
-    /// Waits for a model that is still loading, saying "Bir saniye." if it takes noticeably long.
+    /// Waits for a model that is still loading, saying "Bir saniye." (one moment) if it takes noticeably long.
     private func readyEndpoint(
         announcingWaitTo continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws -> any LoadedChatModel {
