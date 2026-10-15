@@ -6006,6 +6006,36 @@
           }
         }
       }
+    },
+    "Qwen 3.8'in bir önceki sürümü.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The previous version of Qwen 3.8."
+          }
+        }
+      }
+    },
+    "Türkçe genel bilgide güçlü, cevabı hızlı üretir. Testlerimizde en iyi sonuç veren model ailesi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strong on Turkish general knowledge and quick to answer. The best model family in our tests."
+          }
+        }
+      }
+    },
+    "Google'ın büyük Gemma 4 modeli; Türkçe genel bilgide güçlü, ilk kelimeye çabuk başlar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Google's large Gemma 4 model. Strong on Turkish general knowledge and quick to start answering."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

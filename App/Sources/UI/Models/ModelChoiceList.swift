@@ -105,7 +105,8 @@ private struct DownloadableModelRow: View {
                 }
                 Text("\(model.downloadBytes.formatted(.byteCount(style: .file))) indirme · en az \(model.minimumMemoryGB) GB bellek · \(model.license)")
                     .font(.caption).foregroundStyle(.secondary)
-                Text(model.summary).font(.callout).fixedSize(horizontal: false, vertical: true)
+                // The catalog lives in AsistanCore; its Turkish summaries are translated in the app's string catalog.
+                Text(LocalizedStringKey(model.summary)).font(.callout).fixedSize(horizontal: false, vertical: true)
                 status
             }
         }
