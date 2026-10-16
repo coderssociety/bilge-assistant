@@ -23,8 +23,11 @@ struct ReadScreenTool: AssistantTool {
         do {
             let text = try await ScreenReader.readText(scope: arguments.scope == .wholeScreen ? .wholeScreen : .frontWindow)
             return text.isEmpty ? ToolReply.failure(String(localized: "Ekranda okunabilir bir yazı bulamadım.")) : text
-        } catch {
+        } catch let error as ScreenReaderError {
             return ToolReply.failure(error)
+        } catch {
+            Log.tools.error("Reading the screen failed: \(error.localizedDescription, privacy: .public)")
+            return ToolReply.failure(String(localized: "Ekrandaki yazıyı okuyamadım; bir kez daha dener misin?"))
         }
     }
 }

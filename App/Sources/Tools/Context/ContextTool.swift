@@ -55,17 +55,17 @@ struct ContextTool: RuleRoutedTool {
         case let .page(url, _):
             return try await BrowserPage.text(of: url)
         case let .document(url):
-            return try document(url)
+            return try await document(url)
         case let .files(urls):
             guard let readable = urls.first(where: { ReadDocumentTool.readableExtensions.contains($0.pathExtension.lowercased()) }) else {
                 return ToolReply.failure(String(localized: "Seçili dosyalardan okuyabileceğim bir belge yok."))
             }
-            return try document(readable)
+            return try await document(readable)
         }
     }
 
-    private static func document(_ url: URL) throws -> String {
-        let text = try ReadDocumentTool.text(of: url).trimmingCharacters(in: .whitespacesAndNewlines)
+    private static func document(_ url: URL) async throws -> String {
+        let text = try await ReadDocumentTool.text(of: url).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return ToolReply.failure(String(localized: "'\(url.lastPathComponent)' içinde okunabilir yazı yok.")) }
         return String(localized: "Belge: \(url.lastPathComponent)\n\(String(text.prefix(maxCharacters)))")
     }

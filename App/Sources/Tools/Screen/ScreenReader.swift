@@ -1,7 +1,6 @@
 import AppKit
 import CoreGraphics
 import ScreenCaptureKit
-import Vision
 
 enum ScreenReaderError: LocalizedError {
     case permissionMissing
@@ -30,7 +29,7 @@ enum ScreenReader {
             throw ScreenReaderError.permissionMissing
         }
         let image = try await capture(scope)
-        let text = try await recognizeText(in: image)
+        let text = try await TextRecognition.text(in: image)
         return String(text.prefix(maxCharacters))
     }
 
@@ -58,15 +57,5 @@ enum ScreenReader {
         return try await SCScreenshotManager.captureImage(
             contentFilter: SCContentFilter(display: display, excludingApplications: ownApps, exceptingWindows: []),
             configuration: configuration)
-    }
-
-    private static func recognizeText(in image: CGImage) async throws -> String {
-        var request = RecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
-        let wanted = [Locale.Language(identifier: "tr-TR"), Locale.Language(identifier: "en-US")]
-        request.recognitionLanguages = wanted.filter { request.supportedRecognitionLanguages.contains($0) }
-        let observations = try await request.perform(on: image)
-        return observations.compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
     }
 }

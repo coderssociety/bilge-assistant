@@ -64,7 +64,7 @@ struct ReadDocumentTool: AssistantTool {
                 return ToolReply.failure(arguments.query.map { String(localized: "'\($0)' adında okunabilir bir belge bulamadım.") }
                     ?? String(localized: "İndirilenler'de okunabilir bir belge bulamadım."))
             }
-            let text = try Self.text(of: file).trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = try await Self.text(of: file).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else {
                 return ToolReply.failure(String(localized: "'\(file.lastPathComponent)' içinde okunabilir yazı yok."))
             }
@@ -95,14 +95,33 @@ struct ReadDocumentTool: AssistantTool {
         return FileSearch.sortedByRecency(downloads).first { extensions.contains($0.pathExtension.lowercased()) }
     }
 
-    static func text(of file: URL) throws -> String {
+    static func text(of file: URL) async throws -> String {
         switch file.pathExtension.lowercased() {
         case "pdf":
-            return PDFDocument(url: file)?.string ?? ""
+            guard let document = PDFDocument(url: file) else { return "" }
+            let text = document.string ?? ""
+            return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? try await scannedText(of: document) : text
         case "txt", "md", "csv":
             return try String(contentsOf: file, encoding: .utf8)
         default:
             return try NSAttributedString(url: file, options: [:], documentAttributes: nil).string
         }
+    }
+
+    private static let scannedPages = 5
+    /// Points to pixels: enough for small print.
+    private static let scanScale: CGFloat = 2
+
+    /// A scan has no text layer; its first pages are read like the screen.
+    private static func scannedText(of document: PDFDocument) async throws -> String {
+        var pages: [String] = []
+        for index in 0..<min(document.pageCount, scannedPages) {
+            guard let page = document.page(at: index) else { continue }
+            let size = page.bounds(for: .mediaBox).size
+            let picture = page.thumbnail(of: CGSize(width: size.width * scanScale, height: size.height * scanScale), for: .mediaBox)
+            guard let image = picture.cgImage(forProposedRect: nil, context: nil, hints: nil) else { continue }
+            pages.append(try await TextRecognition.text(in: image))
+        }
+        return pages.joined(separator: "\n\n")
     }
 }
