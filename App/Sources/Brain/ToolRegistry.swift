@@ -12,6 +12,7 @@ struct ToolRegistry {
     var memory = MemoryStore(fileURL: nil)
     var spreadsheet = SpreadsheetSession()
     var dictation = DictationSession()
+    var news = NewsReading()
     var language = AssistantLanguage.turkish
 
     func makeTools() -> [any AssistantTool] {
@@ -56,7 +57,7 @@ struct ToolRegistry {
             ReadSelectionTool(),
             WeatherTool(),
             ExchangeRateTool(),
-            NewsTool(),
+            NewsTool(reading: news),
             ReadWebPageTool(),
             ReadMailTool(),
             SendEmailTool(context: context),

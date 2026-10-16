@@ -190,65 +190,6 @@ struct ExchangeRateTool: AssistantTool {
     }
 }
 
-struct NewsTool: AssistantTool {
-    let name = "news"
-    let description = "Son haber başlıklarını okur: gündem, ekonomi, spor, dünya ya da bilim-teknoloji (Anadolu Ajansı)."
-    private static let headlineCount = 5
-
-    @Generable
-    enum Category {
-        case general, economy, sports, world, technology
-
-        /// Anadolu Ajansı for Turkish, BBC News for English.
-        var feedURL: URL? {
-            switch AppLanguage.current {
-            case .turkish:
-                let slug = switch self {
-                case .general: "guncel"
-                case .economy: "ekonomi"
-                case .sports: "spor"
-                case .world: "dunya"
-                case .technology: "bilim-teknoloji"
-                }
-                return URL(string: "https://www.aa.com.tr/tr/rss/default?cat=\(slug)")
-            case .english:
-                let path = switch self {
-                case .general: "news/rss.xml"
-                case .economy: "news/business/rss.xml"
-                case .sports: "sport/rss.xml"
-                case .world: "news/world/rss.xml"
-                case .technology: "news/technology/rss.xml"
-                }
-                return URL(string: "https://feeds.bbci.co.uk/\(path)")
-            }
-        }
-    }
-
-    @Generable
-    struct Arguments {
-        @Guide(description: "Haber konusu; belirtilmediyse general")
-        var category: Category
-    }
-
-    func call(arguments: Arguments) async throws -> String {
-        guard let url = arguments.category.feedURL else {
-            return ToolReply.failure(String(localized: "Haber kaynağı açılamadı."))
-        }
-        do {
-            let headlines = RSSHeadlines.parse(try await WebFetch.data(from: url), limit: Self.headlineCount)
-            guard !headlines.isEmpty else {
-                return ToolReply.failure(String(localized: "Haber başlığı bulunamadı."))
-            }
-            let source = AppLanguage.current == .english
-                ? "Latest headlines from BBC News. " : String(localized: "Anadolu Ajansı'ndan son başlıklar. ")
-            return source
-                + headlines.map { $0.hasSuffix(".") ? $0 : $0 + "." }.joined(separator: " ")
-        } catch {
-            return ToolReply.failure(String(localized: "Haberler alınamadı. \(error.localizedDescription)"))
-        }
-    }
-}
-
 /// "Bu sayfayı özetle" for the page open in the browser, or a given address. The page text is
 /// untrusted and only answered by the tool-less session.
 struct ReadWebPageTool: AssistantTool {

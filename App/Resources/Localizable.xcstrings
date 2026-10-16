@@ -1096,6 +1096,16 @@
         }
       }
     },
+    "Anadolu Ajansı'ndan son %@ başlıkları. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latest %@ headlines from Anadolu Agency. "
+          }
+        }
+      }
+    },
     "Anadolu Ajansı'ndan son başlıklar. ": {
       "localizations": {
         "en": {
@@ -4584,6 +4594,16 @@
         }
       }
     },
+    "Son okuduğumdan beri yeni başlık yok; en son başlıklar yine şunlar. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing new since I last read them; the latest are still these. "
+          }
+        }
+      }
+    },
     "Sonraki sekme.": {
       "localizations": {
         "en": {
@@ -4670,6 +4690,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Version %@"
+          }
+        }
+      }
+    },
+    "Sıradaki başlıklar. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The next headlines. "
           }
         }
       }
