@@ -38,11 +38,13 @@ enum RecognizerError: LocalizedError {
 }
 
 enum RecognizerFactory {
-    static func make(_ engine: RecognizerEngine, language: AssistantLanguage) -> any SpeechRecognizer {
-        switch engine {
+    /// `guarded`: behind GuardedRecognizer, as the assistant uses it; the ASR benchmark measures the engine alone.
+    static func make(_ engine: RecognizerEngine, language: AssistantLanguage, guarded: Bool = true) -> any SpeechRecognizer {
+        let recognizer: any SpeechRecognizer = switch engine {
         case .whisper: WhisperKitRecognizer(language: language)
         case .appleDictation: AppleDictationRecognizer(language: language)
         }
+        return guarded ? GuardedRecognizer(recognizer) : recognizer
     }
 
     /// Apple dictation is instant and small for Turkish; in English only Whisper reliably hears "Bilge".

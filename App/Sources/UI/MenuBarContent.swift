@@ -4,10 +4,11 @@ import SwiftUI
 struct MenuBarContent: View {
     let assistant: AssistantController
     let settings: AssistantSettings
+    let updates: UpdateChecker
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Text(assistant.status.title)
+        Text(assistant.statusTitle)
         if let heard = assistant.lastHeard {
             Text("Duyulan: \(heard)").lineLimit(2)
         }
@@ -29,6 +30,9 @@ struct MenuBarContent: View {
         Divider()
         SettingsLink { Text("Ayarlar…") }
             .keyboardShortcut(",")
+        if let release = updates.available {
+            Button("Yeni sürüm: \(AppIdentity.name) \(release.version)…") { NSWorkspace.shared.open(release.page) }
+        }
         Button("Kurulum rehberi…") { show(WindowID.onboarding) }
         Button("Ses Laboratuvarı…") { show(WindowID.audioLab) }
         Divider()

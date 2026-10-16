@@ -6196,6 +6196,204 @@
           }
         }
       }
+    },
+    "%@ başka bir uygulamada kullanılıyor; başka bir kısayol seç.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another app already uses %@; choose another shortcut."
+          }
+        }
+      }
+    },
+    "%@ güncel (%@).": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ güncel (%2$@)."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ is up to date (%2$@)."
+          }
+        }
+      }
+    },
+    "Denetlenemedi: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't check: %@"
+          }
+        }
+      }
+    },
+    "Dinleme kısayolu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening shortcut"
+          }
+        }
+      }
+    },
+    "GitHub %lld yanıtını verdi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub answered %lld."
+          }
+        }
+      }
+    },
+    "Güncellemeler": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updates"
+          }
+        }
+      }
+    },
+    "Kapatmak için önce bir dinleme kısayolu seç.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a listening shortcut before turning this off."
+          }
+        }
+      }
+    },
+    "Kısayol kaydedilemedi (%d).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't register the shortcut (%d)."
+          }
+        }
+      }
+    },
+    "Kısayol yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No shortcut"
+          }
+        }
+      }
+    },
+    "Kısayola basınca %@ adını duymuş gibi dinler; konuşurken basarsan susar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressing the shortcut makes %@ listen as if you said its name; pressing it while it speaks stops it."
+          }
+        }
+      }
+    },
+    "Kısayolu bekliyor (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for the shortcut (%@)"
+          }
+        }
+      }
+    },
+    "Temizle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "Tuşlara bas…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press the keys…"
+          }
+        }
+      }
+    },
+    "Yeni sürüm var: %@ %@": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Yeni sürüm var: %1$@ %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A new version is out: %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "Yeni sürüm: %@ %@…": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Yeni sürüm: %1$@ %2$@…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New version: %1$@ %2$@…"
+          }
+        }
+      }
+    },
+    "Yeni sürümleri denetle (günde bir kez GitHub'a bakar)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check for new versions (looks at GitHub once a day)"
+          }
+        }
+      }
+    },
+    "Şimdi denetle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check now"
+          }
+        }
+      }
+    },
+    "“%@” deyince dinle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen when I say “%@”"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -25,6 +25,9 @@ final class AssistantSettings {
         static let eventAlertLeadMinutes = "eventAlertLeadMinutes"
         static let morningBriefingEnabled = BriefingTool.enabledKey
         static let speakerCheckEnabled = "speakerCheckEnabled"
+        static let wakeWordEnabled = "wakeWordEnabled"
+        static let listeningShortcut = "listeningShortcut"
+        static let checkForUpdates = "checkForUpdates"
         static let language = AppLanguage.defaultsKey
         /// The system key that picks the app's localization; set together with `language`.
         static let appleLanguages = "AppleLanguages"
@@ -66,6 +69,17 @@ final class AssistantSettings {
     var morningBriefingEnabled: Bool { didSet { defaults.set(morningBriefingEnabled, forKey: Key.morningBriefingEnabled) } }
     /// Only the enrolled voice can give commands and answer confirmations.
     var speakerCheckEnabled: Bool { didSet { defaults.set(speakerCheckEnabled, forKey: Key.speakerCheckEnabled) } }
+    /// Off: only the listening shortcut starts a request, and nothing is transcribed until it is pressed.
+    var wakeWordEnabled: Bool { didSet { defaults.set(wakeWordEnabled, forKey: Key.wakeWordEnabled) } }
+    /// Makes the assistant listen as if its name had been said; nil for none.
+    var listeningShortcut: KeyCombination? {
+        didSet { defaults.set(listeningShortcut.flatMap { try? JSONEncoder().encode($0) }, forKey: Key.listeningShortcut) }
+    }
+    /// Once a day, whether a newer version has been published on GitHub.
+    var checkForUpdates: Bool { didSet { defaults.set(checkForUpdates, forKey: Key.checkForUpdates) } }
+
+    /// Without a shortcut the wake word is the only way in, so it counts as on whatever was saved.
+    var listensForWakeWord: Bool { wakeWordEnabled || listeningShortcut == nil }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -89,6 +103,10 @@ final class AssistantSettings {
         eventAlertLeadMinutes = defaults.object(forKey: Key.eventAlertLeadMinutes) as? Int ?? 10
         morningBriefingEnabled = defaults.object(forKey: Key.morningBriefingEnabled) as? Bool ?? true
         speakerCheckEnabled = defaults.bool(forKey: Key.speakerCheckEnabled)
+        wakeWordEnabled = defaults.object(forKey: Key.wakeWordEnabled) as? Bool ?? true
+        listeningShortcut = defaults.data(forKey: Key.listeningShortcut)
+            .flatMap { try? JSONDecoder().decode(KeyCombination.self, from: $0) }
+        checkForUpdates = defaults.object(forKey: Key.checkForUpdates) as? Bool ?? true
     }
 
     /// Maps the 0...1 sensitivity slider onto the matcher's similarity threshold (0.9 strict ... 0.65 loose).

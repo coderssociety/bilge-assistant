@@ -4,6 +4,10 @@ import SwiftUI
 struct GeneralSettingsView: View {
     @Bindable var settings: AssistantSettings
     let assistant: AssistantController
+    let shortcut: ListeningShortcut
+    let updates: UpdateChecker
+    @State private var checkingUpdates = false
+    @State private var updateOutcome: UpdateChecker.Outcome?
     @State private var wakePhraseDraft = ""
     @State private var wakePhraseError: String?
     @State private var launchAtLogin = LoginItem.isEnabled
@@ -19,6 +23,17 @@ struct GeneralSettingsView: View {
             }
 
             Section("Uyandırma") {
+                Toggle("“\(AppIdentity.name)” deyince dinle", isOn: $settings.wakeWordEnabled)
+                    .disabled(settings.listeningShortcut == nil && settings.wakeWordEnabled)
+                    .help("Kapatmak için önce bir dinleme kısayolu seç.")
+                LabeledContent("Dinleme kısayolu") {
+                    ShortcutRecorder(combination: $settings.listeningShortcut, shortcut: shortcut)
+                }
+                if let problem = shortcut.problem {
+                    Text(problem).font(.caption).foregroundStyle(.red)
+                }
+                Text("Kısayola basınca \(AppIdentity.name) adını duymuş gibi dinler; konuşurken basarsan susar.")
+                    .font(.caption).foregroundStyle(.secondary)
                 LabeledContent("Uyandırma kelimesi") {
                     TextField("", text: $wakePhraseDraft, prompt: Text(AppIdentity.defaultWakePhrase))
                         .onSubmit(applyWakePhrase)
@@ -62,6 +77,21 @@ struct GeneralSettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
 
+            Section("Güncellemeler") {
+                Toggle("Yeni sürümleri denetle (günde bir kez GitHub'a bakar)", isOn: $settings.checkForUpdates)
+                HStack {
+                    Button("Şimdi denetle") {
+                        checkingUpdates = true
+                        Task {
+                            updateOutcome = await updates.checkNow()
+                            checkingUpdates = false
+                        }
+                    }
+                    .disabled(checkingUpdates)
+                    updateStatus
+                }
+            }
+
             Section("Hava durumu") {
                 LabeledContent("Şehir") {
                     TextField("", text: $settings.weatherCity, prompt: Text(WeatherTool.fallbackCity))
@@ -76,6 +106,26 @@ struct GeneralSettingsView: View {
         .onChange(of: settings.wakeSensitivity) { assistant.restartIfRunning() }
         .onChange(of: settings.followUpEnabled) { assistant.restartIfRunning() }
         .onChange(of: settings.bargeInEnabled) { assistant.restartIfRunning() }
+        .onChange(of: settings.wakeWordEnabled) { assistant.restartIfRunning() }
+        .onChange(of: settings.listeningShortcut) { _, combination in
+            shortcut.apply(combination)
+            // Without a shortcut the wake word is the only way in.
+            if combination == nil, !settings.wakeWordEnabled { settings.wakeWordEnabled = true }
+        }
+    }
+
+    @ViewBuilder
+    private var updateStatus: some View {
+        switch updateOutcome {
+        case nil:
+            EmptyView()
+        case let .upToDate(version)?:
+            Text("\(AppIdentity.name) güncel (\(version)).").font(.caption).foregroundStyle(.secondary)
+        case let .available(release)?:
+            Link("Yeni sürüm var: \(AppIdentity.name) \(release.version)", destination: release.page).font(.caption)
+        case let .failed(message)?:
+            Text("Denetlenemedi: \(message)").font(.caption).foregroundStyle(.red)
+        }
     }
 
     private func applyWakePhrase() {

@@ -100,6 +100,23 @@ public struct ConversationFlow: Sendable {
         }
     }
 
+    /// The listening shortcut: like the wake phrase said on its own, and pressed again while the assistant waits
+    /// for the request, a cancel. While it is answering this changes nothing.
+    public mutating func shortcutPressed(at now: Date) -> Action {
+        switch phase {
+        case .awaitingCommand:
+            speechInProgress = false
+            phase = .listeningForWake
+            return .returnToIdle(timedOut: false)
+        case .listeningForWake, .followUp:
+            session = nil
+            phase = .awaitingCommand(deadline: now.addingTimeInterval(commandTimeout))
+            return .acknowledgeWake
+        case .processing, .responding:
+            return .none
+        }
+    }
+
     /// Once the user starts talking inside a window, the deadline no longer cuts them off.
     public mutating func speechStarted(at now: Date) {
         if isAwaitingSpeech { speechInProgress = true }

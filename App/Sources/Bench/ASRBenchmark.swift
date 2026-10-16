@@ -53,7 +53,7 @@ enum ASRBenchmark {
             var reports: [EngineReport] = []
             for engine in RecognizerEngine.allCases {
                 print("Ölçülüyor: \(engine.displayName)")
-                reports.append(try await evaluate(RecognizerFactory.make(engine, language: language), on: samples, language: language))
+                reports.append(try await evaluate(RecognizerFactory.make(engine, language: language, guarded: false), on: samples, language: language))
             }
             try write(reports, to: outputURL)
             return 0

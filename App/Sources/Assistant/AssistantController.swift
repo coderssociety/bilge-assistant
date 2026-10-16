@@ -56,6 +56,8 @@ final class AssistantController {
     private var pendingBargeCommand: String?
     /// "Bilge, dur" (stop) means silence: no follow-up window, or the rest of the sentence gets answered.
     private var stoppedByUser = false
+    /// The shortcut was pressed while listening was off or still starting.
+    private var wakeWhenListening = false
 
     var bargeInDiagnostics: [String] { bargeIn?.diagnostics ?? [] }
     /// Everything the main pipeline transcribed, including speech it ignored (for diagnostics).
@@ -87,6 +89,7 @@ final class AssistantController {
     func stop() {
         listenTask?.cancel()
         listenTask = nil
+        wakeWhenListening = false
         teardown()
         inputLevel = 0
         status = .off
@@ -104,6 +107,37 @@ final class AssistantController {
         guard !isRunning else { return }
         defer { if !isRunning { status = .off } }
         _ = try await loadModels()
+    }
+
+    /// The listening shortcut: like saying the wake phrase; while the assistant answers, like "Bilge, dur". With
+    /// listening off it is switched on, and the assistant listens once it has started.
+    func shortcutPressed() {
+        guard pendingConfirmation == nil else { return }
+        switch status {
+        case .speaking, .thinking:
+            stoppedByUser = true
+            interrupt()
+        case .listening, .awake, .transcribing:
+            let action = flow.shortcutPressed(at: .now)
+            if case .returnToIdle = action { Earcon.cancelled.play() }
+            perform(action)
+        case .loading:
+            // Without a listening task this is the first-run setup preparing models; it isn't listening yet.
+            if isRunning { wakeWhenListening = true }
+        case .off, .failed:
+            wakeWhenListening = true
+            start()
+        case .confirming:
+            break
+        }
+    }
+
+    /// The status line; without the wake word, the idle state names the shortcut instead.
+    var statusTitle: String {
+        guard status == .listening, !settings.listensForWakeWord, let shortcut = settings.listeningShortcut else {
+            return status.title
+        }
+        return String(localized: "Kısayolu bekliyor (\(shortcut.display))")
     }
 
     /// Stops the current reply (menu action); the assistant keeps listening.
@@ -137,6 +171,8 @@ final class AssistantController {
         await vad?.reset()
         segmenter.reset()
         isAudioSuspended = false
+        // The shortcut stops an announcement; that must not cut the next reply's follow-up window.
+        stoppedByUser = false
         status = isRunning ? (flow.isAwaitingSpeech ? .awake : .listening) : .off
     }
 
@@ -157,6 +193,10 @@ final class AssistantController {
             let stream = try microphone.start()
             status = .listening
             Log.wake.info("Listening for wake phrase '\(self.settings.wakePhrase, privacy: .public)'")
+            if wakeWhenListening {
+                wakeWhenListening = false
+                perform(flow.shortcutPressed(at: .now))
+            }
             for await chunk in stream {
                 if Task.isCancelled { break }
                 if isAudioSuspended {
@@ -205,7 +245,8 @@ final class AssistantController {
     /// Optional: if echo cancellation cannot load, the assistant still works, just without barge-in.
     private func loadBargeIn() async {
         bargeIn = nil
-        guard settings.bargeInEnabled, let recognizer else { return }
+        // Cutting in is done by saying the wake phrase; without it, the shortcut stops a reply instead.
+        guard settings.bargeInEnabled, settings.listensForWakeWord, let recognizer else { return }
         status = .loading(String(localized: "Yankı iptali hazırlanıyor…"))
         do {
             bargeIn = try await BargeInListener(
@@ -274,6 +315,7 @@ final class AssistantController {
                 return
             }
             let isWakeCheck = flow.phase == .listeningForWake
+            if isWakeCheck, !settings.listensForWakeWord { return }
             if !isWakeCheck { status = .transcribing }
             guard let transcript = try await transcribe(segment.samples, with: recognizer, wakeCheckOnly: isWakeCheck),
                   !isAudioSuspended
@@ -288,7 +330,8 @@ final class AssistantController {
             let action = flow.heard(transcript, at: .now)
             if action != .none { lastHeard = transcript }
             perform(action)
-            if !isWakeCheck, action == .none { status = .awake }
+            // The shortcut may have closed the window while this was being transcribed.
+            if !isWakeCheck, action == .none { status = flow.isAwaitingSpeech ? .awake : .listening }
         } catch {
             Log.speech.error("Transcription failed: \(error.localizedDescription, privacy: .public)")
             if flow.phase != .listeningForWake { status = .awake }
@@ -439,6 +482,7 @@ final class AssistantController {
     }
 
     private func fail(_ message: String) {
+        wakeWhenListening = false
         Log.wake.error("Assistant stopped: \(message, privacy: .public)")
         status = .failed(message)
     }

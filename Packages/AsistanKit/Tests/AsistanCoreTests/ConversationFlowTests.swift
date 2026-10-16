@@ -135,3 +135,47 @@ struct ConversationFlowTests {
         #expect(flow.tick(at: start.addingTimeInterval(41)) == .returnToIdle(timedOut: false))
     }
 }
+
+@Suite("ConversationFlow listening shortcut")
+struct ConversationFlowShortcutTests {
+    let start = Date(timeIntervalSince1970: 1_000)
+
+    func makeFlow() -> ConversationFlow {
+        ConversationFlow(matcher: WakePhraseMatcher(phrase: "asistan"), commandTimeout: 6, followUpWindow: 5)
+    }
+
+    @Test("the shortcut wakes like the bare wake phrase")
+    func wakes() {
+        var flow = makeFlow()
+        #expect(flow.shortcutPressed(at: start) == .acknowledgeWake)
+        #expect(flow.phase == .awaitingCommand(deadline: start.addingTimeInterval(6)))
+        #expect(flow.heard("saat kaç", at: start.addingTimeInterval(2)) == .runCommand("saat kaç"))
+    }
+
+    @Test("pressing it again while waiting cancels")
+    func cancels() {
+        var flow = makeFlow()
+        _ = flow.shortcutPressed(at: start)
+        #expect(flow.shortcutPressed(at: start.addingTimeInterval(1)) == .returnToIdle(timedOut: false))
+        #expect(flow.phase == .listeningForWake)
+    }
+
+    @Test("in a work session's window it starts a fresh wait outside the session")
+    func leavesTheWorkSession() {
+        var flow = makeFlow()
+        flow.responseStarted()
+        flow.responseFinished(at: start, allowFollowUp: true, session: .init(window: 30, accepts: { _ in true }))
+        #expect(flow.shortcutPressed(at: start.addingTimeInterval(1)) == .acknowledgeWake)
+        #expect(flow.heard("bir sonraki şarkı", at: start.addingTimeInterval(2)) == .runCommand("bir sonraki şarkı"))
+    }
+
+    @Test("it changes nothing while the assistant answers")
+    func ignoredWhileAnswering() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan saat kaç", at: start)
+        #expect(flow.shortcutPressed(at: start.addingTimeInterval(1)) == .none)
+        flow.responseStarted()
+        #expect(flow.shortcutPressed(at: start.addingTimeInterval(1)) == .none)
+        #expect(flow.phase == .responding)
+    }
+}

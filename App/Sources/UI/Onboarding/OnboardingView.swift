@@ -138,7 +138,7 @@ private struct PreparationStep: View {
             } else {
                 HStack(spacing: 10) {
                     ProgressView().controlSize(.small)
-                    Text(assistant.status.title)
+                    Text(assistant.statusTitle)
                 }
             }
         }

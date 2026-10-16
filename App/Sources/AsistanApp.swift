@@ -27,7 +27,7 @@ struct AsistanApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarContent(assistant: environment.assistant, settings: environment.settings)
+            MenuBarContent(assistant: environment.assistant, settings: environment.settings, updates: environment.updates)
         } label: {
             Image(systemName: environment.assistant.status.symbolName)
                 .accessibilityLabel(AppIdentity.name)
@@ -68,6 +68,8 @@ final class AppEnvironment {
     let speakerGate: SpeakerGate
     let assistant: AssistantController
     let audioLab: AudioLabModel
+    let shortcut: ListeningShortcut
+    let updates: UpdateChecker
     private let hud: HUDPresenter
     private let alerts: ProactiveAlerts
     private let isBenchmark = CommandLine.arguments.contains(where: { $0.hasPrefix("--bench") })
@@ -98,10 +100,19 @@ final class AppEnvironment {
         assistant.speakerGate = speakerGate
         self.assistant = assistant
         audioLab = AudioLabModel(speech: speech)
+        shortcut = ListeningShortcut(pressed: { [weak assistant] in assistant?.shortcutPressed() }, failed: {
+            [weak assistant, weak settings] in
+            guard let settings, !settings.wakeWordEnabled else { return }
+            settings.wakeWordEnabled = true
+            assistant?.restartIfRunning()
+        })
+        updates = UpdateChecker(settings: settings)
         hud = HUDPresenter(assistant: assistant, settings: settings)
         alerts = ProactiveAlerts(settings: settings, isListening: { [weak assistant] in assistant?.isRunning ?? false },
                                  announce: { await announcer.target?.announce($0) })
         guard !isBenchmark else { return }
+        shortcut.apply(settings.listeningShortcut)
+        updates.start()
         hud.start()
         alerts.start()
         speakerGate.prepare()

@@ -6,7 +6,8 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             Tab("Genel", systemImage: "gearshape") {
-                GeneralSettingsView(settings: environment.settings, assistant: environment.assistant)
+                GeneralSettingsView(settings: environment.settings, assistant: environment.assistant,
+                                    shortcut: environment.shortcut, updates: environment.updates)
             }
             Tab("Model", systemImage: "cpu") {
                 ModelSettingsView(settings: environment.settings, brain: environment.brain, downloads: environment.downloads)

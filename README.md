@@ -125,6 +125,10 @@ Bilge lives in the menu bar and has no Dock icon. Settings and the setup guide a
 Start every command with “Bilge”: “Bilge, open Safari”. After answering, Bilge keeps listening for a few
 seconds, so you can ask a follow-up without saying its name again.
 
+You can also choose a listening shortcut in Settings > General (it needs ⌘ or ⌃, or an F key). Pressing it works
+like saying “Bilge”; pressing it while Bilge talks stops it. With a shortcut chosen, listening for the wake word
+can be turned off, and then nothing is transcribed until you press it.
+
 <details>
 <summary><b>Mac and apps</b></summary>
 
@@ -257,6 +261,8 @@ Bilge was built for Turkish first. In English:
 ## Privacy
 
 - No audio is stored. Nothing before the wake word is listened to.
+- Once a day Bilge asks GitHub whether a newer version is out and, if so, offers its page in the menu. Nothing is
+  downloaded by itself; Settings > General turns the check off.
 - Speech recognition, the language models and speech synthesis run on the Mac.
 - Network connections are only for data you ask for (weather, exchange rates, news, web pages) and model
   downloads. Local network addresses are blocked when reading web pages.
@@ -269,7 +275,8 @@ Bilge was built for Turkish first. In English:
 You can also try the other speech recognition engine in Settings > Recognition.
 
 **It wakes up by itself.** Move the sensitivity towards “Strict”, or enroll your voice under Settings >
-Recognition > Voice ID so it only answers you.
+Recognition > Voice ID so it only answers you. Recordings with nothing louder than their own background, and the
+subtitle lines Whisper makes up for silence (“Thanks for watching!”), are already ignored.
 
 **It says the language model isn't ready yet.** Turn on Apple Intelligence in System Settings > Apple
 Intelligence & Siri and wait for the model to download.

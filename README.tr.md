@@ -120,6 +120,10 @@ simgeden ulaşırsın.
 Her komutu “Bilge” ile başlat: “Bilge, Safari'yi aç”. Bilge cevap verdikten sonra birkaç saniye daha dinler;
 bu sırada devam sorusunu “Bilge” demeden sorabilirsin.
 
+Ayarlar > Genel'den bir dinleme kısayolu da seçebilirsin (⌘ ya da ⌃ ile bir tuş veya bir F tuşu). Kısayola basmak
+“Bilge” demekle aynıdır; Bilge konuşurken basarsan susar. Kısayol seçiliyken “Bilge” deyince dinlemeyi
+kapatabilirsin; o zaman kısayola basana kadar hiçbir şey yazıya dökülmez.
+
 <details>
 <summary><b>Mac ve uygulamalar</b></summary>
 
@@ -249,6 +253,8 @@ tarayıcı, hafıza ve günlük özet iki dilde de çalışır. İngilizcede:
 ## Gizlilik
 
 - Ses kaydı saklanmaz. Uyandırma kelimesinden öncesi dinlenmez.
+- Bilge günde bir kez GitHub'a yeni sürüm çıkıp çıkmadığını sorar; çıktıysa menüde sayfasını gösterir. Kendiliğinden
+  hiçbir şey indirmez; denetim Ayarlar > Genel'den kapatılabilir.
 - Konuşma tanıma, dil modelleri ve ses üretimi Mac'te çalışır.
 - Ağ bağlantıları yalnızca istediğin veriler (hava durumu, döviz, haber, web sayfası) ve model indirmeleri
   içindir. Web sayfası okurken yerel ağ adreslerine erişim engellenir.
@@ -261,7 +267,8 @@ tarayıcı, hafıza ve günlük özet iki dilde de çalışır. İngilizcede:
 konuşma tanıma motorunu değiştirmeyi de dene.
 
 **Kendi kendine uyanıyor.** Hassasiyeti “Katı”ya doğru kaydır ya da Ayarlar > Tanıma > Ses kimliği'nden
-sesini tanıt; o zaman yalnızca senin sesine cevap verir.
+sesini tanıt; o zaman yalnızca senin sesine cevap verir. Arka plandan yüksek hiçbir şey içermeyen kayıtlar ve
+Whisper'ın sessizlikte uydurduğu altyazı cümleleri (“Altyazı M.K.”) zaten yok sayılır.
 
 **“Dil modeli henüz hazır değil” diyor.** Sistem Ayarları > Apple Intelligence ve Siri'den Apple
 Intelligence'ı aç ve modelin inmesini bekle.

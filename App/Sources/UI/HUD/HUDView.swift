@@ -9,7 +9,7 @@ struct HUDView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
                 StatusOrb(status: assistant.status, level: assistant.inputLevel)
-                Text(assistant.status.title)
+                Text(assistant.statusTitle)
                     .font(.headline)
                     .lineLimit(2)
                 Spacer(minLength: 8)
