@@ -172,6 +172,7 @@ Excel'de bir çalışma kitabı açıkken:
 - Bu sayfada fiyat kelimesini ara
 - YouTube'da kedi videoları ara
 - Bugün hava nasıl / Dolar kaç / Haberleri oku
+- Teknoloji haberleri / Başka var mı / Üçüncü haberi anlat / Tesla haberini aç (tarayıcıda da açar)
 </details>
 
 <details>

@@ -178,6 +178,7 @@ With a workbook open in Excel:
 - Find price on this page
 - Search YouTube for cat videos
 - What's the weather in London / How much is the dollar in lira
+- Technology news / Anything else? / Tell me more about the third one / Open the Tesla story (in the browser too)
 </details>
 
 <details>

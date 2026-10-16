@@ -1050,6 +1050,16 @@
         }
       }
     },
+    "(Haber tarayıcıda açıldı.)\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(The story is open in the browser.)\n"
+          }
+        }
+      }
+    },
     ", ekinde %@": {
       "localizations": {
         "en": {
@@ -2384,6 +2394,16 @@
         }
       }
     },
+    "Ekrandaki yazıyı okuyamadım; bir kez daha dener misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't read the text on the screen; could you try once more?"
+          }
+        }
+      }
+    },
     "Ekranlar": {
       "localizations": {
         "en": {
@@ -2726,6 +2746,26 @@
         }
       }
     },
+    "Haber: %@\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Story: %@\n"
+          }
+        }
+      }
+    },
+    "Haberi tarayıcıda açtım: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I opened the story in the browser: %@"
+          }
+        }
+      }
+    },
     "Haberler alınamadı. %@": {
       "localizations": {
         "en": {
@@ -2812,6 +2852,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "About"
+          }
+        }
+      }
+    },
+    "Hangi haberi açacağımı bulamadım; okuduğum başlıklardan birini söyler misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which story to open; could you name one of the headlines I read?"
           }
         }
       }

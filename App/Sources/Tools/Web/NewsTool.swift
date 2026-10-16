@@ -11,8 +11,19 @@ final class NewsReading: Sendable {
         memory.withLock { $0.recentTopic(at: .now) }.flatMap(NewsRequest.Topic.init(rawValue:))
     }
 
-    func next(_ headlines: [String], topic: NewsRequest.Topic, count: Int) -> HeadlineMemory.Reading {
-        memory.withLock { $0.next(headlines, topic: topic.rawValue, count: count, at: .now) }
+    func next(_ items: [RSSHeadlines.Item], topic: NewsRequest.Topic, count: Int) -> HeadlineMemory.Reading {
+        memory.withLock { $0.next(items, topic: topic.rawValue, count: count, at: .now) }
+    }
+
+    /// The headline just read that `command` points at.
+    func article(for command: String) -> NewsArticleReference.Request? {
+        let heard = memory.withLock { $0.heardItems(at: .now) }
+        return NewsArticleReference.find(command, lastReading: heard.lastReading, all: heard.all)
+    }
+
+    /// Only addresses that came with a headline read out are opened.
+    func wasRead(_ link: URL) -> Bool {
+        memory.withLock { $0.heardItems(at: .now).all.contains { $0.link == link } }
     }
 }
 
@@ -109,7 +120,7 @@ struct NewsTool: AssistantTool {
             return ToolReply.failure(String(localized: "Haber kaynağı açılamadı."))
         }
         do {
-            let feed = RSSHeadlines.parse(try await WebFetch.data(from: url), limit: Self.feedCount)
+            let feed = RSSHeadlines.items(try await WebFetch.data(from: url), limit: Self.feedCount)
             guard !feed.isEmpty else {
                 return ToolReply.failure(String(localized: "Haber başlığı bulunamadı."))
             }

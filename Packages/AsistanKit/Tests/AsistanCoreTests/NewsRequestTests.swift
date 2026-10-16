@@ -36,22 +36,23 @@ struct NewsRequestTests {
 @Suite("HeadlineMemory")
 struct HeadlineMemoryTests {
     let start = Date(timeIntervalSince1970: 1_000)
-    let feed = (1...12).map { "Başlık \($0)" }
+    let feed = (1...12).map { RSSHeadlines.Item(title: "Başlık \($0)", link: nil) }
 
     @Test("asking again goes on with the headlines not yet read")
     func continues() {
         var memory = HeadlineMemory()
-        #expect(memory.next(feed, topic: "general", count: 5, at: start) == .init(headlines: Array(feed[0..<5]), kind: .first))
+        #expect(memory.next(feed, topic: "general", count: 5, at: start) == .init(items: Array(feed[0..<5]), kind: .first))
         let second = memory.next(feed, topic: "general", count: 5, at: start.addingTimeInterval(30))
-        #expect(second == .init(headlines: Array(feed[5..<10]), kind: .next))
+        #expect(second == .init(items: Array(feed[5..<10]), kind: .next))
     }
 
     @Test("a newer headline at the top is read first")
     func newerFirst() {
         var memory = HeadlineMemory()
         _ = memory.next(feed, topic: "general", count: 5, at: start)
-        let reading = memory.next(["Yeni"] + feed, topic: "general", count: 5, at: start.addingTimeInterval(60))
-        #expect(reading.headlines == ["Yeni"] + Array(feed[5..<9]))
+        let newer = RSSHeadlines.Item(title: "Yeni", link: nil)
+        let reading = memory.next([newer] + feed, topic: "general", count: 5, at: start.addingTimeInterval(60))
+        #expect(reading.items == [newer] + Array(feed[5..<9]))
     }
 
     @Test("with nothing new left, the latest are read again and said to be the same")
@@ -60,16 +61,16 @@ struct HeadlineMemoryTests {
         let short = Array(feed.prefix(3))
         _ = memory.next(short, topic: "general", count: 5, at: start)
         #expect(memory.next(short, topic: "general", count: 5, at: start.addingTimeInterval(10)) ==
-            .init(headlines: short, kind: .again))
+            .init(items: short, kind: .again))
     }
 
     @Test("topics are remembered apart, and the memory fades")
     func separateAndFading() {
         var memory = HeadlineMemory()
         _ = memory.next(feed, topic: "general", count: 5, at: start)
-        #expect(memory.next(feed, topic: "technology", count: 5, at: start).headlines == Array(feed[0..<5]))
+        #expect(memory.next(feed, topic: "technology", count: 5, at: start).items == Array(feed[0..<5]))
         let later = start.addingTimeInterval(HeadlineMemory.lifetime + 1)
-        #expect(memory.next(feed, topic: "general", count: 5, at: later).headlines == Array(feed[0..<5]))
+        #expect(memory.next(feed, topic: "general", count: 5, at: later).items == Array(feed[0..<5]))
     }
 
     @Test("the topic just read is remembered for a follow-up for a few minutes")
@@ -78,5 +79,16 @@ struct HeadlineMemoryTests {
         _ = memory.next(feed, topic: "technology", count: 5, at: start)
         #expect(memory.recentTopic(at: start.addingTimeInterval(60)) == "technology")
         #expect(memory.recentTopic(at: start.addingTimeInterval(HeadlineMemory.continuationWindow + 1)) == nil)
+    }
+
+    @Test("what was read is kept for a later request about one of the headlines, the last reading first")
+    func heard() {
+        var memory = HeadlineMemory()
+        _ = memory.next(feed, topic: "general", count: 2, at: start)
+        _ = memory.next(feed, topic: "general", count: 2, at: start.addingTimeInterval(10))
+        let heard = memory.heardItems(at: start.addingTimeInterval(20))
+        #expect(heard.lastReading == Array(feed[2..<4]))
+        #expect(heard.all == Array(feed[2..<4]) + Array(feed[0..<2]))
+        #expect(memory.heardItems(at: start.addingTimeInterval(HeadlineMemory.lifetime + 11)).all.isEmpty)
     }
 }

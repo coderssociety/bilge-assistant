@@ -25,6 +25,11 @@ public enum NewsRequest {
         return nil
     }
 
+    /// One folded word naming a topic: "teknoloji", "sporda".
+    static func isTopicWord(_ word: String) -> Bool {
+        topicWords.contains { word.hasPrefix($0.prefix) }
+    }
+
     /// "Bu kadar mı", "başka var mı": routed to the news without asking for news or naming a topic, it goes on
     /// with the headlines just read.
     public static func isContinuation(_ command: String) -> Bool {
@@ -53,17 +58,21 @@ public struct HeadlineMemory: Sendable {
             case again
         }
 
-        public let headlines: [String]
+        public let items: [RSSHeadlines.Item]
         public let kind: Kind
 
-        public init(headlines: [String], kind: Kind) {
-            self.headlines = headlines
+        public var headlines: [String] { items.map(\.title) }
+
+        public init(items: [RSSHeadlines.Item], kind: Kind) {
+            self.items = items
             self.kind = kind
         }
     }
 
     private var read: [String: (titles: Set<String>, at: Date)] = [:]
     private var last: (topic: String, at: Date)?
+    /// What was read out, newest reading first, for "o haberi aç".
+    private var heard: [(items: [RSSHeadlines.Item], at: Date)] = []
 
     public init() {}
 
@@ -72,17 +81,24 @@ public struct HeadlineMemory: Sendable {
         return last.topic
     }
 
-    /// The next `count` of `headlines` (the feed, newest first) not yet read for `topic`.
-    public mutating func next(_ headlines: [String], topic: String, count: Int, at now: Date) -> Reading {
+    /// The headlines read out within the lifetime: the last reading in its order, then the earlier ones.
+    public func heardItems(at now: Date) -> (lastReading: [RSSHeadlines.Item], all: [RSSHeadlines.Item]) {
+        let recent = heard.filter { now.timeIntervalSince($0.at) < Self.lifetime }
+        return (recent.first?.items ?? [], recent.flatMap(\.items))
+    }
+
+    /// The next `count` of `items` (the feed, newest first) not yet read for `topic`.
+    public mutating func next(_ items: [RSSHeadlines.Item], topic: String, count: Int, at now: Date) -> Reading {
         let earlier = read[topic].flatMap { now.timeIntervalSince($0.at) < Self.lifetime ? $0.titles : nil } ?? []
-        let fresh = headlines.filter { !earlier.contains($0) }
+        let fresh = items.filter { !earlier.contains($0.title) }
         let reading = if fresh.isEmpty {
-            Reading(headlines: Array(headlines.prefix(count)), kind: .again)
+            Reading(items: Array(items.prefix(count)), kind: .again)
         } else {
-            Reading(headlines: Array(fresh.prefix(count)), kind: earlier.isEmpty ? .first : .next)
+            Reading(items: Array(fresh.prefix(count)), kind: earlier.isEmpty ? .first : .next)
         }
         read[topic] = ((reading.kind == .again ? [] : earlier).union(reading.headlines), now)
         last = (topic, now)
+        heard = [(reading.items, now)] + heard.filter { now.timeIntervalSince($0.at) < Self.lifetime }
         return reading
     }
 }

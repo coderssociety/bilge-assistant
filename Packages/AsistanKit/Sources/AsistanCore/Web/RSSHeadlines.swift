@@ -1,19 +1,37 @@
 import Foundation
 
-/// Item titles from an RSS 2.0 or Atom feed, in feed order.
+/// Items from an RSS 2.0 or Atom feed, in feed order.
 public enum RSSHeadlines {
+    public struct Item: Equatable, Hashable, Sendable {
+        public let title: String
+        /// The article's address, when the feed gives one over http(s).
+        public let link: URL?
+
+        public init(title: String, link: URL?) {
+            self.title = title
+            self.link = link
+        }
+    }
+
     public static func parse(_ data: Data, limit: Int) -> [String] {
+        items(data, limit: limit).map(\.title)
+    }
+
+    public static func items(_ data: Data, limit: Int) -> [Item] {
         let delegate = Collector(limit: limit)
         let parser = XMLParser(data: data)
         parser.delegate = delegate
         parser.parse()
-        return delegate.titles
+        return delegate.items
     }
 
     private final class Collector: NSObject, XMLParserDelegate {
         let limit: Int
-        var titles: [String] = []
+        var items: [Item] = []
         private var inItem = false
+        private var title: String?
+        private var link: String?
+        private var field: String?
         private var current: String?
 
         init(limit: Int) {
@@ -22,8 +40,16 @@ public enum RSSHeadlines {
 
         func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?, qualifiedName: String?,
                     attributes: [String: String] = [:]) {
-            if name == "item" || name == "entry" { inItem = true }
-            if inItem, name == "title" { current = "" }
+            if name == "item" || name == "entry" {
+                inItem = true
+                (title, link) = (nil, nil)
+            }
+            guard inItem, name == "title" || name == "link" else { return }
+            (field, current) = (name, "")
+            // Atom gives the address as an attribute: <link rel="alternate" href="…"/>.
+            if name == "link", let href = attributes["href"], (attributes["rel"] ?? "alternate") == "alternate" {
+                link = href
+            }
         }
 
         func parser(_ parser: XMLParser, foundCharacters string: String) {
@@ -35,13 +61,19 @@ public enum RSSHeadlines {
         }
 
         func parser(_ parser: XMLParser, didEndElement name: String, namespaceURI: String?, qualifiedName: String?) {
-            if name == "title", let title = current {
-                let cleaned = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !cleaned.isEmpty { titles.append(cleaned) }
-                current = nil
-                if titles.count >= limit { parser.abortParsing() }
+            if name == field {
+                if let text = current?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+                    if name == "title" { title = text } else { link = text }
+                }
+                (field, current) = (nil, nil)
             }
-            if name == "item" || name == "entry" { inItem = false }
+            guard name == "item" || name == "entry" else { return }
+            inItem = false
+            if let title {
+                let address = link.flatMap(URL.init(string:)).flatMap { ["http", "https"].contains($0.scheme ?? "") ? $0 : nil }
+                items.append(Item(title: title, link: address))
+            }
+            if items.count >= limit { parser.abortParsing() }
         }
     }
 }

@@ -37,6 +37,24 @@ struct WebTextTests {
         #expect(RSSHeadlines.parse(Data(feed.utf8), limit: 2) == ["Birinci haber", "İkinci haber"])
     }
 
+    @Test("RSS and Atom items keep their article address; other schemes are dropped")
+    func links() {
+        let rss = """
+        <rss><channel><link>https://kanal.example</link>
+        <item><title>Birinci</title><link>https://www.aa.com.tr/tr/haber/1</link></item>
+        <item><title>İkinci</title><link>javascript:alert(1)</link></item>
+        </channel></rss>
+        """
+        #expect(RSSHeadlines.items(Data(rss.utf8), limit: 5) == [
+            .init(title: "Birinci", link: URL(string: "https://www.aa.com.tr/tr/haber/1")),
+            .init(title: "İkinci", link: nil),
+        ])
+        let atom = """
+        <feed><entry><title>Atom</title><link rel="alternate" href="https://example.org/a"/></entry></feed>
+        """
+        #expect(RSSHeadlines.items(Data(atom.utf8), limit: 5) == [.init(title: "Atom", link: URL(string: "https://example.org/a"))])
+    }
+
     @Test("locative suffix follows vowel harmony and hard consonants", arguments: [
         ("İstanbul", "İstanbul'da"), ("Ankara", "Ankara'da"), ("İzmir", "İzmir'de"), ("Paris", "Paris'te"),
         ("Kars", "Kars'ta"), ("Berlin", "Berlin'de"), ("Tokyo", "Tokyo'da"), ("Muş", "Muş'ta"), ("Köln", "Köln'de"),
