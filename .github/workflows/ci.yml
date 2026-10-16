@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    # macOS 27 with Xcode 27 (a public preview image at the time of writing); the package needs both.
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
+        working-directory: Packages/AsistanKit
+
+  app:
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      # MLX compiles Metal shaders; the toolchain is a separate download.
+      - run: xcodebuild -downloadComponent MetalToolchain
+      - run: xcodegen generate
+      # Unsigned: this only checks that the app builds.
+      - run: >
+          xcodebuild -project Asistan.xcodeproj -scheme Asistan -configuration Debug
+          -derivedDataPath build/DerivedData.noindex CODE_SIGNING_ALLOWED=NO build
