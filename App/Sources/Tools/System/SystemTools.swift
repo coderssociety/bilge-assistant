@@ -72,7 +72,11 @@ struct MediaTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
-        let player = await MainActor.run { Self.activePlayer() }
+        let running = await MainActor.run { Self.runningPlayer() }
+        // Telling a closed Music to pause opens it first, and the command then times out.
+        guard let player = running ?? (arguments.action == .play ? "Music" : nil) else {
+            return String(localized: "Şu an çalan bir şey yok.")
+        }
         let command: String
         switch arguments.action {
         case .play: command = "play"
@@ -100,9 +104,10 @@ struct MediaTool: AssistantTool {
     }
 
     @MainActor
-    private static func activePlayer() -> String {
+    private static func runningPlayer() -> String? {
         let running = Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier))
-        return running.contains("com.spotify.client") ? "Spotify" : "Music"
+        if running.contains("com.spotify.client") { return "Spotify" }
+        return running.contains("com.apple.Music") ? "Music" : nil
     }
 }
 
