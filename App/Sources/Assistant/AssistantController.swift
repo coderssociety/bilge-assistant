@@ -290,6 +290,7 @@ final class AssistantController {
         let wasInSpeech = segmenter.isInSpeech
         let segments = segmenter.process(frame.samples, probability: frame.probability)
         if !wasInSpeech, segmenter.isInSpeech { flow.speechStarted(at: .now) }
+        if wasInSpeech, !segmenter.isInSpeech { flow.speechEnded(at: .now) }
         segments.forEach { segmentQueue?.yield($0) }
     }
 
@@ -323,7 +324,7 @@ final class AssistantController {
             Log.wake.debug("Heard: \(transcript, privacy: .private)")
             if needsSpeakerCheck(transcript, isWakeCheck: isWakeCheck), await !speakerAllows(segment.samples) {
                 recentTranscripts = Array((recentTranscripts + ["başka bir ses (yok sayıldı): “\(transcript)”"]).suffix(Self.maxRecentTranscripts))
-                if !isWakeCheck { status = .awake }
+                if !isWakeCheck { status = flow.isAwaitingSpeech ? .awake : .listening }
                 return
             }
             recentTranscripts = Array((recentTranscripts + ["\(isWakeCheck ? "uyandırma" : "komut"): “\(transcript)”"]).suffix(Self.maxRecentTranscripts))
@@ -334,7 +335,7 @@ final class AssistantController {
             if !isWakeCheck, action == .none { status = flow.isAwaitingSpeech ? .awake : .listening }
         } catch {
             Log.speech.error("Transcription failed: \(error.localizedDescription, privacy: .public)")
-            if flow.phase != .listeningForWake { status = .awake }
+            if flow.phase != .listeningForWake { status = flow.isAwaitingSpeech ? .awake : .listening }
         }
     }
 

@@ -51,6 +51,36 @@ struct ConversationFlowTests {
             .runCommand("yarın sabah yedide beni uyandır"))
     }
 
+    @Test("speech that ends without being heard lets the window close")
+    func unheardSpeechExpires() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan", at: start)
+        flow.speechStarted(at: start.addingTimeInterval(2))
+        flow.speechEnded(at: start.addingTimeInterval(2.2))
+        #expect(flow.tick(at: start.addingTimeInterval(7)) == .none)
+        #expect(flow.tick(at: start.addingTimeInterval(8.3)) == .returnToIdle(timedOut: true))
+    }
+
+    @Test("a command transcribed after its speech ended still runs")
+    func transcribedAfterSpeechEnded() {
+        var flow = makeFlow()
+        _ = flow.heard("asistan", at: start)
+        flow.speechStarted(at: start.addingTimeInterval(5))
+        flow.speechEnded(at: start.addingTimeInterval(7))
+        #expect(flow.tick(at: start.addingTimeInterval(8)) == .none)
+        #expect(flow.heard("saat kaç", at: start.addingTimeInterval(8.5)) == .runCommand("saat kaç"))
+    }
+
+    @Test("unheard speech after an answer does not keep the follow-up open")
+    func unheardSpeechInFollowUp() {
+        var flow = makeFlow()
+        flow.responseStarted()
+        flow.responseFinished(at: start, allowFollowUp: true)
+        flow.speechStarted(at: start.addingTimeInterval(1))
+        flow.speechEnded(at: start.addingTimeInterval(1.5))
+        #expect(flow.tick(at: start.addingTimeInterval(7.6)) == .returnToIdle(timedOut: false))
+    }
+
     @Test("cancel words end the exchange")
     func cancel() {
         var flow = makeFlow()

@@ -122,6 +122,19 @@ public struct ConversationFlow: Sendable {
         if isAwaitingSpeech { speechInProgress = true }
     }
 
+    /// Speech that ends without being heard (too short to keep, another voice, a failed transcription) must not
+    /// hold the window open: from its end the window runs again, long enough for a transcription under way.
+    public mutating func speechEnded(at now: Date) {
+        guard speechInProgress else { return }
+        speechInProgress = false
+        let extended = now.addingTimeInterval(commandTimeout)
+        switch phase {
+        case let .awaitingCommand(deadline): phase = .awaitingCommand(deadline: max(deadline, extended))
+        case let .followUp(deadline): phase = .followUp(deadline: max(deadline, extended))
+        default: break
+        }
+    }
+
     public mutating func tick(at now: Date) -> Action {
         guard !speechInProgress else { return .none }
         switch phase {
