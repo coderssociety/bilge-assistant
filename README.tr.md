@@ -27,6 +27,9 @@
 dil modelleri ve ses üretimi Mac'te çalışır; bulut hizmeti, hesap ya da abonelik yoktur. İnternet yalnızca
 hava durumu, döviz, haber gibi istediğin veriler ve modellerin ilk indirmesi için kullanılır.
 
+Windows ya da Linux mu kullanıyorsun? [Windows ve Linux için Bilge](https://github.com/coderssociety/bilge-desktop/blob/main/README.tr.md)
+aynı asistanın onlar için yeniden yazılmış hâli.
+
 ## İçindekiler
 
 - [Neler yapar](#neler-yapar)

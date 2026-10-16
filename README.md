@@ -31,6 +31,9 @@ and for downloading models the first time.
 
 “Bilge” means *wise* in Turkish and is pronounced *BIL-geh*. The wake word stays the same in English.
 
+On Windows or Linux? [Bilge for Windows and Linux](https://github.com/coderssociety/bilge-desktop) is the same
+assistant rebuilt for them.
+
 ## Contents
 
 - [What it does](#what-it-does)
