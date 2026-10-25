@@ -106,9 +106,17 @@ def test_seeking_moves_the_episode_and_not_the_desktop_player():
     media, player = FakeMedia(), playing(EPISODE)
     seek = playback.playback_tool(media, TR, player)
     assert seek.run({"action": "seek", "seconds": 30}) == "Bölüm 30 saniye ileri sarıldı."
-    assert seek.run({"action": "seek", "seconds": -90}) == "Bölüm 1 dakika 30 saniye geri sarıldı."
+    assert seek.run({"action": "seek", "seconds": -10}) == "Bölüm 10 saniye geri sarıldı."
     assert seek.run({"action": "restartTrack"}) == "Bölüm baştan başladı."
-    assert player.sought == [30, -90, -12.0] and media.sent == []
+    assert player.sought == [30, -10, -12.0] and media.sent == []
+
+
+def test_a_seek_beyond_either_end_of_the_episode_says_where_it_stopped():
+    player = FakePlayer(duration=40.0)
+    player.play(EPISODE)
+    seek = playback.playback_tool(FakeMedia(None), TR, player)
+    assert seek.run({"action": "seek", "seconds": 300}) == "Bölüm o kadar uzun değil; son saniyelerine sarıldı."
+    assert seek.run({"action": "seek", "seconds": -90}) == "Bölüm baştan başladı."
 
 
 def test_a_live_station_cannot_be_sought():
