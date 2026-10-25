@@ -49,11 +49,15 @@ class IdleUnloadingRecognizer:
         """Bilge was just called: start loading now, while the request is still being said."""
         threading.Thread(target=self._ensure_loaded, name="bilge-warm", daemon=True).start()
 
-    def _ensure_loaded(self) -> Recognizer:
+    def _ensure_loaded(self) -> None:
         with self._lock:
-            return self._loaded()
+            if not self._closed.is_set():
+                self._loaded()
 
     def _loaded(self) -> Recognizer:
+        # Loading after close() would hold the model (or a whisper.cpp process) that nothing lets go again.
+        if self._closed.is_set():
+            raise RecognitionError("The recognizer was closed")
         if self._recognizer is None:
             started = self._clock()
             self._recognizer = self._load()

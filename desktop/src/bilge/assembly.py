@@ -481,11 +481,11 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
         raise
     options = Options(wake_phrase=voice.wake_phrase, follow_up=voice.follow_up, barge_in=voice.barge_in,
                       wake_word=voice.wake_word or not voice.hotkey)  # fmt: skip
-    interpreter, recorder = _listening_modes(agent, recognizer, language, root,
-                                             announce=lambda text: holder["assistant"].announce(text))  # fmt: skip
+    interpreter, recorder, meetings = _listening_modes(agent, recognizer, language, root,
+                                                       announce=lambda text: holder["assistant"].announce(text))  # fmt: skip
     assistant = VoiceAssistant(recognizer, speech, agent, language, options, gate, _making_way(player, on_event),
                                wake_recognizer=wake, services=services, interpreter=interpreter,
-                               recorder=recorder)  # fmt: skip
+                               recorder=recorder, meetings=meetings)  # fmt: skip
     holder["assistant"] = assistant
     front_end = FrontEnd(device, assistant.on_chunk, EchoCanceller() if voice.barge_in else None)
     return assistant, front_end
@@ -508,7 +508,7 @@ def _listening_modes(agent: Agent, recognizer, language: AssistantLanguage, root
     for tool in [*meetings.tools(), interpreter.tool()]:
         agent.registry.add(tool)
     agent.rules = [*meetings.rules(), interpreter.rule(), *agent.rules]
-    return interpreter, recorder
+    return interpreter, recorder, meetings
 
 
 def _interpreting_recognizer(recognizer, language: AssistantLanguage, root: Path):
