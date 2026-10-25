@@ -3,7 +3,12 @@
 /// and goes to the model, so the fast path can only be faster, never wronger.
 public enum QuickIntent: Sendable, Equatable {
     public enum Volume: Sendable, Equatable { case set(Int), up, down, change(Int), mute, unmute }
-    public enum Media: Sendable, Equatable { case play, pause, next, previous, nowPlaying }
+    public enum Media: Sendable, Equatable {
+        case play, pause, next, previous, nowPlaying, restartTrack
+        /// Seconds; nil when not said.
+        case seekForward(Int?), seekBackward(Int?)
+        case shuffle(Bool), repeatAll(Bool)
+    }
     public enum System: Sendable, Equatable {
         case lockScreen, screenOff, sleep, darkModeOn, darkModeOff, focusOn, focusOff, restart, shutDown, logOut
     }

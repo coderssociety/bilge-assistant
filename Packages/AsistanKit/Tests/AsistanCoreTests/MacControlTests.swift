@@ -24,18 +24,30 @@ struct MacControlTests {
         ("Mac'i kapat", .system(.shutDown)),
         ("bilgisayarı kapatır mısın", .system(.shutDown)),
         ("oturumu kapat", .system(.logOut)),
+        ("30 saniye ileri sar", .media(.seekForward(30))),
+        ("otuz saniye ileri sar", .media(.seekForward(30))),
+        ("2 dakika ileri sar", .media(.seekForward(120))),
+        ("geri sar", .media(.seekBackward(nil))),
+        ("videoyu 10 saniye geri sar", .media(.seekBackward(10))),
+        ("baştan başlat", .media(.restartTrack)),
+        ("şarkıyı baştan çal", .media(.restartTrack)),
+        ("karışık çal", .media(.shuffle(true))),
+        ("karıştırmayı kapat", .media(.shuffle(false))),
+        ("tekrarı aç", .media(.repeatAll(true))),
+        ("şarkıyı tekrarla", .media(.repeatAll(true))),
+        ("tekrarlamayı kapat", .media(.repeatAll(false))),
     ])
     func recognized(text: String, expected: QuickIntent) {
         #expect(QuickIntentParser.parse(TurkishNumberParser.digitize(text)) == expected)
     }
 
     @Test("leaves other phrasings to the model", arguments: [
-        "ekranı kapat", "Safari'yi kapat", "Bluetooth ayarlarını aç", "parlaklık nasıl ayarlanır",
-        "uyku odağını aç", "bilgisayarı baştan başlat", "Mac'teki notları kapat",
+        "ekranı kapat", "Safari'yi kapat", "Bluetooth ayarlarını aç", "parlaklık nasıl ayarlanır", "tekrarla",
+        "uyku odağını aç", "geri al", "geri git", "bilgisayarı baştan başlat", "Mac'teki notları kapat",
     ])
     func deferred(text: String) {
         let intent = QuickIntentParser.parse(text)
-        let controls: [QuickIntent?] = [.system(.shutDown), .system(.restart), .brightness(.up)]
+        let controls: [QuickIntent?] = [.system(.shutDown), .system(.restart), .media(.restartTrack), .media(.repeatAll(true)), .brightness(.up)]
         #expect(!controls.contains(intent))
         #expect(intent != .system(.focusOn))
     }
@@ -95,6 +107,18 @@ struct MacControlTests {
     ])
     func bluetooth(text: String, language: AssistantLanguage, expected: MacControlRequest.Switch?) {
         #expect(MacControlRequest.bluetooth(text, language: language) == expected)
+    }
+
+    @Test("reads how far to seek", arguments: [
+        ("30 saniye ileri sar", AssistantLanguage.turkish, Int?.some(30)),
+        ("iki dakika geri sar", .turkish, 120),
+        ("yarım dakika ileri", .turkish, 30),
+        ("geri sar", .turkish, nil),
+        ("skip ahead 15 seconds", .english, 15),
+        ("go back 2 minutes", .english, 120),
+    ])
+    func seek(text: String, language: AssistantLanguage, expected: Int?) {
+        #expect(MacControlRequest.seekSeconds(text, language: language) == expected)
     }
 }
 

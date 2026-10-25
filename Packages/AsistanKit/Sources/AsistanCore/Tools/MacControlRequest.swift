@@ -1,6 +1,6 @@
 /// What a routed Mac-control command asks for, read from its words so the tools never act on an
-/// argument the model invented: Focus on or off, which power action, how much brightness, and Bluetooth
-/// on, off or its state. nil means the words don't say.
+/// argument the model invented: Focus on or off, which power action, how much brightness, Bluetooth
+/// on, off or its state, and how far to seek. nil means the words don't say.
 public enum MacControlRequest {
     public enum Power: Sendable, Equatable { case restart, shutDown, logOut }
     public enum Change: Sendable, Equatable { case up(Int?), down(Int?), set(Int) }
@@ -21,6 +21,7 @@ public enum MacControlRequest {
     private static let englishUpWords: Set<String> = ["up", "increase", "raise", "brighter", "brighten", "higher"]
     private static let englishDownWords: Set<String> = ["down", "decrease", "lower", "dim", "dimmer", "darker", "reduce"]
     private static let questionParticles: Set<String> = ["mi", "mu", "mii"]
+    private static let secondsPerMinute = 60
     private static let maxPercent = 100
 
     public static func focus(_ text: String, language: AssistantLanguage) -> Bool? {
@@ -87,6 +88,22 @@ public enum MacControlRequest {
         }
         if words.contains(where: questionParticles.contains) || words.contains(where: { $0.hasPrefix("durum") }) { return .status }
         return toggle(words).map { $0 ? .on : .off }
+    }
+
+    /// "30 saniye ileri sar" → 30, "iki dakika geri" → 120, "skip ahead 15 seconds" → 15.
+    public static func seekSeconds(_ text: String, language: AssistantLanguage) -> Int? {
+        let words = words(text, language)
+        for (index, word) in words.enumerated() where index > 0 {
+            let amount = words[index - 1] == "yarim" ? 0.5 : Double(words[index - 1])
+            guard let amount else { continue }
+            if word.hasPrefix("saniye") || word.hasPrefix("second") || word == "sn" || word.hasPrefix("sec") {
+                return Int(amount)
+            }
+            if word.hasPrefix("dakika") || word.hasPrefix("minute") || word == "dk" || word == "min" {
+                return Int(amount * Double(secondsPerMinute))
+            }
+        }
+        return nil
     }
 
     private static func toggle(_ words: [String]) -> Bool? {

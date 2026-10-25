@@ -18,6 +18,13 @@ public enum MusicPlayerChoice {
             ?? running.first?.app
     }
 
+    /// Play, pause, next and previous go by AppleScript to the app that is playing (or, to resume, holds a
+    /// paused track); nil means neither is, so the media keys reach whatever is: a browser, a podcast app.
+    public static func forTransport(_ running: [Player], resuming: Bool) -> MusicApp? {
+        running.first { $0.state == .playing }?.app
+            ?? (resuming ? running.first { $0.state == .paused }?.app : nil)
+    }
+
     /// Where a named song is played: the app that is playing, else Spotify when it is open, or when
     /// Music is not open and Spotify is installed, else Music.
     public static func forSearch(_ running: [Player], spotifyInstalled: Bool) -> MusicApp {

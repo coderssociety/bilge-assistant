@@ -19,6 +19,8 @@ struct EnglishRouteGuardTests {
         ("What is the capital of Australia", "searchWeb", "conversation"),
         ("Copy your last answer", "readClipboard", "copyToClipboard"),
         ("Next song", "playMusic", "controlMusic"),
+        ("Rewind 10 seconds", "playMusic", "controlMusic"),
+        ("Shuffle my music", "playMusic", "controlMusic"),
         ("How much is 15 percent of 240", "conversation", "calculate"),
         ("Translate the selected text to Turkish", "conversation", "readSelection"),
         ("Give me some advice", "weather", "conversation"),

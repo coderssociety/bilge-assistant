@@ -18,7 +18,7 @@ struct FastPath {
         case let .volume(volume):
             return await make("setVolume", VolumeTool.self) { Self.arguments(for: volume) }
         case let .media(media):
-            return await make("controlMusic", MediaTool.self) { .init(action: Self.action(for: media)) }
+            return await make("controlMusic", MediaTool.self) { Self.arguments(for: media) }
         case let .system(system):
             return await make("systemAction", SystemActionTool.self) { .init(action: Self.action(for: system), focusName: nil) }
         case let .calendar(range):
@@ -84,13 +84,18 @@ struct FastPath {
         }
     }
 
-    private static func action(for media: QuickIntent.Media) -> MediaTool.Action {
+    private static func arguments(for media: QuickIntent.Media) -> MediaTool.Arguments {
         switch media {
-        case .play: .play
-        case .pause: .pause
-        case .next: .next
-        case .previous: .previous
-        case .nowPlaying: .nowPlaying
+        case .play: .init(action: .play, seconds: nil)
+        case .pause: .init(action: .pause, seconds: nil)
+        case .next: .init(action: .next, seconds: nil)
+        case .previous: .init(action: .previous, seconds: nil)
+        case .nowPlaying: .init(action: .nowPlaying, seconds: nil)
+        case .restartTrack: .init(action: .restartTrack, seconds: nil)
+        case let .seekForward(seconds): .init(action: .seekForward, seconds: seconds)
+        case let .seekBackward(seconds): .init(action: .seekBackward, seconds: seconds)
+        case let .shuffle(on): .init(action: on ? .shuffleOn : .shuffleOff, seconds: nil)
+        case let .repeatAll(on): .init(action: on ? .repeatOn : .repeatOff, seconds: nil)
         }
     }
 

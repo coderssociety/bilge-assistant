@@ -22,7 +22,7 @@ public enum EnglishRouteGuard {
     private static let mathWords: Set<String> = [
         "plus", "minus", "times", "multiplied", "divided", "percent", "squared", "cubed", "root",
     ]
-    private static let playbackWords: Set<String> = ["next", "previous", "skip", "pause", "resume"]
+    private static let playbackWords: Set<String> = ["next", "previous", "skip", "pause", "resume", "rewind", "shuffle"]
     private static let selectionWords: Set<String> = ["selected", "highlighted", "selection"]
     private static let stopWords: Set<String> = ["stop", "cancel", "delete", "clear", "remove", "turn"]
     private static let readWords: Set<String> = ["read", "summarize", "summarise", "say", "says", "content", "contents"]

@@ -1,6 +1,7 @@
 import AppKit
 import AsistanCore
 import FoundationModels
+import IOKit.hidsystem
 
 struct VolumeTool: AssistantTool {
     let name = "setVolume"
@@ -81,52 +82,121 @@ struct VolumeTool: AssistantTool {
 
 struct MediaTool: AssistantTool {
     let name = "controlMusic"
-    let description = "Spotify veya Müzik uygulamasında çalmayı başlatır, duraklatır, sonraki/önceki şarkıya geçer ya da çalan şarkıyı söyler."
+    let description = "Müziği ya da tarayıcıdaki videoyu oynatır, duraklatır, sonrakine/öncekine geçer; Müzik ve Spotify'da ileri/geri sarar, baştan başlatır, karıştırmayı ve tekrarı açıp kapatır, çalanı söyler."
+    private static let defaultSeekSeconds = 15
 
     @Generable
     enum Action {
-        case play, pause, toggle, next, previous, nowPlaying
+        case play, pause, toggle, next, previous, nowPlaying, seekForward, seekBackward, restartTrack
+        case shuffleOn, shuffleOff, repeatOn, repeatOff
     }
 
     @Generable
     struct Arguments {
         var action: Action
+        @Guide(description: "Sadece seekForward/seekBackward için saniye: '30 saniye ileri sar' → 30, '1 dakika geri sar' → 60. Söylenmediyse boş bırak.", .range(1...3600))
+        var seconds: Int?
+    }
+
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        guard [.seekForward, .seekBackward].contains(arguments.action) else { return arguments }
+        let said = MacControlRequest.seekSeconds(command, language: AppLanguage.current)
+        return Arguments(action: arguments.action, seconds: said ?? arguments.seconds)
     }
 
     func call(arguments: Arguments) async throws -> String {
         do {
-            // Telling a closed Music to pause opens it first, and the command then times out.
-            guard let app = try await MusicPlayers.controlTarget() ?? (arguments.action == .play ? .music : nil) else {
-                return String(localized: "Şu an çalan bir şey yok.")
-            }
-            let player = MusicPlayers.displayName(app)
-            let command: String
             switch arguments.action {
-            case .play: command = "play"
-            case .pause: command = "pause"
-            case .toggle: command = "playpause"
-            case .next: command = "next track"
-            case .previous: command = "previous track"
-            case .nowPlaying:
-                command = """
-                if player state is stopped then return ""
-                set stateName to "paused"
-                if player state is playing then set stateName to "playing"
-                return stateName & linefeed & (name of current track) & " - " & (artist of current track)
-                """
-            }
-            let output = try await AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(app.rawValue))\n\(command)\nend tell")
-            switch arguments.action {
-            case .nowPlaying: return Self.nowPlayingReply(output)
-            case .play: return String(localized: "\(player) çalıyor.")
-            case .pause: return String(localized: "\(player) duraklatıldı.")
-            case .toggle: return String(localized: "\(player) oynat/duraklat yapıldı.")
-            case .next: return String(localized: "Sonraki şarkıya geçildi.")
-            case .previous: return String(localized: "Önceki şarkıya dönüldü.")
+            case .play, .pause, .toggle, .next, .previous: return try await transport(arguments.action)
+            case .nowPlaying: return try await nowPlaying()
+            default: return try await playerOnly(arguments)
             }
         } catch {
             return ToolReply.failure(error)
         }
+    }
+
+    /// The app that is playing gets AppleScript; with neither playing, the media keys reach whatever
+    /// plays elsewhere (a browser, a podcast app), as the keyboard's own keys would.
+    private func transport(_ action: Action) async throws -> String {
+        let open = await MainActor.run { MusicPlayers.running() }
+        let states = try await MusicPlayers.states(of: open)
+        guard let app = MusicPlayerChoice.forTransport(states, resuming: action == .play) else {
+            return try await pressMediaKey(action)
+        }
+        let command = switch action {
+        case .play: "play"
+        case .pause: "pause"
+        case .next: "next track"
+        case .previous: "previous track"
+        default: "playpause"
+        }
+        _ = try await AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(app.rawValue))\n\(command)\nend tell")
+        let player = MusicPlayers.displayName(app)
+        return switch action {
+        case .play: String(localized: "\(player) çalıyor.")
+        case .pause: String(localized: "\(player) duraklatıldı.")
+        case .next: String(localized: "Sonraki şarkıya geçildi.")
+        case .previous: String(localized: "Önceki şarkıya dönüldü.")
+        default: String(localized: "\(player) oynat/duraklat yapıldı.")
+        }
+    }
+
+    private func pressMediaKey(_ action: Action) async throws -> String {
+        let key = switch action {
+        case .next: NX_KEYTYPE_FAST
+        case .previous: NX_KEYTYPE_REWIND
+        default: NX_KEYTYPE_PLAY
+        }
+        try await MainActor.run { try SystemKeys.press(key) }
+        return switch action {
+        case .play: String(localized: "Oynatılıyor.")
+        case .pause: String(localized: "Duraklatıldı.")
+        case .next: String(localized: "Sonrakine geçildi.")
+        case .previous: String(localized: "Öncekine dönüldü.")
+        default: String(localized: "Oynat/duraklat yapıldı.")
+        }
+    }
+
+    /// Telling a closed Music anything opens it first, and the command then times out.
+    private func nowPlaying() async throws -> String {
+        guard let app = try await MusicPlayers.controlTarget() else { return String(localized: "Şu an çalan bir şey yok.") }
+        let output = try await AppleScriptRunner.run("""
+        tell application \(AppleScriptRunner.quoted(app.rawValue))
+        if player state is stopped then return ""
+        set stateName to "paused"
+        if player state is playing then set stateName to "playing"
+        return stateName & linefeed & (name of current track) & " - " & (artist of current track)
+        end tell
+        """)
+        return Self.nowPlayingReply(output)
+    }
+
+    /// Seeking, shuffle and repeat need the player's own scripting; Music and Spotify name them differently.
+    private func playerOnly(_ arguments: Arguments) async throws -> String {
+        guard let app = try await MusicPlayers.controlTarget() else {
+            return ToolReply.failure(String(localized: "Bunu yalnızca Müzik ve Spotify'da yapabiliyorum, ikisi de açık değil."))
+        }
+        let isMusic = app == .music
+        let seconds = arguments.seconds ?? Self.defaultSeekSeconds
+        let (command, reply): (String, String) = switch arguments.action {
+        case .seekForward:
+            ("set player position to (player position) + \(seconds)",
+             String(localized: "\(Duration.seconds(seconds).spoken) ileri sardım."))
+        case .seekBackward:
+            ("""
+            set target to (player position) - \(seconds)
+            if target < 0 then set target to 0
+            set player position to target
+            """, String(localized: "\(Duration.seconds(seconds).spoken) geri sardım."))
+        case .restartTrack: ("set player position to 0\nplay", String(localized: "Şarkı baştan başladı."))
+        case .shuffleOn: (isMusic ? "set shuffle enabled to true" : "set shuffling to true", String(localized: "Karışık çalma açık."))
+        case .shuffleOff: (isMusic ? "set shuffle enabled to false" : "set shuffling to false", String(localized: "Karışık çalma kapalı."))
+        case .repeatOn: (isMusic ? "set song repeat to all" : "set repeating to true", String(localized: "Tekrar açık."))
+        default: (isMusic ? "set song repeat to off" : "set repeating to false", String(localized: "Tekrar kapalı."))
+        }
+        _ = try await AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(app.rawValue))\n\(command)\nend tell")
+        return reply
     }
 
     private static func nowPlayingReply(_ output: String) -> String {

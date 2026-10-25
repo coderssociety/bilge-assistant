@@ -93,6 +93,7 @@ enum RouterInstructions {
         ("what did I copy", "readClipboard"),
         ("turn the sound all the way up", "setVolume"),
         ("skip this track", "controlMusic"),
+        ("rewind 10 seconds", "controlMusic"),
         ("put the display to sleep", "systemAction"),
         ("show me the Documents folder", "files"),
         ("do I have any meetings on Friday", "readCalendar"),
@@ -189,7 +190,7 @@ enum RouterInstructions {
         - Reading unread e-mail is readMail. Sending e-mail is sendEmail; sending a text/iMessage ("mesaj at", "yaz") to a person is sendMessage.
         - Someone's phone number or e-mail address is findContact.
         - Finishing a to-do ("…tamamladım", "…yaptım, işaretle", "listeden çıkar") is completeReminder.
-        - Playing a named song, artist, album or playlist is playMusic; play, pause, next and "what is playing" are controlMusic.
+        - Playing a named song, artist, album or playlist is playMusic; play, pause, next, seeking, shuffle, repeat and "what is playing" are controlMusic.
         - Uptime, disk space, memory, IP address and macOS version are systemInfo, not currentDateTime.
         - "<section> ayarlarını aç" opens a System Settings section: openSettings, not openApp.
         - Making a new folder is createFolder; opening an existing folder is files.
@@ -213,7 +214,7 @@ enum RouterInstructions {
         - Reading unread e-mail is readMail. Sending e-mail is sendEmail; sending a text/iMessage ("text", "message") to a person is sendMessage.
         - Someone's phone number or e-mail address is findContact.
         - Finishing a to-do ("I did…", "mark … as done", "cross … off") is completeReminder.
-        - Playing a named song, artist, album or playlist is playMusic; play, pause, next and "what is playing" are controlMusic.
+        - Playing a named song, artist, album or playlist is playMusic; play, pause, next, seeking, shuffle, repeat and "what is playing" are controlMusic.
         - Uptime, disk space, memory, the Wi-Fi network, IP address and macOS version are systemInfo, not currentDateTime.
         - "open <section> settings" opens a System Settings section: openSettings, not openApp.
         - Making a new folder is createFolder; opening an existing folder is files.

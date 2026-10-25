@@ -92,12 +92,32 @@
         }
       }
     },
+    "%@ geri sardım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Went back %@."
+          }
+        }
+      }
+    },
     "%@ günü": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "On %@"
+          }
+        }
+      }
+    },
+    "%@ ileri sardım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skipped ahead %@."
           }
         }
       }
@@ -2122,6 +2142,16 @@
         }
       }
     },
+    "Bunu yalnızca Müzik ve Spotify'da yapabiliyorum, ikisi de açık değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can only do that in Music and Spotify, and neither is open."
+          }
+        }
+      }
+    },
     "Bunu yapamadım. ": {
       "localizations": {
         "en": {
@@ -2484,6 +2514,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Files can only be deleted with voice confirmation."
+          }
+        }
+      }
+    },
+    "Duraklatıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused."
           }
         }
       }
@@ -3596,6 +3636,26 @@
         }
       }
     },
+    "Karışık çalma açık.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle is on."
+          }
+        }
+      }
+    },
+    "Karışık çalma kapalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle is off."
+          }
+        }
+      }
+    },
     "Katı": {
       "localizations": {
         "en": {
@@ -4576,6 +4636,26 @@
         }
       }
     },
+    "Oynat/duraklat yapıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toggled play/pause."
+          }
+        }
+      }
+    },
+    "Oynatılıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing."
+          }
+        }
+      }
+    },
     "Panoda metin yok.": {
       "localizations": {
         "en": {
@@ -5394,6 +5474,16 @@
         }
       }
     },
+    "Sonrakine geçildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skipped to the next one."
+          }
+        }
+      }
+    },
     "Sonuna indim.": {
       "localizations": {
         "en": {
@@ -5654,12 +5744,32 @@
         }
       }
     },
+    "Tekrar açık.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeat is on."
+          }
+        }
+      }
+    },
     "Tekrar dene": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Try again"
+          }
+        }
+      }
+    },
+    "Tekrar kapalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeat is off."
           }
         }
       }
@@ -6511,6 +6621,16 @@
         }
       }
     },
+    "Öncekine dönüldü.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Went back to the previous one."
+          }
+        }
+      }
+    },
     "Öndeki pencereyi bulamadım.": {
       "localizations": {
         "en": {
@@ -6737,6 +6857,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Trackpad"
+          }
+        }
+      }
+    },
+    "Şarkı baştan başladı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The song started over."
           }
         }
       }
