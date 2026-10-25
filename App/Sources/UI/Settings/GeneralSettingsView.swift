@@ -95,6 +95,15 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            Section("Müzik") {
+                Picker("Varsayılan müzik servisi", selection: $settings.musicService) {
+                    Text("Otomatik").tag(MusicService?.none)
+                    ForEach(MusicService.allCases, id: \.self) { Text(verbatim: $0.name).tag(Optional($0)) }
+                }
+                Text("Servis söylemediğinde şarkılar burada çalınır. Otomatik: çalan uygulama, yoksa açık ya da yüklüyse Spotify, o da yoksa Müzik. YouTube, YouTube Music ve Deezer'da ilk eşleşen şarkı açılır; Spotify'da arama sonuçları gösterilir.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section("Hava durumu") {
                 LabeledContent("Şehir") {
                     TextField("", text: $settings.weatherCity, prompt: Text(WeatherTool.fallbackCity))

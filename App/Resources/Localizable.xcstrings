@@ -92,6 +92,46 @@
         }
       }
     },
+    "%@ '%@' açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't open '%2$@' %1$@."
+          }
+        }
+      }
+    },
+    "%@ '%@' açıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opened '%2$@' %1$@."
+          }
+        }
+      }
+    },
+    "%@ '%@' için bir şarkı bulamadım; arama sayfasını açtım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a song for '%2$@' %1$@, so I opened its search page."
+          }
+        }
+      }
+    },
+    "%@ arama açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't open a search %@."
+          }
+        }
+      }
+    },
     "%@ aranıyor.": {
       "localizations": {
         "en": {
@@ -772,6 +812,16 @@
         }
       }
     },
+    "%@ çalan: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing %1$@: %2$@."
+          }
+        }
+      }
+    },
     "%@ çalıyor.": {
       "localizations": {
         "en": {
@@ -798,6 +848,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ is free software: you can use, modify and distribute it under the terms of the GNU GPL 3.0. It comes with no warranty."
+          }
+        }
+      }
+    },
+    "%@ şarkıyı arayamadım; '%@' arama sayfasını açtım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't search %1$@, so I opened the search page for '%2$@'."
           }
         }
       }
@@ -1742,6 +1802,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "The Apple on-device model is ready."
+          }
+        }
+      }
+    },
+    "Apple Music'te": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "on Apple Music"
+          }
+        }
+      }
+    },
+    "Apple Music'te '%@' gösterildi; çalmak için oynat düğmesine basabilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'%@' is shown in Apple Music; press play to hear it."
+          }
+        }
+      }
+    },
+    "Apple Music'te '%@' çalıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing '%@' on Apple Music."
           }
         }
       }
@@ -2852,6 +2942,16 @@
         }
       }
     },
+    "Deezer'da": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "on Deezer"
+          }
+        }
+      }
+    },
     "Depolama": {
       "localizations": {
         "en": {
@@ -2888,6 +2988,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Continue"
+          }
+        }
+      }
+    },
+    "Devam ettirilecek bir şey bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find anything to resume."
           }
         }
       }
@@ -5706,6 +5816,16 @@
         }
       }
     },
+    "Otomatik": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic"
+          }
+        }
+      }
+    },
     "Oturum kapatılıyor.": {
       "localizations": {
         "en": {
@@ -6258,6 +6378,16 @@
         }
       }
     },
+    "Servis söylemediğinde şarkılar burada çalınır. Otomatik: çalan uygulama, yoksa açık ya da yüklüyse Spotify, o da yoksa Müzik. YouTube, YouTube Music ve Deezer'da ilk eşleşen şarkı açılır; Spotify'da arama sonuçları gösterilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Songs play here when you don't name a service. Automatic: the app that is playing, else Spotify if it is open or installed, else Music. On YouTube, YouTube Music and Deezer the first matching song opens; on Spotify the search results are shown."
+          }
+        }
+      }
+    },
     "Ses": {
       "localizations": {
         "en": {
@@ -6744,6 +6874,16 @@
         }
       }
     },
+    "Spotify'da": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "on Spotify"
+          }
+        }
+      }
+    },
     "Spotify'da '%@' için arama sonuçlarını açtım; çalmak istediğini seçebilirsin.": {
       "localizations": {
         "en": {
@@ -7000,6 +7140,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Opened a search for '%@' in the browser."
+          }
+        }
+      }
+    },
+    "Tarayıcıda açık %@ sekmesi: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The %1$@ tab open in your browser: %2$@."
           }
         }
       }
@@ -7320,6 +7470,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Long-lived access token"
+          }
+        }
+      }
+    },
+    "Varsayılan müzik servisi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default music service"
           }
         }
       }
@@ -7744,6 +7904,26 @@
         }
       }
     },
+    "YouTube Music'te": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "on YouTube Music"
+          }
+        }
+      }
+    },
+    "YouTube'da": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "on YouTube"
+          }
+        }
+      }
+    },
     "Yukarı kaydırdım.": {
       "localizations": {
         "en": {
@@ -8017,6 +8197,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "yuan"
+          }
+        }
+      }
+    },
+    "Zaten bir şey çalıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something is already playing."
           }
         }
       }

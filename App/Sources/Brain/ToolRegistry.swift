@@ -60,6 +60,7 @@ struct ToolRegistry {
             ReadNotesTool(),
             AppendNoteTool(),
             PlayMusicTool(),
+            PlayMusicOnServiceTool(),
             RadioTool(),
             PodcastTool(),
             YouTubeSummaryTool(),

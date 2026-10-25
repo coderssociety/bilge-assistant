@@ -135,14 +135,36 @@ struct MediaTool: AssistantTool {
         }
     }
 
-    /// The app that is playing gets AppleScript; with neither playing, the media keys reach whatever
-    /// plays elsewhere (a browser, a podcast app), as the keyboard's own keys would.
+    /// The app that is playing gets AppleScript. Otherwise the media keys reach whatever plays elsewhere (a browser, a
+    /// podcast app), as the keyboard's own keys would; the play/pause key is a toggle, so `transportTarget` decides
+    /// whether pressing it would do what was asked.
     private func transport(_ action: Action) async throws -> String {
         let open = await MainActor.run { MusicPlayers.running() }
-        let states = try await MusicPlayers.states(of: open)
-        guard let app = MusicPlayerChoice.forTransport(states, resuming: action == .play) else {
-            return try await pressMediaKey(action)
+        let players = try await MusicPlayers.states(of: open)
+        let playing = players.first { $0.state == .playing }?.app
+        let transport: MusicPlayerChoice.Transport
+        switch action {
+        case .play: transport = .play
+        case .pause: transport = .pause
+        case .toggle: transport = .toggle
+        default:
+            guard let playing else { return try await pressMediaKey(action) }
+            return try await tell(playing, action)
         }
+        let othersSounding = playing == nil && AudioActivity.othersSounding()
+        let mediaTab = playing == nil && transport != .pause && !othersSounding ? await Self.browserMediaTab() != nil : false
+        switch MusicPlayerChoice.transportTarget(transport, players: players, othersSounding: othersSounding, mediaTab: mediaTab) {
+        case let .app(app): return try await tell(app, action)
+        case .mediaKey: return try await pressMediaKey(action)
+        case .alreadyPlaying: return String(localized: "Zaten bir şey çalıyor.")
+        case .nothing:
+            return action == .pause
+                ? String(localized: "Şu an çalan bir şey yok.")
+                : String(localized: "Devam ettirilecek bir şey bulamadım.")
+        }
+    }
+
+    private func tell(_ app: MusicApp, _ action: Action) async throws -> String {
         let command = switch action {
         case .play: "play"
         case .pause: "pause"
@@ -177,9 +199,19 @@ struct MediaTool: AssistantTool {
         }
     }
 
-    /// Telling a closed Music anything opens it first, and the command then times out.
+    /// The music app that is playing, then a music tab in a browser that is sounding, then a paused track, then a
+    /// music tab merely open. Telling a closed Music anything opens it first, so only open apps are asked.
     private func nowPlaying() async throws -> String {
-        guard let app = try await MusicPlayers.controlTarget() else { return String(localized: "Şu an çalan bir şey yok.") }
+        let open = await MainActor.run { MusicPlayers.running() }
+        let players = try await MusicPlayers.states(of: open)
+        if let app = players.first(where: { $0.state == .playing })?.app { return try await Self.nowPlaying(in: app) }
+        let tab = await Self.browserMediaTab()
+        if let tab, tab.isSounding { return Self.tabReply(tab) }
+        if let app = players.first(where: { $0.state == .paused })?.app { return try await Self.nowPlaying(in: app) }
+        return tab.map(Self.tabReply) ?? String(localized: "Şu an çalan bir şey yok.")
+    }
+
+    private static func nowPlaying(in app: MusicApp) async throws -> String {
         let output = try await AppleScriptRunner.run("""
         tell application \(AppleScriptRunner.quoted(app.rawValue))
         if player state is stopped then return ""
@@ -188,7 +220,30 @@ struct MediaTool: AssistantTool {
         return stateName & linefeed & (name of current track) & " - " & (artist of current track)
         end tell
         """)
-        return Self.nowPlayingReply(output)
+        return nowPlayingReply(output)
+    }
+
+    private struct MediaTab {
+        let service: MusicService
+        let track: String
+        let isSounding: Bool
+    }
+
+    /// The music tab of a running browser most likely to be playing, by its address and title only.
+    private static func browserMediaTab() async -> MediaTab? {
+        let browsers = await MainActor.run { BrowserPage.runningBrowsers() }
+        guard !browsers.isEmpty else { return nil }
+        let tabs = await BrowserPage.tabs(in: browsers)
+        let sounding = BrowserMedia.sounding(browsers, processes: AudioActivity.soundingProcesses())
+        guard let (tab, service) = BrowserMedia.mediaTab(in: tabs, sounding: sounding),
+              let track = TrackName.fromTab(tab.title) else { return nil }
+        return MediaTab(service: service, track: track, isSounding: sounding.contains(tab.browser))
+    }
+
+    private static func tabReply(_ tab: MediaTab) -> String {
+        tab.isSounding
+            ? String(localized: "\(MusicPlayback.place(tab.service)) çalan: \(tab.track).")
+            : String(localized: "Tarayıcıda açık \(tab.service.name) sekmesi: \(tab.track).")
     }
 
     /// Seeking, shuffle and repeat need the player's own scripting; Music and Spotify name them differently.

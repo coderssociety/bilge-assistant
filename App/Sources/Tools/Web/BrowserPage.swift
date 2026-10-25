@@ -77,6 +77,53 @@ enum BrowserPage {
         return output.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
     }
 
+    /// The scriptable browsers that are open; telling a closed one anything would open it.
+    @MainActor
+    static func runningBrowsers() -> [String] {
+        let running = Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier))
+        return scriptable.keys.filter(running.contains).sorted()
+    }
+
+    /// The address and title of every tab in `browsers` (see `BrowserMedia.tabs(fromScript:browser:)`); no page is
+    /// scripted. A browser that cannot be asked, as without the Automation permission, is left out.
+    static func tabs(in browsers: [String]) async -> [BrowserTab] {
+        var tabs: [BrowserTab] = []
+        for identifier in browsers {
+            guard let browser = scriptable[identifier] else { continue }
+            do {
+                tabs += BrowserMedia.tabs(fromScript: try await AppleScriptRunner.run(tabScript(browser)), browser: identifier)
+            } catch {
+                Log.tools.info("No tabs from \(browser.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        return tabs
+    }
+
+    /// "tab" names a class inside these browsers' tell blocks, so the separator is spelled as a character id.
+    private static func tabScript(_ browser: Browser) -> String {
+        let (title, isFront) = browser.isSafari
+            ? ("name", "index of t = index of current tab of w")
+            : ("title", "id of t = id of active tab of w")
+        return """
+        set fieldSeparator to character id 9
+        set output to ""
+        tell application \(AppleScriptRunner.quoted(browser.name))
+        repeat with w in windows
+        try
+        repeat with t in tabs of w
+        set pageURL to URL of t
+        set pageTitle to \(title) of t
+        if pageURL is missing value then set pageURL to ""
+        if pageTitle is missing value then set pageTitle to ""
+        set output to output & ((\(isFront)) as text) & fieldSeparator & pageURL & fieldSeparator & pageTitle & linefeed
+        end repeat
+        end try
+        end repeat
+        end tell
+        return output
+        """
+    }
+
     /// Brings the front window's tab `index` (from 1) forward.
     static func selectTab(_ index: Int, in bundleIdentifier: String) async throws {
         guard let browser = scriptable[bundleIdentifier] else { return }

@@ -20,6 +20,7 @@ final class AssistantSettings {
         static let localModelID = "localModelID"
         static let localModelKeepAlive = "localModelKeepAlive"
         static let weatherCity = WeatherTool.defaultCityKey
+        static let musicService = MusicPlayback.serviceKey
         static let onboardingCompleted = "onboardingCompleted"
         static let proactiveAlertsEnabled = "proactiveAlertsEnabled"
         static let eventAlertLeadMinutes = "eventAlertLeadMinutes"
@@ -55,6 +56,8 @@ final class AssistantSettings {
     var localModelID: String? { didSet { defaults.set(localModelID, forKey: Key.localModelID) } }
 
     var weatherCity: String { didSet { defaults.set(weatherCity, forKey: Key.weatherCity) } }
+    /// Where a song is played when the command names no service; nil is "Otomatik".
+    var musicService: MusicService? { didSet { defaults.set(musicService?.rawValue, forKey: Key.musicService) } }
     var localModelKeepAlive: LocalModelKeepAlive {
         didSet { defaults.set(localModelKeepAlive.rawValue, forKey: Key.localModelKeepAlive) }
     }
@@ -101,6 +104,7 @@ final class AssistantSettings {
         bargeInEnabled = defaults.object(forKey: Key.bargeInEnabled) as? Bool ?? true
         localModelID = defaults.string(forKey: Key.localModelID)
         weatherCity = defaults.string(forKey: Key.weatherCity) ?? WeatherTool.fallbackCity
+        musicService = defaults.string(forKey: Key.musicService).flatMap(MusicService.init(rawValue:))
         localModelKeepAlive = defaults.string(forKey: Key.localModelKeepAlive)
             .flatMap(LocalModelKeepAlive.init(rawValue:)) ?? .untilConversationEnds
         onboardingCompleted = defaults.bool(forKey: Key.onboardingCompleted)
