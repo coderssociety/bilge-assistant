@@ -391,6 +391,7 @@ class Outlook:
                             Body="Fatura ödendi.", UnRead=False, ReceivedTime=datetime(2026, 10, 13, 8, 15)),
         ])  # fmt: skip
         self.sent = []
+        self.attached = []
         self.items = {}
 
     def GetNamespace(self, _):  # noqa: N802
@@ -405,6 +406,7 @@ class Outlook:
             def __init__(self):
                 self.Recipients = SimpleNamespace(Add=lambda to: SimpleNamespace(
                     Resolve=lambda: to == "Ahmet", Name="Ahmet Yılmaz", Address="ahmet@example.org"))  # fmt: skip
+                self.Attachments = SimpleNamespace(Add=outlook.attached.append)
 
             def Send(self):  # noqa: N802
                 outlook.sent.append((self.To, self.Subject, self.Body))

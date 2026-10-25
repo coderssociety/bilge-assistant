@@ -3,11 +3,15 @@ the one just read after the user has heard exactly who it goes to and what it sa
 
 import html
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from bilge import mailboxes
 from bilge.core import mail_request
+from bilge.core.context import context_intent
+from bilge.core.context.screen_context import ContextItem, Files, Text
 from bilge.core.language import AssistantLanguage
 from bilge.desktop.windows.office import MAIL_ITEM, OfficeError, Outlook, OutlookMailbox, smtp_address
 from bilge.tools.base import Risk, Tool, ToolError
@@ -17,9 +21,15 @@ from bilge.tools.reading import TextReading
 
 # The whole message is read out before it is sent; a longer one is refused rather than cut short in the question.
 MAX_BODY = 600
+# What "bunu gönder" points at is sent as it is, up to this much, after the user has heard how it starts.
+MAX_POINTED = 2000
+PREVIEW_CHARACTERS = 300
+MAX_ATTACHMENTS = 5
+SUBJECT_CHARACTERS = 60
 # Outlook's olFormatHTML.
 HTML_FORMAT = 2
 _BODY_TAG = re.compile(r"<body[^>]*>", re.IGNORECASE)
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 _TEXTS = {
     AssistantLanguage.TURKISH: {
@@ -31,7 +41,7 @@ _TEXTS = {
         "send": "Outlook ile e-posta gönderir. Alıcı adres defterindeki bir ad ya da e-posta adresi olabilir.",
         "to": "Alıcının adı ya da e-posta adresi",
         "subject": "Konu",
-        "body": "E-postanın metni, kullanıcının söylediği gibi",
+        "body": "E-postanın metni, kullanıcının söylediği gibi; 'bunu gönder' deniyorsa 'bunu'",
         "unknown": "Outlook'ta '{to}' diye birini bulamadım.",
         "question": "{name} ({address}) adresine '{subject}' konulu e-postayı göndereyim mi? Metin: {body}",
         "sent": "E-postayı {name} adresine gönderdim.",
@@ -47,6 +57,16 @@ _TEXTS = {
         "which": "Az önce birden çok e-posta okudum: {list}. Hangisine yanıt vereyim?",
         "no_sender": "'{sender}' kişisinden gelen bir e-posta bulamadım.",
         "changed": "E-postanın göndereni artık farklı görünüyor; yanıtı göndermedim.",
+        "nothing_pointed": "E-postada ne göndermemi istediğini bulamadım. Bir metni seç ya da kopyala, ya da dosyayı "
+        "Gezgin'de seçip 'bunu gönder' de.",
+        "pointed_question": "{source} şöyle başlıyor: \"{preview}\". Bunu {name} ({address}) adresine '{subject}' "
+        "konulu e-postayla göndereyim mi?",
+        "selected_source": "Gönderilecek seçili metin",
+        "copied_source": "Gönderilecek panodaki metin",
+        "more": "… (devamı var)",
+        "attached_question": "{name} ({address}) adresine '{subject}' konulu e-postayı ekinde {files} ile "
+        "göndereyim mi?",
+        "more_files": "{first} ve {count} dosya daha",
     },
     AssistantLanguage.ENGLISH: {
         "not_running": "Outlook isn't open.",
@@ -57,7 +77,7 @@ _TEXTS = {
         "send": "Sends an e-mail with Outlook. The recipient can be a name from the address book or an address.",
         "to": "The recipient's name or e-mail address",
         "subject": "The subject",
-        "body": "The message, as the user said it",
+        "body": "The message, as the user said it; 'this' when the user says 'send this'",
         "unknown": "I couldn't find '{to}' in Outlook.",
         "question": "Shall I send the e-mail '{subject}' to {name} ({address})? It says: {body}",
         "sent": "I sent the e-mail to {name}.",
@@ -73,6 +93,15 @@ _TEXTS = {
         "which": "I just read several e-mails: {list}. Which one should I answer?",
         "no_sender": "I couldn't find an e-mail from '{sender}'.",
         "changed": "The e-mail's sender looks different now; I didn't send the reply.",
+        "nothing_pointed": "I couldn't find what to send. Select or copy some text, or select the file in Explorer, "
+        "and say 'send this'.",
+        "pointed_question": '{source} starts: "{preview}". Shall I send it to {name} ({address}) as the e-mail '
+        "'{subject}'?",
+        "selected_source": "The selected text to send",
+        "copied_source": "The clipboard text to send",
+        "more": "… (there is more)",
+        "attached_question": "Shall I send the e-mail '{subject}' to {name} ({address}) with {files} attached?",
+        "more_files": "{first} and {count} more files",
     },
 }
 
@@ -83,6 +112,16 @@ class _Draft:
     address: str
     subject: str
     body: str
+    attachments: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class _Pointed:
+    """What "bunu" stood for when the question was asked."""
+
+    body: str
+    attachments: tuple[str, ...]
+    copied: bool = False
 
 
 @dataclass(frozen=True)
@@ -94,7 +133,13 @@ class _Reply:
     body: str
 
 
-def mail_tools(outlook: Outlook, language: AssistantLanguage, reading: TextReading | None = None) -> list[Tool]:
+def mail_tools(
+    outlook: Outlook,
+    language: AssistantLanguage,
+    reading: TextReading | None = None,
+    pointed: Callable[[str], ContextItem | None] | None = None,
+) -> list[Tool]:
+    """`pointed` resolves a body that only points ("bunu", "bu dosyayı") to what is selected or copied."""
     texts = _TEXTS[language]
     # The resolved recipient behind the last question, so what is sent is what the user heard.
     pending: dict[str, _Draft] = {}
@@ -128,7 +173,14 @@ def mail_tools(outlook: Outlook, language: AssistantLanguage, reading: TextReadi
                 return None
             return str(recipient.Name), smtp_address(recipient) or ""
 
-        if len(string_argument(arguments, "body")) > MAX_BODY:
+        body = string_argument(arguments, "body")
+        content = None
+        if pointed is not None and context_intent.only_points(body, language):
+            content = _content(pointed(body))
+            if content is None:
+                problem.append(texts["nothing_pointed"])
+                return None
+        elif len(body) > MAX_BODY:
             problem.append(texts["too_long"])
             return None
         try:
@@ -141,10 +193,27 @@ def mail_tools(outlook: Outlook, language: AssistantLanguage, reading: TextReadi
         if not found[1]:
             problem.append(texts["no_address"].format(to=to))
             return None
-        body = string_argument(arguments, "body")
-        draft = _Draft(found[0], found[1], string_argument(arguments, "subject"), body)
+        subject = string_argument(arguments, "subject")
+        if content is None:
+            draft = _Draft(found[0], found[1], subject, body)
+            pending[key(arguments)] = draft
+            return texts["question"].format(name=draft.name, address=draft.address, subject=subject, body=body)
+        draft = _Draft(found[0], found[1], subject or _subject(content), content.body, content.attachments)
         pending[key(arguments)] = draft
-        return texts["question"].format(name=draft.name, address=draft.address, subject=draft.subject, body=body)
+        return pointed_question(draft, content)
+
+    def pointed_question(draft: _Draft, content: _Pointed) -> str:
+        """Text read from the screen or the clipboard is sent only after the user heard whom it goes to and how it
+        starts."""
+        named = {"name": draft.name, "address": draft.address, "subject": draft.subject}
+        if draft.attachments:
+            first = Path(draft.attachments[0]).name
+            more = len(draft.attachments) - 1
+            files = texts["more_files"].format(first=first, count=more) if more else first
+            return texts["attached_question"].format(files=files, **named)
+        preview = draft.body[:PREVIEW_CHARACTERS] + (texts["more"] if len(draft.body) > PREVIEW_CHARACTERS else "")
+        source = texts["copied_source" if content.copied else "selected_source"]
+        return texts["pointed_question"].format(source=source, preview=preview, **named)
 
     def send(arguments: dict[str, Any]) -> str:
         draft = pending.pop(key(arguments), None)
@@ -157,6 +226,8 @@ def mail_tools(outlook: Outlook, language: AssistantLanguage, reading: TextReadi
             item.To = draft.address
             item.Subject = draft.subject
             item.Body = draft.body
+            for attachment in draft.attachments:
+                item.Attachments.Add(attachment)
             item.Send()
 
         guarded(deliver)
@@ -251,6 +322,26 @@ def mail_tools(outlook: Outlook, language: AssistantLanguage, reading: TextReadi
             refine=reply_refine,
         ),
     ]  # fmt: skip
+
+
+def _content(item: ContextItem | None) -> _Pointed | None:
+    if isinstance(item, Text):
+        return _Pointed(item.text[:MAX_POINTED], (), item.copied)
+    if isinstance(item, Files):
+        files = tuple(url for url in item.urls if Path(url).is_file())[:MAX_ATTACHMENTS]
+        return _Pointed("", files) if files else None
+    return None
+
+
+def _subject(content: _Pointed) -> str:
+    """The first line of the text, or the first attached file's name."""
+    if content.attachments:
+        return Path(content.attachments[0]).stem
+    first = content.body.strip().splitlines()[0] if content.body.strip() else ""
+    sentence = _SENTENCE_END.split(first, maxsplit=1)[0]
+    if len(sentence) <= SUBJECT_CHARACTERS:
+        return sentence
+    return sentence[:SUBJECT_CHARACTERS].rsplit(" ", 1)[0] + "…"
 
 
 def _reply(app, entry: str):

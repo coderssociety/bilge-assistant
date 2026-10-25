@@ -13,6 +13,8 @@ from bilge.brain.action_log import ActionLog
 from bilge.brain.agent import Agent, Confirmer
 from bilge.brain.routing import Mode, Rule, rule
 from bilge.core.alerts import earthquake_alert
+from bilge.core.context import context_intent
+from bilge.core.context.screen_context import ContextItem
 from bilge.core.dictation import dictation_command
 from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import Desktop
@@ -209,6 +211,7 @@ def _desktop_tools(
     )
 
     dictation = typing.DictationSession(found.keyboard, language)
+    pointed = context.ContextReader(found.clipboard, found.file_selection)
     sheet = spreadsheet.SpreadsheetSession(language)
     sheet_tool = spreadsheet.SpreadsheetTool(_spreadsheet_apps(LibreOfficeCalc(Runner())), sheet, language)
     tools = [
@@ -229,21 +232,17 @@ def _desktop_tools(
         *web.web_tools(found.opener, language),
         browser.browser_tool(found.keyboard, language),
         screen.read_screen_tool(found.screen_text, language, text_reading),
-        context.context_tool(
-            context.ContextReader(found.clipboard, found.file_selection),
-            found.screen_text,
-            found.opener,
-            language,
-            text_reading,
-        ),
+        context.context_tool(pointed, found.screen_text, found.opener, language, text_reading),
         *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
-        *_office_tools(language, text_reading),
+        *_office_tools(language, text_reading, lambda body: pointed.item(context_intent.wanted_kind(body, language))),
     ]
     rules = [
         rule("startDictation", lambda command: dictation_command.is_start(command, language)),
         rule("spreadsheet", sheet.claims, lambda command: {"command": command}),
         rule("browserControl", lambda command: browser.claims(command, language), lambda command: {"command": command}),
+        # "Bunu Ahmet'e gönder": the text is read only when the e-mail is prepared, never by the model.
+        context.send_pointed_rule(language),
     ]
     modes = [
         Mode(lambda: dictation.active, dictation.window, lambda _: True, dictation.end, takes=dictation.handle,
@@ -262,13 +261,15 @@ def _spreadsheet_apps(calc):
     return SpreadsheetApps({"excel": ExcelSheets(), "calc": calc})
 
 
-def _office_tools(language: AssistantLanguage, text_reading: TextReading) -> list[Tool]:
+def _office_tools(
+    language: AssistantLanguage, text_reading: TextReading, pointed: Callable[[str], ContextItem | None]
+) -> list[Tool]:
     if sys.platform != "win32":
         return []
     from bilge.desktop.windows.office import Outlook
     from bilge.tools.desktop.mail import mail_tools
 
-    return mail_tools(Outlook(), language, text_reading)
+    return mail_tools(Outlook(), language, text_reading, pointed)
 
 
 def voice_models(settings: config.Settings) -> tuple[ModelSpec, ...]:

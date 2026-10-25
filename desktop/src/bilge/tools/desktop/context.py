@@ -8,13 +8,15 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from bilge.brain.routing import Rule
 from bilge.core import ocr_text
-from bilge.core.context import context_intent, screen_context
+from bilge.core.context import context_intent, screen_context, send_request
 from bilge.core.context.context_intent import Action, Kind
 from bilge.core.context.screen_context import ContextItem, Files, ScreenContext, Text
 from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import Clipboard, FileSelection, Opener, ScreenshotArea, ScreenText
 from bilge.desktop.process import DesktopError
+from bilge.llm.messages import ToolCall
 from bilge.tools import documents
 from bilge.tools.base import Tool, ToolError
 from bilge.tools.desktop.common import failure, obj, string_argument, text
@@ -191,6 +193,19 @@ def context_tool(
         untrusted_output=True,
         refine=refine,
     )
+
+
+def send_pointed_rule(language: AssistantLanguage) -> Rule:
+    """ "Bunu Ahmet'e gönder" goes to sendEmail with the pointing words as the body, which the e-mail tool resolves
+    and shows before asking; the model never handles the text."""
+
+    def route(command: str) -> ToolCall | None:
+        request = send_request.parse(command, language)
+        if request is None:
+            return None
+        return ToolCall("rule", "sendEmail", {"to": request.recipient, "body": request.pointer})
+
+    return route
 
 
 def _readable(url: str) -> bool:
