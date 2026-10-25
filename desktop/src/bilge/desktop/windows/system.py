@@ -10,7 +10,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 from bilge.desktop import image
-from bilge.desktop.base import ScreenshotArea
+from bilge.desktop.base import ScreenshotArea, WindowAction
 from bilge.desktop.process import DesktopError, MissingProgram, Runner
 
 _THEME_KEY = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
@@ -90,6 +90,35 @@ class WindowsSession:
         except OSError as error:
             raise DesktopError(f"Could not change the theme: {error}") from error
         self.api.announce_setting_change("ImmersiveColorSet")
+
+
+# The desktop itself and the taskbar are windows too, but not ones to minimize or close.
+_SHELL_CLASSES = frozenset({"Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd"})
+
+
+class WindowsWindowControl:
+    def __init__(self, api=None):
+        self._api = api
+
+    @property
+    def api(self):
+        self._api = self._api or _api()
+        return self._api
+
+    def act(self, action: WindowAction) -> None:
+        api = self.api
+        window = api.foreground()
+        if window is None or window.class_name in _SHELL_CLASSES:
+            raise DesktopError("No window in front")
+        if action is WindowAction.CLOSE:
+            api.close(window)
+        elif action is WindowAction.FULL_SCREEN:
+            # Windows has no full-screen state of its own; apps that have one (browsers, Explorer, players) use F11.
+            api.press(api.VK_F11)
+        else:
+            command = {WindowAction.MINIMIZE: api.SW_MINIMIZE, WindowAction.MAXIMIZE: api.SW_MAXIMIZE,
+                       WindowAction.RESTORE: api.SW_RESTORE}[action]  # fmt: skip
+            api.show(window, command)
 
 
 class WindowsNetwork:

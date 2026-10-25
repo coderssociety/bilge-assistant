@@ -72,6 +72,8 @@ class WindowAction(StrEnum):
     LEFT_HALF = "leftHalf"
     RIGHT_HALF = "rightHalf"
     MAXIMIZE = "maximize"
+    RESTORE = "restore"
+    CLOSE = "close"
     HIDE_OTHERS = "hideOthers"
 
 

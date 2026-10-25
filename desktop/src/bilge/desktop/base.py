@@ -61,6 +61,14 @@ class ScreenshotArea(StrEnum):
     SELECTION = "selection"
 
 
+class WindowAction(StrEnum):
+    MINIMIZE = "minimize"
+    MAXIMIZE = "maximize"
+    RESTORE = "restore"
+    FULL_SCREEN = "fullScreen"
+    CLOSE = "close"
+
+
 class Apps(Protocol):
     def installed(self) -> list[AppEntry]: ...
 
@@ -123,6 +131,12 @@ class Keyboard(Protocol):
         ...
 
     def backspace(self, count: int) -> None: ...
+
+
+class WindowControl(Protocol):
+    def act(self, action: WindowAction) -> None:
+        """On the window in front. FULL_SCREEN toggles; CLOSE asks the window to close, as its close button does."""
+        ...
 
 
 class Session(Protocol):
@@ -192,6 +206,7 @@ class Desktop:
     music: MusicLauncher
     clipboard: Clipboard
     keyboard: Keyboard
+    windows: WindowControl
     session: Session
     network: Network
     screenshots: Screenshots

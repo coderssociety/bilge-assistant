@@ -47,10 +47,12 @@ def _wifi(w: list[str]) -> QuickIntent | None:
 
 
 _WINDOW_MINIMIZE = (["kucult"], ["simge", "durumuna", "kucult"], ["dock", "a", "indir"])
-_WINDOW_FULL_SCREEN = (["tam", "ekran", "yap"], ["tam", "ekrana", "al"], ["tam", "ekran"])
+_WINDOW_FULL_SCREEN = (["tam", "ekran", "yap"], ["tam", "ekrana", "al"], ["tam", "ekran"], ["tam", "ekrandan", "cik"])
 _WINDOW_LEFT = (["sola", "al"], ["sola", "yasla"], ["ekranin", "soluna", "al"], ["sol", "yariya", "al"])
 _WINDOW_RIGHT = (["saga", "al"], ["saga", "yasla"], ["ekranin", "sagina", "al"], ["sag", "yariya", "al"])
 _WINDOW_MAXIMIZE = (["buyut"], ["ekrani", "kaplasin"])
+_WINDOW_RESTORE = (["eski", "haline", "getir"], ["eski", "boyutuna", "getir"], ["eski", "boyutuna", "dondur"])
+_WINDOW_CLOSE = (["kapat"],)
 _WINDOW_HIDE_OTHERS = (["digerlerini", "gizle"], ["diger", "uygulamalari", "gizle"], ["digerlerini", "sakla"])
 
 
@@ -63,6 +65,8 @@ def _window(w: list[str]) -> QuickIntent | None:
         (_WINDOW_LEFT, WindowAction.LEFT_HALF),
         (_WINDOW_RIGHT, WindowAction.RIGHT_HALF),
         (_WINDOW_MAXIMIZE, WindowAction.MAXIMIZE),
+        (_WINDOW_RESTORE, WindowAction.RESTORE),
+        (_WINDOW_CLOSE, WindowAction.CLOSE),
     ):
         if body in phrases:
             return Window(action) if names_window else None

@@ -18,6 +18,7 @@ from bilge.desktop.linux.system import (
     LinuxSession,
     LinuxSettings,
 )
+from bilge.desktop.linux.windows import LinuxWindows
 from bilge.desktop.music import MusicLauncher
 from bilge.desktop.process import Runner
 
@@ -37,6 +38,7 @@ def build(languages: tuple[str, ...]) -> Desktop:
         music=MusicLauncher(apps, opener, media, lambda: installed_players(apps, runner)),
         clipboard=clipboard,
         keyboard=LinuxKeyboard(runner, env, clipboard),
+        windows=LinuxWindows(runner, env),
         session=LinuxSession(runner, env),
         network=LinuxNetwork(runner),
         screenshots=LinuxScreenshots(runner, env),

@@ -112,7 +112,7 @@ def _desktop_tools(
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
-    from bilge.tools.desktop import apps, clipboard, files, sound, spreadsheet, system, timers, typing, web
+    from bilge.tools.desktop import apps, clipboard, files, sound, spreadsheet, system, timers, typing, web, windows
 
     def alert(message: str) -> None:
         try:
@@ -135,6 +135,7 @@ def _desktop_tools(
         *system.system_tools(found.session, found.network, found.settings, found.screenshots, found.folders, language),
         *clipboard.clipboard_tools(found.clipboard, language, last_reply),
         typing.type_text_tool(found.keyboard, language),
+        windows.window_tool(found.windows, language),
         typing.start_dictation_tool(dictation, language),
         *files.file_tools(found.folders, found.opener, language),
         *web.web_tools(found.opener, language),

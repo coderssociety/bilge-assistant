@@ -6,6 +6,11 @@ from bilge.core.conversation import quick_intent_parser as q
 from bilge.core.language import AssistantLanguage
 from bilge.llm.messages import ToolCall
 
+# The rest (halves of the screen, hiding the other apps) have no tool here; the model says so.
+_WINDOW_ACTIONS = {
+    q.WindowAction.MINIMIZE: "minimize", q.WindowAction.MAXIMIZE: "maximize", q.WindowAction.RESTORE: "restore",
+    q.WindowAction.FULL_SCREEN: "fullScreen", q.WindowAction.CLOSE: "close",
+}  # fmt: skip
 _VOLUME_STEPS = {q.VolumeStep.UP: "increase", q.VolumeStep.DOWN: "decrease", q.VolumeStep.MUTE: "mute",
                  q.VolumeStep.UNMUTE: "unmute"}  # fmt: skip
 
@@ -58,6 +63,8 @@ def _tool_and_arguments(intent: q.QuickIntent | None) -> tuple[str, dict] | None
             return "takeScreenshot", {"area": "wholeScreen", "toClipboard": False}
         case q.Wifi(on=on):
             return "setWiFi", {"power": "on" if on else "off"}
+        case q.Window(action=action) if action in _WINDOW_ACTIONS:
+            return "windowControl", {"action": _WINDOW_ACTIONS[action]}
         case q.Settings(pane=pane):
             return "openSettings", {"pane": pane.value}
         case q.SystemInfo(topic=topic):

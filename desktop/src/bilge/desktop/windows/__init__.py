@@ -15,6 +15,7 @@ from bilge.desktop.windows.system import (
     WindowsScreenshots,
     WindowsSession,
     WindowsSettings,
+    WindowsWindowControl,
 )
 
 
@@ -30,6 +31,7 @@ def build() -> Desktop:
         music=MusicLauncher(apps, opener, media, lambda: installed_players(apps)),
         clipboard=WindowsClipboard(),
         keyboard=WindowsKeyboard(),
+        windows=WindowsWindowControl(),
         session=WindowsSession(),
         network=WindowsNetwork(),
         screenshots=WindowsScreenshots(opener),

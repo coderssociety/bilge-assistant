@@ -107,12 +107,19 @@ def test_a_mode_without_its_own_input_handling_passes_input_on():
         ("firefox'u aç", "openApp", {"appName": "firefox'u"}),
         ("ekran görüntüsü al", "takeScreenshot", {"area": "wholeScreen", "toClipboard": False}),
         ("wifi'ı kapat", "setWiFi", {"power": "off"}),
+        ("pencereyi küçült", "windowControl", {"action": "minimize"}),
+        ("pencereyi eski haline getir", "windowControl", {"action": "restore"}),
+        ("pencereyi kapat", "windowControl", {"action": "close"}),
     ],
 )
 def test_everyday_turkish_commands_map_to_tools(command, tool, arguments):
     call = fast_path.call_for(command, TR)
     assert call is not None, command
     assert (call.name, call.arguments) == (tool, arguments)
+
+
+def test_window_actions_without_a_tool_go_to_the_model():
+    assert fast_path.call_for("pencereyi sola al", TR) is None
 
 
 def test_english_always_goes_to_the_model():
