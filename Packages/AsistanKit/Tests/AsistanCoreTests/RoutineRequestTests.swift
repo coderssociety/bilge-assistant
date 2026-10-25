@@ -77,4 +77,33 @@ struct RoutineRequestTests {
         #expect(RoutineRequest.removal("delete the evening routine", language: .english) == .init(name: "evening"))
         #expect(RoutineRequest.removal("remove all routines", language: .english) == .init(name: "", every: true))
     }
+
+    @Test("deleting needs the routine as the object of the verb", arguments: [
+        ("akşam rutinini siler misin?", AssistantLanguage.turkish, RoutineRequest.Removal(name: "aksam")),
+        ("sabah rutinini lütfen kaldır", .turkish, .init(name: "sabah")),
+        ("rutinlerin hepsini sil", .turkish, .init(name: "", every: true)),
+        ("rutini sil", .turkish, .init(name: "")),
+        ("cancel the morning routine please", .english, .init(name: "morning")),
+    ])
+    func removalAsObject(said: String, language: AssistantLanguage, expected: RoutineRequest.Removal) {
+        #expect(RoutineRequest.removal(said, language: language) == expected)
+    }
+
+    @Test("\"rutin\" describing something else neither deletes nor lists routines", arguments: [
+        ("rutin kontrol randevumu iptal et", AssistantLanguage.turkish), ("sabah rutini bitti ışıkları kapat", .turkish),
+        ("yarın rutin kontrolüm var mı", .turkish), ("cancel my routine checkup", .english),
+        ("my routine is done, stop the music", .english), ("delete my routine checkup reminder", .english),
+    ])
+    func routineAsAdjective(said: String, language: AssistantLanguage) {
+        #expect(RoutineRequest.removal(said, language: language) == nil)
+        #expect(!RoutineRequest.asksForList(said, language: language))
+    }
+
+    @Test("listing still works with the routine before a list word", arguments: [
+        ("kaç rutinim var", AssistantLanguage.turkish), ("rutinlerimi söyler misin", .turkish),
+        ("what routines do I have", .english), ("list my routines", .english),
+    ])
+    func listingForms(said: String, language: AssistantLanguage) {
+        #expect(RoutineRequest.asksForList(said, language: language))
+    }
 }

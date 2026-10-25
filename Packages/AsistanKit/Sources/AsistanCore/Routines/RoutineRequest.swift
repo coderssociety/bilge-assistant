@@ -68,12 +68,24 @@ public struct RoutineRequest: Equatable, Sendable {
 
     private static let turkishRemoveVerbs = ["sil", "kaldir", "iptal", "kapat"]
     private static let englishRemoveVerbs: Set<String> = ["delete", "remove", "cancel", "clear", "stop"]
+    /// The routine as the object of a verb: "akşam rutinini sil", "rutinlerimi kaldır". A bare "rutin" describes
+    /// something else ("rutin kontrol randevumu iptal et").
+    private static let turkishRoutineObjects: Set<String> = [
+        "rutini", "rutinini", "rutinimi", "rutinleri", "rutinlerimi", "rutinlerini", "rutinlerin",
+    ]
+    /// What may stand around the verb after the routine: "iptal et", "siler misin", "lütfen sil", "rutinlerin hepsini sil".
+    private static let turkishRemoveFillers: Set<String> = [
+        "et", "eder", "edin", "edebilir", "lutfen", "misin", "musun", "misiniz", "musunuz", "mi", "mu", "da", "de",
+        "hemen", "artik", "hepsini",
+    ]
+    private static let englishRemoveFillers: Set<String> = ["please", "now", "for", "me"]
     private static let allWords: Set<String> = ["butun", "tum", "hepsini", "hepsi", "all", "every"]
     private static let nameFiller: Set<String> = ["bu", "su", "o", "benim", "the", "my", "a", "that", "this"]
     private static let turkishListWords: Set<String> = [
         "neler", "ne", "nedir", "hangi", "hangileri", "listele", "say", "oku", "var", "goster", "soyle",
     ]
     private static let englishListWords: Set<String> = ["what", "which", "list", "read", "tell", "show", "any", "have"]
+    private static let englishAfterList: Set<String> = ["do", "are", "is", "have", "i", "set", "please"]
 
     /// nil unless the text says a repeating schedule, a time and something to do. A request that talks about the
     /// routine itself ("… bir rutin oluştur") is left alone.
@@ -84,26 +96,43 @@ public struct RoutineRequest: Equatable, Sendable {
 
     public static func asksForList(_ text: String, language: AssistantLanguage) -> Bool {
         let words = folded(text)
-        guard words.contains(where: isRoutineWord), removal(text, language: language) == nil else { return false }
-        let listWords = language == .english ? englishListWords : turkishListWords
-        return words.count == 1 || words.contains(where: listWords.contains)
+        guard let at = words.firstIndex(where: isRoutineWord), removal(text, language: language) == nil else { return false }
+        let isListWord = { (word: String) in
+            language == .english ? englishListWords.contains(word) : turkishListWords.contains(where: word.hasPrefix)
+        }
+        // "Yarın rutin kontrolüm var mı", "my routine checkup": the word describes what follows it.
+        if let next = words.dropFirst(at + 1).first,
+           !(language == .english ? englishAfterList.contains(next) : isListWord(next)) {
+            return false
+        }
+        return words.count == 1 || words.contains(where: isListWord)
     }
 
     public static func removal(_ text: String, language: AssistantLanguage) -> Removal? {
         let words = folded(text)
-        guard let at = words.firstIndex(where: isRoutineWord) else { return nil }
+        guard let at = words.lastIndex(where: isRoutineWord) else { return nil }
         let named: ArraySlice<String>
         if language == .english {
-            guard let verb = words.firstIndex(where: englishRemoveVerbs.contains) else { return nil }
-            named = verb < at ? words[(verb + 1)..<at] : words[..<at]
+            // "Delete the evening routine": the verb governs the routine, which ends the request; not "cancel my
+            // routine checkup" or "my routine is done, stop the music".
+            guard let verb = words[..<at].lastIndex(where: englishRemoveVerbs.contains),
+                  words[(at + 1)...].allSatisfy(englishRemoveFillers.contains) else { return nil }
+            named = words[(verb + 1)..<at]
         } else {
-            guard words[(at + 1)...].contains(where: { word in turkishRemoveVerbs.contains(where: word.hasPrefix) }) else { return nil }
+            // The verb ends the request: "sabah rutini bitti, ışıkları kapat" deletes nothing.
+            let tail = words[(at + 1)...]
+            guard turkishRoutineObjects.contains(words[at]), tail.contains(where: isTurkishRemoveVerb),
+                  tail.allSatisfy({ isTurkishRemoveVerb($0) || turkishRemoveFillers.contains($0) }) else { return nil }
             named = words[..<at]
         }
         let everyRoutine = language == .turkish && named.isEmpty
             && (words[at].hasPrefix("rutinleri") || words[at].hasPrefix("rutinlerin"))
         if named.contains(where: allWords.contains) || everyRoutine { return Removal(name: "", every: true) }
         return Removal(name: named.filter { !nameFiller.contains($0) }.joined(separator: " "))
+    }
+
+    private static func isTurkishRemoveVerb(_ word: String) -> Bool {
+        turkishRemoveVerbs.contains(where: word.hasPrefix)
     }
 
     private static func mentionsRoutine(_ text: String) -> Bool {
