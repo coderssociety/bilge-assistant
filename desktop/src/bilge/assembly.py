@@ -195,6 +195,7 @@ def _desktop_tools(
         clipboard,
         files,
         hardware,
+        notes,
         playback,
         sound,
         spreadsheet,
@@ -204,6 +205,7 @@ def _desktop_tools(
         web,
         windows,
     )
+    from bilge.tools.notes_folder import NotesFolder, notes_folder
 
     dictation = typing.DictationSession(found.keyboard, language)
     sheet = spreadsheet.SpreadsheetSession(language)
@@ -227,10 +229,12 @@ def _desktop_tools(
         *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
         *_office_tools(language, text_reading),
+        *notes.note_tools(NotesFolder(notes_folder(found.folders.documents(), language)), language, text_reading),
     ]
     rules = [
         rule("startDictation", lambda command: dictation_command.is_start(command, language)),
         rule("spreadsheet", sheet.claims, lambda command: {"command": command}),
+        *notes.note_rules(language),
     ]
     modes = [
         Mode(lambda: dictation.active, dictation.window, lambda _: True, dictation.end, takes=dictation.handle,
