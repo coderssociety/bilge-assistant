@@ -50,7 +50,8 @@ aynı asistanın onlar için yeniden yazılmış hâli.
 |---|---|
 | **Mac komutları** | Uygulama açma ve kapatma, ses düzeyi, müzik, ekran görüntüsü, Wi-Fi, karanlık mod, Kestirmeler, dosya bulma ve açma, Çöp Kutusu'na taşıma |
 | **Takvim ve anımsatıcılar** | Sorma, ekleme, tamamlama; yaklaşan toplantıyı ve vakti gelen anımsatıcıyı kendiliğinden söyler |
-| **İletişim** | Kişi bulma, Mail ve Mesajlar ile gönderme. Gönderme her zaman açık bir “evet” ister |
+| **İletişim** | Kişi bulma, okunmamış e-postaları okuma (“maillerimi oku”, “içeriğini oku”), Mail ve Mesajlar ile gönderme. Gönderme her zaman açık bir “evet” ister |
+| **Çeviri** | Okuduğunu başka dilde okur: “İngilizce maili Türkçe oku”, “haberleri Fransızca oku”; ses 31 dilde konuşur |
 | **Excel** | “D3'e B2 ile B1'i topla”, “B sütununun toplamı kaç”, “geri al” |
 | **Bağlam** | Seçili metin, Finder'da seçili dosya ya da açık sayfa için “bunu özetle”, “bunu Ahmet'e gönder” |
 | **Tarayıcı** | Sekmeler arasında geçme, geri ve ileri, kaydırma, sayfada arama |
@@ -173,6 +174,7 @@ Excel'de bir çalışma kitabı açıkken:
 - YouTube'da kedi videoları ara
 - Bugün hava nasıl / Dolar kaç / Haberleri oku
 - Teknoloji haberleri / Başka var mı / Üçüncü haberi anlat / Tesla haberini aç (tarayıcıda da açar)
+- TRT'den haberler / Başka bir kaynak (Anadolu Ajansı, TRT Haber, BBC Türkçe sırayla)
 </details>
 
 <details>

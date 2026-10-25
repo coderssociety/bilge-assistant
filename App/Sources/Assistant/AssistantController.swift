@@ -403,6 +403,8 @@ final class AssistantController {
         status = .thinking
         lastReply = ""
         flow.responseStarted()
+        speech.replyLanguageCode = isWorkInput ? nil : TranslationRequest.target(in: command)?.code
+        defer { speech.replyLanguageCode = nil }
         do {
             try await speech.speak(streaming: replyFragments(for: command, isWorkInput: isWorkInput))
         } catch is CancellationError {

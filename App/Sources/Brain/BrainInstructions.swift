@@ -17,6 +17,27 @@ enum BrainInstructions {
         """
     }
 
+    /// Added to the material instructions when the text is to be read in another language.
+    static func translation(to target: SpeechLanguage, language: AssistantLanguage = .turkish) -> String {
+        if language == .english {
+            return """
+
+            - The user wants the text read in \(target.englishName): translate it into \(target.englishName) and answer only in \(target.englishName), without comments. For a long text translate the main part, at most eight sentences.
+            """
+        }
+        return """
+
+        - Kullanıcı metnin \(target.turkishName) okunmasını istiyor: metni \(target.turkishName) diline çevirerek oku ve yanıtın tamamı \(target.turkishName) olsun, açıklama ekleme. Uzun metinde en önemli kısmı çevir, en fazla sekiz cümle.
+        """
+    }
+
+    /// Added to a conversation request that asks for the answer in another language.
+    static func replyLanguage(_ target: SpeechLanguage, language: AssistantLanguage = .turkish) -> String {
+        language == .english
+            ? "\n\n(Answer only in \(target.englishName).)"
+            : "\n\n(Yanıtını yalnızca \(target.turkishName) dilinde ver.)"
+    }
+
     static func make(now: Date = .now, memory: String? = nil, language: AssistantLanguage = .turkish) -> String {
         let today = now.formatted(.dateTime.day().month(.wide).year().weekday(.wide).locale(language.locale))
         if language == .english { return englishBase(today: today) + (memory.map(englishMemorySection) ?? "") }

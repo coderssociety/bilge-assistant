@@ -54,7 +54,8 @@ assistant rebuilt for them.
 |---|---|
 | **Mac control** | Open and quit apps, volume, music, screenshots, Wi-Fi, dark mode, Shortcuts, finding and opening files, moving files to the Trash |
 | **Calendar and reminders** | Ask, add, complete; it tells you about upcoming meetings and due reminders on its own |
-| **Messages** | Find contacts, send with Mail and Messages. Sending always needs a clear “yes” |
+| **Messages** | Find contacts, read unread e-mail (“read my email”, “what does it say”), send with Mail and Messages. Sending always needs a clear “yes” |
+| **Translation** | Reads in another language: “read the email in Turkish”, “read the news in French”; the voice speaks 31 languages |
 | **Excel** | “Put the sum of B1 and B2 into D3”, “what's the total of column B”, “undo” |
 | **Context** | “Summarize this” or “send this to Ahmet” for selected text, the file selected in Finder, or the open page |
 | **Browser** | Switch tabs, go back and forward, scroll, find on the page |
@@ -179,6 +180,7 @@ With a workbook open in Excel:
 - Search YouTube for cat videos
 - What's the weather in London / How much is the dollar in lira
 - Technology news / Anything else? / Tell me more about the third one / Open the Tesla story (in the browser too)
+- News from the Guardian / Another source (BBC News, The Guardian, NPR in turn)
 </details>
 
 <details>

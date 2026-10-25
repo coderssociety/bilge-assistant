@@ -215,19 +215,23 @@ final class AssistantBrain: CommandHandling {
         router: CommandRouter,
         continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws {
+        // "İngilizce maili Türkçe oku": what a tool reads goes through the model, to be read in that language.
+        let translation = TranslationRequest.target(in: command)
         switch try await router.route(command, previous: previousTurn) {
         case let .tool(call):
-            if !call.answersWithLanguageModel { localModel.turnNeededNoModel() }
+            let viaModel = call.answersWithLanguageModel || translation != nil
+            if !viaModel { localModel.turnNeededNoModel() }
             let result = try await run(call, for: command, continuation: continuation)
-            if call.answersWithLanguageModel, !ToolReply.isFailure(result) {
-                let answer = try await answer(command, from: result, into: continuation)
+            if viaModel, !ToolReply.isFailure(result) {
+                let answer = try await answer(command, from: result, translation: translation, into: continuation)
                 previousTurn = .init(command: command, action: call.toolName, result: answer)
             } else {
                 previousTurn = .init(command: command, action: call.toolName, result: result)
                 continuation.yield(ToolReply.spoken(result))
             }
         case .conversation:
-            let reply = try await streamConversation(command, into: continuation)
+            let request = translation.map { command + BrainInstructions.replyLanguage($0, language: language) } ?? command
+            let reply = try await streamConversation(request, into: continuation)
             previousTurn = .init(command: command, action: CommandRouter.conversationAction, result: reply)
         }
     }
@@ -263,17 +267,20 @@ final class AssistantBrain: CommandHandling {
     private func answer(
         _ command: String,
         from material: String,
+        translation: SpeechLanguage? = nil,
         into continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws -> String {
         let prompt = "Kullanıcının isteği: \(command)\n\nMetin:\n<<<\n\(material)\n>>>"
+        let instructions = BrainInstructions.material(language: language)
+            + (translation.map { BrainInstructions.translation(to: $0, language: language) } ?? "")
         if localModel.isEnabled {
             do {
-                return try await localModel.answer(prompt, instructions: BrainInstructions.material(language: language), into: continuation)
+                return try await localModel.answer(prompt, instructions: instructions, into: continuation)
             } catch {
                 try Self.rethrowIfCancelled(error)
             }
         }
-        let session = LanguageModelSession(model: model, instructions: BrainInstructions.material(language: language))
+        let session = LanguageModelSession(model: model, instructions: instructions)
         let options = GenerationOptions(temperature: 0.3, maximumResponseTokens: Self.maximumResponseTokens)
         var emitted = ""
         for try await snapshot in session.streamResponse(to: prompt, options: options) {

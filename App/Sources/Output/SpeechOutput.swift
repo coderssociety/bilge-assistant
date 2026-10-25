@@ -13,6 +13,8 @@ final class SpeechOutput {
     private(set) var voice: Supertonic3Voice
     var speed: Float
     let language: AssistantLanguage
+    /// For one reply read in another language ("Fransızca oku"); the voice speaks any language Supertonic-3 knows.
+    var replyLanguageCode: String?
 
     init(voice: Supertonic3Voice = .f1, speed: Float = 1.05, language: AssistantLanguage = .turkish) {
         self.voice = voice
@@ -65,10 +67,13 @@ final class SpeechOutput {
     private func enqueue(_ sentence: String) async throws {
         try await prepare()
         guard let manager, let style else { throw Supertonic3Error.notInitialized }
-        let spoken = SpokenText.normalize(sentence, language: language)
+        let code = replyLanguageCode ?? language.code
+        // Numbers and units are spelled out only for the languages that have a normalizer.
+        let spoken = AssistantLanguage(rawValue: code).map { SpokenText.normalize(sentence, language: $0) }
+            ?? SpokenText.withoutMarkup(sentence).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !spoken.isEmpty else { return }
         try Task.checkCancellation()
-        let result = try await manager.synthesize(text: spoken, language: language.code, style: style, speed: speed)
+        let result = try await manager.synthesize(text: spoken, language: code, style: style, speed: speed)
         try Task.checkCancellation()
         try player.enqueue(result.samples)
     }
