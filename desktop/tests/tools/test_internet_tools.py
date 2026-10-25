@@ -139,6 +139,22 @@ def test_the_amount_and_currencies_come_from_the_words():
     }
 
 
+def test_two_currencies_asked_about_against_the_lira_are_not_converted_into_each_other():
+    tool = internet.exchange_rate(TR)
+    assert tool.refine({"from": "USD", "to": "TRY"}, "dolar ve euro kaç lira") == {"from": "USD", "to": "TRY"}
+    assert tool.refine({"from": "EUR", "to": "USD"}, "dolar ve euro kaç lira") == {"from": "EUR", "to": "TRY"}
+    assert tool.refine({"from": "EUR"}, "dolar ve euro") == {"from": "EUR", "to": "TRY"}
+
+
+def test_an_amount_written_with_separators_is_read_whole(monkeypatch):
+    fake_web(monkeypatch, {"https://api.frankfurter.app": {"rates": {"USD": 25000}}})
+    assert internet.exchange_rate(TR).run({"from": "TRY", "to": "USD", "amount": "1.000.000"}) == (
+        "1.000.000 lira 25.000 dolar."
+    )
+    fake_web(monkeypatch, {"https://api.frankfurter.app": {"rates": {"EUR": 50}}})
+    assert internet.exchange_rate(TR).run({"from": "TRY", "to": "EUR", "amount": "2.500,50"}).startswith("2.500,5 lira")
+
+
 def test_gold_is_sent_to_the_gold_price_tool_rather_than_taken_for_a_currency():
     tool = internet.exchange_rate(TR)
     arguments = tool.refine({"from": "TRY"}, "gram altın kaç lira")
