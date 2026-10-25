@@ -42,6 +42,24 @@ enum AccessibilityControl {
         return window as! AXUIElement
     }
 
+    static func frontWindows() throws -> [AXUIElement] {
+        try requireTrust()
+        guard let app = frontApplication() else { throw AccessibilityError.noWindow }
+        return attribute(AXUIElementCreateApplication(app.processIdentifier), kAXWindowsAttribute) as? [AXUIElement] ?? []
+    }
+
+    static func size(of window: AXUIElement) -> CGSize? {
+        guard let value = attribute(window, kAXSizeAttribute) else { return nil }
+        var size = CGSize.zero
+        return AXValueGetValue(value as! AXValue, .cgSize, &size) ? size : nil
+    }
+
+    /// Presses one of the window's title-bar buttons, e.g. `kAXCloseButtonAttribute`.
+    static func pressButton(_ button: String, of window: AXUIElement) -> Bool {
+        guard let element = attribute(window, button) else { return false }
+        return AXUIElementPerformAction(element as! AXUIElement, kAXPressAction as CFString) == .success
+    }
+
     static func selectedText() throws -> String? {
         try requireTrust()
         let system = AXUIElementCreateSystemWide()

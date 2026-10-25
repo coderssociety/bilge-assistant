@@ -4,7 +4,10 @@ extension FastPath {
     static func action(for window: QuickIntent.Window) -> WindowTool.Action {
         switch window {
         case .minimize: .minimize
+        case .restore: .restore
+        case .close: .close
         case .fullScreen: .fullScreen
+        case .exitFullScreen: .exitFullScreen
         case .leftHalf: .leftHalf
         case .rightHalf: .rightHalf
         case .maximize: .maximize

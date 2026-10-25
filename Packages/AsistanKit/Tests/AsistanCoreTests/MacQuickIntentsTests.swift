@@ -10,6 +10,10 @@ struct MacQuickIntentsTests {
         ("Wi-Fi'yi açar mısın", .wifi(on: true)),
         ("pencereyi küçült", .window(.minimize)),
         ("tam ekran yap", .window(.fullScreen)),
+        ("tam ekrandan çık", .window(.exitFullScreen)),
+        ("pencereyi geri getir", .window(.restore)),
+        ("pencereyi eski haline getir", .window(.restore)),
+        ("pencereyi kapat", .window(.close)),
         ("pencereyi ekranın soluna al", .window(.leftHalf)),
         ("diğer uygulamaları gizle", .window(.hideOthers)),
         ("Bluetooth ayarlarını aç", .settings(.bluetooth)),
@@ -25,7 +29,7 @@ struct MacQuickIntentsTests {
 
     @Test("leaves anything with more content to the model", arguments: [
         "bu pencerenin ekran görüntüsünü panoya al", "Wi-Fi'ı kapat ve müziği aç", "küçült",
-        "Safari'yi gizle", "ses ayarlarını kıs", "Telegram ayarlarını aç",
+        "Safari'yi gizle", "ses ayarlarını kıs", "Telegram ayarlarını aç", "geri getir",
     ])
     func notRecognized(text: String) {
         #expect(QuickIntentParser.parse(text) == nil)

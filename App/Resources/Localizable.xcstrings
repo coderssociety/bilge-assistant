@@ -1792,6 +1792,26 @@
         }
       }
     },
+    "Bu pencere tam ekran yapılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This window can't go full screen."
+          }
+        }
+      }
+    },
+    "Bu pencere taşınamadı ya da boyutlandırılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This window couldn't be moved or resized."
+          }
+        }
+      }
+    },
     "Bu pencerede %lld sekme var.": {
       "localizations": {
         "en": {
@@ -2672,6 +2692,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't have any changes to undo."
+          }
+        }
+      }
+    },
+    "Geri alınacak küçültülmüş, tam ekran ya da büyütülmüş bir pencere yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no minimized, full-screen or zoomed window to restore."
           }
         }
       }
@@ -4186,6 +4216,76 @@
         }
       }
     },
+    "Pencere eski boyutuna döndü.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window is back to its earlier size."
+          }
+        }
+      }
+    },
+    "Pencere eski boyutuna döndürülemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't return the window to its earlier size."
+          }
+        }
+      }
+    },
+    "Pencere geri getirildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window restored."
+          }
+        }
+      }
+    },
+    "Pencere geri getirilemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't restore the window."
+          }
+        }
+      }
+    },
+    "Pencere hâlâ açık; uygulama kapatmadan önce bir şey soruyor olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window is still open; the app may be asking something before it closes."
+          }
+        }
+      }
+    },
+    "Pencere kapatılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't close the window."
+          }
+        }
+      }
+    },
+    "Pencere kapatıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window closed."
+          }
+        }
+      }
+    },
     "Pencere küçültüldü.": {
       "localizations": {
         "en": {
@@ -4196,12 +4296,62 @@
         }
       }
     },
+    "Pencere küçültülemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't minimize the window."
+          }
+        }
+      }
+    },
     "Pencere tam ekran yapıldı.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Window is now full screen."
+          }
+        }
+      }
+    },
+    "Pencere tam ekranda değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window isn't in full screen."
+          }
+        }
+      }
+    },
+    "Pencere tam ekrandan çıkarılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't take the window out of full screen."
+          }
+        }
+      }
+    },
+    "Pencere tam ekrandan çıktı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window left full screen."
+          }
+        }
+      }
+    },
+    "Pencerenin daha küçük bir önceki boyutu yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window has no smaller earlier size."
           }
         }
       }

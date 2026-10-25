@@ -46,6 +46,8 @@ public enum RouteGuard {
         if isDictation(words), action != "createNote" { return "typeText" }
         // "geri al" (undo) outside a spreadsheet was once routed to quitApp.
         if action == "quitApp", words.contains("geri"), words.contains(where: { $0.hasPrefix("al") }) { return "conversation" }
+        // Closing a window must not quit the whole app.
+        if action == "quitApp", words.contains(where: { $0.hasPrefix("pencere") }) { return "windowControl" }
         switch action {
         case "setTimer":
             // Timers live in the app and fire only today; "yarın sabah süt almayı hatırlat" was set as one.
