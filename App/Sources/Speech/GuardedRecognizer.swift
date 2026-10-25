@@ -24,4 +24,12 @@ actor GuardedRecognizer: SpeechRecognizer {
         }
         return MadeUpSentences.removed(from: try await inner.transcribe(samples))
     }
+
+    func transcribe(_ samples: [Float], detectingAmong languages: [String]) async throws -> DetectedSpeech? {
+        guard Loudness.holdsSpeech(samples, sampleRate: StreamingResampler.targetSampleRate) else {
+            return DetectedSpeech(text: "", language: languages.first ?? "")
+        }
+        guard let detected = try await inner.transcribe(samples, detectingAmong: languages) else { return nil }
+        return DetectedSpeech(text: MadeUpSentences.removed(from: detected.text), language: detected.language)
+    }
 }

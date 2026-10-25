@@ -13,11 +13,25 @@ enum RecognizerEngine: String, CaseIterable, Codable, Sendable {
     }
 }
 
+/// What was said and which language it was in (ISO 639-1).
+struct DetectedSpeech: Sendable, Equatable {
+    let text: String
+    let language: String
+}
+
 /// Transcribes one complete utterance of 16 kHz mono Float32 audio in the assistant's language.
 protocol SpeechRecognizer: Actor {
     nonisolated var engine: RecognizerEngine { get }
     func prepare() async throws
     func transcribe(_ samples: [Float]) async throws -> String
+    /// Transcribes speech in whichever of `languages` it is in; nil when the engine cannot tell languages apart.
+    func transcribe(_ samples: [Float], detectingAmong languages: [String]) async throws -> DetectedSpeech?
+}
+
+extension SpeechRecognizer {
+    func transcribe(_ samples: [Float], detectingAmong languages: [String]) async throws -> DetectedSpeech? {
+        nil
+    }
 }
 
 enum RecognizerError: LocalizedError {
