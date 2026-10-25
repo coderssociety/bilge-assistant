@@ -21,12 +21,13 @@ from bilge.desktop.base import Desktop
 from bilge.llm.providers import ProviderError, make_provider
 from bilge.models.downloader import Downloader, ModelSpec
 from bilge.tools.base import Registry, Tool
-from bilge.tools.builtin import earthquakes, football, internet, prayer, prices, stocks, wikipedia
+from bilge.tools.builtin import earthquakes, football, internet, prayer, prices, routines, stocks, wikipedia
 from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
 from bilge.tools.builtin.contacts import ContactLookup, find_contact_tool
+from bilge.tools.builtin.home_assistant import HomeAssistant, smart_home_rule, smart_home_tool
 from bilge.tools.builtin.mail import read_mail_tool
 from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.builtin.units import convert_units
@@ -45,6 +46,7 @@ ICS_SECRET = "calendar-ics"
 # One for the whole run: the watcher a restart builds must not announce an earthquake the previous one already did.
 _ANNOUNCED_EARTHQUAKES = earthquake_alert.Announced()
 IMAP_SECRET = "imap"
+HOME_ASSISTANT_SECRET = "home-assistant"
 
 
 def models_dir() -> Path:
@@ -85,6 +87,18 @@ def mailbox(settings: config.MailSettings) -> mailboxes.Mailbox | None:
     return mailboxes.IMAPMailbox(settings.server, settings.username, config.api_key(IMAP_SECRET) or "")
 
 
+def routine_store() -> routines.RoutineStore:
+    return routines.RoutineStore(config.data_dir() / "routines.json")
+
+
+def home_assistant(settings: config.HomeSettings) -> HomeAssistant | None:
+    """None until both the address and the token are set."""
+    if not settings.address:
+        return None
+    token = config.api_key(HOME_ASSISTANT_SECRET)
+    return HomeAssistant(settings.address, token) if token else None
+
+
 def build_agent(
     settings: config.Settings,
     confirm: Confirmer,
@@ -92,9 +106,11 @@ def build_agent(
     model: str | None = None,
     announce: Callable[[str], None] | None = None,
     services: list["Service"] | None = None,
+    run_routine: Callable[[str], None] | None = None,
 ) -> Agent:
     """`announce` says something unprompted (a timer going off). Work that runs while Bilge listens (the earthquake
-    watcher) is added to `services` for the voice assistant to start and stop."""
+    watcher, the routines) is added to `services` for the voice assistant to start and stop. `run_routine` runs a
+    routine's command unattended and says the reply; without it routines can be set up but don't run."""
     language = settings.assistant_language
     preset = provider or settings.model.provider
     chosen = model or settings.model.model
@@ -117,6 +133,9 @@ def build_agent(
     if services is not None and settings.earthquake_alerts:
         services.append(earthquakes.EarthquakeWatcher(language, lambda: settings.weather_city, alert,
                                                       _ANNOUNCED_EARTHQUAKES))  # fmt: skip
+    saved_routines = routine_store()
+    if services is not None and run_routine is not None:
+        services.append(routines.RoutineService(saved_routines, lambda routine: run_routine(routine.command)))
     registry = Registry([
         current_date_time(language),
         calculator(language),
@@ -137,6 +156,7 @@ def build_agent(
         briefing_tool(briefing),
         find_contact_tool(people, language),
         *calendar_tools(calendar, language, alert=_reminder_alert(alarms) if alarms is not None else None),
+        *routines.routine_tools(saved_routines, language),
     ])  # fmt: skip
     if sys.platform != "win32":
         registry.add(read_mail_tool(lambda: mailbox(settings.mail), language, reading=text_reading))
@@ -163,6 +183,12 @@ def build_agent(
             registry.add(tool)
         rules = [*desktop_rules, *rules]
         modes = desktop_modes
+    home = home_assistant(settings.home)
+    if home is not None:
+        registry.add(smart_home_tool(home, language))
+        rules = [smart_home_rule(language), *rules]
+    # A routine carries a command other rules would claim ("her sabah 8'de günün özetini oku").
+    rules = [*routines.routine_rules(language), *rules]
     agent = Agent(chat, registry, confirm=confirm, language=language, memory=memory.prompt_lines,
                   action_log=ActionLog(config.data_dir() / "actions.jsonl"), rules=rules, modes=modes,
                   reading=text_reading)  # fmt: skip
@@ -374,6 +400,7 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
         model=model,
         announce=lambda text: holder["assistant"].announce(text),
         services=services,
+        run_routine=lambda command: holder["assistant"].run_unattended(command),
     )
     # The wake word is Turkish in both languages.
     wake = GuardedRecognizer(

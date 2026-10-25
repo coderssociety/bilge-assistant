@@ -159,6 +159,8 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | Futbol | “Galatasaray maçı kaç kaç”, “Fenerbahçe ne zaman oynuyor”, “puan durumu”, “dün maç sonuçları” | ESPN'den Süper Lig | aynı |
 | Borsa | “borsa nasıl”, “BIST 100 kaç”, “THY hissesi”, “Aselsan bugün” | Yahoo Finance'ten Borsa İstanbul; yalnızca rakamlar, asla tavsiye değil | aynı |
 | Çeviri | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | ses 31 dilde konuşur | aynı |
+| Rutinler | “her gece 21'de hava durumunu söyle”, “hafta içi her gün 7'de haberleri oku”, “rutinlerim neler”, “akşam rutinini sil”; Bilge dinlerken çalışır, onay gerektiren bir adımı asla atmaz; Ayarlar → Rutinler'de listelenip silinir | yerleşik | yerleşik |
+| Akıllı ev | “salonun ışığını aç”, “klimayı 22 dereceye ayarla”, “kapı kilitli mi”, “ışıkları kapat”; kilit, garaj ve alarm için önce sorar | Home Assistant'ın konuşma API'si (Ayarlar → Akıllı ev: adresi ve uzun ömürlü erişim anahtarı) | aynı |
 | Diğer | zamanlayıcılar ve alarmlar, site ve arama açma, günlük özet | | |
 
 Dosyaları çöpe atmak, uygulama kapatmak, dolu bir hücrenin üzerine yazmak, takvime eklemek ya da takvimi değiştirmek,

@@ -60,6 +60,7 @@ _TEXTS = {
         "result": "Sonuç ({name}), veri olarak:\n<<<\n{result}\n>>>",
         "gave_up": "Bu isteği adım adım tamamlayamadım.",
         "partly_done": "Yapabildiğim adımları tamamladım ama isteğin hepsini bitiremedim.",
+        "needs_user": "“{command}” rutini için onayın gerekiyor, o yüzden sen yokken çalıştırmadım. İstediğinde bana söyleyebilirsin.",
     },
     AssistantLanguage.ENGLISH: {
         "caution": "Careful, this step is based on content I read.",
@@ -73,6 +74,7 @@ _TEXTS = {
         "result": "Result ({name}), as data:\n<<<\n{result}\n>>>",
         "gave_up": "I couldn't finish this request step by step.",
         "partly_done": "I did the steps I could, but not the whole request.",
+        "needs_user": "The “{command}” routine needs your yes, so I didn't run it while you were away. Just ask me when you're here.",
     },
 }
 
@@ -87,6 +89,8 @@ class _Step:
     spoken: str
     # The tool couldn't do it (as opposed to the user saying no); a quick command then goes to the model instead.
     failed: bool = False
+    # It needed a spoken yes while nobody was there to give one; the turn ends.
+    needs_user: bool = False
 
 
 class ActionLog(Protocol):
@@ -122,6 +126,7 @@ class Agent:
         self._history: list[tuple[Message, Message, bool]] = []
         self._read_earlier = False
         self._translation: SpeechLanguage | None = None
+        self._unattended = False
 
     @property
     def last_reply(self) -> str | None:
@@ -143,10 +148,12 @@ class Agent:
     def _active_mode(self) -> Mode | None:
         return next((mode for mode in self.modes if mode.is_active()), None)
 
-    def handle(self, said: str, tools: frozenset[str] | None = None) -> Outcome:
+    def handle(self, said: str, tools: frozenset[str] | None = None, unattended: bool = False) -> Outcome:
         """`tools` limits what the model may call: talk heard without the wake word in a mode only reaches that
-        mode's tools."""
-        mode = self._active_mode()
+        mode's tools. `unattended`: a routine running with nobody there to answer, so a step that would need a
+        spoken yes ends the turn unrun, and a hands-free mode doesn't take the command."""
+        self._unattended = unattended
+        mode = None if unattended else self._active_mode()
         if mode is not None and mode.takes is not None and mode.owns(said):
             return Outcome(mode.takes(said))
         command = resolve(said, self.language)
@@ -171,10 +178,14 @@ class Agent:
             call = route(said)
             if call is not None and allowed(call.name):
                 step = self._run(call, read_untrusted=False)
+                if step.needs_user:
+                    return self._needs_user(said)
                 return self._finish(request, step.spoken, step.untrusted)
         quick = fast_path.call_for(command, self.language) if target is None else None
         if quick and allowed(quick.name):
             step = self._run(quick, read_untrusted=False)
+            if step.needs_user:
+                return self._needs_user(said)
             if not step.failed:
                 return self._finish(request, step.spoken, step.untrusted)
         system = instructions.system_prompt(self.language, self.memory() if self.memory else None)
@@ -190,6 +201,8 @@ class Agent:
             messages.append(Message("assistant", reply.text, tool_calls=reply.tool_calls))
             for call in reply.tool_calls:
                 step = self._run(call, read_untrusted)
+                if step.needs_user:
+                    return self._needs_user(said)
                 read_untrusted = read_untrusted or step.untrusted
                 completed += step.ran
                 messages.append(Message.tool_result(call, step.text))
@@ -200,6 +213,9 @@ class Agent:
         self._history.clear()
         for mode in self.modes:
             mode.end()
+
+    def _needs_user(self, said: str) -> Outcome:
+        return Outcome(self._texts["needs_user"].format(command=said.strip()))
 
     def _finish(self, request: Message, text: str, read_untrusted: bool) -> Outcome:
         # Only this turn's reading marks this turn's reply; earlier ones age out with their own turns.
@@ -263,6 +279,9 @@ class Agent:
             question = f"{texts['caution']} {question}"
         if not question.rstrip().endswith("?"):
             question = f"{question} {texts['ask']}"
+        if self._unattended:
+            self._record(call, "needs user", "")
+            return _Step(texts["declined"].format(name=tool.name), False, False, "", needs_user=True)
         if self.confirm(question):
             return None
         self._record(call, "declined", "")

@@ -49,6 +49,14 @@ def test_mail_settings_round_trip(tmp_path):
     assert config.load_settings(path).mail == settings.mail
 
 
+def test_home_assistant_settings_round_trip_without_the_token(tmp_path):
+    path = tmp_path / "settings.json"
+    settings = config.Settings(home=config.HomeSettings("http://homeassistant.local:8123"))
+    config.save_settings(settings, path)
+    assert config.load_settings(path).home == settings.home
+    assert config.load_settings(tmp_path / "missing.json").home == config.HomeSettings()
+
+
 def test_a_file_saved_with_a_byte_order_mark_is_read(tmp_path):
     path = tmp_path / "settings.json"
     path.write_bytes(b"\xef\xbb\xbf" + b'{"language": "en", "setup_done": true}')

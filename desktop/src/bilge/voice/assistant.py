@@ -10,6 +10,7 @@ meeting being recorded, during which only the stop phrase is acted on.
 
 import logging
 import threading
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -58,6 +59,8 @@ CONFIRMATION_TIMEOUT = 8.0
 CONFIRMATION_GRACE = 5.0
 # During a meeting only utterances this short are checked for the stop phrase; the recorder writes down the rest.
 STOP_PHRASE_SECONDS = 4.0
+# How long a routine waits for a conversation in progress to end before it runs anyway.
+ROUTINE_IDLE_WAIT = 120.0
 
 
 FAILED_TURN = {
@@ -227,13 +230,8 @@ class VoiceAssistant:
         self._perform(action)
 
     def interrupt(self) -> None:
-        """Stops the reply in progress; Bilge keeps listening."""
+        """Stops the reply in progress; Bilge keeps listening, and so do the services."""
         self._resolve(Answer.REJECTED)
-        for service in self._services:
-            try:
-                service.stop()
-            except Exception:
-                log.exception("Could not stop %s", type(service).__name__)
         self.speech.stop()
 
     # MARK: - Audio (called on the audio thread for each 512-sample chunk)
@@ -613,12 +611,66 @@ class VoiceAssistant:
                 self._settle_barge_in()
             finally:
                 self._resume()
-            # "Bilge, dur" over an announcement only stops it; a request said over it is still answered.
-            self._stopped_by_user = False
-            command, self._barge_command = self._barge_command, None
-            with self._flow_lock:
-                awaiting = self.flow.is_awaiting_speech
-            self._set_status(self._idle_status(awaiting))
+            command = self._end_unasked()
+        self._answer_cut_in(command)
+
+    def run_unattended(self, command: str) -> None:
+        """Runs a routine's command as if it had been said, once nobody is talking to Bilge, and says the reply
+        like an announcement. Nobody is there to answer a question, so the agent runs nothing that needs a yes."""
+        threading.Thread(target=self._run_unattended, args=(command,), name="bilge-routine", daemon=True).start()
+
+    def _run_unattended(self, command: str) -> None:
+        deadline = time.monotonic() + ROUTINE_IDLE_WAIT
+        cut_in = None
+        while self._running.is_set():
+            with self._speaking_lock:
+                with self._flow_lock:
+                    busy = self.flow.is_awaiting_speech
+                # The interpreter or a meeting being recorded holds the microphone until it ends.
+                in_mode = self._idle_status(False) is not Status.LISTENING
+                if not in_mode and (not busy or time.monotonic() >= deadline):
+                    self._run_routine_locked(command)
+                    cut_in = self._end_unasked()
+                    break
+            if self._stopping.wait(TICK_SECONDS):
+                break
+        self._answer_cut_in(cut_in)
+
+    def _run_routine_locked(self, command: str) -> None:
+        self._suspend()
+        self._set_status(Status.THINKING)
+        try:
+            self._thinking = True
+            try:
+                outcome = self.agent.handle(command, unattended=True)
+            finally:
+                self._thinking = False
+            if not self._stopped_by_user and self._barge_command is None:
+                self.speech.play(tone(self.speech.device.sample_rate, (880, 1320)))
+                self._say(outcome.text)
+            self._settle_barge_in()
+        except Exception as error:
+            log.exception("A routine failed")
+            self._event("error", str(error))
+        finally:
+            self._resume()
+        with self._flow_lock:
+            awaiting = self.flow.is_awaiting_speech
+        # Not a conversation the user started: unless one is going on, nothing of it carries into the next request.
+        if not awaiting:
+            self.agent.forget_conversation()
+
+    def _end_unasked(self) -> str | None:
+        """Called with the speaking lock held after something nobody asked for; returns a request said over it."""
+        # "Bilge, dur" over an announcement only stops it; a request said over it is still answered.
+        self._stopped_by_user = False
+        command, self._barge_command = self._barge_command, None
+        with self._flow_lock:
+            awaiting = self.flow.is_awaiting_speech
+        self._set_status(self._idle_status(awaiting))
+        return command
+
+    def _answer_cut_in(self, command: str | None) -> None:
         if command is not None:
             with self._flow_lock:
                 action = self.flow.heard(command, at=datetime.now())

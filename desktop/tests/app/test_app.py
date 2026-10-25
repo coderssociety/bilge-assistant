@@ -469,3 +469,63 @@ def test_a_command_table_that_cannot_be_read_is_not_saved(qapp, isolated, tmp_pa
         [config.CustomCommand("B", [r"C:\x\y.exe", "/q"])],
         None,
     )
+
+
+def test_a_home_assistant_token_is_kept_only_after_the_server_accepted_it(qapp, isolated, tmp_path, monkeypatch):
+    from bilge.app.settings import SettingsWindow
+    from bilge.app.settings import home as home_page
+    from bilge.tools.builtin.home_assistant import HomeAssistantError, Reason
+
+    texts.use(AssistantLanguage.TURKISH)
+    tried = []
+
+    class Server:
+        def __init__(self, address, token):
+            tried.append((address, token))
+
+        def check(self):
+            if tried[-1][1] != "doğru":
+                raise HomeAssistantError(Reason.UNAUTHORIZED)
+
+    monkeypatch.setattr(home_page, "HomeAssistant", Server)
+    window = SettingsWindow(config.Settings(), tmp_path / "settings.json")
+    page = window.pages["home"]
+    page.address.setText("homeassistant.local")
+    window.save()
+    assert window.message.text().startswith("Home Assistant adresi http://")
+    page.address.setText("http://homeassistant.local:8123")
+    page.token.setText("yanlış")
+    page.test.click()
+    assert wait(lambda: "erişim anahtarını kabul etmedi" in page.message.text(), qapp)
+    page.token.setText("doğru")
+    page.test.click()
+    assert wait(lambda: page.message.text().startswith("Bağlandı"), qapp)
+    window.save()
+    assert config.load_settings(tmp_path / "settings.json").home == config.HomeSettings(
+        "http://homeassistant.local:8123"
+    )
+    assert isolated == {"home-assistant": "doğru"}
+    assert "doğru" not in (tmp_path / "settings.json").read_text(encoding="utf-8")
+
+
+def test_routines_page_lists_and_deletes_routines(qapp, isolated, tmp_path):
+    from bilge.app.settings.routines import RoutinesPage
+    from bilge.core.routines.routine_schedule import EVERY_DAY, WEEKDAYS, Routine
+    from bilge.tools.builtin.routines import RoutineStore
+
+    texts.use(AssistantLanguage.TURKISH)
+    store = RoutineStore(tmp_path / "data" / "routines.json")
+    store.add(Routine("a", EVERY_DAY, 21, 0, "hava durumunu söyle"))
+    store.add(Routine("b", WEEKDAYS, 7, 0, "haberleri oku"))
+    page = RoutinesPage(store)
+    shown = [page.entries.item(i).text() for i in range(page.entries.count())]
+    assert shown == ["hafta içi her gün 07:00'de “haberleri oku”", "her gün 21:00'de “hava durumunu söyle”"]
+    page.entries.setCurrentRow(0)
+    page._delete()
+    assert [r.id for r in store.load()] == ["a"]
+    page.entries.setCurrentRow(0)
+    page._delete()
+    assert page.entries.item(0).text() == "Kurulu rutin yok."
+    page.entries.setCurrentRow(0)
+    page._delete()
+    assert store.load() == []

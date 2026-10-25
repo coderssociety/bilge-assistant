@@ -42,6 +42,8 @@ _TURKISH = {
     "tab.calendar": "Takvim",
     "tab.mail": "E-posta",
     "tab.commands": "Komutlar",
+    "tab.home": "Akıllı ev",
+    "tab.routines": "Rutinler",
     "tab.memory": "Hafıza",
     "tab.history": "Geçmiş",
     "tab.about": "Hakkında",
@@ -155,6 +157,19 @@ _TURKISH = {
     "commands.incomplete": "Her komutun hem adı hem komut satırı olmalı.",
     "commands.unparsable": "Bir komut satırında kapanmamış bir tırnak var.",
     "commands.duplicate": "İki komut aynı adı taşıyor.",
+    "home.note": "Evdeki cihazları Home Assistant üzerinden yönetmek için (“salonun ışığını aç”, “kapı kilitli mi”). Erişim anahtarını Home Assistant'ta profil sayfanın Güvenlik bölümünden “Uzun ömürlü erişim anahtarı” olarak oluşturabilirsin; Bilge onu yalnızca sistemin anahtar deposunda tutar.",
+    "home.address": "Home Assistant adresi",
+    "home.token": "Uzun ömürlü erişim anahtarı",
+    "home.token_stored": "Bir anahtar kayıtlı; değiştirmek için yenisini yaz.",
+    "home.token_missing": "Kayıtlı anahtar yok.",
+    "home.test": "Bağlantıyı dene",
+    "home.ok": "Bağlandı. Kaydedince anahtar saklanır.",
+    "home.failed": "Bağlanamadı: {error}",
+    "home.bad_address": "Home Assistant adresi http:// ya da https:// ile başlamalı, ör. http://homeassistant.local:8123",
+    "routines.intro": "Sesle kurduğun rutinler (“her gece 21'de hava durumunu söyle”). Bilge dinlerken çalışırlar; onay gerektiren bir adımı sen yokken yapmazlar.",
+    "routines.delete": "Seçileni sil",
+    "routines.empty": "Kurulu rutin yok.",
+    "routines.failed": "Rutinler okunamadı: {error}",
     "memory.intro": "Bilge'den hatırlamasını istediklerin:",
     "memory.forget": "Seçileni unut",
     "memory.forget_all": "Hepsini unut",
@@ -225,6 +240,8 @@ _ENGLISH = {
     "tab.calendar": "Calendar",
     "tab.mail": "Mail",
     "tab.commands": "Commands",
+    "tab.home": "Smart home",
+    "tab.routines": "Routines",
     "tab.memory": "Memory",
     "tab.history": "History",
     "tab.about": "About",
@@ -338,6 +355,19 @@ _ENGLISH = {
     "commands.incomplete": "Every command needs both a name and a command line.",
     "commands.unparsable": "A command line has a quote that isn't closed.",
     "commands.duplicate": "Two commands have the same name.",
+    "home.note": "For controlling devices at home through Home Assistant (“turn on the living room lights”, “is the front door locked”). Create the access token in Home Assistant under your profile's Security section as a “Long-lived access token”; Bilge keeps it only in the system's key store.",
+    "home.address": "Home Assistant address",
+    "home.token": "Long-lived access token",
+    "home.token_stored": "A token is stored; type a new one to replace it.",
+    "home.token_missing": "No token is stored.",
+    "home.test": "Test the connection",
+    "home.ok": "Connected. The token is stored when you save.",
+    "home.failed": "Couldn't connect: {error}",
+    "home.bad_address": "The Home Assistant address must start with http:// or https://, e.g. http://homeassistant.local:8123",
+    "routines.intro": "The routines you set up by voice (“every night at 9 tell me the weather”). They run while Bilge listens, and never take a step that needs your yes while you're away.",
+    "routines.delete": "Delete selected",
+    "routines.empty": "There are no routines.",
+    "routines.failed": "Couldn't read the routines: {error}",
     "memory.intro": "What you asked Bilge to remember:",
     "memory.forget": "Forget selected",
     "memory.forget_all": "Forget everything",
@@ -379,6 +409,10 @@ def use(language: AssistantLanguage, wake_word: bool = True) -> None:
     global _language, _wake_word
     _language = language
     _wake_word = wake_word
+
+
+def language() -> AssistantLanguage:
+    return _language
 
 
 def status(name: str) -> str:

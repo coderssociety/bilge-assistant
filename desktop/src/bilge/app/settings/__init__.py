@@ -12,10 +12,12 @@ from bilge import config
 from bilge.app.settings.calendar import CalendarPage
 from bilge.app.settings.commands import CommandsPage
 from bilge.app.settings.general import GeneralPage
+from bilge.app.settings.home import HomePage
 from bilge.app.settings.mail import MailPage
 from bilge.app.settings.model import ModelChooser
 from bilge.app.settings.recognition import RecognitionChooser
 from bilge.app.settings.records import AboutPage, HistoryPage, MemoryPage
+from bilge.app.settings.routines import RoutinesPage
 from bilge.app.settings.voice import VoicePage
 from bilge.app.texts import t
 from bilge.app.tray import app_icon
@@ -41,10 +43,12 @@ class SettingsWindow(QDialog):
         if sys.platform != "win32":
             self.pages["mail"] = MailPage()
         self.pages["commands"] = CommandsPage()
+        self.pages["home"] = HomePage()
         tabs = QTabWidget()
         for name, page in self.pages.items():
             page.load(settings)
             tabs.addTab(page, t(f"tab.{name}"))
+        tabs.addTab(RoutinesPage(), t("tab.routines"))
         tabs.addTab(MemoryPage(), t("tab.memory"))
         tabs.addTab(HistoryPage(), t("tab.history"))
         tabs.addTab(AboutPage(), t("tab.about"))

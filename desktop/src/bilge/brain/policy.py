@@ -16,10 +16,11 @@ from enum import Enum
 from bilge.tools.base import Risk
 
 # Could send the text somewhere (a URL with data in it, another app) or keep it: an injected "fact" in memory
-# would sit in every future conversation's instructions.
+# would sit in every future conversation's instructions, and an injected routine would run unattended every day.
 REFUSED_AFTER_UNTRUSTED = frozenset(
-    {"readWebPage", "openWebsite", "searchWeb", "typeText", "remember", "sendEmail", "replyToEmail", "sendMessage"}
-)
+    {"readWebPage", "openWebsite", "searchWeb", "typeText", "remember", "sendEmail", "replyToEmail", "sendMessage",
+     "addRoutine"}
+)  # fmt: skip
 FREE_AFTER_UNTRUSTED = frozenset(
     {
         "currentDateTime", "calculate", "convertUnits", "worldClock", "batteryStatus", "systemInfo", "weather",
