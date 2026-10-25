@@ -10,6 +10,20 @@ final class ConversationContext {
     var screen: ScreenContext?
     /// What the last tool read, in parts, for "devamını oku" and questions about it.
     var reading: ContinuedReading?
+    /// The messages readMail listed last, for "buna yanıt ver".
+    private var readMail: [MailReference] = []
+    private var readMailAt: Date?
+
+    func keepReadMail(_ references: [MailReference], at date: Date) {
+        readMail = references
+        readMailAt = date
+    }
+
+    /// Like a reading, what was read stops being "this" after a while.
+    func recentMail(at now: Date) -> [MailReference] {
+        guard let readMailAt, now.timeIntervalSince(readMailAt) < ContinuedReading.lifetime else { return [] }
+        return readMail
+    }
 }
 
 struct CopyToClipboardTool: AssistantTool {

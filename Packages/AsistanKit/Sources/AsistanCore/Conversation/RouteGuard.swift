@@ -47,6 +47,20 @@ public enum RouteGuard {
     /// `previousAction` is the tool of the turn just before, for follow-ups like "peki yarın?" after a weather answer.
     public static func review(action: String, command: String, previousAction: String? = nil) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
+        // "Alışveriş notuma süt ekle" is not a reminder, and "…notuma süt yaz" is not dictation.
+        if NoteRequest.addition(in: command) != nil { return "appendToNote" }
+        if NoteRequest.asksForList(command) { return "readNotes" }
+        // "Annemi ara" is a phone call, not a web search; "Atatürk'ü internette ara" stays a search.
+        if CallRequest.parse(command) != nil { return "callContact" }
+        if action == "callContact", words.contains(where: { word in searchSites.contains(where: word.hasPrefix) }) {
+            return "searchWeb"
+        }
+        // "Buna yanıt ver: …" after reading mail answers that mail; "…diye cevap yaz" is not dictation.
+        if MailReplyRequest.parse(command) != nil, previousAction == "readMail" || MailReplyRequest.mentionsMail(command) {
+            return "replyMail"
+        }
+        // "Yarınki toplantıyı iptal et" was taken for reading the calendar or adding to it.
+        if let calendarAction = CalendarChange.reviewedAction(action, command: command, language: .turkish) { return calendarAction }
         // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.
         if isDictation(words), action != "createNote" { return "typeText" }
         // "geri al" (undo) outside a spreadsheet was once routed to quitApp.

@@ -230,7 +230,7 @@ final class AssistantBrain: CommandHandling {
             let viaModel = call.answersWithLanguageModel || translation != nil
             if !viaModel { localModel.turnNeededNoModel() }
             let output = try await run(call, for: command, continuation: continuation)
-            let result = keepReading(output, of: call, viaModel: viaModel)
+            let result = keepReading(output, of: call, viaModel: viaModel, translation: translation)
             if viaModel, !ToolReply.isFailure(result) {
                 let answer = try await answer(command, from: result, translation: translation, into: continuation)
                 previousTurn = .init(command: command, action: call.toolName, result: answer)
@@ -243,7 +243,8 @@ final class AssistantBrain: CommandHandling {
             // "İkinci maddeyi açıkla" after a reading: the conversation never saw what the tool read.
             if let reading = context.reading, reading.isCurrent(at: .now), ReadingRequest.refersToReading(command, language: language) {
                 let material = String(reading.lastPart.prefix(Self.followUpMaterialLimit))
-                let reply = try await answer(command, from: material, translation: translation, into: continuation)
+                let reply = try await answer(command, from: material, translation: translation ?? reading.translation,
+                                             into: continuation)
                 previousTurn = .init(command: command, action: CommandRouter.conversationAction, result: reply)
                 return
             }
@@ -255,10 +256,11 @@ final class AssistantBrain: CommandHandling {
 
     /// Keeps what a tool read for "devamını oku" and questions about it, and gives the part to read now:
     /// the first part of a long text, the whole of a short one.
-    private func keepReading(_ result: String, of call: PreparedToolCall, viaModel: Bool) -> String {
+    private func keepReading(_ result: String, of call: PreparedToolCall, viaModel: Bool, translation: SpeechLanguage?) -> String {
         context.reading = nil
         guard !ToolReply.isFailure(result), call.readingLayout != nil || viaModel,
-              let reading = ContinuedReading(result, layout: call.readingLayout, answersWithLanguageModel: viaModel, at: .now)
+              let reading = ContinuedReading(result, layout: call.readingLayout, answersWithLanguageModel: viaModel,
+                                             translation: translation, at: .now)
         else { return result }
         context.reading = reading
         return reading.firstPart
@@ -275,7 +277,7 @@ final class AssistantBrain: CommandHandling {
         context.reading = reading
         let reply: String
         if reading.answersWithLanguageModel {
-            reply = try await answer(command, from: part, into: continuation)
+            reply = try await answer(command, from: part, translation: reading.translation, into: continuation)
         } else {
             localModel.turnNeededNoModel()
             reply = part

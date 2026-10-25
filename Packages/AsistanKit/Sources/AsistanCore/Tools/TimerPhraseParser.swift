@@ -85,7 +85,7 @@ public enum TimerPhraseParser {
         return words.contains(where: { noonWords.contains(String($0)) }) ? (12, 0) : nil
     }
 
-    private static func appointmentHour(_ hour: Int, in folded: String) -> Int {
+    static func appointmentHour(_ hour: Int, in folded: String) -> Int {
         let words = folded.split(separator: " ")
         let afternoon = words.contains("aksam") || folded.contains("ogleden sonra")
         let morning = words.contains("sabah") || words.contains("gece")

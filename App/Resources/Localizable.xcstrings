@@ -82,6 +82,16 @@
         }
       }
     },
+    "%@ aranıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calling %@."
+          }
+        }
+      }
+    },
     "%@ ağına bağlı": {
       "localizations": {
         "en": {
@@ -118,6 +128,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skipped ahead %@."
+          }
+        }
+      }
+    },
+    "%@ için FaceTime'da aranabilecek bir numara ya da e-posta yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has no number or e-mail address to call on FaceTime."
+          }
+        }
+      }
+    },
+    "%@ için kayıtlı bir telefon numarası yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has no phone number saved."
+          }
+        }
+      }
+    },
+    "%@ kişisinden gelen bir e-posta bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find an e-mail from %@."
           }
         }
       }
@@ -662,6 +702,16 @@
         }
       }
     },
+    "%@, %@ adresinden gelen \"%@\" konulu e-postaya şu yanıtı gönderiyorum: %@. Göndermem için evet ya da gönder de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm replying to the e-mail \"%3$@\" from %1$@, %2$@, with: %4$@. Say yes or send to send it."
+          }
+        }
+      }
+    },
     "%@, %@ adresine \"%@\" konulu e-postayı gönderiyorum%@%@. Göndermem için evet ya da gönder de.": {
       "localizations": {
         "en": {
@@ -674,6 +724,26 @@
           "stringUnit": {
             "state": "new",
             "value": "%1$@, %2$@ adresine \"%3$@\" konulu e-postayı gönderiyorum%4$@%5$@. Göndermem için evet ya da gönder de."
+          }
+        }
+      }
+    },
+    "%@, %@ adresini FaceTime görüntülü aramayla arayayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I call %@ at %@ with FaceTime video?"
+          }
+        }
+      }
+    },
+    "%@, %@ adresini FaceTime sesli aramayla arayayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I call %@ at %@ with FaceTime Audio?"
           }
         }
       }
@@ -714,6 +784,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm sending %1$@ (%2$@) this by iMessage: %3$@. Say yes or send to send it."
+          }
+        }
+      }
+    },
+    "%@, %@ numarasını iPhone üzerinden arayayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I call %@ at %@ through your iPhone?"
           }
         }
       }
@@ -848,6 +928,16 @@
         }
       }
     },
+    "%lld notun var, en son düzenlenenler: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have %lld notes; the most recently edited: %@"
+          }
+        }
+      }
+    },
     "%lld saat": {
       "localizations": {
         "en": {
@@ -884,6 +974,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't find a shortcut named '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında bir not bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a note called '%@'."
           }
         }
       }
@@ -1014,6 +1114,46 @@
         }
       }
     },
+    "'%@' etkinliğini ne zamana taşıyacağımı anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch when to move '%@' to."
+          }
+        }
+      }
+    },
+    "'%@' etkinliğini taşıyayım mı? Şu an %@, yeni zamanı %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I move '%@'? It is now %@; the new time would be %@."
+          }
+        }
+      }
+    },
+    "'%@' etkinliğini, %@, takviminden sileyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I delete '%@', %@, from your calendar?"
+          }
+        }
+      }
+    },
+    "'%@' etkinliğinin %@ olan tekrarını ve sonraki tüm tekrarlarını sileyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I delete the occurrence of '%@' %@ and every one after it?"
+          }
+        }
+      }
+    },
     "'%@' geçen bir not bulamadım.": {
       "localizations": {
         "en": {
@@ -1114,6 +1254,46 @@
         }
       }
     },
+    "'%@' notu kilitli, ona ekleyemem.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The '%@' note is locked, so I can't add to it."
+          }
+        }
+      }
+    },
+    "'%@' notuna ekledim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added it to the '%@' note."
+          }
+        }
+      }
+    },
+    "'%@' notunda ekler var; bozulmasın diye ona yazmadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The '%@' note has attachments, so I left it alone to keep them intact."
+          }
+        }
+      }
+    },
+    "'%@' notunun sonuna şunu ekleyeyim mi: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I add this to the end of the '%@' note: %@"
+          }
+        }
+      }
+    },
     "'%@' sonucu: %@": {
       "localizations": {
         "en": {
@@ -1130,12 +1310,42 @@
         }
       }
     },
+    "'%@' takviminden silindi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleted '%@' from your calendar."
+          }
+        }
+      }
+    },
     "'%@' tamamlandı olarak işaretlendi.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Marked '%@' as completed."
+          }
+        }
+      }
+    },
+    "'%@' taşındı: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved '%@' to %@."
+          }
+        }
+      }
+    },
+    "'%@' tekrarlanan bir etkinlik; yalnızca bu tekrarını, %@, sileyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'%@' repeats; shall I delete only this occurrence, %@?"
           }
         }
       }
@@ -1342,6 +1552,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't build the search address."
+          }
+        }
+      }
+    },
+    "Arama başlatılamadı. FaceTime'ın ve iPhone'dan arama ayarının açık olduğunu kontrol et.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't start the call. Check that FaceTime and calls from iPhone are turned on."
+          }
+        }
+      }
+    },
+    "Aramayı yalnızca onayla başlatırım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I only start a call once you confirm."
           }
         }
       }
@@ -1742,6 +1972,16 @@
         }
       }
     },
+    "Birden fazla etkinlik uyuyor: %@. Hangisi olduğunu günüyle ya da saatiyle söyler misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More than one event fits: %@. Which one is it? Tell me its day or time."
+          }
+        }
+      }
+    },
     "Birinin numarasını ya da e-postasını bulmak ve onayınla mesaj göndermek için.": {
       "localizations": {
         "en": {
@@ -2098,6 +2338,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't have permission to control this app. You need to allow it in System Settings > Privacy & Security > Automation."
+          }
+        }
+      }
+    },
+    "Bu ve sonraki tüm tekrarlar taşınacak.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This and every later occurrence will move."
           }
         }
       }
@@ -2860,6 +3110,16 @@
         }
       }
     },
+    "Etkinlik bu arada değişmiş ya da silinmiş, bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The event has changed or been deleted in the meantime; I couldn't find it."
+          }
+        }
+      }
+    },
     "Etkinliğin günü ya da saati anlaşılamadı.": {
       "localizations": {
         "en": {
@@ -3262,6 +3522,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't tell which units to convert between."
+          }
+        }
+      }
+    },
+    "Hangi e-postaya ne yanıt vereceğimi anlayamadım. Örneğin 'buna yanıt ver: yarın uygunum' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch which e-mail to answer or what to say. You can say, for example, 'reply to this: I'm free tomorrow'."
+          }
+        }
+      }
+    },
+    "Hangi e-postaya yanıt vereceğimi bilmiyorum; önce 'maillerimi oku' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't know which e-mail to answer; you can say 'read my mail' first."
+          }
+        }
+      }
+    },
+    "Hangi e-postaya yanıt vereyim? Az önce okuduklarım: %@. Örneğin 'Ahmet'in mailine … diye yanıt ver' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which e-mail should I answer? The ones I just read: %@. You can say, for example, 'reply to Ahmet's email saying …'."
+          }
+        }
+      }
+    },
+    "Hangi etkinliği iptal edeceğimi ya da taşıyacağımı anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch which event to cancel or move."
           }
         }
       }
@@ -4546,6 +4846,36 @@
         }
       }
     },
+    "Nota ne eklememi istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch what to add to the note."
+          }
+        }
+      }
+    },
+    "Nota yalnızca onayla eklerim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I only add to a note once you confirm."
+          }
+        }
+      }
+    },
+    "Notlar'dan beklenmedik bir yanıt geldi; notu kontrol etmen iyi olur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes gave an unexpected answer; you may want to check the note."
+          }
+        }
+      }
+    },
     "O gün için namaz vakitlerini bulamadım.": {
       "localizations": {
         "en": {
@@ -5644,6 +5974,16 @@
         }
       }
     },
+    "Takvimde değişikliği yalnızca onayla yaparım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I only change the calendar once you confirm."
+          }
+        }
+      }
+    },
     "Takvime": {
       "localizations": {
         "en": {
@@ -5660,6 +6000,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "To read your calendar and add events with your approval."
+          }
+        }
+      }
+    },
+    "Takviminde buna uyan bir etkinlik bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a matching event in your calendar."
           }
         }
       }
@@ -6164,6 +6514,16 @@
         }
       }
     },
+    "Yalnızca bu tekrar taşınacak.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only this occurrence will move."
+          }
+        }
+      }
+    },
     "Yalnızca dinleme açıkken ve Takvim/Anımsatıcılar izni verilmişse çalışır.": {
       "localizations": {
         "en": {
@@ -6194,6 +6554,16 @@
         }
       }
     },
+    "Yanıt %@ kişisine gönderildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reply sent to %@."
+          }
+        }
+      }
+    },
     "Yanıt çok uzun sürdü. Tekrar dener misin?": {
       "localizations": {
         "en": {
@@ -6210,6 +6580,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reply: %@"
+          }
+        }
+      }
+    },
+    "Yanıtlanacak e-posta bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find the e-mail to reply to."
+          }
+        }
+      }
+    },
+    "Yanıtta ne yazmamı istediğini söyler misin? Örneğin 'buna yanıt ver: yarın uygunum'.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What should the reply say? For example, 'reply to this: I'm free tomorrow'."
           }
         }
       }

@@ -119,6 +119,45 @@ actor CalendarAccess {
         try store.save(event, span: .thisEvent, commit: true)
     }
 
+    /// Events in `interval` that can be changed: holidays, birthdays and other read-only calendars are left out.
+    func changeableEvents(in interval: DateInterval) async throws -> [CalendarEventCandidate] {
+        try await requireEvents()
+        let predicate = store.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
+        return store.events(matching: predicate)
+            .filter { $0.calendar.allowsContentModifications && $0.status != .canceled }
+            .map { event in
+                CalendarEventCandidate(id: event.calendarItemIdentifier, title: event.title ?? String(localized: "Başlıksız"),
+                                       start: event.startDate, end: event.endDate, isAllDay: event.isAllDay,
+                                       isRecurring: event.hasRecurrenceRules)
+            }
+    }
+
+    /// Removes the occurrence `candidate` describes, or it and all later ones; false when it is gone meanwhile.
+    func removeEvent(_ candidate: CalendarEventCandidate, allOccurrences: Bool) async throws -> Bool {
+        try await requireEvents()
+        guard let event = occurrence(of: candidate) else { return false }
+        try store.remove(event, span: allOccurrences ? .futureEvents : .thisEvent, commit: true)
+        return true
+    }
+
+    /// Moves the occurrence `candidate` describes, keeping its length; with `allOccurrences` later ones move too.
+    func moveEvent(_ candidate: CalendarEventCandidate, to start: Date, allOccurrences: Bool) async throws -> Bool {
+        try await requireEvents()
+        guard let event = occurrence(of: candidate) else { return false }
+        let duration = event.endDate.timeIntervalSince(event.startDate)
+        event.startDate = start
+        event.endDate = start.addingTimeInterval(duration)
+        try store.save(event, span: allOccurrences ? .futureEvents : .thisEvent, commit: true)
+        return true
+    }
+
+    /// Occurrences of a repeating event share one identifier, so the start time picks the one meant.
+    private func occurrence(of candidate: CalendarEventCandidate) -> EKEvent? {
+        let predicate = store.predicateForEvents(withStart: candidate.start.addingTimeInterval(-60),
+                                                 end: candidate.end.addingTimeInterval(60), calendars: nil)
+        return store.events(matching: predicate).first { $0.calendarItemIdentifier == candidate.id && $0.startDate == candidate.start }
+    }
+
     func addReminder(title: String, due: Date?) async throws {
         try await requireReminders()
         let reminder = EKReminder(eventStore: store)

@@ -138,6 +138,51 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "files", command: command) == expected)
     }
 
+    @Test("adding to a named note goes to the note, not to reminders or dictation", arguments: [
+        ("alışveriş notuma süt ekle", "addReminder"), ("alışveriş notuma süt ekle", "createNote"),
+        ("market notuma ekmek yaz", "typeText"), ("toplantı notuna şunu ekle: bütçe onaylandı", "conversation"),
+    ])
+    func appendsToNote(command: String, modelAction: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == "appendToNote")
+    }
+
+    @Test("listing notes reads the notes", arguments: [("notlarım neler", "openApp"), ("son notlarım", "conversation")])
+    func listsNotes(command: String, modelAction: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == "readNotes")
+        #expect(RouteGuard.review(action: "addReminder", command: "süt almayı listeme ekle") == "addReminder")
+    }
+
+    @Test("a person and 'ara' is a call, a place to search in keeps it a search", arguments: [
+        ("annemi ara", "searchWeb", "callContact"), ("Ahmet'i FaceTime'la ara", "findContact", "callContact"),
+        ("Ayşe'yi sesli ara", "conversation", "callContact"), ("anneme telefon et", "sendMessage", "callContact"),
+        ("Atatürk'ü internette ara", "searchWeb", "searchWeb"), ("Atatürk'ü internette ara", "callContact", "searchWeb"),
+        ("Google'da en yakın eczaneyi ara", "callContact", "searchWeb"), ("kediyi ara", "searchWeb", "searchWeb"),
+    ])
+    func calls(command: String, modelAction: String, expected: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == expected)
+    }
+
+    @Test("cancelling or moving an event is changeCalendarEvent", arguments: [
+        ("yarınki toplantıyı iptal et", "readCalendar", "changeCalendarEvent"),
+        ("diş hekimi randevusunu cumaya al", "addCalendarEvent", "changeCalendarEvent"),
+        ("saat 3'teki toplantıyı 4'e ertele", "setTimer", "changeCalendarEvent"),
+        ("dişçiyi cumaya al", "addCalendarEvent", "changeCalendarEvent"),
+        ("dişçiyi cumaya al", "conversation", "conversation"),
+        ("alarmı iptal et", "manageTimers", "manageTimers"),
+        ("süt almayı listeme ekle", "addReminder", "addReminder"),
+    ])
+    func calendarChanges(command: String, modelAction: String, expected: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == expected)
+    }
+
+    @Test("a reply after reading mail, or to a named mail, is replyMail")
+    func mailReplies() {
+        #expect(RouteGuard.review(action: "sendEmail", command: "buna yanıt ver: yarın uygunum", previousAction: "readMail") == "replyMail")
+        #expect(RouteGuard.review(action: "typeText", command: "Ahmet'in mailine teşekkür ederim diye cevap yaz") == "replyMail")
+        #expect(RouteGuard.review(action: "conversation", command: "bu soruya cevap ver") == "conversation")
+        #expect(RouteGuard.review(action: "sendEmail", command: "Ahmet'e toplantı iptal diye mail at") == "sendEmail")
+    }
+
     @Test("undo is never taken for quitting an app")
     func undoIsNotQuit() {
         #expect(RouteGuard.review(action: "quitApp", command: "geri al") == "conversation")

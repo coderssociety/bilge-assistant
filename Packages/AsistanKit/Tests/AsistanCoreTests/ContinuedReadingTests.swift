@@ -29,6 +29,17 @@ struct ContinuedReadingTests {
         #expect(parts.first == "Oran 3.5")
     }
 
+    @Test("the language a reading was asked in carries over to its next parts")
+    func keepsTranslation() throws {
+        let turkish = try #require(TranslationRequest.target(in: "İngilizce maili Türkçe oku"))
+        var reading = try #require(ContinuedReading("First part.\nSecond part.", layout: .text(maxCharacters: 14),
+                                                    answersWithLanguageModel: true, translation: turkish, at: start))
+        #expect(reading.next(at: start) == "Second part.")
+        #expect(reading.translation?.code == "tr")
+        let plain = ContinuedReading("Metin.", layout: nil, answersWithLanguageModel: false, at: start)
+        #expect(plain?.translation == nil)
+    }
+
     @Test("every character is kept across parts")
     func nothingLost() {
         let text = (1...300).map { "Cümle \($0) burada bitiyor." }.joined(separator: " ")

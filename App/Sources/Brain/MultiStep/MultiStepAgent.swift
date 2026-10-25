@@ -25,7 +25,10 @@ struct MultiStepAgent {
     ]
     /// Could carry that text off the Mac (a URL with data in it) or into another app; refused outright.
     /// `remember` too: an injected "fact" would otherwise sit in every future conversation's instructions.
-    private static let refusedAfterUntrusted: Set<String> = ["readWebPage", "openWebsite", "searchWeb", "typeText", "remember"]
+    /// `replyMail` too: a reply must carry only the user's own words, never text taken from the mail.
+    private static let refusedAfterUntrusted: Set<String> = [
+        "readWebPage", "openWebsite", "searchWeb", "typeText", "remember", "replyMail",
+    ]
     /// Read-only tools stay allowed without asking: they only bring more data in, and the ways to carry
     /// it out are refused or confirmed.
     private static let freeAfterUntrusted: Set<String> = [
