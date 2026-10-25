@@ -22,7 +22,8 @@ def get_json(url: str, language: AssistantLanguage, user_agent: str = web_fetch.
 
 
 class TimedCache:
-    """Values by key until they are `seconds` old. Failures aren't kept, so the next question tries again."""
+    """Values by key until they are `seconds` old. Failures and empty answers aren't kept, so the next question
+    tries again: a directory that answers [] for a moment shouldn't say "not found" for an hour."""
 
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
         self._clock = clock
@@ -36,6 +37,7 @@ class TimedCache:
         if kept is not None and now - kept[0] < seconds:
             return kept[1]
         value = load()
-        with self._lock:
-            self._values[key] = (now, value)
+        if value:
+            with self._lock:
+                self._values[key] = (now, value)
         return value
