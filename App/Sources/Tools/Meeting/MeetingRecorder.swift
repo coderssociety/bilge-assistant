@@ -19,7 +19,9 @@ final class MeetingRecorder {
 
     var isRecording: Bool { startedAt != nil }
 
+    /// Radio or a podcast in Bilge would be transcribed into the notes, so it is paused.
     func begin(at now: Date = .now) {
+        StreamPlayer.shared.pause()
         startedAt = now
         chunks = []
     }
