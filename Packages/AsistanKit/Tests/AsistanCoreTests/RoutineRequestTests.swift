@@ -115,4 +115,13 @@ struct RoutineRequestTests {
         #expect(RoutineRequest.parse(said, language: .turkish)?.hour == hour)
         #expect(RoutineRequest.parse(said, language: .turkish)?.days == RoutineSchedule.everyDay)
     }
+
+    @Test("at night, 12 is midnight and 1 to 5 the small hours", arguments: [
+        ("every night at 1 turn off the lights", 1), ("every night at 12 turn off the lights", 0),
+        ("every night at 9 tell me the weather", 21), ("every night at 11 turn off the lights", 23),
+        ("every day at 2 at night turn off the lights", 2),
+    ])
+    func englishNight(said: String, hour: Int) {
+        #expect(RoutineRequest.parse(said, language: .english)?.hour == hour)
+    }
 }
