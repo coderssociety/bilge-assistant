@@ -4724,6 +4724,26 @@
         }
       }
     },
+    "Spotify'da '%@' için arama sonuçlarını açtım; çalmak istediğini seçebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I opened Spotify's search results for '%@'; pick the one you want to play."
+          }
+        }
+      }
+    },
+    "Spotify'da arama açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open a search in Spotify."
+          }
+        }
+      }
+    },
     "Sunucu yanıt vermedi (%lld).": {
       "localizations": {
         "en": {
