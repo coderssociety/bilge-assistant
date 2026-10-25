@@ -30,11 +30,11 @@ PAGE_CHARACTERS = 12_000
 def _json(url: str, language: AssistantLanguage) -> Any:
     response = web_fetch.get(url, language)
     if response.status != 200:
-        raise web_fetch.WebFetchError(f"HTTP {response.status}")
+        raise web_fetch.WebFetchError(web_fetch.Reason.STATUS, response.status)
     try:
         return json.loads(response.body)
     except ValueError as error:
-        raise web_fetch.WebFetchError("Unexpected answer") from error
+        raise web_fetch.WebFetchError(web_fetch.Reason.UNEXPECTED) from error
 
 
 def weather(language: AssistantLanguage, default_city: Callable[[], str]) -> Tool:
@@ -79,7 +79,8 @@ def weather(language: AssistantLanguage, default_city: Callable[[], str]) -> Too
             )
         except web_fetch.WebFetchError as error:
             raise ToolError(
-                ("Couldn't get the weather. " if english else "Hava durumu alınamadı. ") + str(error)
+                ("Couldn't get the weather. " if english else "Hava durumu alınamadı. ")
+                + web_fetch.describe(error, language)
             ) from error
         daily = forecast["daily"]
         if not isinstance(day, int) or not 0 <= day < len(daily["time"]):
@@ -174,7 +175,8 @@ def exchange_rate(language: AssistantLanguage) -> Tool:
             )
         except web_fetch.WebFetchError as error:
             raise ToolError(
-                ("Couldn't get the exchange rate. " if english else "Döviz kuru alınamadı. ") + str(error)
+                ("Couldn't get the exchange rate. " if english else "Döviz kuru alınamadı. ")
+                + web_fetch.describe(error, language)
             ) from error
         value = (data.get("rates") or {}).get(target)
         if value is None:
@@ -327,7 +329,9 @@ def news(language: AssistantLanguage, reading: NewsReading | None = None) -> Too
         try:
             feed = rss_headlines.items(web_fetch.get(source.feed(category) or "", language).body, FEED_COUNT)
         except web_fetch.WebFetchError as error:
-            raise ToolError(("Couldn't get the news. " if english else "Haberler alınamadı. ") + str(error)) from error
+            raise ToolError(
+                ("Couldn't get the news. " if english else "Haberler alınamadı. ") + web_fetch.describe(error, language)
+            ) from error
         if not feed:
             raise ToolError("No headlines found." if english else "Haber başlığı bulunamadı.")
         read = reading.next(feed, category, HEADLINE_COUNT, source)
@@ -402,11 +406,13 @@ def news_article(
             response = web_fetch.get(item.link, language)
             if not 200 <= response.status < 300:
                 # A paywall, a bot block or a missing page is not the story.
-                raise web_fetch.WebFetchError(f"HTTP {response.status}")
+                raise web_fetch.WebFetchError(web_fetch.Reason.STATUS, response.status)
         except web_fetch.WebFetchError as error:
             if opened:
                 return f"Opened in the browser: {item.title}" if english else f"Haberi tarayıcıda açtım: {item.title}"
-            raise ToolError(("Couldn't open the story. " if english else "Haber açılamadı. ") + str(error)) from error
+            raise ToolError(
+                ("Couldn't open the story. " if english else "Haber açılamadı. ") + web_fetch.describe(error, language)
+            ) from error
         body = html_text.extract(response.text())[:PAGE_CHARACTERS]
         note = ("(Opened in the browser.)\n" if english else "(Haber tarayıcıda açıldı.)\n") if opened else ""
         return f"{'Story' if english else 'Haber'}: {item.title}\n{note}\n{body}"
@@ -450,11 +456,11 @@ def read_web_page(language: AssistantLanguage) -> Tool:
         try:
             response = web_fetch.get(url, language)
         except web_fetch.LocalAddressError as error:
-            raise ToolError(
-                "I don't open addresses on the local network." if english else "Yerel ağdaki adresleri açmıyorum."
-            ) from error
+            raise ToolError(web_fetch.describe(error, language)) from error
         except web_fetch.WebFetchError as error:
-            raise ToolError(("Couldn't open the page. " if english else "Sayfa açılamadı. ") + str(error)) from error
+            raise ToolError(
+                ("Couldn't open the page. " if english else "Sayfa açılamadı. ") + web_fetch.describe(error, language)
+            ) from error
         page = response.text()
         title = html_text.title(page)
         body = html_text.extract(page)[:PAGE_CHARACTERS]

@@ -12,6 +12,7 @@ import socket
 import ssl
 import time
 from dataclasses import dataclass
+from enum import StrEnum
 from urllib.parse import urljoin, urlsplit
 
 from bilge.core.language import AssistantLanguage
@@ -30,13 +31,76 @@ _CHUNK = 64 * 1024
 _IPV4_COMPATIBLE = ipaddress.ip_network("::/96")
 
 
+class Reason(StrEnum):
+    CONNECT = "connect"
+    NOT_FOUND = "notFound"
+    LOCAL = "local"
+    UNSUPPORTED = "unsupported"
+    REDIRECTS = "redirects"
+    TOO_LARGE = "tooLarge"
+    TOO_SLOW = "tooSlow"
+    STATUS = "status"
+    UNEXPECTED = "unexpected"
+
+
 class WebFetchError(Exception):
-    """Messages are fixed text: anything the server sent (a redirect target, a status line) could be an
-    instruction aimed at the model, which reads tool errors."""
+    """A reason code rather than text: anything the server sent (a redirect target, a status line) could be an
+    instruction aimed at the model, which reads tool errors. `describe` turns it into a sentence."""
+
+    def __init__(self, reason: Reason, status: int | None = None):
+        super().__init__(reason.value if status is None else f"{reason.value} {status}")
+        self.reason = reason
+        self.status = status
 
 
 class LocalAddressError(WebFetchError):
-    pass
+    def __init__(self) -> None:
+        super().__init__(Reason.LOCAL)
+
+
+_SENTENCES = {
+    AssistantLanguage.TURKISH: {
+        Reason.CONNECT: "Sunucuya bağlanamadım.",
+        Reason.NOT_FOUND: "Adresi bulamadım; internet bağlantısı çalışıyor mu?",
+        Reason.LOCAL: "Yerel ağdaki adresleri açmıyorum.",
+        Reason.UNSUPPORTED: "Bu tür bir adresi açamıyorum.",
+        Reason.REDIRECTS: "Sayfa beni sürekli başka bir adrese yönlendirdi.",
+        Reason.TOO_LARGE: "Sayfa okunamayacak kadar büyük.",
+        Reason.TOO_SLOW: "Sayfa çok geç yanıt verdi.",
+        Reason.UNEXPECTED: "Sunucudan anlayamadığım bir yanıt geldi.",
+        "missing": "Sayfa bulunamadı.",
+        "refused": "Site erişime izin vermedi.",
+        "busy": "Site şu an çok yoğun, biraz sonra yine deneyebilirim.",
+        "server": "Sunucu şu an yanıt veremiyor.",
+    },
+    AssistantLanguage.ENGLISH: {
+        Reason.CONNECT: "I couldn't connect to the server.",
+        Reason.NOT_FOUND: "I couldn't find the address; is the internet connection working?",
+        Reason.LOCAL: "I don't open addresses on the local network.",
+        Reason.UNSUPPORTED: "I can't open that kind of address.",
+        Reason.REDIRECTS: "The page kept sending me to another address.",
+        Reason.TOO_LARGE: "The page is too large to read.",
+        Reason.TOO_SLOW: "The page took too long to answer.",
+        Reason.UNEXPECTED: "The server sent an answer I couldn't understand.",
+        "missing": "The page wasn't found.",
+        "refused": "The site refused access.",
+        "busy": "The site is busy right now; I can try again in a little while.",
+        "server": "The server can't answer right now.",
+    },
+}
+
+
+def describe(error: WebFetchError, language: AssistantLanguage) -> str:
+    """A sentence for the user in their language."""
+    sentences = _SENTENCES[language]
+    if error.reason is not Reason.STATUS:
+        return sentences[error.reason]
+    status = error.status or 0
+    if status in (404, 410):
+        return sentences["missing"]
+    if status in (401, 403, 451):
+        return sentences["refused"]
+    return sentences["busy" if status == 429 else "server"]
 
 
 @dataclass(frozen=True)
@@ -75,23 +139,23 @@ def _follow(url: str, language: AssistantLanguage, max_bytes: int) -> Response:
         if location is None:
             return response
         current = urljoin(current, location)
-    raise WebFetchError("Too many redirects")
+    raise WebFetchError(Reason.REDIRECTS)
 
 
 def _get_once(url: str, language: AssistantLanguage, max_bytes: int, deadline: float) -> tuple[Response, str | None]:
     parts = urlsplit(url)
     scheme = parts.scheme.lower()
     if scheme not in _DEFAULT_PORTS or not parts.hostname:
-        raise WebFetchError("Unsupported address")
+        raise WebFetchError(Reason.UNSUPPORTED)
     try:
         port = parts.port or _DEFAULT_PORTS[scheme]
     except ValueError as error:
-        raise WebFetchError("Unsupported address") from error
+        raise WebFetchError(Reason.UNSUPPORTED) from error
     if port not in ALLOWED_PORTS:
-        raise WebFetchError("Port not allowed")
+        raise WebFetchError(Reason.UNSUPPORTED)
     host = parts.hostname
     if network_address.is_local_name(host):
-        raise LocalAddressError("Local address")
+        raise LocalAddressError()
     path = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
     headers = {
         "Host": host if port == _DEFAULT_PORTS[scheme] else f"{host}:{port}",
@@ -118,18 +182,18 @@ def _get_once(url: str, language: AssistantLanguage, max_bytes: int, deadline: f
             last_error = error
         finally:
             connection.close()
-    raise WebFetchError("Could not connect") from last_error
+    raise WebFetchError(Reason.CONNECT) from last_error
 
 
 def _public_addresses(host: str, port: int) -> list[str]:
     try:
         infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
     except socket.gaierror as error:
-        raise WebFetchError("Could not find the address") from error
+        raise WebFetchError(Reason.NOT_FOUND) from error
     addresses = list(dict.fromkeys(info[4][0].split("%")[0] for info in infos))
     # Every address must be public: a name with one public and one private address could still be steered.
     if not addresses or not all(_is_public(a) for a in addresses):
-        raise LocalAddressError("Local address")
+        raise LocalAddressError()
     return addresses
 
 
@@ -155,9 +219,9 @@ def _read_limited(reply: http.client.HTTPResponse, max_bytes: int, deadline: flo
     while chunk := reply.read(_CHUNK):
         total += len(chunk)
         if total > max_bytes:
-            raise WebFetchError("The page is too large")
+            raise WebFetchError(Reason.TOO_LARGE)
         if time.monotonic() > deadline:
-            raise WebFetchError("The page took too long")
+            raise WebFetchError(Reason.TOO_SLOW)
         chunks.append(chunk)
     return b"".join(chunks)
 

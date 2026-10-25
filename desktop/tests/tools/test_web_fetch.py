@@ -3,7 +3,10 @@ import threading
 
 import pytest
 
+from bilge.core.language import AssistantLanguage
 from bilge.tools import web_fetch
+from bilge.tools.base import ToolError
+from bilge.tools.builtin import internet
 
 
 @pytest.fixture
@@ -93,3 +96,45 @@ def test_a_missing_page_is_not_tried_again(monkeypatch):
     monkeypatch.setattr(web_fetch, "_follow", follow)
     assert web_fetch.get("https://example.org").status == 404
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    ("error", "turkish", "english"),
+    [
+        (
+            web_fetch.WebFetchError(web_fetch.Reason.CONNECT),
+            "Sunucuya bağlanamadım.",
+            "I couldn't connect to the server.",
+        ),
+        (
+            web_fetch.LocalAddressError(),
+            "Yerel ağdaki adresleri açmıyorum.",
+            "I don't open addresses on the local network.",
+        ),
+        (web_fetch.WebFetchError(web_fetch.Reason.STATUS, 404), "Sayfa bulunamadı.", "The page wasn't found."),
+        (
+            web_fetch.WebFetchError(web_fetch.Reason.STATUS, 503),
+            "Sunucu şu an yanıt veremiyor.",
+            "The server can't answer right now.",
+        ),
+    ],
+)
+def test_errors_are_told_in_the_users_language(error, turkish, english):
+    assert web_fetch.describe(error, AssistantLanguage.TURKISH) == turkish
+    assert web_fetch.describe(error, AssistantLanguage.ENGLISH) == english
+
+
+def test_every_reason_has_a_sentence_in_both_languages():
+    for language in AssistantLanguage:
+        for reason in web_fetch.Reason:
+            assert web_fetch.describe(web_fetch.WebFetchError(reason, 500), language)
+
+
+def test_a_failed_page_is_explained_without_english_in_a_turkish_sentence(monkeypatch):
+    def offline(url, language=AssistantLanguage.TURKISH, max_bytes=0):
+        raise web_fetch.WebFetchError(web_fetch.Reason.NOT_FOUND)
+
+    monkeypatch.setattr(web_fetch, "get", offline)
+    with pytest.raises(ToolError) as caught:
+        internet.read_web_page(AssistantLanguage.TURKISH).run({"address": "ornek.com.tr"})
+    assert str(caught.value) == "Sayfa açılamadı. Adresi bulamadım; internet bağlantısı çalışıyor mu?"

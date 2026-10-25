@@ -16,7 +16,7 @@ def fake_web(monkeypatch, pages):
             if url.startswith(prefix):
                 data = body if isinstance(body, bytes) else json.dumps(body).encode()
                 return web_fetch.Response(url, 200, "application/json", data)
-        raise web_fetch.WebFetchError("offline")
+        raise web_fetch.WebFetchError(web_fetch.Reason.CONNECT)
 
     monkeypatch.setattr(web_fetch, "get", get)
 
@@ -170,7 +170,7 @@ def test_an_error_page_is_not_told_as_the_story(monkeypatch):
     )
     tool = internet.news_article(TR, reading, lambda link: None)
     arguments = tool.refine({"headline": ""}, "Claude'un keşfettiği haberi anlat")
-    with pytest.raises(ToolError, match="Haber açılamadı. HTTP 403"):
+    with pytest.raises(ToolError, match="Haber açılamadı. Site erişime izin vermedi."):
         tool.run({**arguments, "open": False})
     assert tool.run({**arguments, "open": True}).startswith("Haberi tarayıcıda açtım:")
 
