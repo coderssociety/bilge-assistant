@@ -7,11 +7,11 @@ hears its name; the large one is loaded again as soon as it does, which delays t
 import logging
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 import numpy as np
 
-from bilge.voice.recognizers import Recognizer
+from bilge.voice.recognizers import Detected, RecognitionError, Recognizer, detects_language
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +34,8 @@ class IdleUnloadingRecognizer:
         # Held while loading, transcribing or unloading: a model is never let go in the middle of a recording.
         self._lock = threading.Lock()
         self._recognizer: Recognizer | None = load()
+        # The same loader always builds the same kind of recognizer.
+        self.detects_language = detects_language(self._recognizer)
         self._last_used = clock()
         self._closed = threading.Event()
         self._watcher = threading.Thread(target=self._watch, args=(check_seconds,), name="bilge-idle", daemon=True)
@@ -64,6 +66,14 @@ class IdleUnloadingRecognizer:
             text = self._loaded().transcribe(samples)
             self._last_used = self._clock()
             return text
+
+    def transcribe_detecting(self, samples: np.ndarray, languages: Sequence[str]) -> Detected:
+        if not self.detects_language:
+            raise RecognitionError("This recognizer can't tell languages apart")
+        with self._lock:
+            detected = self._loaded().transcribe_detecting(samples, languages)  # type: ignore[attr-defined]
+            self._last_used = self._clock()
+            return detected
 
     def unload_if_idle(self) -> None:
         with self._lock:
