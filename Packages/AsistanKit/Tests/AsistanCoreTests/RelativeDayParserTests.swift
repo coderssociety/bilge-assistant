@@ -24,13 +24,43 @@ struct RelativeDayParserTests {
         ("salı günü", 7),
         ("haftaya çarşamba", 8),
         ("3 gün sonra", 3),
+        ("yarın pazara gitmeyi hatırlat", 1),
+        ("yarından sonra dişçi", 2),
+        ("cumaya toplantı koy", 3),
+        ("cumartesi saat 2'de halı saha", 4),
+        ("pazar günü", 5),
+        ("haftaya", 7),
+        ("gelecek hafta toplantı", 7),
+        ("haftaya salı", 7),
+        ("haftaya pazartesi ne var", 6),
+        ("gelecek hafta cuma", 10),
+        ("önümüzdeki hafta perşembe", 9),
+        ("2 hafta sonra", 14),
+        ("1 hafta sonra", 7),
+        ("15 Kasım'da", 33),
+        ("3 Aralık toplantı", 51),
+        ("10 Ekim", 362),
+        ("ayın 20'sinde", 7),
+        ("ayın 5'inde", 23),
     ])
     func offsets(text: String, expected: Int) {
         #expect(RelativeDayParser.dayOffset(in: text, now: tuesday, calendar: calendar) == expected)
     }
 
-    @Test("returns nil when no day is mentioned")
-    func none() {
-        #expect(RelativeDayParser.dayOffset(in: "15:00'te toplantı ekle", now: tuesday, calendar: calendar) == nil)
+    @Test("returns nil when no day is mentioned", arguments: [
+        "15:00'te toplantı ekle",
+        "pazara gitmeyi hatırlat",
+        "pazarda domates al",
+        "31 Şubat",
+    ])
+    func none(text: String) {
+        #expect(RelativeDayParser.dayOffset(in: text, now: tuesday, calendar: calendar) == nil)
+    }
+
+    @Test("tells whether a weekday is named")
+    func weekdayNamed() {
+        #expect(RelativeDayParser.namesWeekday("haftaya cuma"))
+        #expect(!RelativeDayParser.namesWeekday("haftaya ne var"))
+        #expect(!RelativeDayParser.namesWeekday("pazara git"))
     }
 }
