@@ -157,7 +157,7 @@ class Network(Protocol):
 
 class Screenshots(Protocol):
     def capture(self, area: ScreenshotArea, destination: Path) -> bool:
-        """False when the user cancelled (for example, no area was selected)."""
+        """False when the user cancelled (for example, no area was selected); DesktopError when it failed."""
         ...
 
     def copy_image(self, image: Path) -> None: ...

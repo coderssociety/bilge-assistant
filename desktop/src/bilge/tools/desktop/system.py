@@ -72,7 +72,8 @@ _TEXTS = {
         "to_clipboard": "Panoya kopyalanması istendiyse true",
         "shot_saved": "Ekran görüntüsünü {folder} klasörüne kaydettim.",
         "shot_copied": "Ekran görüntüsü panoya kopyalandı.",
-        "shot_cancelled": "Ekran görüntüsü alınmadı.",
+        "shot_cancelled": "Seçim iptal edildi, ekran görüntüsü alınmadı.",
+        "shot_failed": "Ekran görüntüsü alınamadı; ekran görüntüsü programı hata verdi.",
         "shot_name": "Ekran görüntüsü {stamp}.png",
         "shot_folder": "Ekran Görüntüleri",
     },
@@ -109,7 +110,8 @@ _TEXTS = {
         "to_clipboard": "true if it should be copied",
         "shot_saved": "I saved the screenshot in {folder}.",
         "shot_copied": "The screenshot is on the clipboard.",
-        "shot_cancelled": "No screenshot was taken.",
+        "shot_cancelled": "The selection was cancelled, so no screenshot was taken.",
+        "shot_failed": "The screenshot failed; the screenshot program reported an error.",
         "shot_name": "Screenshot {stamp}.png",
         "shot_folder": "Screenshots",
     },
@@ -292,9 +294,9 @@ def screenshot_tool(
             if not screenshots.capture(area, image):
                 return texts["shot_cancelled"]
         except DesktopError as error:
-            raise failure(error, language) from error
+            raise failure(error, language, texts["shot_failed"]) from error
         except OSError as error:
-            raise failure(DesktopError(str(error)), language) from error
+            raise failure(DesktopError(str(error)), language, texts["shot_failed"]) from error
         return texts["shot_saved"].format(folder=folder.name)
 
     parameters = obj(
