@@ -263,6 +263,23 @@ class Notifier(Protocol):
 
 
 @dataclass(frozen=True)
+class PairedPhone:
+    id: str
+    name: str
+
+
+class TextMessages(Protocol):
+    """SMS through the user's own phone, paired with this computer."""
+
+    def reachable_phone(self) -> PairedPhone:
+        """MissingProgram when the bridge to the phone isn't installed; NotPossibleHere when no paired phone is
+        reachable."""
+        ...
+
+    def send(self, phone: PairedPhone, number: str, text: str) -> None: ...
+
+
+@dataclass(frozen=True)
 class Desktop:
     apps: Apps
     volume: Volume

@@ -33,6 +33,7 @@ from bilge.tools.memory_store import MemoryStore
 from bilge.tools.reading import TextReading, continue_reading_tool
 
 if TYPE_CHECKING:
+    from bilge.desktop.base import TextMessages
     from bilge.tools.desktop.timers import TimerService
     from bilge.voice.assistant import Service
 
@@ -215,6 +216,7 @@ def _desktop_tools(
         commands,
         files,
         hardware,
+        messages,
         notes,
         playback,
         sound,
@@ -253,6 +255,7 @@ def _desktop_tools(
         *_office_tools(language, text_reading, people),
         *notes.note_tools(NotesFolder(notes_folder(found.folders.documents(), language)), language, text_reading),
         *commands.command_tools(own_commands),
+        messages.send_message_tool(_text_messages(), people, language),
     ]
     rules = [
         rule("startDictation", lambda command: dictation_command.is_start(command, language)),
@@ -267,6 +270,16 @@ def _desktop_tools(
              tools=frozenset({"spreadsheet"})),
     ]  # fmt: skip
     return tools, rules, modes
+
+
+def _text_messages() -> "TextMessages | None":
+    """KDE Connect on Linux; Windows has no way to send SMS yet."""
+    if sys.platform == "win32":
+        return None
+    from bilge.desktop.linux.kdeconnect import KdeConnectMessages
+    from bilge.desktop.process import Runner
+
+    return KdeConnectMessages(Runner())
 
 
 def _spreadsheet_apps(calc):
