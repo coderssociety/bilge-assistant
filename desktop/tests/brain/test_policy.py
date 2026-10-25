@@ -22,3 +22,8 @@ def test_after_untrusted_content_side_effects_need_a_yes():
 
 def test_after_untrusted_content_reading_stays_free():
     assert decide("weather", Risk.SAFE, read_untrusted=True) == Verdict(Action.RUN)
+
+
+def test_after_a_song_title_pausing_and_skipping_stay_free():
+    for name in ("controlMusic", "controlPlayback"):
+        assert decide(name, Risk.SAFE, read_untrusted=False, read_earlier=True) == Verdict(Action.RUN)

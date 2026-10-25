@@ -33,6 +33,8 @@ FREE_AFTER_UNTRUSTED = frozenset(
         "newsArticle",
         # Reads what the user points at; it opens only documents the user selected, never programs.
         "useContext",
+        # Pausing or skipping what plays carries nothing anywhere; a song's title read out must not make "durdur" ask.
+        "controlMusic", "controlPlayback",
     }
 )  # fmt: skip
 
