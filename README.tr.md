@@ -25,7 +25,8 @@
 
 “Bilge” dediğinde uyanır, ne istediğini anlar, işi Mac'te yapar ve sesle cevap verir. Konuşma tanıma,
 dil modelleri ve ses üretimi Mac'te çalışır; bulut hizmeti, hesap ya da abonelik yoktur. İnternet yalnızca
-hava durumu, döviz, haber gibi istediğin veriler ve modellerin ilk indirmesi için kullanılır.
+hava durumu, haber, fiyat ya da şarkı gibi istediğin veriler ve modellerin ilk indirmesi için kullanılır.
+Hangi özelliğin hangi hizmete bağlandığı [Gizlilik](#gizlilik) bölümünde yazılı.
 
 Windows ya da Linux mu kullanıyorsun? [Windows ve Linux için Bilge](https://github.com/coderssociety/bilge-desktop/blob/main/README.tr.md)
 aynı asistanın onlar için yeniden yazılmış hâli.
@@ -37,6 +38,7 @@ aynı asistanın onlar için yeniden yazılmış hâli.
 - [Nasıl çalışır](#nasıl-çalışır)
 - [Kurulum](#kurulum)
 - [Kullanım](#kullanım)
+  - [Ayarlar](#ayarlar)
 - [Modeller](#modeller)
 - [Dil](#dil)
 - [Gizlilik](#gizlilik)
@@ -48,20 +50,34 @@ aynı asistanın onlar için yeniden yazılmış hâli.
 
 | | |
 |---|---|
-| **Mac komutları** | Uygulama açma ve kapatma, ses düzeyi, müzik, ekran görüntüsü, Wi-Fi, karanlık mod, Kestirmeler, dosya bulma ve açma, Çöp Kutusu'na taşıma |
-| **Takvim ve anımsatıcılar** | Sorma, ekleme, tamamlama; yaklaşan toplantıyı ve vakti gelen anımsatıcıyı kendiliğinden söyler |
-| **İletişim** | Kişi bulma, okunmamış e-postaları okuma (“maillerimi oku”, “içeriğini oku”), Mail ve Mesajlar ile gönderme. Gönderme her zaman açık bir “evet” ister |
-| **Çeviri** | Okuduğunu başka dilde okur: “İngilizce maili Türkçe oku”, “haberleri Fransızca oku”; ses 31 dilde konuşur |
+| **Mac komutları** | Uygulama açma ve kapatma, pencere düzenleme, ses düzeyi, parlaklık, Wi-Fi, Bluetooth, karanlık mod, odak modu, kilitleme, uyutma, yeniden başlatma ve kapatma, ekran görüntüsü, pil ve sistem durumu, Sistem Ayarları bölümleri, Kestirmeler |
+| **Dosyalar** | Dosyayı adına, türüne ya da tarihine göre bulup açma; PDF, Word ve metin belgelerini okuyup özetleme; klasör oluşturma; Çöp Kutusu'na taşıma |
+| **Takvim ve anımsatıcılar** | Herhangi bir günü, haftayı ya da ayı okuma; etkinlik ekleme, taşıma ve iptal etme; anımsatıcı ekleme ve tamamlama. Yaklaşan toplantıyı ve vakti gelen anımsatıcıyı kendiliğinden söyler |
+| **Zamanlayıcı ve rutinler** | Listelenip tek tek iptal edilebilen zamanlayıcı ve alarmlar; her gün ya da seçilen günlerde belli bir saatte kendiliğinden çalışan rutinler |
+| **E-posta, mesaj, arama** | Okunmamış e-postaları ve içeriklerini okuma, yanıtlama, Mail ve Mesajlar ile gönderme, kişi bulma, telefonla (iPhone üzerinden) ya da FaceTime ile arama |
+| **Notlar** | Not oluşturma, notları okuma ve listeleme, var olan bir notun sonuna ekleme |
+| **Müzik, radyo, podcast** | Müzik, Spotify, YouTube, YouTube Music, Deezer ya da Apple Music'te şarkı çalma; duraklatma, geçme, sarma, karışık çalma ve tekrar; internet radyosu ve podcast'in son bölümü Bilge'nin içinde çalar |
+| **Akıllı ev** | Kendi Home Assistant'ın üzerinden ışık, klima, priz, perde, kilit ve diğer cihazlar |
+| **Haber ve bilgi** | Hava durumu, döviz, farklı kaynaklardan haberler ve bir başlığın ayrıntısı, Vikipedi, başka şehirlerde saat, birim çevirme, hesap |
+| **Türkiye'ye özel** | Namaz vakitleri, altın ve akaryakıt fiyatları, son depremler ve yakındaki güçlü depremler için uyarı, Süper Lig skorları ve puan durumu, Borsa İstanbul fiyatları |
+| **Çeviri** | E-postayı, haberleri ya da bir sayfayı başka dilde okur; tercüman modu iki dil arasındaki konuşmayı sesli çevirir. Ses 31 dilde konuşur |
+| **Toplantılar** | Toplantıyı ya da bir ses dosyasını Mac'te yazıya döker, dökümü özetiyle birlikte kaydeder |
+| **Tarayıcı ve web** | Sekmeler arasında geçme, geri ve ileri, kaydırma, sayfada arama, web'de arama, açık sayfayı okuma ya da özetleme, YouTube videosunu özetleme |
 | **Excel** | “D3'e B2 ile B1'i topla”, “B sütununun toplamı kaç”, “geri al” |
-| **Bağlam** | Seçili metin, Finder'da seçili dosya ya da açık sayfa için “bunu özetle”, “bunu Ahmet'e gönder” |
-| **Tarayıcı** | Sekmeler arasında geçme, geri ve ileri, kaydırma, sayfada arama |
+| **Bağlam** | Seçili metin, Finder'da seçili dosya, pano, açık sayfa ya da ekrandakiler için “bunu özetle”, “bunu Ahmet'e gönder” |
 | **Dikte** | Öndeki uygulamaya sesle yazma; “virgül”, “yeni satır”, “son cümleyi sil” |
 | **Günlük özet** | “Günaydın” dediğinde hava, bugünkü etkinlikler, anımsatıcılar ve okunmamış e-postalar |
 | **Hafıza** | “Şunu hatırla: …”, “bunu unut”. Hatırladıklarını Ayarlar'da görür ve silebilirsin |
 | **Ses kimliği** | Sesini tanıtırsan yalnızca senin komutlarına ve onaylarına uyar |
 
-Silme, gönderme ve ekleme gibi geri alınamayan işlerde önce sesli onay ister. Bilge konuşurken
-“Bilge, dur” diyerek sözünü kesebilirsin.
+Silme, gönderme, arama ve ekleme gibi geri alınamayan işlerde önce sesli onay ister. Rutinler sen yokken
+çalıştığı için onay gerektiren bir adımı hiçbir zaman yapmaz. Bilge konuşurken “Bilge, dur” diyerek sözünü
+kesebilirsin.
+
+0.4.0 ile gelenler: akıllı ev, rutinler, tercüman modu, toplantı dökümü, radyo, podcast, YouTube video özeti,
+yeni müzik servisleri, telefon ve FaceTime araması, takvim etkinliklerini ve notları düzenleme, e-postaya yanıt,
+namaz vakitleri, altın ve akaryakıt fiyatları, depremler, Süper Lig, Borsa İstanbul, Vikipedi, dünya saati,
+birim çevirme; parlaklık, Bluetooth, odak modu, güç ve medya oynatma kontrolü.
 
 ## Ekran görüntüleri
 
@@ -128,23 +144,198 @@ Ayarlar > Genel'den bir dinleme kısayolu da seçebilirsin (⌘ ya da ⌃ ile bi
 “Bilge” demekle aynıdır; Bilge konuşurken basarsan susar. Kısayol seçiliyken “Bilge” deyince dinlemeyi
 kapatabilirsin; o zaman kısayola basana kadar hiçbir şey yazıya dökülmez.
 
+Aşağıdaki örnekler Bilge'nin anladığı komutlardır; kelimesi kelimesine söylemen gerekmez.
+
 <details>
 <summary><b>Mac ve uygulamalar</b></summary>
 
 - Safari'yi aç / Spotify'ı kapat / Hangi uygulamalar açık
-- Sesi yüzde otuz yap / Müziği durdur / Sonraki şarkı
-- Ekranı kilitle / Karanlık modu aç / Pil durumu nedir
-- Masaüstündeki fatura dosyasını bul
-- Sabah rutini kestirmesini çalıştır
+- Sesi yüzde otuz yap / Ekran parlaklığını artır / Ekranı biraz karart
+- Wi-Fi'ı aç / Bluetooth'u kapat / Bluetooth açık mı
+- Karanlık modu aç / Rahatsız etmeyi kapat
+- Ekranı kilitle / Mac'i uyut / Bilgisayarı yeniden başlat / Mac'i kapat
+- Pencereyi küçült / Pencereyi sola yerleştir / Tam ekran yap / Diğer uygulamaları gizle
+- Bu pencerenin ekran görüntüsünü al
+- Pil durumu nedir / Diskte ne kadar yer kaldı / IP adresim ne
+- Bluetooth ayarlarını aç
+- Hangi kestirmelerim var / Sabah rutini kestirmesini çalıştır
+
+Yeniden başlatma, kapatma ve oturumu kapatma ancak açık bir “evet”ten sonra yapılır; Wi-Fi'ı ya da Bluetooth'u
+kapatmak ve kestirme çalıştırmak da önce onay ister. macOS'ta odak modunu açıp kapatmanın herkese açık bir yolu
+olmadığından Bilge senin kestirmeni çalıştırır: Kestirmeler'de “Odak Ayarla” eylemini içeren ve adında
+“Rahatsız Etme Aç” ya da “Rahatsız Etme Kapat” geçen bir kestirme oluştur. Böyle bir kestirme yoksa Bilge
+Kestirmeler'i açmayı önerir.
+</details>
+
+<details>
+<summary><b>Dosyalar ve belgeler</b></summary>
+
+- Geçen haftaki bütçe sunumunu bul / Son indirdiğim PDF'i aç
+- İndirilenler klasörünü aç
+- Masaüstündeki raporu özetle / Bu PDF'te teslim tarihi ne yazıyor
+- Masaüstünde Faturalar adında bir klasör oluştur
+- Eski faturayı çöp kutusuna taşı
+
+Dosyalar Spotlight ile bulunur. Çöp Kutusu'na taşımadan önce sorar, hiçbir dosyayı kalıcı olarak silmez.
 </details>
 
 <details>
 <summary><b>Takvim, anımsatıcı, zamanlayıcı</b></summary>
 
-- Bugün kaç toplantım var
+- Bugün kaç toplantım var / Haftaya neler var
 - Yarın saat onda diş hekimi randevusu ekle
-- Ekmek almayı anımsatıcılarıma ekle
-- On dakikalık zamanlayıcı kur
+- Diş hekimi randevusunu cumaya al / Saat 3'teki toplantıyı 4'e ertele / Yarınki toplantıyı iptal et
+- Ekmek almayı anımsatıcılarıma ekle / Anımsatıcılarımda ne var / Faturayı ödedim, işaretle
+- On dakikalık zamanlayıcı kur / Yarın sabah 7 buçuğa alarm kur
+- Kaç dakika kaldı / Çay zamanlayıcısını iptal et / Bütün alarmları sil
+
+Etkinlik eklemek, taşımak, iptal etmek ve anımsatıcı eklemek önce onay ister. Zamanlayıcı ve alarmlar Saat
+uygulamasında değil Bilge'nin içinde kurulur: Bilge açık olduğu sürece süre dolunca bunu sesli söyler.
+</details>
+
+<details>
+<summary><b>E-posta, mesaj, arama</b></summary>
+
+- Maillerimi oku / Yeni e-posta var mı / İçeriğini oku
+- Buna yanıt ver: yarın uygunum / Ahmet'e cevap yaz: tamam, geliyorum
+- Ahmet'e rapor hazır diye e-posta gönder / Ayşe'ye geç kalacağım diye mesaj at
+- Ahmet'in numarasını bul
+- Annemi ara / Ahmet'i FaceTime'la ara / Eşimi görüntülü ara
+
+Bir şey gönderilmeden ya da arama başlamadan önce Bilge kime ne gideceğini okur ve “evet” bekler. Telefon
+aramaları Mac'e bağlı iPhone üzerinden yapılır (iPhone'dan aramalar); FaceTime aramaları Mac'te başlar.
+</details>
+
+<details>
+<summary><b>Notlar</b></summary>
+
+- Not al: Elif'e doğum günü hediyesi al
+- Alışveriş notuma süt ekle / Toplantı notuna şunu ekle: bütçe onaylandı
+- Tarif notumu oku / Son notumu oku / Notlarımı listele
+
+Var olan bir nota ekleme yapmadan önce onay ister.
+</details>
+
+<details>
+<summary><b>Müzik, radyo, podcast</b></summary>
+
+- Tarkan çal / Müziği durdur / Sonraki şarkı / Ne çalıyor
+- YouTube'da Tarkan aç / YouTube Music'te Sezen Aksu çal / Deezer'da Kuzu Kuzu çal
+- Apple Music'te Tarkan çal / Spotify'da Tarkan'ın şarkılarını çal
+- 30 saniye ileri sar / Bir dakika geri sar / Baştan başlat / Karışık çal / Şarkıyı tekrarla
+- Power FM aç / Radyonun sesini kıs / Hangi radyo çalıyor / Radyoyu kapat
+- Mesele Ekonomi podcastinin son bölümünü aç / Medyascope'un yeni bölümü var mı
+
+Servis söylemezsen şarkı Ayarlar > Genel'deki varsayılan serviste çalar. “Otomatik” seçiliyse çalan uygulama,
+yoksa açık ya da yüklüyse Spotify, o da yoksa Müzik kullanılır. Servisler şöyle çalışır:
+
+- **Müzik**: Arşivindeki uyan çalma listesi ya da şarkı çalar. Yoksa şarkı Apple Music kataloğunda bulunup
+  Müzik'te açılır; Müzik onu çoğunlukla yalnızca gösterir, çalmak için oynat düğmesine basman gerekir.
+- **YouTube, YouTube Music, Deezer**: İlk uyan şarkı açılır ve çalar (YouTube tarayıcında, Deezer yüklüyse
+  kendi uygulamasında, değilse sitesinde).
+- **Spotify**: Spotify'ın hesapsız kullanılabilen bir araması olmadığından Bilge Spotify'ın arama sonuçlarını
+  açar, şarkıyı sen seçersin.
+
+İleri-geri sarma, karışık çalma ve tekrar Müzik ile Spotify'da çalışır (sarma podcast'lerde de). Oynatma,
+duraklatma ve sonrakine geçme medya tuşlarıyla tarayıcıdaki videoya ve diğer oynatıcılara da ulaşır. Radyo
+istasyonları radio-browser.info'dan gelir, önce Türkiye'deki istasyonlara bakılır. Radyo ve podcast Bilge'nin
+içinde çalar: Bilge dinlerken ya da konuşurken radyonun sesi kısılır, podcast duraklar.
+</details>
+
+<details>
+<summary><b>Akıllı ev</b></summary>
+
+- Salonun ışığını aç / Mutfak ışığını kapat
+- Klimayı 22 dereceye ayarla / Kombiyi 21 dereceye ayarla
+- Kapı kilitli mi / Kapıyı kilitle / Garaj kapısını aç
+
+Bunun için bir [Home Assistant](https://www.home-assistant.io) sunucusu gerekir. Ayarlar > Akıllı ev'de
+adresini (örneğin `http://192.168.1.20:8123`) ve Home Assistant'ta Profil > Güvenlik bölümünden oluşturduğun
+uzun ömürlü erişim anahtarını gir. “Bağlantıyı dene” ikisini de denetler. Anahtar Anahtar Zinciri'nde saklanır
+ve yalnızca bu adrese gönderilir.
+
+Ev cihazı ya da oda adı geçen komutlar Home Assistant'a söylediğin gibi gönderilir; Home Assistant onları
+Assist'e açtığın cihazlarla eşleştirir, Bilge de cevabı okur. Kilit, garaj kapısı ve alarm değişiklikleri önce
+onay ister; kapının kilitli olup olmadığını sormak istemez.
+</details>
+
+<details>
+<summary><b>Rutinler</b></summary>
+
+- Her gece 21'de hava durumunu söyle
+- Hafta içi her gün 7'de haberleri oku
+- Pazartesi ve çarşamba günleri sabah 9'da haberleri oku
+- Her sabah 8'de günün özetini oku
+- Rutinlerim neler / Akşam rutinini sil / Bütün rutinleri sil
+
+Vakti gelince komut sanki sen söylemişsin gibi çalışır. Bilge rutini kaydetmeden önce zamanını okuyup onay
+ister. Rutinler yalnızca Bilge açıkken ve dinlerken çalışır; Mac uykudayken ya da dinleme kapalıyken kaçan bir
+vakit sonradan telafi edilmez. Göndermek ya da bir şeyi kapatmak gibi onay gerektiren bir adım sen yokken
+yapılmaz; Bilge bunun yerine rutinin seni beklediğini söyler. Ayarlar > Rutinler'de rutinler listelenir ve
+silinebilir.
+</details>
+
+<details>
+<summary><b>Haber, hava durumu, bilgi</b></summary>
+
+- Günaydın (günün özeti: hava, bugünkü etkinlikler, anımsatıcılar ve okunmamış e-postalar)
+- Bugün hava nasıl / Yarın yağmur yağacak mı / Londra'da hava nasıl
+- Dolar kaç / 100 euro kaç TL
+- Teknoloji haberleri / Başka var mı / Üçüncü haberi anlat / Tesla haberini aç (tarayıcıda da açar)
+- TRT'den haberler / Başka bir kaynak (Anadolu Ajansı, TRT Haber, BBC Türkçe sırayla)
+- Mustafa Kemal Atatürk kimdir / Fotosentez nedir / Everest hakkında bilgi ver
+- Tokyo'da saat kaç / New York ile aramızda kaç saat fark var
+- 10 mil kaç kilometre / 100 fahrenheit kaç derece / 1 su bardağı kaç mililitre
+- 125'in yüzde 18'i kaç
+
+Şehir söylemezsen hava durumu Ayarlar > Genel'deki şehir için verilir. Vikipedi cevapları Türkçe Vikipedi'den
+alınır ve kısa tutulur. Dünya saati ve birim çevirme internet olmadan çalışır.
+</details>
+
+<details>
+<summary><b>Türkiye'ye özel</b></summary>
+
+- Akşam ezanı kaçta / İftara ne kadar var / Yarın imsak kaçta / Bugünkü namaz vakitleri
+- Gram altın ne kadar / Çeyrek altın kaç lira / Ons ne kadar
+- Benzin ne kadar / İzmir'de motorin fiyatı / LPG kaç lira
+- Bugün büyük deprem oldu mu / Van'da deprem oldu mu
+- Galatasaray maçı kaç kaç / Beşiktaş'ın sıradaki maçı / Puan durumu
+- Borsa nasıl / BIST 100 kaç / THY hissesi ne kadar
+
+Namaz vakitleri ilin Diyanet aylık listesinden okunur (Türkiye dışındaki yerler için Diyanet yöntemini kullanan
+başka bir kaynaktan). Depremler AFAD'dan, AFAD yanıt vermezse Kandilli Rasathanesi'nden gelir. Futbolda yalnızca
+Süper Lig, borsada yalnızca Borsa İstanbul vardır; Bilge fiyatı ve günlük değişimi söyler, tavsiye vermez.
+
+Ayarlar > Genel'de “Yakınımdaki depremleri söyle” açıksa Bilge açık olduğu sürece iki dakikada bir AFAD'a bakar;
+hava durumu şehrine 150 km içindeki 4 ve üzeri depremleri bir kez sesli söyler ve bildirim gösterir.
+</details>
+
+<details>
+<summary><b>Çeviri ve tercüman modu</b></summary>
+
+- İngilizce maili Türkçe oku / Haberleri İngilizce oku
+- Devamını oku / Devamını özetle (uzun bir metni aynı dilde sürdürür)
+- Bana Rusça çevirmen ol / Tercüman modunu aç: Türkçe ve İngilizce
+- Tercümanı kapat
+
+Tercüman modunda söylenen her şey çiftin öbür diline çevrilir ve o dilde seslendirilir; ekranda da yazısı
+görünür. Tek bir dil söylersen Bilge'nin kendi diliyle eşleşir. Mod, iki taraftan biri kapatma cümlesini (iki
+dilden birinde) söyleyince ya da iki dakika sessizlikten sonra biter. İki dili ayırt eden Whisper olduğu için
+Whisper konuşma modelinin Mac'te olması gerekir; Apple Dikte kullanıyorsan Whisper'ı Ayarlar > Tanıma'dan bir
+kez indir.
+</details>
+
+<details>
+<summary><b>Toplantılar ve ses dosyaları</b></summary>
+
+- Toplantıyı kaydetmeye başla / Kaydı bitir (ya da menü çubuğundaki “Kaydı bitir”)
+- (Finder'da bir ses ya da video dosyası seçiliyken) Bu ses dosyasını yazıya dök
+- Son indirdiğim ses kaydını yazıya dök
+
+Toplantı kaydedilirken duyulan her şey Mac'te yazıya dökülür, sesin kendisi saklanmaz; yalnızca kaydı bitirme
+komutuna uyulur. Kayıt bitince cihaz içi model kararları, yapılacakları ve açık soruları içeren bir özet yazar;
+notlar `~/Documents/Bilge/Toplantılar` klasörüne Markdown dosyası olarak kaydedilir. Bilge özeti okumak isteyip
+istemediğini sorar. Tercüman modu gibi bu da Whisper modelinin Mac'te olmasını gerektirir.
 </details>
 
 <details>
@@ -156,25 +347,31 @@ Excel'de bir çalışma kitabı açıkken:
 - C5'e 1250 yaz
 - B sütununun toplamı kaç
 - Geri al
+
+Dolu bir hücrenin üzerine yazmadan önce onay ister.
 </details>
 
 <details>
-<summary><b>Seçili metin, dosya ya da sayfa</b></summary>
+<summary><b>Seçili metin, pano, ekran</b></summary>
 
-- (Bir metni seçip) Bunu özetle
-- (Finder'da bir dosya seçip) Bunu Ahmet'e gönder
-- Ekranda ne yazıyor
+- (Bir metni seçip) Bunu özetle / Bunu açıkla
+- Seçili metni İngilizceye çevir
+- (Finder'da bir dosya seçip) Bunu Ahmet'e gönder / Şu dosyayı aç
+- Kopyaladığım metni özetle / Bunu kopyala
+- Ekranda ne yazıyor / Bu hata ne demek
 </details>
 
 <details>
 <summary><b>Tarayıcı ve web</b></summary>
 
-- YouTube sekmesine geç
+- YouTube sekmesine geç / Bu sekmeyi kapat / Geri git / Aşağı kaydır
 - Bu sayfada fiyat kelimesini ara
-- YouTube'da kedi videoları ara
-- Bugün hava nasıl / Dolar kaç / Haberleri oku
-- Teknoloji haberleri / Başka var mı / Üçüncü haberi anlat / Tesla haberini aç (tarayıcıda da açar)
-- TRT'den haberler / Başka bir kaynak (Anadolu Ajansı, TRT Haber, BBC Türkçe sırayla)
+- YouTube'da kedi videoları ara / Google'da tren saatlerini ara / github.com'u aç
+- Bu sayfayı oku / Bu sayfayı özetle
+- Bu videoyu özetle / Bu video ne anlatıyor / Panodaki videoyu özetle
+
+Sekmeler ve açık sayfa Safari, Chrome, Arc, Brave ve Edge'de çalışır. YouTube videosu altyazısından özetlenir;
+altyazısı olmayan video özetlenemez. Uzun bir videoda “devamını özetle” diyerek sürdürebilirsin.
 </details>
 
 <details>
@@ -188,8 +385,24 @@ Excel'de bir çalışma kitabı açıkken:
 <summary><b>Hafıza</b></summary>
 
 - Şunu hatırla: kahvemi şekersiz içerim
+- Benim hakkımda ne biliyorsun
 - Kahveyle ilgili bilgiyi unut
 </details>
+
+### Ayarlar
+
+| Sekme | Neler ayarlanır |
+|---|---|
+| Genel | Dil, uyandırma kelimesiyle dinleme, uyandırma kelimesinin kendisi, dinleme kısayolu, hassasiyet, devam sorusu, sözünü kesme, oturum açılınca başlama, durum paneli, toplantı ve anımsatıcı hatırlatmaları, sabah özeti, deprem uyarısı, güncelleme denetimi, varsayılan müzik servisi, hava durumu şehri |
+| Model | Sohbet modeli: Apple'ınki, listeden indirilen, Mac'inde zaten olan ya da kendi modelin |
+| Ses | Bilge'nin sesi ve konuşma hızı |
+| Tanıma | Konuşma tanıma motoru (Apple Dikte ya da Whisper) ve ses kimliği |
+| İzinler | Bilge'nin neleri kullanabildiği; izin verme ve Sistem Ayarları'nı açma düğmeleri |
+| Hafıza | Bilge'nin senin hakkında hatırladıkları; tek tek ya da hepsini silme |
+| Rutinler | Kurulu rutinler ve her birini silme düğmesi |
+| Akıllı ev | Home Assistant adresi, erişim anahtarı ve bağlantı denemesi |
+| Geçmiş | Bilge'nin yaptıkları ve onayını bekleyenler, günlük dosyasıyla |
+| Hakkında | Sürüm ve açık kaynak lisansları |
 
 ## Modeller
 
@@ -244,12 +457,14 @@ Bilge'nin MLX sürümünün desteklemediği bir model türü açılamazsa o ceva
 ## Dil
 
 Kurulumun ilk adımında Türkçe ya da İngilizce seçilir; Ayarlar > Genel'den değiştirilebilir (uygulama
-yeniden başlar). Bilge seçilen dilde dinler, konuşur ve menülerini gösterir. Komutlar, Excel, dikte,
-tarayıcı, hafıza ve günlük özet iki dilde de çalışır. İngilizcede:
+yeniden başlar). Bilge seçilen dilde dinler, konuşur ve menülerini gösterir. [Kullanım](#kullanım)
+bölümündeki bütün özellikler iki dilde de çalışır; Türkiye'ye özel olanlar İngilizce de cevap verir ama
+verileri Türkiye'yle ilgilidir. İngilizcede:
 
 - Konuşma tanıma varsayılan olarak Whisper'dır (1,5 GB indirme). Apple Dikte İngilizce modunda Türkçe
   söylenen “Bilge” adını neredeyse hiç tanımadı; Whisper 20 denemenin 17'sinde tanıdı.
-- Haberler BBC News'ten okunur; döviz sorularında hedef söylenmezse dolar alınır.
+- Haberler önce BBC News'ten, sonra The Guardian ve NPR'dan okunur; döviz sorularında hedef söylenmezse dolar
+  alınır.
 - Bilge konuşurken araya girmek (“Bilge, stop”) Türkçedekinden daha az güvenilirdir: Whisper, Bilge'nin
   kendi sesinin yankısı arasında uyandırma kelimesini daha sık kaçırır.
 - Testlerde İngilizce komutlar 76 denemenin 75'inde doğru araca gitti (geliştirmede hiç kullanılmamış
@@ -258,14 +473,40 @@ tarayıcı, hafıza ve günlük özet iki dilde de çalışır. İngilizcede:
 
 ## Gizlilik
 
-- Ses kaydı saklanmaz. Uyandırma kelimesinden öncesi dinlenmez.
-- Bilge günde bir kez GitHub'a yeni sürüm çıkıp çıkmadığını sorar; çıktıysa menüde sayfasını gösterir. Kendiliğinden
-  hiçbir şey indirmez; denetim Ayarlar > Genel'den kapatılabilir.
-- Konuşma tanıma, dil modelleri ve ses üretimi Mac'te çalışır.
-- Ağ bağlantıları yalnızca istediğin veriler (hava durumu, döviz, haber, web sayfası) ve model indirmeleri
-  içindir. Web sayfası okurken yerel ağ adreslerine erişim engellenir.
-- Hafıza, ses kimliği ve işlem kaydı `~/Library/Application Support/Asistan` altında, yalnızca senin
-  okuyabileceğin dosyalarda durur.
+- Ses kaydı saklanmaz. Uyandırma kelimesinden öncesi dinlenmez. Toplantı kaydında yalnızca yazıya dökülen metin
+  tutulur.
+- Konuşma tanıma, dil modelleri, çeviri ve ses üretimi Mac'te çalışır.
+- Ağ bağlantıları yalnızca istediğin veriler ve model indirmeleri içindir. Her özellik yalnızca kullandığında
+  şu hizmetlere bağlanır:
+
+  | Özellik | Hizmet | Ne öğrenir |
+  |---|---|---|
+  | Hava durumu | Open-Meteo | Şehri |
+  | Döviz | Frankfurter (Avrupa Merkez Bankası kurları) | Para birimlerini |
+  | Haberler | Anadolu Ajansı, TRT Haber, BBC Türkçe; BBC News, The Guardian, NPR | Haber akışları okunur; ayrıntısını istediğin haber kendi sitesinde açılır |
+  | Vikipedi | Vikipedi (Türkçe ya da İngilizce) | Konuyu |
+  | Namaz vakitleri | ezanvakti.emushaf.net (Diyanet listeleri), olmazsa Aladhan | Şehri |
+  | Altın fiyatları | finans.truncgil.com, Altınkaynak, gold-api.com | İstekten fazlasını değil |
+  | Akaryakıt fiyatları | Opet, Petrol Ofisi | İli |
+  | Depremler ve uyarılar | AFAD, olmazsa Kandilli Rasathanesi; il olmayan bir yeri bulmak için Open-Meteo | İstekten fazlasını değil; Open-Meteo o yerin adını |
+  | Süper Lig | ESPN | İstekten fazlasını değil |
+  | Borsa İstanbul | Yahoo Finance | Hisseyi ya da endeksi |
+  | Radyo | radio-browser.info, sonra istasyonun kendi yayını | İstasyon adını |
+  | Podcast | iTunes Search, sonra podcast'in kendi akışı ve bölüm dosyası | Podcast adını |
+  | Müzik | YouTube, YouTube Music, Deezer ya da iTunes Search (Apple Music); Spotify'ın kendi araması | Şarkıyı ya da sanatçıyı |
+  | YouTube özeti | YouTube | Videoyu |
+  | Web sayfaları | İstediğin site | Sayfa adresini |
+  | Akıllı ev | Yalnızca girdiğin Home Assistant adresi | Komutunu ve erişim anahtarını |
+  | Güncelleme denetimi | GitHub, günde bir kez | İstekten fazlasını değil |
+  | Modeller | Hugging Face | İndirilen modeli |
+
+- Web sayfası, radyo yayını ve haber akışı okunurken yerel ağ adreslerine erişim engellenir. Tek istisna Home
+  Assistant'tır: ayrı bir bağlantı yalnızca Ayarlar > Akıllı ev'deki adrese gider, yönlendirmeleri izlemez ve
+  vekil sunucuları (proxy) atlar. Erişim anahtarı Anahtar Zinciri'nde saklanır, hiçbir zaman günlüğe yazılmaz.
+- Güncelleme denetimi yeni sürüm çıktıysa yalnızca sayfasını menüde gösterir; kendiliğinden hiçbir şey indirmez.
+  Ayarlar > Genel'den kapatılabilir.
+- Hafıza, rutinler, ses kimliği ve işlem kaydı `~/Library/Application Support/Asistan` altında, toplantı notları
+  `~/Documents/Bilge/Toplantılar` içinde, yalnızca senin okuyabileceğin dosyalarda durur.
 
 ## Sorun giderme
 
@@ -282,6 +523,26 @@ Intelligence'ı aç ve modelin inmesini bekle.
 **Bir uygulamayı kontrol edemiyor.** Sistem Ayarları > Gizlilik ve Güvenlik altında Erişilebilirlik ve
 Otomasyon'da Bilge'ye izin verildiğini kontrol et. İzinlerin durumunu Bilge'nin Ayarlar > İzinler sekmesinde
 de görebilirsin.
+
+**Tarayıcı ya da müzik uygulaması komutlara tepki vermiyor.** macOS, Bilge'nin bir uygulamayı Apple Events ile
+kontrol edip edemeyeceğini her uygulama için bir kez sorar: tarayıcın (Safari, Chrome, Arc, Brave, Edge), Müzik,
+Spotify, Mail, Mesajlar, Notlar, Excel ve Sistem Olayları. Reddettiysen Sistem Ayarları > Gizlilik ve Güvenlik >
+Otomasyon'da o uygulama için Bilge'yi yeniden aç.
+
+**Home Assistant'a ulaşamıyor.** Ayarlar > Akıllı ev'deki adresi ve Mac'in aynı ağda olduğunu kontrol et, sonra
+“Bağlantıyı dene”ye bas. macOS ayrıca Bilge'nin yerel ağı kullanıp kullanamayacağını sorar; reddettiysen Sistem
+Ayarları > Gizlilik ve Güvenlik > Yerel Ağ'dan izin ver. Home Assistant 401 dönüyorsa anahtar kabul edilmemiştir:
+yeni bir uzun ömürlü erişim anahtarı oluşturup yeniden kaydet.
+
+**Tercüman modu ya da toplantı kaydı Whisper gerektiğini söylüyor.** Ayarlar > Tanıma'da Whisper'ı bir kez seçip
+indir (yaklaşık 1,5 GB). Sonra Apple Dikte'ye dönebilirsin; bu oturumlar yine Whisper'ı kullanır.
+
+**“Rahatsız etmeyi aç” çalışmıyor.** Bilge'nin “Odak Ayarla” eylemini içeren ve adında “Rahatsız Etme Aç” ya da
+“Rahatsız Etme Kapat” geçen bir kestirmene ihtiyacı var. Ayrıntı [Kullanım](#kullanım) bölümünde, Mac ve
+uygulamalar başlığında.
+
+**Rutin çalışmadı.** Rutinler yalnızca Bilge açıkken ve dinlerken çalışır; Mac uykudayken kaçan bir vakit
+atlanır. Komutu onay gerektiren bir rutin o adımda durur.
 
 ## Kaynaktan derleme
 
