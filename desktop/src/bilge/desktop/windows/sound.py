@@ -2,10 +2,11 @@
 over the volume flyout, which Spotify, browsers and most players report to)."""
 
 import asyncio
+from datetime import UTC, datetime, timedelta
 
-from bilge.desktop.base import AppEntry, Apps, MediaCommand, NowPlaying, VolumeState
+from bilge.desktop.base import AppEntry, Apps, MediaCommand, NowPlaying, RepeatMode, VolumeState
 from bilge.desktop.music import is_spotify
-from bilge.desktop.process import DesktopError, MissingProgram
+from bilge.desktop.process import DesktopError, MissingProgram, NotPossibleHere
 from bilge.desktop.windows import com
 
 
@@ -60,6 +61,9 @@ _METHODS = {
     MediaCommand.NEXT: "try_skip_next_async",
     MediaCommand.PREVIOUS: "try_skip_previous_async",
 }
+# MediaPlaybackAutoRepeatMode: None, Track, List.
+_REPEAT = {RepeatMode.OFF: 0, RepeatMode.TRACK: 1, RepeatMode.ALL: 2}
+_TICKS_PER_SECOND = 10_000_000
 
 
 def player_name(app_id: str) -> str:
@@ -118,6 +122,67 @@ class WindowsMedia:
             return player_name(session.source_app_user_model_id)
 
         return self._run(act())
+
+    def seek(self, seconds: float) -> str:
+        async def act(session) -> bool:
+            timeline = session.get_timeline_properties()
+            start, end = _seconds(timeline.start_time), _seconds(timeline.end_time)
+            target = _current_position(session, timeline) + seconds
+            target = max(start, min(target, end)) if end > start else max(start, target)
+            return await session.try_change_playback_position_async(round(target * _TICKS_PER_SECOND))
+
+        return self._control("is_playback_position_enabled", act)
+
+    def restart_track(self) -> str:
+        async def act(session) -> bool:
+            start = _seconds(session.get_timeline_properties().start_time)
+            return await session.try_change_playback_position_async(round(start * _TICKS_PER_SECOND))
+
+        return self._control("is_playback_position_enabled", act)
+
+    def set_shuffle(self, on: bool) -> str:
+        return self._control("is_shuffle_enabled", lambda session: session.try_change_shuffle_active_async(on))
+
+    def set_repeat(self, mode: RepeatMode) -> str:
+        # pywinrt takes the enum's number, which spares a dependency on the Windows.Media projection.
+        return self._control("is_repeat_enabled",
+                             lambda session: session.try_change_auto_repeat_mode_async(_REPEAT[mode]))  # fmt: skip
+
+    def _control(self, ability: str, act) -> str:
+        """`ability` names the playback control the player must offer; `act` returns the player's answer."""
+
+        async def run() -> str:
+            session = await self._choose()
+            if session is None:
+                raise DesktopError("No media session")
+            name = player_name(session.source_app_user_model_id)
+            if not getattr(session.get_playback_info().controls, ability):
+                raise NotPossibleHere(f"{name} doesn't offer {ability}")
+            if not await act(session):
+                raise DesktopError(f"{name} refused the change")
+            return name
+
+        return self._run(run())
+
+
+def _seconds(value) -> float:
+    """WinRT time spans arrive as timedelta, or as 100-nanosecond ticks from older projections."""
+    if isinstance(value, timedelta):
+        return value.total_seconds()
+    return int(value or 0) / _TICKS_PER_SECOND
+
+
+def _current_position(session, timeline) -> float:
+    """The timeline is only updated now and then; while playing, the time since then is added, unless that runs past
+    the end (a player that never updates it), where seeking from there would skip the track."""
+    position = _seconds(timeline.position)
+    updated = getattr(timeline, "last_updated_time", None)
+    if int(session.get_playback_info().playback_status) != _PLAYING or not isinstance(updated, datetime):
+        return position
+    moment = updated if updated.tzinfo else updated.replace(tzinfo=UTC)
+    estimate = position + max(0.0, (datetime.now(UTC) - moment).total_seconds())
+    end = _seconds(timeline.end_time)
+    return position if end > 0 and estimate > end else estimate
 
 
 # The Media Player app of Windows 11 (formerly Groove), then the classic Windows Media Player.

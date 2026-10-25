@@ -25,6 +25,8 @@ from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
 from bilge.tools.builtin.memory import memory_tools
+from bilge.tools.builtin.units import convert_units
+from bilge.tools.builtin.world_clock import world_clock_tool
 from bilge.tools.memory_store import MemoryStore
 from bilge.tools.reading import TextReading, continue_reading_tool
 
@@ -92,6 +94,8 @@ def build_agent(
     registry = Registry([
         current_date_time(language),
         calculator(language),
+        convert_units(language),
+        world_clock_tool(language),
         weather,
         internet.exchange_rate(language),
         prices.gold_price(language),
@@ -174,7 +178,20 @@ def _desktop_tools(
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
-    from bilge.tools.desktop import apps, clipboard, files, sound, spreadsheet, system, timers, typing, web, windows
+    from bilge.tools.desktop import (
+        apps,
+        clipboard,
+        files,
+        hardware,
+        playback,
+        sound,
+        spreadsheet,
+        system,
+        timers,
+        typing,
+        web,
+        windows,
+    )
 
     dictation = typing.DictationSession(found.keyboard, language)
     sheet = spreadsheet.SpreadsheetSession(language)
@@ -184,6 +201,10 @@ def _desktop_tools(
         sound.volume_tool(found.volume, language),
         sound.music_tool(found.media, language, found.music),
         sound.music_search_tool(found.music, language),
+        playback.playback_tool(found.media, language),
+        *hardware.hardware_tools(
+            found.brightness, found.do_not_disturb, found.bluetooth, found.power, found.settings, language
+        ),
         *system.system_tools(found.session, found.network, found.settings, found.screenshots, found.folders, language),
         *clipboard.clipboard_tools(found.clipboard, language, last_reply),
         typing.type_text_tool(found.keyboard, language),

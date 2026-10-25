@@ -5,6 +5,7 @@ from enum import StrEnum
 from typing import Any
 
 from bilge.core.language import AssistantLanguage
+from bilge.core.tools import volume_amount
 from bilge.desktop.process import DesktopError, MissingProgram
 from bilge.tools.base import ToolError
 
@@ -59,3 +60,15 @@ def int_argument(arguments: dict[str, Any], key: str) -> int | None:
         return int(float(value))
     except (TypeError, ValueError):
         return None
+
+
+def refine_level(arguments: dict[str, Any], command: str) -> dict[str, Any]:
+    """For a set/increase/decrease level (volume, brightness): the model sometimes drops or garbles the number, so the
+    one said wins, and "yüzde 80'e" or "to 80" makes it the level to reach."""
+    said = volume_amount.read(command)
+    action = string_argument(arguments, "action")
+    if said is None or action not in ("set", "increase", "decrease"):
+        return arguments
+    if said.target or action == "set":
+        return {**arguments, "action": "set", "level": said.value, "by": None}
+    return {**arguments, "by": said.value}

@@ -20,8 +20,8 @@ from bilge.tools.base import Risk
 REFUSED_AFTER_UNTRUSTED = frozenset({"readWebPage", "openWebsite", "searchWeb", "typeText", "remember", "sendEmail"})
 FREE_AFTER_UNTRUSTED = frozenset(
     {
-        "currentDateTime", "calculate", "batteryStatus", "systemInfo", "weather", "exchangeRate", "goldPrice",
-        "fuelPrice", "prayerTimes", "news",
+        "currentDateTime", "calculate", "convertUnits", "worldClock", "batteryStatus", "systemInfo", "weather",
+        "exchangeRate", "goldPrice", "fuelPrice", "prayerTimes", "news",
         "readDocument", "readNotes", "readScreen", "readSelection", "readClipboard", "readCalendar",
         "readReminders", "findContact", "readMail", "listShortcuts", "listRunningApps", "listMemories",
         # Figures from public data services, asked for by name.

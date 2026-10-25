@@ -128,8 +128,30 @@ class WindowsWindowControl:
 _SSID_LINE = re.compile(r"^\s*SSID\s*:\s*(.+?)\s*$", re.MULTILINE)
 
 
+async def system_radios(kind: str) -> list:
+    """The radios of one kind ("WI_FI", "BLUETOOTH") behind the switches Windows shows in its quick settings; turning
+    them on and off needs no administrator rights."""
+    try:
+        from winrt.windows.devices.radios import Radio, RadioKind
+    except ImportError as error:
+        raise MissingProgram("winrt-Windows.Devices.Radios") from error
+    await Radio.request_access_async()
+    wanted = getattr(RadioKind, kind)
+    return [radio for radio in await Radio.get_radios_async() if radio.kind == wanted]
+
+
+async def switch_radios(radios: list, enabled: bool, what: str) -> None:
+    if not radios:
+        raise DesktopError(f"No {what} radio")
+    for radio in radios:
+        # RadioState: 1 is on, 2 is off.
+        result = await radio.set_state_async(1 if enabled else 2)
+        if int(result) != 1:
+            raise DesktopError(f"{what} refused the change: {int(result)}")
+
+
 class WindowsNetwork:
-    """Wi-Fi through the radio switch Windows shows in its quick settings; it needs no administrator rights."""
+    """Wi-Fi through the radio switch Windows shows in its quick settings."""
 
     def __init__(self, radios=None, runner: Runner | None = None):
         self._radios = radios
@@ -138,12 +160,7 @@ class WindowsNetwork:
     async def _wifi(self):
         if self._radios is not None:
             return list(self._radios())
-        try:
-            from winrt.windows.devices.radios import Radio, RadioKind
-        except ImportError as error:
-            raise MissingProgram("winrt-Windows.Devices.Radios") from error
-        await Radio.request_access_async()
-        return [radio for radio in await Radio.get_radios_async() if radio.kind == RadioKind.WI_FI]
+        return await system_radios("WI_FI")
 
     def wifi_enabled(self) -> bool | None:
         async def read():
@@ -165,14 +182,7 @@ class WindowsNetwork:
 
     def set_wifi(self, enabled: bool) -> None:
         async def change():
-            radios = await self._wifi()
-            if not radios:
-                raise DesktopError("No Wi-Fi radio")
-            for radio in radios:
-                # RadioState: 1 is on, 2 is off.
-                result = await radio.set_state_async(1 if enabled else 2)
-                if int(result) != 1:
-                    raise DesktopError(f"Wi-Fi refused the change: {int(result)}")
+            await switch_radios(await self._wifi(), enabled, "Wi-Fi")
 
         try:
             asyncio.run(change())

@@ -4,11 +4,19 @@ from enum import StrEnum
 from typing import Any
 
 from bilge.core.language import AssistantLanguage
-from bilge.core.tools import volume_amount
 from bilge.desktop.base import Media, MediaCommand, MusicLauncher, Volume
 from bilge.desktop.process import DesktopError
 from bilge.tools.base import Tool, ToolError
-from bilge.tools.desktop.common import choice, failure, int_argument, integer, obj, string_argument, text
+from bilge.tools.desktop.common import (
+    choice,
+    failure,
+    int_argument,
+    integer,
+    obj,
+    refine_level,
+    string_argument,
+    text,
+)
 
 VOLUME_STEP = 10
 
@@ -87,16 +95,6 @@ _TEXTS = {
 def volume_tool(volume: Volume, language: AssistantLanguage) -> Tool:
     texts = _TEXTS[language]
 
-    def refine(arguments: dict[str, Any], command: str) -> dict[str, Any]:
-        # The model sometimes drops or garbles the number; the one said wins.
-        said = volume_amount.read(command)
-        action = string_argument(arguments, "action")
-        if said is None or action not in (VolumeAction.SET, VolumeAction.INCREASE, VolumeAction.DECREASE):
-            return arguments
-        if said.target or action == VolumeAction.SET:
-            return {**arguments, "action": VolumeAction.SET.value, "level": said.value, "by": None}
-        return {**arguments, "by": said.value}
-
     def run(arguments: dict[str, Any]) -> str:
         action = string_argument(arguments, "action")
         level = int_argument(arguments, "level")
@@ -132,7 +130,7 @@ def volume_tool(volume: Volume, language: AssistantLanguage) -> Tool:
         ["action"], action=choice(VolumeAction, "set/increase/decrease/mute/unmute"),
         level=integer(texts["level"], 0, 100), by=integer(texts["by"], 1, 100),
     )  # fmt: skip
-    return Tool("setVolume", texts["volume"], run=run, parameters=parameters, refine=refine)
+    return Tool("setVolume", texts["volume"], run=run, parameters=parameters, refine=refine_level)
 
 
 def music_tool(media: Media, language: AssistantLanguage, launcher: MusicLauncher | None = None) -> Tool:

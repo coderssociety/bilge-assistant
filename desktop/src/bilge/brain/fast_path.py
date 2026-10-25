@@ -2,6 +2,7 @@
 so they are answered at once and cost nothing. The call still goes through the agent's checks and the action log; a
 call that can't be bound with certainty (no installed app matches) fails, and the model gets the command instead."""
 
+from bilge.core.conversation import daily_quick_intents as d
 from bilge.core.conversation import quick_intent_parser as q
 from bilge.core.language import AssistantLanguage
 from bilge.llm.messages import ToolCall
@@ -69,4 +70,27 @@ def _tool_and_arguments(intent: q.QuickIntent | None) -> tuple[str, dict] | None
             return "openSettings", {"pane": pane.value}
         case q.SystemInfo(topic=topic):
             return "systemInfo", {"topic": topic.value}
+    return _daily_tool_and_arguments(intent)
+
+
+def _daily_tool_and_arguments(intent: q.QuickIntent | None) -> tuple[str, dict] | None:
+    match intent:
+        case d.ConvertUnits(quantity=quantity, to=to):
+            return "convertUnits", {"quantity": quantity, "to": to}
+        case d.WorldClock(place=place, other=other, difference=difference):
+            return "worldClock", {"place": place, "otherPlace": other, "kind": "difference" if difference else "time"}
+        case d.Brightness(action=d.LevelAction.SET, amount=level):
+            return "setBrightness", {"action": "set", "level": level}
+        case d.Brightness(action=action, amount=by):
+            return "setBrightness", {"action": action.value, **({"by": by} if by else {})}
+        case d.DoNotDisturb(action=action):
+            return "doNotDisturb", {"action": action.value}
+        case d.Bluetooth(action=action):
+            return "bluetooth", {"action": action.value}
+        case d.Power(action=action):
+            return "power", {"action": action.value}
+        case d.Playback(action=d.PlaybackAction.SEEK, seconds=seconds):
+            return "controlPlayback", {"action": "seek", "seconds": seconds}
+        case d.Playback(action=action):
+            return "controlPlayback", {"action": action.value}
     return None

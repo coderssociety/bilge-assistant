@@ -140,13 +140,15 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | | Örnekler | Linux'ta | Windows'ta |
 |---|---|---|---|
 | Uygulamalar | “Firefox'u aç”, “hesap makinesini kapat”, “açık uygulamalar neler” | menü girdileri, `gio` | Başlat menüsü |
-| Ses | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor” | `wpctl`, `pactl` ya da `amixer`; MPRIS çalarlar | Core Audio; sistemin medya denetimleri |
+| Ses | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor”, “30 saniye ileri sar”, “karışık çal” | `wpctl`, `pactl` ya da `amixer`; MPRIS çalarlar | Core Audio; sistemin medya denetimleri |
 | Dosyalar | “kira sözleşmesini bul”, “son indirdiğim PDF'i özetle”, “eski faturayı çöpe at” | freedesktop çöp kutusu | Geri Dönüşüm Kutusu |
 | Yazma | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` ya da `ydotool` (Wayland) | yerleşik |
 | Takvim | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “süt almayı işaretle” | CalDAV ya da bir iCal adresi | aynısı ya da Outlook |
 | Tablo | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel ya da LibreOffice Calc |
 | E-posta | “okunmamış e-postalarım”, “içeriğini oku”, “Ahmet'e yarın geleceğimi yaz” | | Outlook |
 | Sistem | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` ya da Plasma, `nmcli`, masaüstünün ekran görüntüsü aracı | yerleşik |
+| Ekran ve güç | “parlaklığı yüzde 50 yap”, “rahatsız etmeyini aç”, “Bluetooth'u kapat”, “bilgisayarı yeniden başlat” | GNOME ya da Plasma, `brightnessctl` ya da `ddcutil`; `bluetoothctl` ya da `rfkill`; `systemctl` | WMI (dizüstü ekranları); radyo anahtarı; `shutdown` (Rahatsız Etmeyin'in API'si yok: Bilge Win+N'ye basmanı söyler) |
+| Birim çevirme ve dünya saati | “10 mil kaç kilometre”, “2 litre kaç bardak”, “Tokyo'da saat kaç”, “New York ile aramızda kaç saat fark var” | yerleşik | yerleşik |
 | Pano | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” | `wl-clipboard`, `xclip` ya da `xsel` | yerleşik |
 | Haberler | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı, TRT Haber, BBC Türkçe (İngilizcede BBC News, The Guardian, NPR); “aç” haberi tarayıcıda da açar | aynı |
 | Depremler | “son depremler”, “İzmir'de deprem var mı”, “en son deprem nerede”; hava durumu şehrinin 150 km yakınında 4 ve üzeri bir deprem olunca sorulmadan söyler | AFAD, ulaşılamazsa Kandilli Rasathanesi | aynı |
@@ -155,8 +157,8 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | Çeviri | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | ses 31 dilde konuşur | aynı |
 | Diğer | zamanlayıcılar ve alarmlar, site ve arama açma, günlük özet | | |
 
-Dosyaları çöpe atmak, uygulama kapatmak, dolu bir hücrenin üzerine yazmak, takvime eklemek ya da Wi-Fi'ı kapatmak
-önce sorulur; Bilge'nin başka bir yerde okuduğu metni taşıyabilecek her şey de öyle. Bir e-posta, gideceği adresle
+Dosyaları çöpe atmak, uygulama kapatmak, dolu bir hücrenin üzerine yazmak, takvime eklemek, Wi-Fi'ı ya da
+Bluetooth'u kapatmak, bilgisayarı yeniden başlatmak, kapatmak ya da oturumu kapatmak önce sorulur; Bilge'nin başka bir yerde okuduğu metni taşıyabilecek her şey de öyle. Bir e-posta, gideceği adresle
 birlikte gönderilmeden önce sesli okunur. Terminallerde, kod düzenleyicilerde, uzak masaüstlerinde, sanal
 makinelerde ve parola yöneticilerinde yazma reddedilir. Wayland'deki GNOME öndeki pencereyi başka programlara
 söylemediği için orada Bilge yazmadan önce sorar.
