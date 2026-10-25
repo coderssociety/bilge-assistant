@@ -34,10 +34,14 @@ enum WebFetch {
     /// For the whole fetch, redirects included; otherwise five slow hops could take over a minute.
     private static let totalTimeout: Duration = .seconds(25)
     private static let maxBytes = 3_000_000
+    /// A prefix is read on purpose from something larger, like an oldest-first podcast feed read for its end.
+    private static let maxPrefixBytes = 8_000_000
     private static let maxRedirects = 5
     private static let allowedPorts: Set<Int> = [80, 443]
     /// Wikimedia throttles agents that give no contact address (HTTP 429 on its search API).
     private static let headers = [("User-Agent", "Mozilla/5.0 (Macintosh) Bilge/0.1 (+https://github.com/coderssociety/bilge-assistant)"), ("Accept-Language", AppLanguage.current == .english ? "en,tr;q=0.8" : "tr,en;q=0.8")]
+
+    private static let mediaTimeout: Duration = .seconds(10)
 
     private static let transientStatuses: Set<Int> = [502, 503, 504]
     private static let retryDelay: Duration = .milliseconds(400)
@@ -64,7 +68,7 @@ enum WebFetch {
     /// The first `maxBytes` of something that may be larger, like a podcast feed with thousands of episodes
     /// whose newest are at the top. The data may end mid-document.
     static func prefix(from url: URL, maxBytes: Int) async throws -> Data {
-        try await fetch(url, maxBytes: min(maxBytes, Self.maxBytes), truncating: true)
+        try await fetch(url, maxBytes: min(maxBytes, maxPrefixBytes), truncating: true)
     }
 
     /// A JSON POST for an API that answers nothing else (YouTube's player). Redirects are not followed.
@@ -76,6 +80,54 @@ enum WebFetch {
         }
         guard (200..<300).contains(response.status) else { throw WebFetchError.badStatus(response.status) }
         return response.body
+    }
+
+    /// Where a radio stream or podcast episode really plays from. AVPlayer resolves the name and follows redirects
+    /// on its own, and a feed's "192.168.1.1.nip.io" passes a check of the name alone; so the redirects are followed
+    /// here first, each connection checked, and every address the final host resolves to must be public. Streams
+    /// may use any port (Icecast's 8000).
+    static func mediaURL(for url: URL) async throws -> URL {
+        var current = url
+        let deadline = ContinuousClock.now + mediaTimeout
+        for _ in 0...maxRedirects {
+            guard ["http", "https"].contains(current.scheme?.lowercased() ?? ""), let host = current.host(), !host.isEmpty else {
+                throw WebFetchError.unsupportedAddress
+            }
+            guard NetworkAddress.isPublicHost(host) else { throw WebFetchError.localAddress }
+            let remaining = deadline - ContinuousClock.now
+            guard remaining > .zero else { throw WebFetchError.timedOut }
+            let target = current
+            let response = try await exchange {
+                try await PublicHTTPClient.head(target, headers: headers, timeout: remaining)
+            }
+            guard let next = response.redirectTarget(from: current) else {
+                try await requirePublicAddresses(of: host)
+                return current
+            }
+            current = next
+        }
+        throw WebFetchError.tooManyRedirects
+    }
+
+    private static func requirePublicAddresses(of host: String) async throws {
+        let addresses = try await Task.detached { try resolve(host) }.value
+        guard !addresses.isEmpty else { throw WebFetchError.unreachable }
+        guard addresses.allSatisfy(NetworkAddress.isPublic) else { throw WebFetchError.localAddress }
+    }
+
+    private static func resolve(_ host: String) throws -> [String] {
+        var hints = addrinfo()
+        hints.ai_socktype = SOCK_STREAM
+        var list: UnsafeMutablePointer<addrinfo>?
+        let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        guard getaddrinfo(bare, nil, &hints, &list) == 0, let first = list else { throw WebFetchError.unreachable }
+        defer { freeaddrinfo(list) }
+        return sequence(first: first) { $0.pointee.ai_next }.compactMap { info in
+            var name = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+            let found = getnameinfo(info.pointee.ai_addr, info.pointee.ai_addrlen, &name, socklen_t(name.count), nil, 0, NI_NUMERICHOST)
+            guard found == 0 else { return nil }
+            return String(cString: name).split(separator: "%").first.map(String.init)
+        }
     }
 
     private static func fetch(_ url: URL, maxBytes: Int = Self.maxBytes, truncating: Bool = false) async throws -> Data {

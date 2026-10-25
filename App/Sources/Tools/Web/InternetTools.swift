@@ -220,16 +220,21 @@ struct ExchangeRateTool: AssistantTool {
         var to: Currency
         @Guide(description: "Miktar; söylenmediyse boş bırak")
         var amount: Double?
+        @Guide(description: "Birlikte sorulan ikinci para birimi: 'dolar ve euro kaç lira' → euro; yoksa boş bırak")
+        var alsoFrom: Currency?
     }
 
     /// The currencies and amount said win over the model's: it once answered "100 Euro kaç para" with
-    /// another amount. An unsaid target is lira in Turkish; in English the dollar (or the euro, when
-    /// converting dollars) is the expected default.
+    /// another amount. Spoken numbers the parser cannot read keep the model's amount. An unsaid target is
+    /// lira in Turkish; in English the dollar (or the euro, when converting dollars) is the expected default.
     func refine(_ arguments: Arguments, command: String) -> Arguments {
         let parsed = CurrencyRequest.parse(command)
         var refined = arguments
-        refined.amount = parsed.amount
-        if let from = parsed.from.flatMap(Currency.init(code:)) { refined.from = from }
+        if let amount = parsed.amount { refined.amount = amount }
+        if let from = parsed.from.flatMap(Currency.init(code:)) {
+            refined.from = from
+            refined.alsoFrom = parsed.alsoFrom.flatMap(Currency.init(code:))
+        }
         if let to = parsed.to.flatMap(Currency.init(code:)) {
             refined.to = to
         } else if AppLanguage.current == .english {
@@ -251,19 +256,27 @@ struct ExchangeRateTool: AssistantTool {
             return ToolReply.failure(String(localized: "Hangi para birimini çevireceğimi anlayamadım."))
         }
         let amount = max(arguments.amount ?? 1, 0)
-        var url = URLComponents(string: "https://api.frankfurter.app/latest")!
-        url.queryItems = [.init(name: "from", value: arguments.from.code), .init(name: "to", value: target.code),
-                          .init(name: "amount", value: String(amount))]
+        let sources = [arguments.from] + [arguments.alsoFrom].compactMap { $0 }.filter { $0 != target && $0 != arguments.from }
         do {
-            let result = try await WebFetch.json(Rates.self, from: url.url!)
-            guard let value = result.rates[target.code] else {
-                return ToolReply.failure(String(localized: "Bu kur bulunamadı."))
+            var answers: [String] = []
+            for source in sources {
+                guard let value = try await Self.convert(amount, from: source, to: target) else {
+                    return ToolReply.failure(String(localized: "Bu kur bulunamadı."))
+                }
+                let (said, converted) = (Self.format(amount), Self.format(value))
+                answers.append(String(localized: "\(said) \(source.spokenName) \(converted) \(target.spokenName)."))
             }
-            let (source, converted) = (Self.format(amount), Self.format(value))
-            return String(localized: "\(source) \(arguments.from.spokenName) \(converted) \(target.spokenName).")
+            return answers.joined(separator: " ")
         } catch {
             return ToolReply.failure(String(localized: "Döviz kuru alınamadı. \(error.localizedDescription)"))
         }
+    }
+
+    private static func convert(_ amount: Double, from source: Currency, to target: Currency) async throws -> Double? {
+        var url = URLComponents(string: "https://api.frankfurter.app/latest")!
+        url.queryItems = [.init(name: "from", value: source.code), .init(name: "to", value: target.code),
+                          .init(name: "amount", value: String(amount))]
+        return try await WebFetch.json(Rates.self, from: url.url!).rates[target.code]
     }
 
     private static func format(_ value: Double) -> String {

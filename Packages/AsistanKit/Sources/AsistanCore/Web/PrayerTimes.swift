@@ -80,6 +80,22 @@ public enum PrayerTimesParser {
         return day(date: date, separator: "-", fields: aladhanFields, values: timings, timeZone: zone)
     }
 
+    /// Aladhan's "dd-MM-yyyy" for the days `offsets` from `now`, counted in the place's time zone: at 02:00 in
+    /// Istanbul it is still the day before in New York.
+    public static func aladhanDates(offsets: [Int], now: Date, timeZone: TimeZone) -> [String] {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        return offsets.compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: now) else { return nil }
+            let parts = calendar.dateComponents([.day, .month, .year], from: date)
+            return String(format: "%02d-%02d-%04d", parts.day ?? 1, parts.month ?? 1, parts.year ?? 2000)
+        }
+    }
+
+    public static func aladhanDate(of day: PrayerDay) -> String {
+        String(format: "%02d-%02d-%04d", day.day, day.month, day.year)
+    }
+
     private static func id(matching name: String, in data: Data, nameKey: String, idKey: String) -> String? {
         guard let entries = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return nil }
         let wanted = TurkishText.folded(name)

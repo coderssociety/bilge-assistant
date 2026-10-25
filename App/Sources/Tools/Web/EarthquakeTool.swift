@@ -13,7 +13,8 @@ enum EarthquakeFeed {
     private static let afadURL = "https://servisnet.afad.gov.tr/apigateway/deprem/apiv2/event/filter"
     /// Kandilli answers only over plain http.
     private static let kandilliURL = URL(string: "http://www.koeri.boun.edu.tr/scripts/lst0.asp")!
-    private static let afadLimit = 500
+    /// A quiet week in Turkey is ~600 events of any size; 500 covered under six days (~320 bytes each).
+    private static let afadLimit = 3000
 
     static func fetch(since start: Date, minimumMagnitude: Double, now: Date = .now) async throws -> Result {
         do {
@@ -126,8 +127,10 @@ struct EarthquakeTool: RuleRoutedTool {
                 home = place
             }
             let window = EarthquakeReport(query: query, home: home, source: .afad, now: now, language: language).window
-            let entry = try await Self.cache.value(for: "\(query.period)", maxAge: Self.freshness) {
-                try await EarthquakeFeed.fetch(since: window.start, minimumMagnitude: 0, now: now)
+            // Every answer leaves out what is below the magnitude said, so the feed can too.
+            let minimumMagnitude = query.minimumMagnitude ?? 0
+            let entry = try await Self.cache.value(for: "\(query.period)-\(minimumMagnitude)", maxAge: Self.freshness) {
+                try await EarthquakeFeed.fetch(since: window.start, minimumMagnitude: minimumMagnitude, now: now)
             }
             let report = EarthquakeReport(query: query, home: home, source: entry.value.source, now: now, language: language)
             return entry.stalenessNote + report.text(for: entry.value.earthquakes)

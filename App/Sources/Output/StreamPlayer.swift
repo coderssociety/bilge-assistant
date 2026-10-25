@@ -38,17 +38,22 @@ final class StreamPlayer {
         return wantsPlayback ? .playing : .paused
     }
 
-    /// Only http(s) streams on public hosts; addresses come from radio-browser and podcast feeds.
-    static func isAllowed(_ url: URL) -> Bool {
-        guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""), let host = url.host() else { return false }
-        return NetworkAddress.isPublicHost(host)
+    /// Only http(s) streams whose redirects and addresses are all public, played from where the redirects end;
+    /// addresses come from radio-browser and podcast feeds.
+    static func allowedURL(_ url: URL) async -> URL? {
+        do {
+            return try await WebFetch.mediaURL(for: url)
+        } catch {
+            Log.tools.error("Refused to play a stream: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 
     /// Starts `item` and waits until the stream answers; false (and nothing playing) if it could not be played.
     func play(_ item: Item) async -> Bool {
-        guard Self.isAllowed(item.url) else { return false }
-        let playerItem = load(item.url)
-        current = item
+        guard let url = await Self.allowedURL(item.url) else { return false }
+        let playerItem = load(url)
+        current = Item(kind: item.kind, title: item.title, show: item.show, url: url)
         wantsPlayback = true
         apply()
         let ready = await waitUntilReady(playerItem)

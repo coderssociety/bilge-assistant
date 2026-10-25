@@ -60,6 +60,15 @@ public enum PodcastEpisodes {
         return dated.max { ($0.published ?? .distantPast) < ($1.published ?? .distantPast) } ?? episodes.first
     }
 
+    /// Whether newer episodes may follow what was read: the feed lists them oldest first and reading stopped
+    /// at the item or byte limit.
+    public static func mayContinueWithNewer(_ items: [RSSHeadlines.Item], itemLimit: Int, bytesRead: Int,
+                                            byteLimit: Int) -> Bool {
+        let dates = items.compactMap(\.published)
+        guard let first = dates.first, let last = dates.last, first < last else { return false }
+        return items.count >= itemLimit || bytesRead >= byteLimit
+    }
+
     /// Whole calendar days from `date` to `now`: 0 for today, 1 for yesterday.
     public static func daysSince(_ date: Date, now: Date, calendar: Calendar = .current) -> Int {
         let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)).day ?? 0

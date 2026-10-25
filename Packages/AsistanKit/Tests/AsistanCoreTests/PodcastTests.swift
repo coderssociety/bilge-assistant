@@ -45,6 +45,27 @@ struct PodcastTests {
         #expect(PodcastEpisodes.latest([RSSHeadlines.Item(title: "Yazı", link: nil)]) == nil)
     }
 
+    @Test("an oldest-first feed cut off at the limit is read further for its newest episode")
+    func oldestFirst() throws {
+        let episodes = (1...5).map { day in
+            "<item><title>Bölüm \(day)</title><pubDate>Mon, 0\(day) Sep 2025 06:00:00 +0000</pubDate>"
+                + "<enclosure url=\"https://example.org/\(day).mp3\" type=\"audio/mpeg\"/></item>"
+        }
+        let ascending = Data("<rss><channel>\(episodes.joined())</channel></rss>".utf8)
+        let start = RSSHeadlines.items(ascending, limit: 2)
+        #expect(PodcastEpisodes.latest(start)?.title == "Bölüm 2")
+        #expect(PodcastEpisodes.mayContinueWithNewer(start, itemLimit: 2, bytesRead: ascending.count, byteLimit: 1_000_000))
+        #expect(PodcastEpisodes.mayContinueWithNewer(start, itemLimit: 60, bytesRead: 1_000_000, byteLimit: 1_000_000))
+        #expect(PodcastEpisodes.latest(RSSHeadlines.items(ascending, limit: .max))?.title == "Bölüm 5")
+
+        let descending = Data("<rss><channel>\(episodes.reversed().joined())</channel></rss>".utf8)
+        let newestFirst = RSSHeadlines.items(descending, limit: 2)
+        #expect(PodcastEpisodes.latest(newestFirst)?.title == "Bölüm 5")
+        #expect(!PodcastEpisodes.mayContinueWithNewer(newestFirst, itemLimit: 2, bytesRead: descending.count, byteLimit: 1_000_000))
+        let whole = RSSHeadlines.items(ascending, limit: 60)
+        #expect(!PodcastEpisodes.mayContinueWithNewer(whole, itemLimit: 60, bytesRead: ascending.count, byteLimit: 1_000_000))
+    }
+
     @Test("days since an episode came out count calendar days")
     func days() throws {
         var calendar = Calendar(identifier: .gregorian)

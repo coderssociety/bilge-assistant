@@ -55,6 +55,21 @@ struct PrayerTimesTests {
         #expect(PrayerTimesParser.aladhanDay(from: Data(#"{"code":503,"data":"Geocoding is temporarily unavailable."}"#.utf8)) == nil)
     }
 
+    @Test("Aladhan's days are counted in the place's time zone, not the Mac's")
+    func aladhanDates() throws {
+        // 02:00 on 26 October in Istanbul is still 25 October in New York and already morning in Tokyo.
+        let now = try #require(ISO8601DateFormatter().date(from: "2026-10-25T23:00:00Z"))
+        let newYork = try #require(TimeZone(identifier: "America/New_York"))
+        let tokyo = try #require(TimeZone(identifier: "Asia/Tokyo"))
+        #expect(PrayerTimesParser.aladhanDates(offsets: [0, 1], now: now, timeZone: newYork) == ["25-10-2026", "26-10-2026"])
+        #expect(PrayerTimesParser.aladhanDates(offsets: [0, 1], now: now, timeZone: PrayerTimesParser.turkeyTimeZone)
+            == ["26-10-2026", "27-10-2026"])
+        #expect(PrayerTimesParser.aladhanDates(offsets: [0, 2], now: now, timeZone: tokyo) == ["26-10-2026", "28-10-2026"])
+        let day = try #require(PrayerTimesParser.aladhanDay(from: PrayerFixtures.aladhanDay))
+        #expect(PrayerTimesParser.aladhanDates(offsets: [0], now: try #require(day.date(of: .dhuhr)), timeZone: day.timeZone)
+            == [PrayerTimesParser.aladhanDate(of: day)])
+    }
+
     @Test("understands which time is asked", arguments: [
         ("akşam ezanı kaçta", PrayerQuestion(prayer: .maghrib)),
         ("ezana ne kadar var", PrayerQuestion(prayer: nil)),
