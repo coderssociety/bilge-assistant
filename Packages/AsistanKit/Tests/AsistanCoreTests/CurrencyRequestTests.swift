@@ -18,6 +18,16 @@ struct CurrencyRequestTests {
         ("2,5 Kanada doları kaç İsviçre frangı", Parsed(from: "CAD", to: "CHF", amount: 2.5)),
         ("1.500 dolar kaç lira", Parsed(from: "USD", to: "TRY", amount: 1500)),
         ("convert 50 dollars to euros", Parsed(from: "USD", to: "EUR", amount: 50)),
+        ("dolar ve euro kaç lira", Parsed(from: "USD", to: "TRY", amount: nil, alsoFrom: "EUR")),
+        ("dolar ve euro ne kadar", Parsed(from: "USD", to: nil, amount: nil, alsoFrom: "EUR")),
+        ("dolar euro kaç TL", Parsed(from: "USD", to: "TRY", amount: nil, alsoFrom: "EUR")),
+        ("100 doları liraya çevir", Parsed(from: "USD", to: "TRY", amount: 100)),
+        ("500 lirayı dolara çevir", Parsed(from: "TRY", to: "USD", amount: 500)),
+        ("euro dolar paritesi", Parsed(from: "EUR", to: "USD", amount: nil)),
+        ("1.000.000 lira kaç dolar", Parsed(from: "TRY", to: "USD", amount: 1_000_000)),
+        ("2.500,50 euro kaç TL", Parsed(from: "EUR", to: "TRY", amount: 2500.5)),
+        ("2.5 dollars in euros", Parsed(from: "USD", to: "EUR", amount: 2.5)),
+        ("1.2.3 dolar kaç lira", Parsed(from: "USD", to: "TRY", amount: nil)),
     ])
     func parses(text: String, expected: Parsed) {
         #expect(CurrencyRequest.parse(text) == expected)
