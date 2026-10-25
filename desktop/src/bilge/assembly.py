@@ -18,7 +18,7 @@ from bilge.desktop.base import Desktop
 from bilge.llm.providers import ProviderError, make_provider
 from bilge.models.downloader import Downloader, ModelSpec
 from bilge.tools.base import Registry, Tool
-from bilge.tools.builtin import internet
+from bilge.tools.builtin import earthquakes, internet
 from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
@@ -85,6 +85,7 @@ def build_agent(
         weather,
         internet.exchange_rate(language),
         internet.news(language, news_reading),
+        earthquakes.earthquakes(language, lambda: settings.weather_city),
         internet.read_web_page(language, text_reading),
         continue_reading_tool(text_reading, language),
         briefing_tool(briefing),
@@ -94,6 +95,7 @@ def build_agent(
         rule("dailyBriefing", briefing.claims),
         rule("news", internet.news_source_rule_claims(language, news_reading)),
         rule("exchangeRate", internet.asks_for_gold(language), lambda _: {"gold": True}),
+        rule("earthquakes", earthquakes.asks_about_earthquakes),
     ]
     modes: list[Mode] = []
     opener = found.opener.open if found is not None else None
