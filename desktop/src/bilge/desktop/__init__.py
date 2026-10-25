@@ -3,7 +3,7 @@
 import sys
 
 from bilge.core.language import AssistantLanguage
-from bilge.desktop.base import Desktop
+from bilge.desktop.base import Desktop, Folders
 
 
 def current(language: AssistantLanguage) -> Desktop | None:
@@ -19,3 +19,14 @@ def current(language: AssistantLanguage) -> Desktop | None:
 
         return windows.build()
     return None
+
+
+def folders() -> Folders:
+    """The user's folders (Documents, Downloads…), also where Bilge has no other desktop integration."""
+    if sys.platform == "win32":
+        from bilge.desktop.windows.system import WindowsFolders
+
+        return WindowsFolders()
+    from bilge.desktop.linux.system import LinuxFolders
+
+    return LinuxFolders()

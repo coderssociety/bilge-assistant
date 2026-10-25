@@ -399,11 +399,47 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
         raise
     options = Options(wake_phrase=voice.wake_phrase, follow_up=voice.follow_up, barge_in=voice.barge_in,
                       wake_word=voice.wake_word or not voice.hotkey)  # fmt: skip
+    interpreter, recorder = _listening_modes(agent, recognizer, language, root,
+                                             announce=lambda text: holder["assistant"].announce(text))  # fmt: skip
     assistant = VoiceAssistant(recognizer, speech, agent, language, options, gate, on_event, wake_recognizer=wake,
-                               services=services)  # fmt: skip
+                               services=services, interpreter=interpreter, recorder=recorder)  # fmt: skip
     holder["assistant"] = assistant
     front_end = FrontEnd(device, assistant.on_chunk, EchoCanceller() if voice.barge_in else None)
     return assistant, front_end
+
+
+def _listening_modes(agent: Agent, recognizer, language: AssistantLanguage, root: Path,
+                     announce: Callable[[str], None]):  # fmt: skip
+    """The interpreter and meeting recording, which need the microphone and the recognizer, so they exist only when
+    Bilge listens; their tools and rules are added to the agent."""
+    from bilge.tools.meetings import Meetings
+    from bilge.voice.interpreter import Interpreter
+    from bilge.voice.meeting import MeetingNotes, MeetingRecorder
+
+    folders = desktop.folders()
+    notes = MeetingNotes(lambda: agent.provider, folders.documents, language)
+    recorder = MeetingRecorder(recognizer, notes)
+    meetings = Meetings(recorder, notes, recognizer, folders, language, announce)
+    interpreter = Interpreter(lambda: _interpreting_recognizer(recognizer, language, root), lambda: agent.provider,
+                              language)  # fmt: skip
+    for tool in [*meetings.tools(), interpreter.tool()]:
+        agent.registry.add(tool)
+    agent.rules = [*meetings.rules(), interpreter.rule(), *agent.rules]
+    return interpreter, recorder
+
+
+def _interpreting_recognizer(recognizer, language: AssistantLanguage, root: Path):
+    """The configured recognizer when it can tell languages apart; otherwise the local faster-whisper model, if it
+    has been downloaded (whisper.cpp on a graphics card and the hosted APIs are told the language)."""
+    from bilge.voice import models
+    from bilge.voice.recognizers import GuardedRecognizer, WhisperRecognizer, detects_language, has_cuda
+
+    if detects_language(recognizer):
+        return recognizer
+    if not Downloader(root).is_downloaded(models.WHISPER_TURBO):
+        return None
+    device = "cuda" if has_cuda() else "cpu"
+    return GuardedRecognizer(WhisperRecognizer(str(root / models.WHISPER_TURBO.name), language, device=device))
 
 
 def _recognizer(voice: config.VoiceSettings, language: AssistantLanguage, root: Path):

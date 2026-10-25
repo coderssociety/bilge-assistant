@@ -60,7 +60,8 @@ class Hud(QWidget):
         self.status.setText(texts.status(status) if status else "")
         asking = status == "confirming"
         self.buttons.setVisible(asking)
-        if status in ("awake", "transcribing", "thinking", "speaking", "confirming"):
+        # The interpreter and a meeting recording stay shown for as long as they take the microphone over.
+        if status in ("awake", "transcribing", "thinking", "speaking", "confirming", "interpreting", "recording"):
             self._pop()
         elif status == "listening":
             self._hide_timer.start()

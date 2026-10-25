@@ -6,12 +6,15 @@ import logging
 import os
 import sys
 import wave
+from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Protocol
 
 import httpx
 import numpy as np
 
 from bilge.core.audio import loudness
+from bilge.core.interpreter.interpretation import likelier
 from bilge.core.language import AssistantLanguage
 from bilge.core.speech import hallucinations
 
@@ -34,6 +37,25 @@ class Recognizer(Protocol):
     def transcribe(self, samples: np.ndarray) -> str:
         """16 kHz mono float32 in [-1, 1]."""
         ...
+
+
+@dataclass(frozen=True)
+class Detected:
+    text: str
+    # ISO 639-1, one of the languages it was asked to choose between.
+    language: str
+
+
+class LanguageDetecting(Protocol):
+    def transcribe_detecting(self, samples: np.ndarray, languages: Sequence[str]) -> Detected:
+        """Decides which of `languages` was spoken and transcribes it in that one."""
+        ...
+
+
+def detects_language(recognizer: object) -> bool:
+    """Only faster-whisper says which language it heard; whisper.cpp and the hosted APIs here are told one."""
+    flag = getattr(recognizer, "detects_language", None)
+    return bool(flag) if flag is not None else hasattr(recognizer, "transcribe_detecting")
 
 
 class WhisperRecognizer:
@@ -65,6 +87,20 @@ class WhisperRecognizer:
             vad_filter=False,
         )
         return " ".join(segment.text.strip() for segment in segments).strip()
+
+    def transcribe_detecting(self, samples: np.ndarray, languages: Sequence[str]) -> Detected:
+        audio = samples.astype(np.float32, copy=False)
+        _, _, probabilities = self._model.detect_language(audio)
+        language = likelier(probabilities, languages)
+        segments, _ = self._model.transcribe(
+            audio,
+            language=language,
+            beam_size=5,
+            condition_on_previous_text=False,
+            without_timestamps=True,
+            vad_filter=False,
+        )
+        return Detected(" ".join(segment.text.strip() for segment in segments).strip(), language)
 
 
 def has_cuda() -> bool:
@@ -126,6 +162,18 @@ class GuardedRecognizer:
             log.debug("Not transcribed: nothing louder than the background")
             return ""
         return hallucinations.without_made_up(self.inner.transcribe(samples))
+
+    @property
+    def detects_language(self) -> bool:
+        return detects_language(self.inner)
+
+    def transcribe_detecting(self, samples: np.ndarray, languages: Sequence[str]) -> Detected:
+        if not loudness.holds_speech(frame_levels(samples)):
+            return Detected("", languages[0])
+        if not detects_language(self.inner):
+            raise RecognitionError("This recognizer can't tell languages apart")
+        detected = self.inner.transcribe_detecting(samples, languages)  # type: ignore[attr-defined]
+        return Detected(hallucinations.without_made_up(detected.text), detected.language)
 
     def warm(self) -> None:
         warm = getattr(self.inner, "warm", None)
