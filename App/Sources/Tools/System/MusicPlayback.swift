@@ -86,7 +86,7 @@ enum MusicPlayback {
             return ToolReply.failure(String(localized: "\(place(service)) '\(track.spoken)' açılamadı."))
         }
         await stopBilgePlayer()
-        if service != .appleMusic { await MusicPlayers.pauseAll() }
+        await MusicPlayers.pauseAll(except: service == .appleMusic ? .music : nil)
         guard service == .appleMusic else { return String(localized: "\(place(service)) '\(track.spoken)' açıldı.") }
         return await musicStarted(track)
             ? String(localized: "Apple Music'te '\(track.spoken)' çalıyor.")
@@ -116,6 +116,7 @@ enum MusicPlayback {
         if let playlist = try await matchingPlaylist(query) {
             _ = try await AppleScriptRunner.run("tell application \"Music\" to play playlist \(AppleScriptRunner.quoted(playlist))")
             await stopBilgePlayer()
+            await MusicPlayers.pauseAll(except: .music)
             return String(localized: "'\(playlist)' çalma listesini çalıyorum.")
         }
         let playing = try await AppleScriptRunner.run("""
@@ -129,6 +130,7 @@ enum MusicPlayback {
         """)
         guard !playing.isEmpty else { return nil }
         await stopBilgePlayer()
+        await MusicPlayers.pauseAll(except: .music)
         return String(localized: "Çalıyorum: \(playing).")
     }
 

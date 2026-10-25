@@ -61,9 +61,10 @@ enum MusicPlayers {
         return zip(apps, states).map { ($0, $1) }
     }
 
-    /// Radio or a podcast is about to play in Bilge; Music and Spotify stop talking over it.
-    static func pauseAll() async {
-        let open = await MainActor.run { running() }
+    /// Something else has started (radio or a podcast in Bilge, a song on a service); Music and Spotify stop talking
+    /// over it, except `kept`, the app that was just started.
+    static func pauseAll(except kept: MusicApp? = nil) async {
+        let open = await MainActor.run { running() }.filter { $0 != kept }
         guard !open.isEmpty else { return }
         do {
             for player in try await states(of: open) where player.state == .playing {
