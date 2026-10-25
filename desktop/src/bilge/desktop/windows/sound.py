@@ -3,7 +3,8 @@ over the volume flyout, which Spotify, browsers and most players report to)."""
 
 import asyncio
 
-from bilge.desktop.base import MediaCommand, NowPlaying, VolumeState
+from bilge.desktop.base import AppEntry, Apps, MediaCommand, NowPlaying, VolumeState
+from bilge.desktop.music import is_spotify
 from bilge.desktop.process import DesktopError, MissingProgram
 from bilge.desktop.windows import com
 
@@ -117,3 +118,18 @@ class WindowsMedia:
             return player_name(session.source_app_user_model_id)
 
         return self._run(act())
+
+
+# The Media Player app of Windows 11 (formerly Groove), then the classic Windows Media Player.
+_MEDIA_PLAYER_IDS = ("microsoft.zunemusic", "microsoft.windows.mediaplayer32")
+
+
+def installed_players(apps: Apps) -> list[AppEntry]:
+    """Spotify when installed, otherwise the Media Player that comes with Windows."""
+    entries = apps.installed()
+    spotify = [entry for entry in entries if is_spotify(entry)]
+    builtin = sorted(
+        (entry for entry in entries if any(part in entry.id.lower() for part in _MEDIA_PLAYER_IDS)),
+        key=lambda entry: next(i for i, part in enumerate(_MEDIA_PLAYER_IDS) if part in entry.id.lower()),
+    )
+    return spotify + builtin

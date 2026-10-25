@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from bilge.core.language import AssistantLanguage
-from bilge.desktop.base import AppEntry, FrontWindow, MediaCommand, NowPlaying, VolumeState
+from bilge.desktop.base import AppEntry, FrontWindow, MediaCommand, NowPlaying, PlayerStart, VolumeState
 from bilge.desktop.process import MissingProgram
 from bilge.tools.base import ToolError
 from bilge.tools.desktop import apps, clipboard, sound, system, timers, typing, web
@@ -135,6 +135,37 @@ def test_music_control_and_now_playing():
     assert tool.run({"action": "pause"}) == "Spotify duraklatıldı."
     assert media.sent == [MediaCommand.PAUSE]
     assert sound.music_tool(FakeMedia(None), TR).run({"action": "play"}) == "Açık bir müzik çalar bulamadım."
+
+
+class FakeLauncher:
+    def __init__(self, started):
+        self.started, self.searched = started, []
+
+    def start_player(self):
+        return self.started
+
+    def play_search(self, query):
+        self.searched.append(query)
+        return "Spotify"
+
+
+def test_play_with_no_open_player_starts_one():
+    tool = sound.music_tool(FakeMedia(None), TR, FakeLauncher(PlayerStart("Rhythmbox", True)))
+    assert tool.run({"action": "play"}) == "Rhythmbox açıldı ve çalıyor."
+    tool = sound.music_tool(FakeMedia(None), TR, FakeLauncher(PlayerStart("VLC", False)))
+    assert tool.run({"action": "play"}) == "VLC açıldı ama çalmayı başlatamadım; çalardan bir şarkı seçebilirsin."
+    tool = sound.music_tool(FakeMedia(None), TR, FakeLauncher(None))
+    assert tool.run({"action": "play"}).startswith("Yüklü bir müzik çalar bulamadım.")
+    assert tool.run({"action": "next"}) == "Açık bir müzik çalar bulamadım."
+
+
+def test_named_music_is_searched_for():
+    launcher = FakeLauncher(None)
+    tool = sound.music_search_tool(launcher, TR)
+    assert tool.run({"query": "Tarkan"}) == "Spotify içinde 'Tarkan' aramasını açtım; listeden bir şarkı seçebilirsin."
+    assert launcher.searched == ["Tarkan"]
+    with pytest.raises(ToolError):
+        tool.run({"query": " "})
 
 
 def test_battery_states():

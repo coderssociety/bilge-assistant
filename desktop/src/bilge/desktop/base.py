@@ -39,6 +39,14 @@ class NowPlaying:
     artist: str = ""
 
 
+@dataclass(frozen=True)
+class PlayerStart:
+    """A music player Bilge started; `playing` is False when it opened but didn't take the play command."""
+
+    name: str
+    playing: bool
+
+
 class MediaCommand(StrEnum):
     PLAY = "play"
     PAUSE = "pause"
@@ -80,6 +88,16 @@ class Media(Protocol):
 
     def send(self, command: MediaCommand) -> str:
         """Returns the player's name."""
+        ...
+
+
+class MusicLauncher(Protocol):
+    def start_player(self) -> PlayerStart | None:
+        """Starts the user's music player and asks it to play; None when no player is installed."""
+        ...
+
+    def play_search(self, query: str) -> str:
+        """Opens a search for `query` in Spotify when it is installed, otherwise a web music search; returns where."""
         ...
 
 
@@ -171,6 +189,7 @@ class Desktop:
     apps: Apps
     volume: Volume
     media: Media
+    music: MusicLauncher
     clipboard: Clipboard
     keyboard: Keyboard
     session: Session

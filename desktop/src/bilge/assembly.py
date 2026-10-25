@@ -130,7 +130,8 @@ def _desktop_tools(
     tools = [
         *apps.app_tools(apps.AppCatalog(found.apps), language),
         sound.volume_tool(found.volume, language),
-        sound.music_tool(found.media, language),
+        sound.music_tool(found.media, language, found.music),
+        sound.music_search_tool(found.music, language),
         *system.system_tools(found.session, found.network, found.settings, found.screenshots, found.folders, language),
         *clipboard.clipboard_tools(found.clipboard, language, last_reply),
         typing.type_text_tool(found.keyboard, language),

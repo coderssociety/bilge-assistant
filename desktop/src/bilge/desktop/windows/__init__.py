@@ -2,10 +2,11 @@
 over COM."""
 
 from bilge.desktop.base import Desktop
+from bilge.desktop.music import MusicLauncher
 from bilge.desktop.process import Runner
 from bilge.desktop.windows.apps import WindowsApps
 from bilge.desktop.windows.input import WindowsClipboard, WindowsKeyboard
-from bilge.desktop.windows.sound import WindowsMedia, WindowsVolume
+from bilge.desktop.windows.sound import WindowsMedia, WindowsVolume, installed_players
 from bilge.desktop.windows.system import (
     WindowsFolders,
     WindowsNetwork,
@@ -20,10 +21,13 @@ from bilge.desktop.windows.system import (
 def build() -> Desktop:
     runner = Runner()
     opener = WindowsOpener(runner)
+    apps = WindowsApps(runner)
+    media = WindowsMedia()
     return Desktop(
-        apps=WindowsApps(runner),
+        apps=apps,
         volume=WindowsVolume(),
-        media=WindowsMedia(),
+        media=media,
+        music=MusicLauncher(apps, opener, media, lambda: installed_players(apps)),
         clipboard=WindowsClipboard(),
         keyboard=WindowsKeyboard(),
         session=WindowsSession(),

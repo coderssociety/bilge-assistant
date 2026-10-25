@@ -8,7 +8,7 @@ from bilge.desktop.linux.audio import LinuxVolume
 from bilge.desktop.linux.clipboard import LinuxClipboard
 from bilge.desktop.linux.dbus import SessionBus
 from bilge.desktop.linux.keyboard import LinuxKeyboard
-from bilge.desktop.linux.media import MprisMedia
+from bilge.desktop.linux.media import MprisMedia, installed_players
 from bilge.desktop.linux.system import (
     LinuxFolders,
     LinuxNetwork,
@@ -18,6 +18,7 @@ from bilge.desktop.linux.system import (
     LinuxSession,
     LinuxSettings,
 )
+from bilge.desktop.music import MusicLauncher
 from bilge.desktop.process import Runner
 
 
@@ -26,17 +27,21 @@ def build(languages: tuple[str, ...]) -> Desktop:
     env = environment.current()
     bus = SessionBus()
     clipboard = LinuxClipboard(runner, env)
+    apps = LinuxApps(runner, languages)
+    media = MprisMedia(bus)
+    opener = LinuxOpener(runner, bus)
     return Desktop(
-        apps=LinuxApps(runner, languages),
+        apps=apps,
         volume=LinuxVolume(runner),
-        media=MprisMedia(bus),
+        media=media,
+        music=MusicLauncher(apps, opener, media, lambda: installed_players(apps, runner)),
         clipboard=clipboard,
         keyboard=LinuxKeyboard(runner, env, clipboard),
         session=LinuxSession(runner, env),
         network=LinuxNetwork(runner),
         screenshots=LinuxScreenshots(runner, env),
         settings=LinuxSettings(runner, env),
-        opener=LinuxOpener(runner, bus),
+        opener=opener,
         notifier=LinuxNotifier(runner, bus),
         folders=LinuxFolders(),
     )
