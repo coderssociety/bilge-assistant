@@ -75,7 +75,12 @@ class _Collector:
 
 
 def _is_web(url: str | None) -> bool:
-    return bool(url) and urlsplit(url).scheme in ("http", "https")
+    if not url:
+        return False
+    try:
+        return urlsplit(url).scheme in ("http", "https")
+    except ValueError:
+        return False
 
 
 def _media(attributes: dict[str, str]) -> str | None:

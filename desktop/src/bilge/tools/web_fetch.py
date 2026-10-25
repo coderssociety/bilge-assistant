@@ -6,16 +6,19 @@ again leaves a gap: the name could resolve to a local address the second time (D
 could then reach the router or a service on this machine.
 """
 
+import contextlib
+import functools
 import http.client
 import ipaddress
 import json
 import socket
 import ssl
+import threading
 import time
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import quote, urljoin, urlsplit
 
 from bilge.core.language import AssistantLanguage
 from bilge.core.web import network_address
@@ -38,6 +41,8 @@ BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 )
 _CHUNK = 64 * 1024
+# Characters a path or query keeps as written; "%" among them, so an address already encoded isn't encoded twice.
+_URL_SAFE = "/?:@!$&'()*+,;=%~"
 _IPV4_COMPATIBLE = ipaddress.ip_network("::/96")
 
 
@@ -164,7 +169,7 @@ def _follow(url: str, language: AssistantLanguage, max_bytes: int, user_agent: s
         response, location = _get_once(current, language, max_bytes, deadline, user_agent)
         if location is None:
             return response
-        current = urljoin(current, location)
+        current = _join(current, location)
     raise WebFetchError(Reason.REDIRECTS)
 
 
@@ -173,10 +178,10 @@ def _get_once(
 ) -> tuple[Response, str | None]:
     connection, reply = _open(url, language, user_agent)
     try:
-        location = reply.getheader("Location")
+        location = _location(reply)
         if reply.status in _REDIRECTS and location:
             return Response(url, reply.status, "", b""), location
-        body = _read_limited(reply, max_bytes, deadline)
+        body = _read_limited(connection, reply, max_bytes, deadline)
         return Response(url, reply.status, reply.getheader("Content-Type", ""), body), None
     except (OSError, http.client.HTTPException) as error:
         raise WebFetchError(Reason.CONNECT) from error
@@ -193,7 +198,7 @@ def post_json(
     body = json.dumps(payload).encode()
     connection, reply = _open(url, language, user_agent, "POST", body, {"Content-Type": "application/json"})
     try:
-        data = _read_limited(reply, MAX_BYTES, deadline)
+        data = _read_limited(connection, reply, MAX_BYTES, deadline)
     except (OSError, http.client.HTTPException) as error:
         raise WebFetchError(Reason.CONNECT) from error
     finally:
@@ -211,21 +216,30 @@ class Stream:
     caller stops reading. `length` is the whole file's size when the server says it; `ranged` that it started
     at the asked offset."""
 
-    def __init__(self, connection: http.client.HTTPConnection, reply: http.client.HTTPResponse, start: int):
+    def __init__(self, connection: "_PinnedConnection", reply: http.client.HTTPResponse, start: int):
         self._connection = connection
         self._reply = reply
+        # http.client's answer can't be read and closed at once: both let go of its file.
+        self._lock = threading.Lock()
         self.content_type = reply.getheader("Content-Type", "")
         self.ranged = start > 0 and reply.status == 206
         self.length = _whole_length(reply, start)
 
     def read(self, size: int) -> bytes:
         try:
-            return self._reply.read(size)
+            with self._lock:
+                return self._reply.read(size)
         except (OSError, http.client.HTTPException) as error:
             raise WebFetchError(Reason.CONNECT) from error
 
     def close(self) -> None:
-        self._connection.close()
+        """Also from another thread, to end a read waiting on the network. The socket is shut first, which ends
+        that read at once: a "Connection: close" answer owns the socket, so closing the connection alone would
+        leave it open, and the reply can only be closed once the read has let go of it."""
+        self._connection.shut()
+        with self._lock:
+            self._reply.close()
+            self._connection.close()
 
 
 def open_stream(url: str, language: AssistantLanguage = AssistantLanguage.TURKISH, start: int = 0) -> Stream:
@@ -235,10 +249,10 @@ def open_stream(url: str, language: AssistantLanguage = AssistantLanguage.TURKIS
     current = url
     for _ in range(MAX_REDIRECTS + 1):
         connection, reply = _open(current, language, STREAM_USER_AGENT, extra_headers=headers, any_port=True)
-        location = reply.getheader("Location")
+        location = _location(reply)
         if reply.status in _REDIRECTS and location:
             connection.close()
-            current = urljoin(current, location)
+            current = _join(current, location)
             continue
         if reply.status not in (200, 206):
             connection.close()
@@ -255,6 +269,39 @@ def _whole_length(reply: http.client.HTTPResponse, start: int) -> int | None:
     return int(length) + (start if reply.status == 206 else 0) if length.isdigit() else None
 
 
+def _location(reply: http.client.HTTPResponse) -> str | None:
+    """http.client reads headers as Latin-1; servers send a Turkish address in UTF-8."""
+    location = reply.getheader("Location")
+    if location is None:
+        return None
+    try:
+        return location.encode("latin-1").decode("utf-8")
+    except UnicodeError:
+        return location
+
+
+def _join(current: str, location: str) -> str:
+    try:
+        return urljoin(current, location)
+    except ValueError as error:
+        raise WebFetchError(Reason.UNEXPECTED) from error
+
+
+def _target(url: str) -> tuple[str, str, int | None, str]:
+    """The scheme, host, port and request path of an address as they go on the wire: a name written in Turkish
+    letters (işbank.com.tr) in its IDNA form, the path and query percent-encoded."""
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+        host = (parts.hostname or "").encode("idna").decode("ascii")
+    except ValueError as error:
+        raise WebFetchError(Reason.UNSUPPORTED) from error
+    path = quote(parts.path or "/", safe=_URL_SAFE)
+    if parts.query:
+        path += "?" + quote(parts.query, safe=_URL_SAFE)
+    return parts.scheme.lower(), host, port, path
+
+
 def _open(
     url: str,
     language: AssistantLanguage,
@@ -263,22 +310,16 @@ def _open(
     body: bytes | None = None,
     extra_headers: dict[str, str] | None = None,
     any_port: bool = False,
-) -> tuple[http.client.HTTPConnection, http.client.HTTPResponse]:
+) -> tuple["_PinnedConnection", http.client.HTTPResponse]:
     """Sends the request to a checked address and returns the open connection with its answer's headers read."""
-    parts = urlsplit(url)
-    scheme = parts.scheme.lower()
-    if scheme not in _DEFAULT_PORTS or not parts.hostname:
+    scheme, host, port, path = _target(url)
+    if scheme not in _DEFAULT_PORTS or not host:
         raise WebFetchError(Reason.UNSUPPORTED)
-    try:
-        port = parts.port or _DEFAULT_PORTS[scheme]
-    except ValueError as error:
-        raise WebFetchError(Reason.UNSUPPORTED) from error
+    port = port or _DEFAULT_PORTS[scheme]
     if port not in ALLOWED_PORTS and not any_port:
         raise WebFetchError(Reason.UNSUPPORTED)
-    host = parts.hostname
     if network_address.is_local_name(host):
         raise LocalAddressError()
-    path = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
     headers = {
         "Host": host if port == _DEFAULT_PORTS[scheme] else f"{host}:{port}",
         "User-Agent": user_agent,
@@ -332,17 +373,45 @@ def _is_public(address: str) -> bool:
     return ip.is_global and network_address.is_public(address)
 
 
-def _read_limited(reply: http.client.HTTPResponse, max_bytes: int, deadline: float) -> bytes:
+def _read_limited(
+    connection: "_PinnedConnection", reply: http.client.HTTPResponse, max_bytes: int, deadline: float
+) -> bytes:
+    """`read1` returns whatever has arrived, and each wait is cut to the time left: `read` would wait for a whole
+    chunk, which a server sending a byte a second never fills before its socket timeout."""
     chunks: list[bytes] = []
     total = 0
-    while chunk := reply.read(_CHUNK):
+    # The answer closes its socket as soon as the last byte is read.
+    while not reply.isclosed():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise WebFetchError(Reason.TOO_SLOW)
+        connection.wait_at_most(min(remaining, TIMEOUT_SECONDS))
+        try:
+            chunk = reply.read1(_CHUNK)
+        except TimeoutError as error:
+            raise WebFetchError(Reason.TOO_SLOW) from error
+        if not chunk:
+            break
         total += len(chunk)
         if total > max_bytes:
             raise WebFetchError(Reason.TOO_LARGE)
-        if time.monotonic() > deadline:
-            raise WebFetchError(Reason.TOO_SLOW)
         chunks.append(chunk)
     return b"".join(chunks)
+
+
+@functools.cache
+def _tls_context() -> ssl.SSLContext:
+    """The system's trust store, as a browser uses: the roots Python carries lack some a Turkish government site
+    chains to (AFAD's GlobalSign Root R46), and Windows fetches missing roots only for programs that ask it."""
+    try:
+        import truststore
+    except ImportError:
+        try:
+            import certifi
+        except ImportError:
+            return ssl.create_default_context()
+        return ssl.create_default_context(cafile=certifi.where())
+    return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
 
 class _PinnedConnection(http.client.HTTPConnection):
@@ -352,9 +421,21 @@ class _PinnedConnection(http.client.HTTPConnection):
         super().__init__(host, port, timeout=TIMEOUT_SECONDS)
         self._scheme = scheme
         self._address = address
+        # Kept apart from `sock`, which http.client lets go when the answer takes the socket over.
+        self._socket: socket.socket | None = None
 
     def connect(self) -> None:
         sock = socket.create_connection((self._address, self.port), self.timeout)
         if self._scheme == "https":
-            sock = ssl.create_default_context().wrap_socket(sock, server_hostname=self.host)
-        self.sock = sock
+            sock = _tls_context().wrap_socket(sock, server_hostname=self.host)
+        self.sock = self._socket = sock
+
+    def wait_at_most(self, seconds: float) -> None:
+        if self._socket is not None:
+            self._socket.settimeout(seconds)
+
+    def shut(self) -> None:
+        """Ends the connection under a read in progress on another thread."""
+        if self._socket is not None:
+            with contextlib.suppress(OSError):
+                self._socket.shutdown(socket.SHUT_RDWR)

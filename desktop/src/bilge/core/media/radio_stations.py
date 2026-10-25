@@ -92,7 +92,11 @@ def _candidate(entry: Any, wanted: str) -> tuple[tuple, Stream] | None:
     if not isinstance(entry, dict) or entry.get("lastcheckok", 1) != 1:
         return None
     url = str(entry.get("url_resolved") or entry.get("url") or "").strip()
-    if urlsplit(url).scheme not in ("http", "https"):
+    try:
+        scheme = urlsplit(url).scheme
+    except ValueError:
+        return None
+    if scheme not in ("http", "https"):
         return None
     name = folded(str(entry.get("name") or ""))
     playlist = entry.get("hls") == 1 or ".m3u8" in url.lower()

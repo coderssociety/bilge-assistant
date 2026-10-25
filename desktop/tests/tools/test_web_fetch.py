@@ -1,5 +1,9 @@
+import contextlib
 import http.server
+import socket
+import ssl
 import threading
+import time
 
 import pytest
 
@@ -198,3 +202,152 @@ def test_the_whole_length_is_read_from_a_range_or_a_plain_answer():
     assert web_fetch._whole_length(FakeReply(206, {"Content-Range": "bytes 100-999/1000"}), 100) == 1000
     assert web_fetch._whole_length(FakeReply(200, {"Content-Length": "45558925"}), 0) == 45558925
     assert web_fetch._whole_length(FakeReply(200, {}), 0) is None
+
+
+class RawServer:
+    """A local server answering each connection with `answer(connection)` after reading the request's head."""
+
+    def __init__(self, answer):
+        self._listener = socket.create_server(("127.0.0.1", 0))
+        self.port = self._listener.getsockname()[1]
+        self.requests: list[bytes] = []
+        self._answer = answer
+        threading.Thread(target=self._serve, daemon=True).start()
+
+    def _serve(self):
+        while True:
+            try:
+                connection, _ = self._listener.accept()
+            except OSError:
+                return
+            threading.Thread(target=self._reply, args=(connection,), daemon=True).start()
+
+    def _reply(self, connection):
+        with connection, contextlib.suppress(OSError):
+            request = b""
+            while b"\r\n\r\n" not in request:
+                data = connection.recv(4096)
+                if not data:
+                    return
+                request += data
+            self.requests.append(request)
+            self._answer(connection)
+
+    def close(self):
+        self._listener.close()
+
+
+@pytest.fixture
+def raw_server(monkeypatch):
+    """The address checks pass for any name, which then reaches this machine; only these tests do that."""
+    servers = []
+    looked_up = []
+
+    def start(answer):
+        server = RawServer(answer)
+        servers.append(server)
+        monkeypatch.setattr(web_fetch, "ALLOWED_PORTS", frozenset({server.port}))
+        return server
+
+    def public_addresses(host, port):
+        looked_up.append(host)
+        return ["127.0.0.1"]
+
+    monkeypatch.setattr(web_fetch, "_public_addresses", public_addresses)
+    start.looked_up = looked_up
+    yield start
+    for server in servers:
+        server.close()
+
+
+OK = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok"
+
+
+def test_a_trickling_server_is_given_up_on_at_the_deadline(raw_server, monkeypatch):
+    def trickle(connection):
+        connection.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 60\r\n\r\n")
+        for _ in range(60):
+            connection.sendall(b"x")
+            time.sleep(0.05)
+
+    server = raw_server(trickle)
+    monkeypatch.setattr(web_fetch, "TOTAL_SECONDS", 0.5)
+    started = time.monotonic()
+    with pytest.raises(web_fetch.WebFetchError) as raised:
+        web_fetch.get(f"http://trickle.example:{server.port}/")
+    assert raised.value.reason is web_fetch.Reason.TOO_SLOW
+    assert time.monotonic() - started < 1.5
+
+
+def test_turkish_letters_in_the_name_and_path_are_encoded(raw_server):
+    server = raw_server(lambda connection: connection.sendall(OK))
+    response = web_fetch.get(f"http://www.işbank.com.tr:{server.port}/wiki/İstanbul?q=şişli%20a b")
+    assert response.body == b"ok"
+    host = "www.işbank.com.tr".encode("idna")
+    assert raw_server.looked_up == [host.decode()]
+    head = server.requests[0]
+    assert head.startswith(b"GET /wiki/%C4%B0stanbul?q=%C5%9Fi%C5%9Fli%20a%20b HTTP/1.1\r\n")
+    assert b"\r\nHost: " + host + b":" + str(server.port).encode() + b"\r\n" in head
+
+
+def test_a_redirect_written_in_utf8_is_followed(raw_server):
+    def answer(connection):
+        if len(server.requests) == 1:
+            connection.sendall(b"HTTP/1.1 302 Found\r\nLocation: /wiki/\xc4\xb0stanbul\r\nContent-Length: 0\r\n\r\n")
+        else:
+            connection.sendall(OK)
+
+    server = raw_server(answer)
+    assert web_fetch.get(f"http://tr.wikipedia.example:{server.port}/wiki/Istanbul").body == b"ok"
+    assert server.requests[1].startswith(b"GET /wiki/%C4%B0stanbul HTTP/1.1\r\n")
+
+
+@pytest.mark.parametrize("url", ["http://a..com/", "http://[bad/", f"http://{'a' * 64}.com/"])
+def test_addresses_that_cannot_be_written_are_unsupported(url):
+    with pytest.raises(web_fetch.WebFetchError) as raised:
+        web_fetch.get(url)
+    assert raised.value.reason is web_fetch.Reason.UNSUPPORTED
+
+
+@pytest.mark.parametrize(
+    "head",
+    [
+        b"HTTP/1.0 200 OK\r\nContent-Type: audio/mpeg\r\n\r\n",
+        b"HTTP/1.1 200 OK\r\nContent-Type: audio/mpeg\r\nContent-Length: 1000000\r\n\r\n",
+    ],
+)
+def test_closing_a_stream_ends_a_waiting_read_and_the_connection(raw_server, head):
+    hung_up = threading.Event()
+
+    def radio(connection):
+        connection.sendall(head + b"x" * 10)
+        connection.settimeout(5)
+        if connection.recv(1) == b"":
+            hung_up.set()
+
+    server = raw_server(radio)
+    stream = web_fetch.open_stream(f"http://radio.example:{server.port}/live")
+    assert stream.read(10) == b"x" * 10
+    read = []
+
+    def wait_for_more():
+        with contextlib.suppress(web_fetch.WebFetchError):
+            read.append(stream.read(10))
+
+    reader = threading.Thread(target=wait_for_more)
+    reader.start()
+    time.sleep(0.2)
+    started = time.monotonic()
+    stream.close()
+    reader.join(2)
+    assert not reader.is_alive() and read in ([], [b""])
+    assert time.monotonic() - started < 1
+    assert hung_up.wait(2)
+
+
+def test_certificates_are_checked_against_the_systems_trust_store():
+    import truststore
+
+    context = web_fetch._tls_context()
+    assert isinstance(context, truststore.SSLContext)
+    assert context.check_hostname and context.verify_mode is ssl.CERT_REQUIRED

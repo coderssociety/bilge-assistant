@@ -79,6 +79,7 @@ def test_broken_and_malformed_entries_are_skipped():
     results = [
         entry("TRT FM", "https://broken.example/", ok=0),
         entry("TRT FM", "ftp://odd.example/"),
+        entry("TRT FM", "http://[bad"),
         "not a station",
         {"name": "TRT FM"},
         entry("TRT FM", "https://trt.example/trtfm", codec="AAC+", votes="many"),
