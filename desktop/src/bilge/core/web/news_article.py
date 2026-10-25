@@ -6,14 +6,11 @@ the news instead of opening the app."""
 from dataclasses import dataclass
 
 from bilge.core import text
+from bilge.core.tools import ordinal
 from bilge.core.web import news_request
 from bilge.core.web.rss_headlines import Item
 
-_LAST = -1
-# Turkish ones take endings ("üçüncüsünü"); "ilk" only short ones, not "ilkbahar".
-_ORDINALS = (("ilk", 1), ("birinci", 1), ("ikinci", 2), ("ucuncu", 3), ("dorduncu", 4), ("besinci", 5),
-             ("sonuncu", _LAST))  # fmt: skip
-_ENGLISH_ORDINALS = {"first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "last": _LAST}
+_LAST = ordinal.LAST
 _OPEN_WORDS = ("acar", "acin", "acip", "acsan", "acabil", "aciver", "acmak", "open")
 _BROWSER_WORDS = frozenset(
     {"tarayici", "tarayicida", "safari", "safaride", "chrome", "firefox", "firefoxta", "browser"}
@@ -98,12 +95,7 @@ def _is_named(word: str) -> bool:
 
 
 def _ordinal(word: str) -> int | None:
-    if word in _ENGLISH_ORDINALS:
-        return _ENGLISH_ORDINALS[word]
-    for prefix, place in _ORDINALS:
-        if word.startswith(prefix) and (len(prefix) >= 5 or len(word) <= len(prefix) + 3):
-            return place
-    return None
+    return ordinal.of_word(word)
 
 
 def _words(sentence: str) -> list[str]:

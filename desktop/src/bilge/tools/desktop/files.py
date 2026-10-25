@@ -3,6 +3,8 @@ inside the user's home folder, and nothing is ever deleted permanently."""
 
 import os
 import stat
+from collections.abc import Callable
+from datetime import datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -12,16 +14,19 @@ from send2trash.exceptions import TrashPermissionError
 
 from bilge.core.language import AssistantLanguage
 from bilge.core.text import folded
+from bilge.core.tools import ordinal
 from bilge.desktop import file_search
 from bilge.desktop.base import Folders, Opener
 from bilge.desktop.process import DesktopError
 from bilge.tools import documents
 from bilge.tools.base import Risk, Tool, ToolError
-from bilge.tools.desktop.common import choice, failure, obj, string_argument, text
+from bilge.tools.desktop.common import choice, failure, int_argument, integer, obj, string_argument, text
 from bilge.tools.reading import TextReading, continued
 
 MAX_RESULTS = 5
 DOCUMENT_CHARACTERS = 6000
+# How long "ikincisini aç" still means the files just listed.
+LIST_WINDOW = timedelta(minutes=10)
 # Opening these would run code the user never approved, so they are only shown in the file manager.
 _EXECUTABLE_SUFFIXES = frozenset(
     {
@@ -64,13 +69,28 @@ class Folder(StrEnum):
     DESKTOP = "desktop"
     DOWNLOADS = "downloads"
     DOCUMENTS = "documents"
+    PICTURES = "pictures"
+    MUSIC = "music"
+    VIDEOS = "videos"
     HOME = "home"
+
+
+# Folded word stems naming a folder, so "Resimler klasörünü aç" opens Pictures whatever the model picked.
+_FOLDER_WORDS = (
+    ("masaust", Folder.DESKTOP), ("desktop", Folder.DESKTOP), ("indir", Folder.DOWNLOADS),
+    ("download", Folder.DOWNLOADS), ("belge", Folder.DOCUMENTS), ("document", Folder.DOCUMENTS),
+    ("resim", Folder.PICTURES), ("fotograf", Folder.PICTURES), ("picture", Folder.PICTURES),
+    ("photo", Folder.PICTURES), ("muzik", Folder.MUSIC), ("music", Folder.MUSIC), ("video", Folder.VIDEOS),
+    ("ana klasor", Folder.HOME), ("home", Folder.HOME), ("kullanici klasor", Folder.HOME),
+)  # fmt: skip
 
 
 _TEXTS = {
     AssistantLanguage.TURKISH: {
-        "files": "Dosya bulur, bulunan dosyayı açar, son indirilen dosyayı açar ya da Masaüstü/İndirilenler/Belgeler klasörünü açar.",
+        "files": "Dosya bulur, bulunan dosyayı (ya da az önce listelenenlerden birini: 'ikincisini aç') açar, son indirilen dosyayı açar ya da Masaüstü/İndirilenler/Belgeler/Resimler/Müzik/Videolar klasörünü açar.",
         "query": "'find' ve 'openFound' için dosya adında geçen kelimeler",
+        "index": "'openFound' için listedeki sıra: 'ikincisini aç' → 2",
+        "no_such": "Listede yalnızca {count} dosya vardı.",
         "folder": "'openFolder' için klasör",
         "no_query": "Aranacak dosya adı belirtilmedi.",
         "none_found": "'{query}' ile eşleşen dosya bulunamadı.",
@@ -90,7 +110,7 @@ _TEXTS = {
         "trash_question": "{location} içindeki '{name}' dosyasını çöp kutusuna taşıyayım mı?",
         "trashed": "'{name}' çöp kutusuna taşındı. Gerekirse oradan geri alabilirsin.",
         "trash_failed": "'{name}' çöp kutusuna taşınamadı.",
-        "read": "Bir belgeyi (PDF, metin, Word, OpenDocument) açmadan okur; özetler ya da içeriğiyle ilgili soruyu yanıtlar.",
+        "read": "Bir belgeyi (PDF, metin, Word, Excel, PowerPoint, OpenDocument) açmadan okur; özetler ya da içeriğiyle ilgili soruyu yanıtlar.",
         "read_query": "Belge adında geçen kelimeler. 'Son indirdiğim PDF' gibi isteklerde yalnızca türü yaz ('pdf', 'word'); tür de yoksa boş bırak",
         "no_document": "'{query}' adında okunabilir bir belge bulamadım.",
         "no_download": "İndirilenler'de okunabilir bir belge bulamadım.",
@@ -100,8 +120,10 @@ _TEXTS = {
         "document": "Belge: {name}\n{text}",
     },
     AssistantLanguage.ENGLISH: {
-        "files": "Finds files, opens a found file, opens the latest download, or opens the Desktop, Downloads or Documents folder.",
+        "files": "Finds files, opens a found file (or one just listed: 'open the second one'), opens the latest download, or opens the Desktop, Downloads, Documents, Pictures, Music or Videos folder.",
         "query": "For 'find' and 'openFound': words in the file name",
+        "index": "For 'openFound': the place in the list just read, 'the second one' → 2",
+        "no_such": "There were only {count} files in the list.",
         "folder": "For 'openFolder': the folder",
         "no_query": "No file name was given.",
         "none_found": "No file matches '{query}'.",
@@ -121,7 +143,7 @@ _TEXTS = {
         "trash_question": "Shall I move '{name}' in {location} to the trash?",
         "trashed": "Moved '{name}' to the trash. You can restore it from there.",
         "trash_failed": "Couldn't move '{name}' to the trash.",
-        "read": "Reads a document (PDF, text, Word, OpenDocument) without opening it, to summarize it or answer a question about it.",
+        "read": "Reads a document (PDF, text, Word, Excel, PowerPoint, OpenDocument) without opening it, to summarize it or answer a question about it.",
         "read_query": "Words in the document's name. For 'the PDF I just downloaded' give only the type ('pdf', 'word'); otherwise leave empty",
         "no_document": "I couldn't find a readable document called '{query}'.",
         "no_download": "I couldn't find a readable document in Downloads.",
@@ -134,19 +156,29 @@ _TEXTS = {
 
 _TYPE_WORDS = {
     "pdf": {"pdf"}, "word": {"docx", "odt"}, "belge": {"docx", "odt", "pdf"}, "metin": {"txt", "md", "rtf"},
-    "text": {"txt", "md", "rtf"}, "tablo": {"csv"}, "document": {"docx", "odt", "pdf"},
+    "text": {"txt", "md", "rtf"}, "tablo": {"csv", "xlsx"}, "document": {"docx", "odt", "pdf"},
+    "excel": {"xlsx"}, "spreadsheet": {"xlsx", "csv"}, "sunum": {"pptx"}, "slayt": {"pptx"},
+    "powerpoint": {"pptx"}, "presentation": {"pptx"}, "slide": {"pptx"},
 }  # fmt: skip
 
 
 class FileTools:
     def __init__(
-        self, folders: Folders, opener: Opener, language: AssistantLanguage, reading: TextReading | None = None
+        self,
+        folders: Folders,
+        opener: Opener,
+        language: AssistantLanguage,
+        reading: TextReading | None = None,
+        clock: Callable[[], datetime] = datetime.now,
     ):
         self.folders = folders
         self.opener = opener
         self.language = language
         self.texts = _TEXTS[language]
         self.reading = reading
+        self.clock = clock
+        # The files last listed, for "ikincisini aç": (query, files, when).
+        self._listed: tuple[str, list[Path], datetime] | None = None
         # The file named in a trash question, so the one moved is exactly the one the user agreed to.
         self._pending_trash: dict[str, Path] = {}
 
@@ -170,7 +202,8 @@ class FileTools:
     def folder(self, name: str) -> Path:
         return {
             Folder.DESKTOP: self.folders.desktop, Folder.DOWNLOADS: self.folders.downloads,
-            Folder.DOCUMENTS: self.folders.documents,
+            Folder.DOCUMENTS: self.folders.documents, Folder.PICTURES: self.folders.pictures,
+            Folder.MUSIC: self.folders.music, Folder.VIDEOS: self.folders.videos,
         }.get(name, self.folders.home)()  # fmt: skip
 
     def open(self, path: Path) -> str:
@@ -192,18 +225,50 @@ class FileTools:
 
     # Tools
 
+    def files_refine(self, arguments: dict[str, Any], command: str) -> dict[str, Any]:
+        """A place ("ikincisini aç") or a folder said in the command wins over the model's."""
+        words = folded(command).split()
+        refined = dict(arguments)
+        place = ordinal.in_words(words)
+        if place is not None:
+            refined["index"] = place
+            if self._recent_list() is not None and refined.get("action") in (FileAction.FIND, FileAction.OPEN_FOUND):
+                refined["action"] = FileAction.OPEN_FOUND
+        if refined.get("action") == FileAction.OPEN_FOUND and place is None:
+            refined.pop("index", None)
+        if refined.get("action") == FileAction.OPEN_FOLDER:
+            joined = " ".join(words)
+            named = next((f for stem, f in _FOLDER_WORDS if any(w.startswith(stem) for w in words) or stem in joined),
+                         None)  # fmt: skip
+            refined["folder"] = named or refined.get("folder")
+        return refined
+
+    def _recent_list(self) -> tuple[str, list[Path], datetime] | None:
+        if self._listed is None or self.clock() - self._listed[2] >= LIST_WINDOW:
+            return None
+        return self._listed
+
     def files(self, arguments: dict[str, Any]) -> str:
         texts = self.texts
         action = string_argument(arguments, "action")
         query = string_argument(arguments, "query")
         if action in (FileAction.FIND, FileAction.OPEN_FOUND):
-            if not query:
+            index = int_argument(arguments, "index")
+            listed_before = self._recent_list()
+            if action == FileAction.OPEN_FOUND and index and listed_before and query in ("", listed_before[0]):
+                found = listed_before[1]
+            elif not query:
                 raise ToolError(texts["no_query"])
-            found = self.find(query)
+            else:
+                found = self.find(query)
             if not found:
                 return texts["none_found"].format(query=query)
             if action == FileAction.OPEN_FOUND:
-                return self.open(found[0])
+                chosen = len(found) if index == ordinal.LAST else index or 1
+                if not 1 <= chosen <= len(found):
+                    return texts["no_such"].format(count=len(found))
+                return self.open(found[chosen - 1])
+            self._listed = (query, found, self.clock())
             listed = "; ".join(f"{p.name} ({self.location(p)})" for p in found)
             return texts["found"].format(files=listed)
         if action == FileAction.OPEN_LATEST_DOWNLOAD:
@@ -322,8 +387,10 @@ def file_tools(
                 ["action"],
                 action=choice(FileAction, ""),
                 query=text(texts["query"]),
+                index=integer(texts["index"], 1, MAX_RESULTS),
                 folder=choice(Folder, texts["folder"]),
             ),
+            refine=tools.files_refine,
             # Names of downloaded files are chosen by whoever sent them.
             untrusted_output=lambda arguments: arguments.get("action") == FileAction.FIND,
         ),

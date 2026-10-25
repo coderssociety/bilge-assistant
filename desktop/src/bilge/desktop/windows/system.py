@@ -33,6 +33,8 @@ _FOLDERS = {
     "downloads": "374DE290-123F-4565-9164-39C4925E467B",
     "documents": "FDD39AD0-238F-46AF-ADB4-6C85480369C7",
     "pictures": "33E28130-4E1E-4676-835A-98395C3BC3BB",
+    "music": "4BD8D571-6D19-48D3-BE97-422220080E43",
+    "videos": "18989B1D-99B5-455B-841C-AB7C74E4DDFC",
 }
 _SETTINGS_PAGES = {
     "wifi": "network-wifi", "bluetooth": "bluetooth", "network": "network-status", "sound": "sound",
@@ -268,3 +270,9 @@ class WindowsFolders:
 
     def pictures(self) -> Path:
         return self._known("pictures", "Pictures")
+
+    def music(self) -> Path:
+        return self._known("music", "Music")
+
+    def videos(self) -> Path:
+        return self._known("videos", "Videos")

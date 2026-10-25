@@ -231,9 +231,16 @@ class LinuxFolders:
     def pictures(self) -> Path:
         return user_dir("PICTURES", "Pictures")
 
+    def music(self) -> Path:
+        return user_dir("MUSIC", "Music")
+
+    def videos(self) -> Path:
+        return user_dir("VIDEOS", "Videos")
+
 
 def user_dir(name: str, fallback: str, environ: dict[str, str] | None = None) -> Path:
-    """An XDG user folder ("DESKTOP", "DOWNLOAD", "DOCUMENTS", "PICTURES"), which may be translated ("Masaüstü")."""
+    """An XDG user folder ("DESKTOP", "DOWNLOAD", "DOCUMENTS", "PICTURES", "MUSIC", "VIDEOS"), which may be translated
+    ("Masaüstü")."""
     env = os.environ if environ is None else environ
     home = Path(env.get("HOME", str(Path.home())))
     config = Path(env.get("XDG_CONFIG_HOME") or home / ".config") / "user-dirs.dirs"

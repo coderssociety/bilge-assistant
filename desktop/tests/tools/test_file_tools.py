@@ -1,4 +1,5 @@
 import zipfile
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -8,7 +9,7 @@ from bilge.core.language import AssistantLanguage
 from bilge.desktop import file_search
 from bilge.tools import documents
 from bilge.tools.base import ToolError
-from bilge.tools.desktop.files import DOCUMENT_CHARACTERS, FileTools, file_tools, is_executable
+from bilge.tools.desktop.files import DOCUMENT_CHARACTERS, LIST_WINDOW, FileTools, file_tools, is_executable
 from bilge.tools.reading import TextReading
 
 TR = AssistantLanguage.TURKISH
@@ -37,7 +38,8 @@ class Opener:
 
 def folders(home):
     return SimpleNamespace(home=lambda: home, desktop=lambda: home / "Masaüstü", documents=lambda: home / "Belgeler",
-                           downloads=lambda: home / "İndirilenler", pictures=lambda: home / "Resimler")  # fmt: skip
+                           downloads=lambda: home / "İndirilenler", pictures=lambda: home / "Resimler",
+                           music=lambda: home / "Müzik", videos=lambda: home / "Videolar")  # fmt: skip
 
 
 def tools_for(home, opener=None):
@@ -214,3 +216,71 @@ def test_read_on_goes_on_with_the_next_part_of_the_document(home):
     # Without a recent reading, "devamını oku" is an ordinary request.
     fresh = {t.name: t for t in file_tools(folders(home), Opener(), TR, TextReading(TR))}["readDocument"]
     assert "continue" not in fresh.refine({"query": "rapor", "continue": True}, "devamını oku")
+
+
+def test_a_file_from_the_list_just_read_is_opened_by_its_place(home):
+    for name in ("Kira 2024.txt", "Kira 2025.txt"):
+        (home / "Belgeler" / name).write_text("x", encoding="utf-8")
+    opener = Opener()
+    now = [datetime(2026, 10, 15, 14, 5)]
+    tools = FileTools(folders(home), opener, TR, clock=lambda: now[0])
+    listed = tools.files({"action": "find", "query": "kira"})
+    names = [part.split(" (")[0] for part in listed.removeprefix("Bulunan dosyalar: ").split("; ")]
+    second = tools.files_refine({"action": "find", "query": "kira"}, "ikincisini aç")
+    assert second == {"action": "openFound", "query": "kira", "index": 2}
+    assert tools.files(second) == f"{names[1]} açıldı."
+    assert tools.files(tools.files_refine({"action": "openFound"}, "sonuncusunu aç")) == f"{names[-1]} açıldı."
+    assert tools.files({"action": "openFound", "index": 5}) == "Listede yalnızca 3 dosya vardı."
+    # Without "ikincisini", the model's invented place is dropped and the best match opens.
+    assert "index" not in tools.files_refine({"action": "openFound", "query": "kira", "index": 3}, "kirayı aç")
+    now[0] += LIST_WINDOW
+    with pytest.raises(ToolError):
+        tools.files(tools.files_refine({"action": "openFound"}, "ikincisini aç"))
+
+
+@pytest.mark.parametrize(
+    ("command", "folder"),
+    [
+        ("Resimler klasörünü aç", "Resimler"),
+        ("müzik klasörünü aç", "Müzik"),
+        ("Videolar klasörünü aç", "Videolar"),
+        ("open my pictures folder", "Resimler"),
+        ("Belgeler'i aç", "Belgeler"),
+    ],
+)
+def test_pictures_music_and_videos_folders_open(home, command, folder):
+    opener = Opener()
+    tools = FileTools(folders(home), opener, TR)
+    tools.files(tools.files_refine({"action": "openFolder", "folder": "home"}, command))
+    assert opener.opened == [str(home / folder)]
+
+
+def write_xlsx(path: Path):
+    ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("xl/sharedStrings.xml", f"<sst {ns}><si><t>Ürün</t></si><si><t>Fiyat</t></si>"
+                                                 "<si><t>Elma</t></si></sst>")  # fmt: skip
+        archive.writestr("xl/worksheets/sheet1.xml", f'<worksheet {ns}><sheetData>'
+                         '<row><c t="s"><v>0</v></c><c t="s"><v>1</v></c></row>'
+                         '<row><c t="s"><v>2</v></c><c><v>12.5</v></c></row></sheetData></worksheet>')  # fmt: skip
+        archive.writestr("xl/worksheets/sheet2.xml", f'<worksheet {ns}><sheetData><row>'
+                         '<c t="inlineStr"><is><t>Not</t></is></c></row></sheetData></worksheet>')  # fmt: skip
+
+
+def write_pptx(path: Path):
+    ns = 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"'
+    with zipfile.ZipFile(path, "w") as archive:
+        # Out of order on purpose: slide10 must come after slide2.
+        for number, line in ((10, "Son slayt"), (1, "Başlık"), (2, "İkinci slayt")):
+            archive.writestr(f"ppt/slides/slide{number}.xml", f"<p:sld {ns} xmlns:p=\"p\"><a:p><a:r><a:t>{line}</a:t>"
+                                                             "</a:r></a:p></p:sld>")  # fmt: skip
+        archive.writestr("ppt/slides/_rels/slide1.xml.rels", "<Relationships/>")
+
+
+def test_excel_and_powerpoint_files_are_read(tmp_path, home):
+    write_xlsx(tmp_path / "fiyat.xlsx")
+    write_pptx(tmp_path / "sunum.pptx")
+    assert documents.text_of(tmp_path / "fiyat.xlsx") == "Ürün\tFiyat\nElma\t12.5\n\nNot"
+    assert documents.text_of(tmp_path / "sunum.pptx") == "Başlık\n\nİkinci slayt\n\nSon slayt"
+    write_pptx(home / "İndirilenler" / "sunum.pptx")
+    assert tools_for(home)["readDocument"].run({"query": "son indirdiğim sunum"}).startswith("Belge: sunum.pptx\n")
