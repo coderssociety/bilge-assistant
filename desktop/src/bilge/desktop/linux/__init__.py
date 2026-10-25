@@ -5,10 +5,14 @@ from bilge.desktop.base import Desktop
 from bilge.desktop.linux import environment
 from bilge.desktop.linux.apps import LinuxApps
 from bilge.desktop.linux.audio import LinuxVolume
+from bilge.desktop.linux.bluetooth import LinuxBluetooth
 from bilge.desktop.linux.clipboard import LinuxClipboard
 from bilge.desktop.linux.dbus import SessionBus
+from bilge.desktop.linux.display import LinuxBrightness
 from bilge.desktop.linux.keyboard import LinuxKeyboard
 from bilge.desktop.linux.media import MprisMedia, installed_players
+from bilge.desktop.linux.notifications import LinuxDoNotDisturb
+from bilge.desktop.linux.power import LinuxPower
 from bilge.desktop.linux.system import (
     LinuxFolders,
     LinuxNetwork,
@@ -46,4 +50,8 @@ def build(languages: tuple[str, ...]) -> Desktop:
         opener=opener,
         notifier=LinuxNotifier(runner, bus),
         folders=LinuxFolders(),
+        brightness=LinuxBrightness(runner, env, bus),
+        do_not_disturb=LinuxDoNotDisturb(runner, env, bus),
+        bluetooth=LinuxBluetooth(runner),
+        power=LinuxPower(runner, env, bus),
     )

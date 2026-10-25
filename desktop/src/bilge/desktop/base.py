@@ -55,6 +55,12 @@ class MediaCommand(StrEnum):
     PREVIOUS = "previous"
 
 
+class PowerAction(StrEnum):
+    RESTART = "restart"
+    SHUT_DOWN = "shutDown"
+    LOG_OUT = "logOut"
+
+
 class ScreenshotArea(StrEnum):
     WHOLE_SCREEN = "wholeScreen"
     FRONT_WINDOW = "frontWindow"
@@ -159,6 +165,38 @@ class Network(Protocol):
     def set_wifi(self, enabled: bool) -> None: ...
 
 
+class Brightness(Protocol):
+    """The built-in screen's brightness in percent, or an external monitor's where the platform can reach it."""
+
+    def level(self) -> int: ...
+
+    def set_level(self, level: int) -> None:
+        """NotPossibleHere when no screen here lets a program change it."""
+        ...
+
+
+class DoNotDisturb(Protocol):
+    def enabled(self) -> bool | None:
+        """None when reading it failed; NotPossibleHere where the desktop never tells programs."""
+        ...
+
+    def set_enabled(self, on: bool) -> None:
+        """NotPossibleHere where the desktop gives programs no way to change it."""
+        ...
+
+
+class Bluetooth(Protocol):
+    def enabled(self) -> bool:
+        """NotPossibleHere when the computer has no Bluetooth adapter."""
+        ...
+
+    def set_enabled(self, on: bool) -> None: ...
+
+
+class Power(Protocol):
+    def act(self, action: PowerAction) -> None: ...
+
+
 class Screenshots(Protocol):
     def capture(self, area: ScreenshotArea, destination: Path) -> bool:
         """False when the user cancelled (for example, no area was selected); DesktopError when it failed."""
@@ -222,3 +260,7 @@ class Desktop:
     opener: Opener
     notifier: Notifier
     folders: Folders
+    brightness: Brightness
+    do_not_disturb: DoNotDisturb
+    bluetooth: Bluetooth
+    power: Power

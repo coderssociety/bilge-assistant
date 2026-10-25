@@ -151,7 +151,19 @@ def _desktop_tools(
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
-    from bilge.tools.desktop import apps, clipboard, files, sound, spreadsheet, system, timers, typing, web, windows
+    from bilge.tools.desktop import (
+        apps,
+        clipboard,
+        files,
+        hardware,
+        sound,
+        spreadsheet,
+        system,
+        timers,
+        typing,
+        web,
+        windows,
+    )
 
     dictation = typing.DictationSession(found.keyboard, language)
     sheet = spreadsheet.SpreadsheetSession(language)
@@ -161,6 +173,9 @@ def _desktop_tools(
         sound.volume_tool(found.volume, language),
         sound.music_tool(found.media, language, found.music),
         sound.music_search_tool(found.music, language),
+        *hardware.hardware_tools(
+            found.brightness, found.do_not_disturb, found.bluetooth, found.power, found.settings, language
+        ),
         *system.system_tools(found.session, found.network, found.settings, found.screenshots, found.folders, language),
         *clipboard.clipboard_tools(found.clipboard, language, last_reply),
         typing.type_text_tool(found.keyboard, language),
