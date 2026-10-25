@@ -15,6 +15,7 @@ from enum import StrEnum
 import numpy as np
 
 from bilge.brain.agent import Agent
+from bilge.core import translation_request
 from bilge.core.audio.speech_segmenter import Configuration, SpeechSegmenter
 from bilge.core.conversation import confirmation_parser
 from bilge.core.conversation.barge_in_detector import BargeInDetector, Command, Stop
@@ -353,7 +354,8 @@ class VoiceAssistant:
                 self._thinking = False
             # Stopped or redirected while it was still thinking: the answer is no longer wanted.
             if not self._stopped_by_user and self._barge_command is None:
-                self._say(reply)
+                target = None if work else translation_request.target(command)
+                self._say(reply, target.code if target else None)
         except Exception as error:
             log.exception("The turn failed")
             self._event("error", str(error))
@@ -377,7 +379,7 @@ class VoiceAssistant:
                 action = self.flow.heard(command, at=datetime.now())
             self._perform(action)
 
-    def _say(self, text: str) -> None:
+    def _say(self, text: str, language_code: str | None = None) -> None:
         if not text.strip():
             return
         self._reply_so_far = ""
@@ -389,7 +391,7 @@ class VoiceAssistant:
             self._reply_so_far = f"{self._reply_so_far} {sentence}".strip()
 
         try:
-            self.speech.speak(text, on_sentence=spoken)
+            self.speech.speak(text, on_sentence=spoken, language_code=language_code)
         finally:
             self._speaking = False
 

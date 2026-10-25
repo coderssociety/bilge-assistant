@@ -29,10 +29,12 @@ class SilentSpeech:
 
     def __init__(self):
         self.said = []
+        self.languages = []
         self.stopped = 0
 
-    def speak(self, text, on_sentence=None):
+    def speak(self, text, on_sentence=None, language_code=None):
         self.said.append(text)
+        self.languages.append(language_code)
         if on_sentence:
             on_sentence(text)
         return True
@@ -91,6 +93,15 @@ def test_wake_word_and_command_in_one_breath_runs_the_command():
     assistant._handle_utterance(SPEECH)
     assert wait(lambda: speech.said == ["Tamam: saat kaç?"])
     assert agent.commands == ["saat kaç?"]
+    assistant.stop()
+
+
+def test_a_reply_asked_for_in_another_language_is_spoken_in_it():
+    assistant, speech, agent = make(ScriptedRecognizer("Bilge, maili Fransızca oku"))
+    assistant.start()
+    assistant._handle_utterance(SPEECH)
+    assert wait(lambda: speech.said == ["Tamam: maili Fransızca oku"])
+    assert speech.languages == ["fr"]
     assistant.stop()
 
 
@@ -235,10 +246,10 @@ def test_an_announcement_cut_short_leaves_the_next_reply_alone():
     holder = {}
 
     class StoppingSpeech(SilentSpeech):
-        def speak(self, text, on_sentence=None):
+        def speak(self, text, on_sentence=None, language_code=None):
             if text.startswith("Hatırlatma"):
                 holder["a"]._stopped_by_user = True
-            return super().speak(text, on_sentence)
+            return super().speak(text, on_sentence, language_code)
 
     speech = StoppingSpeech()
     agent = EchoAgent()

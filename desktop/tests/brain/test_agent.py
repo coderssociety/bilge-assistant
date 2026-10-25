@@ -266,3 +266,15 @@ def test_untrusted_output_can_depend_on_the_call():
     provider = ScriptedProvider(call("controlMusic", action="nowPlaying"), Reply("X çalıyor."))
     agent, _ = make_agent(provider, [tool])
     assert agent.handle("ne çalıyor şu an söyler misin").read_untrusted
+
+
+def test_a_request_to_read_in_another_language_goes_to_the_model_with_that_language():
+    from bilge.tools.builtin.clock import current_date_time
+
+    clock = current_date_time(AssistantLanguage.TURKISH, clock=lambda: datetime(2026, 10, 15, 14, 5))
+    provider = ScriptedProvider(call("currentDateTime"), Reply("Il est 14 h 05."))
+    agent, _ = make_agent(provider, [clock])
+    assert agent.handle("saat kaç Fransızca söyle").text == "Il est 14 h 05."
+    request = provider.calls[0][1].content
+    assert request.startswith("Şu an: 15 Ekim 2026 Perşembe 14:05\nİstek: saat kaç Fransızca söyle")
+    assert "Yanıtını yalnızca Fransızca ver" in request

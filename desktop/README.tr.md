@@ -145,10 +145,11 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | Yazma | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` ya da `ydotool` (Wayland) | yerleşik |
 | Takvim | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “süt almayı işaretle” | CalDAV ya da bir iCal adresi | aynısı ya da Outlook |
 | Tablo | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel ya da LibreOffice Calc |
-| E-posta | “okunmamış e-postalarım”, “Ahmet'e yarın geleceğimi yaz” | | Outlook |
+| E-posta | “okunmamış e-postalarım”, “içeriğini oku”, “Ahmet'e yarın geleceğimi yaz” | | Outlook |
 | Sistem | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` ya da Plasma, `nmcli`, masaüstünün ekran görüntüsü aracı | yerleşik |
 | Pano | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” | `wl-clipboard`, `xclip` ya da `xsel` | yerleşik |
-| Haberler | “teknoloji haberleri”, “başka var mı”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı (İngilizcede BBC News); “aç” haberi tarayıcıda da açar | aynı |
+| Haberler | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı, TRT Haber, BBC Türkçe (İngilizcede BBC News, The Guardian, NPR); “aç” haberi tarayıcıda da açar | aynı |
+| Çeviri | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | ses 31 dilde konuşur | aynı |
 | Diğer | zamanlayıcılar ve alarmlar, site ve arama açma, günlük özet | | |
 
 Dosyaları çöpe atmak, uygulama kapatmak, dolu bir hücrenin üzerine yazmak, takvime eklemek ya da Wi-Fi'ı kapatmak

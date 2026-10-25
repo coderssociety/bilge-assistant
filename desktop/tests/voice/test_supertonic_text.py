@@ -21,3 +21,7 @@ def test_long_text_splits_at_sentence_ends():
     parts = chunks(sentence, max_length=100)
     assert all(len(p) <= 100 for p in parts)
     assert " ".join(parts) == sentence.strip()
+
+
+def test_another_language_the_model_knows_is_tagged_by_its_code():
+    assert preprocess("Bonjour", "fr") == "<fr>Bonjour.</fr>"

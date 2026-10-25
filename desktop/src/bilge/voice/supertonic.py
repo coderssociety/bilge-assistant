@@ -45,7 +45,7 @@ _ENDS_WITH_PUNCTUATION = re.compile(r"[.!?;:,'\"')\]}…。」』】〉》›»]
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
-def preprocess(text: str, language: AssistantLanguage) -> str:
+def preprocess(text: str, language: AssistantLanguage | str) -> str:
     """The model was trained on NFKD text wrapped in a language tag; Turkish letters split into base + mark."""
     text = _EMOJI.sub("", unicodedata.normalize("NFKD", text)).translate(_CHARACTERS)
     for old, new in _EXPRESSIONS.items():
@@ -57,7 +57,8 @@ def preprocess(text: str, language: AssistantLanguage) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     if not _ENDS_WITH_PUNCTUATION.search(text):
         text += "."
-    return f"<{language.code}>{text}</{language.code}>"
+    code = language.code if isinstance(language, AssistantLanguage) else language
+    return f"<{code}>{text}</{code}>"
 
 
 def chunks(text: str, max_length: int = _MAX_CHUNK) -> list[str]:
@@ -122,8 +123,11 @@ class Supertonic:
             self._styles[voice] = VoiceStyle.load(self._voices_dir / f"{voice}.json")
         return self._styles[voice]
 
-    def synthesize(self, text: str, language: AssistantLanguage, voice: str, seed: int | None = None) -> np.ndarray:
-        """Mono float32 samples at `sample_rate`; empty for text with nothing to say."""
+    def synthesize(
+        self, text: str, language: AssistantLanguage | str, voice: str, seed: int | None = None
+    ) -> np.ndarray:
+        """Mono float32 samples at `sample_rate`; empty for text with nothing to say. `language` may also be the code
+        of any other language the model knows ("fr"), for a translation."""
         style = self.style(voice)
         rng = np.random.default_rng(seed)
         silence = np.zeros(int(_SILENCE_BETWEEN_CHUNKS * self.sample_rate), dtype=np.float32)
@@ -134,7 +138,9 @@ class Supertonic:
             parts.append(self._chunk(chunk, language, style, rng))
         return np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)
 
-    def _chunk(self, text: str, language: AssistantLanguage, style: VoiceStyle, rng: np.random.Generator) -> np.ndarray:
+    def _chunk(
+        self, text: str, language: AssistantLanguage | str, style: VoiceStyle, rng: np.random.Generator
+    ) -> np.ndarray:
         codepoints = np.frombuffer(preprocess(text, language).encode("utf-32-le"), dtype=np.uint32)
         # A character the model has no token for (outside the Basic Multilingual Plane) is left out.
         codepoints = codepoints[codepoints < len(self._indexer)]

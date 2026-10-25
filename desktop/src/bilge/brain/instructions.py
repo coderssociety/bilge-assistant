@@ -4,6 +4,7 @@ from datetime import datetime
 
 from bilge.core.identity import NAME
 from bilge.core.language import AssistantLanguage
+from bilge.core.translation_request import SpeechLanguage
 
 _TR_MONTHS = [
     "Ocak",
@@ -59,6 +60,19 @@ def system_prompt(language: AssistantLanguage, memory: str | None = None) -> str
         return base
     heading = _ENGLISH_MEMORY if language is AssistantLanguage.ENGLISH else _TURKISH_MEMORY
     return f"{base}\n\n{heading}\n{memory}"
+
+
+def translation(target: SpeechLanguage, language: AssistantLanguage) -> str:
+    """Added to a request that wants what is read, or the answer, in another language ("İngilizce maili Türkçe oku")."""
+    if language is AssistantLanguage.ENGLISH:
+        return (
+            f"\n(Answer only in {target.english_name}: translate what you read into {target.english_name}, without "
+            "comments; for a long text the main part, at most eight sentences.)"
+        )
+    return (
+        f"\n(Yanıtını yalnızca {target.turkish_name} ver: okuduğun metni {target.turkish_name} diline çevir, açıklama "
+        "ekleme; uzun metinde en önemli kısmı, en fazla sekiz cümle.)"
+    )
 
 
 def request(command: str, now: datetime, language: AssistantLanguage) -> str:

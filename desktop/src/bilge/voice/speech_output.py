@@ -31,13 +31,17 @@ class SpeechOutput:
         self._stopped.set()
         self.device.clear()
 
-    def speak(self, text: str, on_sentence=None) -> bool:
-        """Blocks until everything is said; False when it was stopped first."""
+    def speak(self, text: str, on_sentence=None, language_code: str | None = None) -> bool:
+        """Blocks until everything is said; False when it was stopped first. `language_code`: a reply read in another
+        language ("fr"); numbers are spelled out only for the languages that have a normalizer."""
+        code = language_code or self.language.code
+        normalizer = next((language for language in AssistantLanguage if language.code == code), None)
         with self._lock:
             self._stopped.clear()
-            sentences = sentence_splitter.split(spoken_text.normalize(text, self.language))
+            spoken = spoken_text.normalize(text, normalizer) if normalizer else spoken_text.without_markup(text)
+            sentences = sentence_splitter.split(spoken)
             ready: queue.Queue[np.ndarray | None] = queue.Queue(maxsize=2)
-            producer = threading.Thread(target=self._synthesize, args=(sentences, ready), daemon=True)
+            producer = threading.Thread(target=self._synthesize, args=(sentences, ready, code), daemon=True)
             producer.start()
             index = 0
             while (audio := ready.get()) is not None:
@@ -56,12 +60,12 @@ class SpeechOutput:
         """Short sounds (the wake tone) at the device rate, without waiting."""
         self.device.play(samples)
 
-    def _synthesize(self, sentences: list[str], ready: queue.Queue) -> None:
+    def _synthesize(self, sentences: list[str], ready: queue.Queue, code: str) -> None:
         try:
             for sentence in sentences:
                 if self._stopped.is_set():
                     break
-                audio = self.tts.synthesize(sentence, self.language, self.voice)
+                audio = self.tts.synthesize(sentence, code, self.voice)
                 if len(audio):
                     ready.put(soxr.resample(audio, self.tts.sample_rate, self.device.sample_rate).astype(np.float32))
         except Exception:

@@ -13,6 +13,7 @@ from typing import Any, Protocol
 from bilge.brain import fast_path, instructions
 from bilge.brain.policy import Action, decide
 from bilge.brain.routing import Mode, Rule
+from bilge.core import translation_request
 from bilge.core.conversation.conversation_flow import WorkSession
 from bilge.core.language import AssistantLanguage
 from bilge.core.speech import turkish_number_parser, turkish_time_of_day
@@ -143,18 +144,21 @@ class Agent:
         self._command = command
         # A reply to text fetched in an earlier turn is still in the conversation.
         self._read_earlier = any(untrusted for *_, untrusted in self._history)
-        request = Message.user(instructions.request(command, self.clock(), self.language))
+        # "İngilizce maili Türkçe oku": the model reads and translates, so rules that answer by themselves step aside.
+        target = translation_request.target(command)
+        wording = instructions.request(command, self.clock(), self.language)
+        request = Message.user(wording + (instructions.translation(target, self.language) if target else ""))
 
         # Rules see the words as said: their own parsers read numbers, and "on iki" is not always a time.
         def allowed(name: str) -> bool:
             return self.registry.get(name) is not None and (tools is None or name in tools)
 
-        for route in self.rules:
+        for route in self.rules if target is None else []:
             call = route(said)
             if call is not None and allowed(call.name):
                 step = self._run(call, read_untrusted=False)
                 return self._finish(request, step.spoken, step.untrusted)
-        quick = fast_path.call_for(command, self.language)
+        quick = fast_path.call_for(command, self.language) if target is None else None
         if quick and allowed(quick.name):
             step = self._run(quick, read_untrusted=False)
             if not step.failed:
