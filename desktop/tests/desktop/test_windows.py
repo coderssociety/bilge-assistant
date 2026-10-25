@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from bilge import calendars
+from bilge.brain.agent import resolve
 from bilge.core.language import AssistantLanguage
 from bilge.core.spreadsheet.cell_reference import CellReference, SpreadsheetNumber, SpreadsheetText
 from bilge.desktop import image
@@ -338,6 +339,11 @@ class Items(list):
 
     def Restrict(self, query):  # noqa: N802
         self.queries.append(query)
+        if query.startswith("@SQL="):
+            wanted = query.split("'%")[1].split("%'")[0].lower()
+            return Items([i for i in self if wanted in f"{i.SenderName} {i.SenderEmailAddress}".lower()])
+        if query == "[UnRead] = True":
+            return Items([i for i in self if i.UnRead])
         return Items([i for i in self if not getattr(i, "Complete", False)])
 
     def GetFirst(self):  # noqa: N802
@@ -362,7 +368,15 @@ class Outlook:
                                                AllDayEvent=False)])  # fmt: skip
         self.tasks = Items([SimpleNamespace(Subject="Süt al", DueDate=datetime(4501, 1, 1), Complete=False,
                                             MarkComplete=lambda: None)])  # fmt: skip
-        self.inbox = Items([SimpleNamespace(SenderName="Ahmet", Subject="Toplantı", Body="Yarın 10'da görüşelim.")])
+        # Newest first, as Sort("[ReceivedTime]", True) leaves them.
+        self.inbox = Items([
+            SimpleNamespace(SenderName="Ahmet", SenderEmailAddress="ahmet@example.org", Subject="Toplantı",
+                            Body="Yarın 10'da görüşelim.", UnRead=True, ReceivedTime=datetime(2026, 10, 15, 9, 30)),
+            SimpleNamespace(SenderName="Ayşe Kaya", SenderEmailAddress="ayse@example.org", Subject="Rapor",
+                            Body="Rapor ekte.", UnRead=False, ReceivedTime=datetime(2026, 10, 14, 17, 0)),
+            SimpleNamespace(SenderName="Ahmet", SenderEmailAddress="ahmet@example.org", Subject="Fatura",
+                            Body="Fatura ödendi.", UnRead=False, ReceivedTime=datetime(2026, 10, 13, 8, 15)),
+        ])  # fmt: skip
         self.sent = []
 
     def GetNamespace(self, _):  # noqa: N802
@@ -424,6 +438,33 @@ def test_mail_is_read_as_untrusted_and_sent_only_to_the_resolved_recipient(no_co
     assert send.question({"to": "Bilinmeyen", "body": "x"}) is None
     with pytest.raises(ToolError, match="Bilinmeyen"):
         send.run({"to": "Bilinmeyen", "body": "x"})
+
+
+def test_mail_is_picked_out_by_sender_and_place_read_or_not(no_com):
+    app = Outlook()
+    read = {t.name: t for t in mail_tools(office.Outlook(application=lambda: app), TR)}["readMail"]
+    ayse = read.refine({}, "Ayşe'nin mailini oku")
+    assert ayse == {"content": True, "sender": "Ayşe"}
+    assert read.run(ayse) == "E-posta: Ayşe Kaya - Rapor, 14.10.2026 17:00\nRapor ekte."
+    assert app.inbox.queries[-1] == (
+        "@SQL=\"urn:schemas:httpmail:fromname\" LIKE '%Ayşe%' OR \"urn:schemas:httpmail:fromemail\" LIKE '%Ayşe%'"
+    )
+    second = read.refine({}, resolve("Ahmet'in ikinci mailini oku", TR))
+    assert read.run(second) == "E-posta: Ahmet - Fatura, 13.10.2026 08:15\nFatura ödendi."
+    for message in app.inbox:
+        message.UnRead = False
+    assert read.run({}) == "Okunmamış e-postan yok."
+    assert read.run(read.refine({}, "son mailimi oku")).startswith("E-posta: Ahmet - Toplantı")
+    assert read.run({"position": 9}) == "Yalnızca 3 e-posta buldum."
+    assert read.run({"sender": "Zeynep"}) == "'Zeynep' kişisinden gelen bir e-posta bulamadım."
+
+
+def test_a_sender_cannot_change_the_outlook_filter(no_com):
+    app = Outlook()
+    read = {t.name: t for t in mail_tools(office.Outlook(application=lambda: app), TR)}["readMail"]
+    read.run({"sender": "x' OR \"urn:schemas:httpmail:subject\" LIKE '%"})
+    # Only the four quotes around the two LIKE patterns are left.
+    assert app.inbox.queries[-1].count("'") == 4
 
 
 def test_office_start_menu_ids_name_their_program():

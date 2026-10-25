@@ -1,6 +1,8 @@
 import pytest
 
-from bilge.core.mail_request import asks_for_content
+from bilge.brain.agent import resolve
+from bilge.core.language import AssistantLanguage
+from bilge.core.mail_request import asks_for_content, position, sender
 
 
 @pytest.mark.parametrize(
@@ -22,3 +24,37 @@ from bilge.core.mail_request import asks_for_content
 )
 def test_knows_when_the_messages_themselves_are_wanted(command: str, wants_content: bool) -> None:
     assert asks_for_content(command) is wants_content
+
+
+@pytest.mark.parametrize(
+    ("command", "name"),
+    [
+        ("Ahmet'in mailini oku", "Ahmet"),
+        ("Ayşe'nin son e-postasını oku", "Ayşe"),
+        ("Mehmet'ten gelen maili oku", "Mehmet"),
+        ("Ahmet'in ikinci mailini oku", "Ahmet"),
+        ("Read the email from Anna", "Anna"),
+        ("Read John's latest email", "John"),
+        ("Read the email from yesterday", None),
+        ("Son mailimi oku", None),
+    ],
+)
+def test_reads_whose_mail_is_asked_for(command: str, name: str | None) -> None:
+    assert sender(resolve(command, AssistantLanguage.TURKISH)) == name
+
+
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        ("ikinci maili oku", 2),
+        ("üçüncü e-postayı oku", 3),
+        ("birinci maili oku", 1),
+        ("son mailimi oku", 1),
+        ("read the second email", 2),
+        ("read my latest email", 1),
+        ("maillerimi oku", None),
+        ("ikinci şarkıyı çal", None),
+    ],
+)
+def test_reads_which_message_is_asked_for(command: str, expected: int | None) -> None:
+    assert position(resolve(command, AssistantLanguage.TURKISH)) == expected
