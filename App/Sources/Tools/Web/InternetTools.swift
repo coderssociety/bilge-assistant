@@ -167,8 +167,15 @@ struct ExchangeRateTool: AssistantTool {
     let description = "Döviz kurunu ve para çevirisini söyler: 'dolar kaç lira', '100 euro kaç TL' (Avrupa Merkez Bankası kurları)."
 
     @Generable
-    enum Currency {
+    enum Currency: CaseIterable {
         case lira, dollar, euro, pound, swissFranc, yen, yuan, canadianDollar, australianDollar, swedishKrona, norwegianKrone, danishKrone
+        /// Not a currency the rates source knows; chosen only so the tool can decline it.
+        case gold
+
+        init?(code: String) {
+            guard let match = Self.allCases.first(where: { $0.code == code }) else { return nil }
+            self = match
+        }
 
         var code: String {
             switch self {
@@ -184,6 +191,7 @@ struct ExchangeRateTool: AssistantTool {
             case .swedishKrona: "SEK"
             case .norwegianKrone: "NOK"
             case .danishKrone: "DKK"
+            case .gold: "XAU"
             }
         }
 
@@ -202,6 +210,7 @@ struct ExchangeRateTool: AssistantTool {
             case .swedishKrona: String(localized: "İsveç kronu")
             case .norwegianKrone: String(localized: "Norveç kronu")
             case .danishKrone: String(localized: "Danimarka kronu")
+            case .gold: String(localized: "altın")
             }
         }
     }
@@ -216,16 +225,25 @@ struct ExchangeRateTool: AssistantTool {
         var amount: Double?
     }
 
-    /// The model fills an unsaid target with lira, as the description tells it to for Turkish users;
-    /// in English the dollar (or the euro, when converting dollars) is the expected default.
+    /// The currencies and amount said win over the model's: it once answered "100 Euro kaç para" with
+    /// another amount. An unsaid target is lira in Turkish; in English the dollar (or the euro, when
+    /// converting dollars) is the expected default.
     func refine(_ arguments: Arguments, command: String) -> Arguments {
-        guard AppLanguage.current == .english, arguments.to == .lira else { return arguments }
-        let folded = TurkishText.folded(command)
-        guard !["lira", "try", "tl", "turkish"].contains(where: { folded.split(separator: " ").contains(Substring($0)) }) else {
-            return arguments
-        }
+        let parsed = CurrencyRequest.parse(command)
         var refined = arguments
-        refined.to = arguments.from == .dollar ? .euro : .dollar
+        refined.amount = parsed.amount
+        if parsed.asksAboutGold {
+            refined.from = .gold
+            return refined
+        }
+        if let from = parsed.from.flatMap(Currency.init(code:)) { refined.from = from }
+        if let to = parsed.to.flatMap(Currency.init(code:)) {
+            refined.to = to
+        } else if AppLanguage.current == .english {
+            if refined.to == .lira { refined.to = refined.from == .dollar ? .euro : .dollar }
+        } else if parsed.from != nil {
+            refined.to = .lira
+        }
         return refined
     }
 
@@ -235,6 +253,9 @@ struct ExchangeRateTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
+        guard arguments.from != .gold, arguments.to != .gold else {
+            return ToolReply.failure(String(localized: "Altın fiyatlarını henüz söyleyemiyorum."))
+        }
         let target = arguments.from == arguments.to ? Currency.lira : arguments.to
         guard arguments.from != target else {
             return ToolReply.failure(String(localized: "Hangi para birimini çevireceğimi anlayamadım."))
