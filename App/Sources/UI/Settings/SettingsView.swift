@@ -27,6 +27,9 @@ struct SettingsView: View {
             Tab("Rutinler", systemImage: "repeat") {
                 RoutinesView(store: environment.routines)
             }
+            Tab("Akıllı ev", systemImage: "house") {
+                SmartHomeSettingsView(home: environment.home)
+            }
             Tab("Geçmiş", systemImage: "clock.arrow.circlepath") {
                 HistoryView()
             }
@@ -34,6 +37,6 @@ struct SettingsView: View {
                 AboutView()
             }
         }
-        .frame(width: 560, height: 470)
+        .frame(width: 680, height: 470)
     }
 }

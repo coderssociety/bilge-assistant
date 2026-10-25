@@ -65,6 +65,7 @@ final class AppEnvironment {
     let brain: AssistantBrain
     let memory: MemoryStore
     let routines: RoutineStore
+    let home: HomeAssistantConfig
     let downloads: ModelDownloads
     let speakerGate: SpeakerGate
     let assistant: AssistantController
@@ -86,7 +87,8 @@ final class AppEnvironment {
         let timers = TimerService { await announcer.target?.announce($0) }
         let memory = MemoryStore()
         let routines = RoutineStore()
-        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory, routines: routines,
+        let home = HomeAssistantConfig()
+        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory, routines: routines, home: home,
                                     language: settings.language)
         let whisper = WhisperProvider(language: settings.language)
         let meetings = MeetingRecorder()
@@ -103,6 +105,7 @@ final class AppEnvironment {
         self.brain = brain
         self.memory = memory
         self.routines = routines
+        self.home = home
         let downloads = ModelDownloads()
         downloads.onDownloaded = { _ in brain.localModelDownloaded() }
         self.downloads = downloads

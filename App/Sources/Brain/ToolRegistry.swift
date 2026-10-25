@@ -11,6 +11,8 @@ struct ToolRegistry {
     /// In memory only unless the app passes its stored one, so benchmarks never touch the user's facts.
     var memory = MemoryStore(fileURL: nil)
     var routines = RoutineStore(fileURL: nil)
+    /// Only the app passes the user's Home Assistant; without it there is no smart-home tool.
+    var home: HomeAssistantConfig?
     var spreadsheet = SpreadsheetSession()
     var dictation = DictationSession()
     var news = NewsReading()
@@ -18,10 +20,13 @@ struct ToolRegistry {
     var language = AssistantLanguage.turkish
 
     func makeTools() -> [any AssistantTool] {
-        [
-            // Rule-routed tools claim commands in this order: a routine's command may name any other tool.
+        // Rule-routed tools claim commands in this order: a routine's command may name any other tool, and a home
+        // command may name a room that other rules would take.
+        let first: [any AssistantTool] = [
             AddRoutineTool(store: routines, language: language),
             ManageRoutinesTool(store: routines, language: language),
+        ] + (home.map { [SmartHomeTool(home: $0, language: language)] } ?? [])
+        return first + [
             OpenAppTool(catalog: catalog),
             QuitAppTool(catalog: catalog),
             RunningAppsTool(),

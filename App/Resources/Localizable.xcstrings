@@ -1460,6 +1460,26 @@
         }
       }
     },
+    "Adres": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Address"
+          }
+        }
+      }
+    },
+    "Adres http:// ya da https:// ile başlamalı, ör. http://192.168.1.20:8123.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The address must start with http:// or https://, e.g. http://192.168.1.20:8123."
+          }
+        }
+      }
+    },
     "Adım %lld / %lld": {
       "localizations": {
         "en": {
@@ -1496,12 +1516,32 @@
         }
       }
     },
+    "Akıllı ev": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smart Home"
+          }
+        }
+      }
+    },
     "Altın fiyatlarını şu an alamadım; kaynaklara ulaşılamadı.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "I can't get gold prices right now; the sources couldn't be reached."
+          }
+        }
+      }
+    },
+    "Anahtar Zinciri'ne erişilemedi (%lld).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't access the Keychain (%lld)."
           }
         }
       }
@@ -1686,6 +1726,16 @@
         }
       }
     },
+    "Ayarlandığında “salonun ışığını aç”, “klimayı 22 dereceye ayarla”, “kapı kilitli mi” gibi ev cihazı ya da oda adı geçen komutlar Home Assistant'a gönderilir ve yanıtı okunur. Kilit, garaj kapısı ve alarm değişiklikleri önce onayını ister.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Once set up, commands that name a home device or room, such as “turn on the living room lights”, “set the thermostat to 22 degrees” or “is the front door locked”, go to Home Assistant and its answer is read out. Changes to locks, the garage door and the alarm ask for your yes first."
+          }
+        }
+      }
+    },
     "Ayarları aç": {
       "localizations": {
         "en": {
@@ -1782,6 +1832,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "You told me: %@."
+          }
+        }
+      }
+    },
+    "Bağlandı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected."
+          }
+        }
+      }
+    },
+    "Bağlantıyı dene": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test Connection"
           }
         }
       }
@@ -3260,6 +3330,16 @@
         }
       }
     },
+    "Erişim anahtarı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access token"
+          }
+        }
+      }
+    },
     "Erkek %@": {
       "localizations": {
         "en": {
@@ -4036,6 +4116,106 @@
         }
       }
     },
+    "Home Assistant": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home Assistant"
+          }
+        }
+      }
+    },
+    "Home Assistant adresi geçersiz; ayarlarda http:// ya da https:// ile başlayan adresi gir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Home Assistant address isn't valid; enter one starting with http:// or https:// in Settings."
+          }
+        }
+      }
+    },
+    "Home Assistant bir hatayla yanıt verdi (%lld).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home Assistant answered with an error (%lld)."
+          }
+        }
+      }
+    },
+    "Home Assistant erişim anahtarı kayıtlı değil; ayarlardan ekleyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Home Assistant access token is stored; you can add one in Settings."
+          }
+        }
+      }
+    },
+    "Home Assistant erişim anahtarını kabul etmedi (401); ayarlardan yeni bir uzun ömürlü erişim anahtarı gir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home Assistant didn't accept the access token (401); enter a new long-lived access token in Settings."
+          }
+        }
+      }
+    },
+    "Home Assistant zamanında yanıt vermedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home Assistant didn't answer in time."
+          }
+        }
+      }
+    },
+    "Home Assistant'a ulaşamadım; adres doğru mu, Mac aynı ağda mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't reach Home Assistant; is the address right, and is the Mac on the same network?"
+          }
+        }
+      }
+    },
+    "Home Assistant'a “%@” diyeyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I tell Home Assistant “%@”?"
+          }
+        }
+      }
+    },
+    "Home Assistant'ta Profil > Güvenlik > Uzun ömürlü erişim anahtarları bölümünden oluştur. Anahtar Anahtar Zinciri'nde saklanır ve yalnızca bu adrese gönderilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create one in Home Assistant under Profile > Security > Long-lived access tokens. It is kept in the Keychain and sent only to this address."
+          }
+        }
+      }
+    },
+    "Home Assistant'tan anlayamadığım bir yanıt geldi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home Assistant sent an answer I couldn't read."
+          }
+        }
+      }
+    },
     "Hugging Face'ten MLX biçiminde bir model indir (örneğin mlx-community'den) ve klasörünü buraya koy. Klasörde config.json, tokenizer ve .safetensors dosyaları olmalı. Desteklenmeyen bir model türü açılamazsa cevabı Apple modeli verir.": {
       "localizations": {
         "en": {
@@ -4186,6 +4366,16 @@
         }
       }
     },
+    "Kaydet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
     "Kaydet ve oku": {
       "localizations": {
         "en": {
@@ -4242,6 +4432,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The recordings aren't similar enough. Could you try again somewhere quiet, close to the microphone?"
+          }
+        }
+      }
+    },
+    "Kayıtlı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved"
           }
         }
       }
@@ -4312,6 +4512,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lock Screen"
+          }
+        }
+      }
+    },
+    "Kilit, garaj kapısı ve alarm yalnızca onayla değiştirilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I change locks, the garage door and the alarm only after you confirm."
           }
         }
       }
@@ -4612,6 +4822,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open-source components and models used"
+          }
+        }
+      }
+    },
+    "Kullanım": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage"
           }
         }
       }
@@ -6800,6 +7020,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The app isn't running, or it quit before it could answer."
+          }
+        }
+      }
+    },
+    "Uzun ömürlü erişim anahtarı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long-lived access token"
           }
         }
       }
