@@ -1952,6 +1952,16 @@
         }
       }
     },
+    "Devamı var; istersen “devam et” de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's more; say “continue” if you want it."
+          }
+        }
+      }
+    },
     "Dikkat, bu adım okuduğum bir içeriğe dayanıyor.": {
       "localizations": {
         "en": {
@@ -3982,6 +3992,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unread emails: "
+          }
+        }
+      }
+    },
+    "Okuyacak başka bir şey kalmadı, hepsini okudum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's nothing more to read; that was all of it."
           }
         }
       }

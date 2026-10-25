@@ -18,7 +18,7 @@ enum BrowserPage {
     ]
     /// Also reachable by keyboard shortcuts, though not by AppleScript.
     private static let keyboardOnly: Set<String> = ["org.mozilla.firefox"]
-    private static let maxCharacters = 6000
+    static let maxCharacters = 6000
 
     static func isBrowser(_ bundleIdentifier: String?) -> Bool {
         bundleIdentifier.map { scriptable[$0] != nil || keyboardOnly.contains($0) } ?? false
@@ -43,7 +43,7 @@ enum BrowserPage {
     }
 
     /// The page fetched again and reduced to its text. It is untrusted: answer from it in a tool-less session.
-    static func text(of url: URL) async throws -> String {
+    static func text(of url: URL, maxCharacters: Int = maxCharacters) async throws -> String {
         let html = try await WebFetch.text(from: url)
         let text = HTMLText.extract(html)
         guard !text.isEmpty else { return ToolReply.failure(String(localized: "Sayfada okunabilir yazı yok.")) }

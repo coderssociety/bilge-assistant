@@ -1,10 +1,11 @@
+import AsistanCore
 import Foundation
 import FoundationModels
 
 struct CalendarQueryTool: AssistantTool {
     let name = "readCalendar"
     let description = "Takvimdeki etkinlikleri okur: bugün, yarın ya da bu hafta."
-    private static let maxEvents = 12
+    let readingLayout: ContinuedReading.Layout? = .list(separator: "; ", perPart: 12)
 
     @Generable
     enum Range {
@@ -28,7 +29,7 @@ struct CalendarQueryTool: AssistantTool {
         do {
             let events = try await CalendarAccess.shared.events(from: start, to: end)
             guard !events.isEmpty else { return String(localized: "\(label) takvimde etkinlik yok.") }
-            let lines = events.prefix(Self.maxEvents).map { Self.describe($0, includeDay: days > 1) }
+            let lines = events.map { Self.describe($0, includeDay: days > 1) }
             return String(localized: "\(label) \(events.count) etkinlik var: \(lines.joined(separator: "; "))")
         } catch {
             return ToolReply.failure(error)

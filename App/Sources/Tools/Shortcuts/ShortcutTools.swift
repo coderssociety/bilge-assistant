@@ -41,7 +41,7 @@ enum ShortcutsCatalog {
 struct ListShortcutsTool: AssistantTool {
     let name = "listShortcuts"
     let description = "Kestirmeler uygulamasındaki kestirmelerin adlarını listeler."
-    private static let maxNames = 20
+    let readingLayout: ContinuedReading.Layout? = .list(separator: ", ", perPart: 20)
 
     @Generable
     struct Arguments {}
@@ -52,7 +52,7 @@ struct ListShortcutsTool: AssistantTool {
         do {
             let names = try await ShortcutsCatalog.names()
             guard !names.isEmpty else { return String(localized: "Hiç kestirmen yok.") }
-            return String(localized: "\(names.count) kestirmen var: \(names.prefix(Self.maxNames).joined(separator: ", "))")
+            return String(localized: "\(names.count) kestirmen var: \(names.joined(separator: ", "))")
         } catch {
             return ToolReply.failure(error)
         }

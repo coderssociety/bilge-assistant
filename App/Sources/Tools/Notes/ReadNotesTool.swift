@@ -1,3 +1,4 @@
+import AsistanCore
 import Foundation
 import FoundationModels
 
@@ -7,7 +8,7 @@ struct ReadNotesTool: AssistantTool {
     let name = "readNotes"
     let description = "Notlar uygulamasında bir notu arar ve içeriğini okur; konu söylenmezse en son notu okur."
     let answersWithLanguageModel = true
-    private static let maxCharacters = 3000
+    let readingLayout: ContinuedReading.Layout? = .text(maxCharacters: 3000)
 
     @Generable
     struct Arguments {
@@ -37,7 +38,7 @@ struct ReadNotesTool: AssistantTool {
                     ? String(localized: "Hiç not bulamadım.")
                     : String(localized: "'\(query)' geçen bir not bulamadım."))
             }
-            return String(text.prefix(Self.maxCharacters))
+            return text
         } catch {
             return ToolReply.failure(error)
         }

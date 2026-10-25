@@ -1,3 +1,4 @@
+import AsistanCore
 import Foundation
 import FoundationModels
 import Synchronization
@@ -15,6 +16,8 @@ protocol AssistantTool: Tool where Output == String, Arguments: Generable & Send
     var risk: ToolRisk { get }
     /// The result is raw material (screen text) that the language model turns into the answer.
     var answersWithLanguageModel: Bool { get }
+    /// How a long result is read in parts, so "devamını oku" goes on; nil reads it whole.
+    var readingLayout: ContinuedReading.Layout? { get }
     /// Non-nil for tools without parameters, so the router can skip argument extraction.
     func emptyArguments() -> Arguments?
     /// Non-nil when the whole command can serve as the arguments, skipping model extraction.
@@ -41,6 +44,7 @@ protocol RuleRoutedTool: AssistantTool {
 extension AssistantTool {
     var risk: ToolRisk { .safe }
     var answersWithLanguageModel: Bool { false }
+    var readingLayout: ContinuedReading.Layout? { nil }
     func emptyArguments() -> Arguments? { nil }
     func arguments(fromCommand command: String) -> Arguments? { nil }
     func refine(_ arguments: Arguments, command: String) -> Arguments { arguments }
@@ -54,6 +58,7 @@ extension AssistantTool {
             risk: risk,
             confirmationQuestion: risk == .needsConfirmation ? confirmationQuestion(for: arguments) : nil,
             answersWithLanguageModel: answersWithLanguageModel,
+            readingLayout: readingLayout,
             execute: { try await call(arguments: arguments) })
     }
 }
@@ -65,6 +70,7 @@ struct PreparedToolCall: Sendable {
     let risk: ToolRisk
     let confirmationQuestion: String?
     var answersWithLanguageModel = false
+    var readingLayout: ContinuedReading.Layout?
     /// Sending on the user's behalf: only an explicit "evet"/"gönder" confirms.
     var requiresExplicitYes = false
     let execute: @Sendable () async throws -> String
@@ -73,15 +79,15 @@ struct PreparedToolCall: Sendable {
     func cautioned(_ note: String) -> PreparedToolCall {
         PreparedToolCall(toolName: toolName, argumentsDescription: argumentsDescription, risk: risk,
                          confirmationQuestion: confirmationQuestion.map { note + " " + $0 },
-                         answersWithLanguageModel: answersWithLanguageModel, requiresExplicitYes: requiresExplicitYes,
-                         execute: execute)
+                         answersWithLanguageModel: answersWithLanguageModel, readingLayout: readingLayout,
+                         requiresExplicitYes: requiresExplicitYes, execute: execute)
     }
 
     /// The same call, but asking `question` first even if it was safe.
     func requiringConfirmation(_ question: String) -> PreparedToolCall {
         PreparedToolCall(toolName: toolName, argumentsDescription: argumentsDescription, risk: .needsConfirmation,
                          confirmationQuestion: question, answersWithLanguageModel: answersWithLanguageModel,
-                         requiresExplicitYes: requiresExplicitYes, execute: execute)
+                         readingLayout: readingLayout, requiresExplicitYes: requiresExplicitYes, execute: execute)
     }
 
     /// A call that cannot run (e.g. nothing matched); speaking `message` is the whole turn.

@@ -196,6 +196,7 @@ struct ReadWebPageTool: AssistantTool {
     let name = "readWebPage"
     let description = "Tarayıcıda açık olan web sayfasını ya da söylenen adresi indirip okur; özetler ya da soruyu yanıtlar."
     let answersWithLanguageModel = true
+    let readingLayout: ContinuedReading.Layout? = .text(maxCharacters: BrowserPage.maxCharacters)
 
     @Generable
     struct Arguments {
@@ -208,7 +209,7 @@ struct ReadWebPageTool: AssistantTool {
             guard let url = try await Self.target(arguments.address) else {
                 return ToolReply.failure(String(localized: "Tarayıcıda açık bir sayfa bulamadım."))
             }
-            return try await BrowserPage.text(of: url)
+            return try await BrowserPage.text(of: url, maxCharacters: .max)
         } catch {
             return ToolReply.failure(error)
         }

@@ -49,7 +49,7 @@ struct ReadDocumentTool: AssistantTool {
     let name = "readDocument"
     let description = "Bir belgeyi (PDF, metin, Word, RTF) açmadan okur; özetler ya da içeriğiyle ilgili soruyu yanıtlar."
     let answersWithLanguageModel = true
-    private static let maxCharacters = 6000
+    let readingLayout: ContinuedReading.Layout? = .text(maxCharacters: 6000)
     static let readableExtensions: Set<String> = ["pdf", "txt", "md", "rtf", "rtfd", "docx", "doc", "html", "htm", "csv"]
 
     @Generable
@@ -68,7 +68,7 @@ struct ReadDocumentTool: AssistantTool {
             guard !text.isEmpty else {
                 return ToolReply.failure(String(localized: "'\(file.lastPathComponent)' içinde okunabilir yazı yok."))
             }
-            return String(localized: "Belge: \(file.lastPathComponent)\n\(String(text.prefix(Self.maxCharacters)))")
+            return String(localized: "Belge: \(file.lastPathComponent)\n\(text)")
         } catch {
             return ToolReply.failure(error)
         }
