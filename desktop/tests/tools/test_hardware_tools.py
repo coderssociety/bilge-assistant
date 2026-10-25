@@ -1,9 +1,12 @@
+from datetime import datetime
+
 import pytest
 
+from bilge.brain.agent import Agent
 from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import NowPlaying, PowerAction, RepeatMode
 from bilge.desktop.process import DesktopError, MissingProgram, NotPossibleHere
-from bilge.tools.base import ToolError
+from bilge.tools.base import Registry, ToolError
 from bilge.tools.desktop import hardware, playback
 
 TR, EN = AssistantLanguage.TURKISH, AssistantLanguage.ENGLISH
@@ -194,3 +197,21 @@ def test_playback_without_a_player_or_support():
     )
     with pytest.raises(ToolError, match="desteklemiyor"):
         playback.playback_tool(FakeMedia(error=NotPossibleHere("no shuffle")), TR).run({"action": "shuffleOn"})
+
+
+class NoModel:
+    def complete(self, messages, tools=None, **_):
+        raise AssertionError("the fast path should have answered")
+
+
+def test_fast_path_runs_the_new_tools_and_still_asks_before_power_actions():
+    asked = []
+    brightness, power = FakeBrightness(), FakePower()
+    registry = Registry([hardware.brightness_tool(brightness, TR), hardware.power_tool(power, TR)])
+    agent = Agent(NoModel(), registry, lambda question: asked.append(question) or False, TR,
+                  clock=lambda: datetime(2026, 10, 25, 14, 30))  # fmt: skip
+    assert agent.handle("parlaklığı yüzde elli yap").text == "Parlaklık yüzde 50."
+    assert brightness.value == 50
+    assert agent.handle("bilgisayarı kapat").text == "Tamam, yapmıyorum."
+    assert asked == ["Kaydedilmemiş işler kaybolabilir. Bilgisayarı kapatayım mı?"]
+    assert power.done == []

@@ -7,6 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 
+from bilge.core.conversation import daily_quick_intents
 from bilge.core.text import folded
 from bilge.core.tools import timer_phrase_parser, turkish_arithmetic_parser
 
@@ -227,6 +228,7 @@ QuickIntent = (
     | Window
     | Settings
     | SystemInfo
+    | daily_quick_intents.DailyIntent
 )
 
 _MAX_APP_NAME_WORDS = 3
@@ -252,6 +254,9 @@ def parse(text: str) -> QuickIntent | None:
     if intent is not None:
         return intent
     intent = mac_quick_intents.parse(words)
+    if intent is not None:
+        return intent
+    intent = daily_quick_intents.parse(words, text)
     if intent is not None:
         return intent
     intent = _timer(words, text)
@@ -286,6 +291,8 @@ _AORIST_TO_IMPERATIVE: dict[str, str] = {
     "durdurur": "durdur", "duraklatir": "duraklat", "kisar": "kis", "artirir": "artir", "yukseltir": "yukselt",
     "azaltir": "azalt", "soyler": "soyle", "listeler": "listele", "kurar": "kur", "uyutur": "uyut", "alir": "al",
     "calar": "cal", "getirir": "getir", "yapar": "yap", "gosterir": "goster", "eder": "et", "siler": "sil",
+    "sarar": "sar", "karistirir": "karistir", "tekrarlar": "tekrarla", "dusurur": "dusur", "cevirir": "cevir",
+    "atlar": "atla", "karartir": "karart", "aydinlatir": "aydinlat", "susturur": "sustur",
 }  # fmt: skip
 _QUESTION_PARTICLES = frozenset({"misin", "musun", "misiniz", "musunuz"})
 _TRAILING_POLITENESS = frozenset({"lutfen", "acaba", "hemen"})

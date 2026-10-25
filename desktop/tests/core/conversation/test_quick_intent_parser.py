@@ -116,11 +116,8 @@ def test_recognizes_everyday_commands_without_the_model(command, expected):
         "Masaüstündeki deneme dosyasını aç",
         "alarmları kapat ve müziği aç",
         "kopyaladığım metni Notlar'a yapıştır",
-        "Rahatsız etme modunu aç",  # Focus goes through Shortcuts
         "Sesi biraz aç ve müziği başlat",  # two actions
         "Türkiye'nin başkenti neresi",
-        "Bluetooth'u kapat",
-        "Bilgisayarı kapat",
         "ondan sonra müziği aç",
         "Saat kaçta toplantım var",
     ],
