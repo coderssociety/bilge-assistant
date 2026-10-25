@@ -5,10 +5,11 @@ from bilge.core.media.playback_state import Playback, Source
 class FakePlayer:
     """Bilge's player as the tools see it, keeping the state machine but playing nothing."""
 
-    def __init__(self, error=None, position=12.0):
+    def __init__(self, error=None, position=12.0, duration=None):
         self.playback = Playback()
         self.error = error
         self.position = position
+        self.duration = duration
         self.played: list[Source] = []
         self.sought: list[float] = []
         self.resumed = 0
@@ -41,4 +42,5 @@ class FakePlayer:
         if self.playback.source is None or self.playback.source.is_live:
             return None
         self.sought.append(seconds)
-        return max(0.0, self.position + seconds)
+        target = max(0.0, self.position + seconds)
+        return min(target, self.duration) if self.duration is not None else target

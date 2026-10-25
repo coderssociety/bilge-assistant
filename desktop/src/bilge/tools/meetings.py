@@ -113,6 +113,7 @@ class Meetings:
         self._clock = clock
         self._lock = threading.Lock()
         self._job: threading.Thread | None = None
+        self._cancelled = threading.Event()
         self._offer: tuple[str, datetime] | None = None
 
     def start(self, _: dict[str, Any]) -> str:
@@ -156,15 +157,27 @@ class Meetings:
             return None
         return offer[0]
 
+    def close(self) -> None:
+        """Bilge stops listening: a file being written down is given up, so it no longer holds (or reloads) the
+        model; nothing is announced for it."""
+        self._cancelled.set()
+
     def _transcribe_file(self, path: Path) -> None:
         texts = self.texts
+        cancelled = self._cancelled.is_set
         try:
-            segments, seconds = transcribe_blocks(self._recognizer, audio_file.decode(path), self.language)
+            segments, seconds = transcribe_blocks(self._recognizer, audio_file.decode(path), self.language, cancelled)
+            if cancelled():
+                log.info("Writing down %s was given up", path)
+                return
             if not segments:
                 self._announce(texts["file_empty"].format(name=path.name))
                 return
             notes = self.notes.write(self._clock(), seconds, segments, source=path.name)
         except Exception:  # noqa: BLE001 - on its own thread, so whatever stops it must still be told to the user
+            if cancelled():
+                log.info("Writing down %s stopped with listening", path, exc_info=True)
+                return
             log.exception("Could not transcribe %s", path)
             self._announce(texts["file_failed"].format(name=path.name))
             return

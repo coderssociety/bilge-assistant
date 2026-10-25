@@ -122,12 +122,14 @@ class Interpreter:
         return self.mode.expired(self._clock())
 
     def stop(self) -> None:
-        self.mode.stop()
-
-    def close(self) -> None:
-        """Bilge stops listening: the mode ends, and a model loaded just for it is let go."""
+        """The mode ends, and a model loaded just for it (faster-whisper turbo, ~1.5 GB) is let go rather than kept
+        for the rest of the session; the main recognizer stays with Bilge."""
         self.mode.stop()
         self._recognizer = None
+
+    def close(self) -> None:
+        """Bilge stops listening."""
+        self.stop()
 
     def tool(self) -> Tool:
         return Tool("startInterpreter", self.texts["tool"], run=self.start,

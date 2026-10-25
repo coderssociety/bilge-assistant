@@ -13,6 +13,7 @@ from bilge.desktop.base import Media, MediaCommand, MusicLauncher, Volume
 from bilge.desktop.process import DesktopError
 from bilge.tools import music_lookup
 from bilge.tools.base import Tool, ToolError
+from bilge.tools.desktop import sources
 from bilge.tools.desktop.common import (
     choice,
     failure,
@@ -86,6 +87,7 @@ _TEXTS = {
         "own_episode": "{name} podcasti çalıyor: {title}",
         "own_no_skip": "Bunda parça atlanamıyor; başka bir istasyon ya da bölüm isteyebilirsin.",
         "own_failed": "{name} yeniden açılamadı. ",
+        "unknown_action": "Müzik çalarda bunu yapamıyorum; çalabilir, duraklatabilir ya da parça atlayabilirim.",
     },
     AssistantLanguage.ENGLISH: {
         "volume": "Sets, raises or lowers the computer's volume, or mutes and unmutes it.",
@@ -123,6 +125,7 @@ _TEXTS = {
         "own_episode": "Playing {name}: {title}",
         "own_no_skip": "There are no tracks to skip here; ask for another station or episode instead.",
         "own_failed": "I couldn't start {name} again. ",
+        "unknown_action": "I can't do that in the music player; I can play, pause or skip tracks.",
     },
 }
 
@@ -180,7 +183,8 @@ def music_tool(
             return None
         source = playback.source
         if not playback.is_playing:
-            if action not in (MusicAction.PLAY, MusicAction.TOGGLE):
+            # A song the user paused in the desktop player since is what "devam et" means now.
+            if action not in (MusicAction.PLAY, MusicAction.TOGGLE) or sources.desktop_holds_track(media):
                 return None
             try:
                 player.resume()
@@ -190,7 +194,8 @@ def music_tool(
                 ) from error
             return texts["own_resumed"].format(name=source.name)
         if action is MusicAction.PLAY:
-            return texts["own_playing"].format(name=source.name)
+            # With a song waiting in the desktop player, "müziği aç" means that song rather than the station on.
+            return None if sources.desktop_holds_track(media) else texts["own_playing"].format(name=source.name)
         if action in (MusicAction.PAUSE, MusicAction.TOGGLE):
             player.pause()
             # A station can't wait: pausing it lets it go, and "devam et" tunes in again.
@@ -213,11 +218,13 @@ def music_tool(
     def run(arguments: dict[str, Any]) -> str:
         try:
             action = MusicAction(string_argument(arguments, "action"))
-        except ValueError:
-            action = MusicAction.TOGGLE
+        except ValueError as error:
+            raise ToolError(texts["unknown_action"]) from error
         handled = own(action)
         if handled is not None:
             return handled
+        if action in (MusicAction.PLAY, MusicAction.TOGGLE):
+            sources.quiet_own(player)
         try:
             if action is MusicAction.NOW_PLAYING:
                 playing = media.now_playing()
@@ -230,10 +237,10 @@ def music_tool(
                 return texts["now_playing"].format(song=song)
             if media.now_playing() is None:
                 return start() if action in (MusicAction.PLAY, MusicAction.TOGGLE) else texts["no_player"]
-            player = media.send(MediaCommand(action.value))
+            name = media.send(MediaCommand(action.value))
         except DesktopError as error:
             raise failure(error, language) from error
-        return texts[action].format(player=player)
+        return texts[action].format(player=name)
 
     # Track titles can be set by whoever made the video or page that is playing.
     return Tool("controlMusic", texts["music"], run=run, parameters=obj(["action"], action=choice(MusicAction, "")),
@@ -254,8 +261,10 @@ def music_search_tool(
     language: AssistantLanguage,
     default_service: Callable[[], str] = lambda: music_request.AUTO,
     find: Callable[[MusicService, str, AssistantLanguage], list[Track]] = music_lookup.find,
+    player: Player | None = None,
 ) -> Tool:
-    """`default_service`: the setting used when the command names no service."""
+    """`default_service`: the setting used when the command names no service. `player`: Bilge's own radio and podcast
+    player, quieted before the song opens so the two don't play over each other."""
     texts = _TEXTS[language]
     places = music_request.LOCATIVES if language is AssistantLanguage.TURKISH else music_request.NAMES
     region = music_lookup.country(language)
@@ -293,6 +302,7 @@ def music_search_tool(
                 default_service(),
                 lambda: launcher.has_app(MusicService.SPOTIFY),
             )
+            sources.quiet_own(player)
             return play(service, query)
         except DesktopError as error:
             raise failure(error, language) from error

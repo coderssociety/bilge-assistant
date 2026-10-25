@@ -509,6 +509,21 @@ def test_stopping_bilge_saves_the_meeting_being_recorded():
     assert recorder.abandoned
 
 
+def test_stopping_bilge_gives_up_a_file_being_written_down():
+    class Meetings:
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    meetings = Meetings()
+    assistant = VoiceAssistant(ScriptedRecognizer(), SilentSpeech(), EchoAgent(), AssistantLanguage.TURKISH,
+                               wake_recognizer=ScriptedRecognizer(), meetings=meetings)  # fmt: skip
+    assistant.start()
+    assistant.stop()
+    assert meetings.closed
+
+
 def test_the_shortcut_does_not_cut_a_meeting_short():
     assistant, speech, _, recorder, _ = recording()
     assistant.start()

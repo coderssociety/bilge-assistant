@@ -15,7 +15,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 
@@ -45,6 +45,9 @@ from bilge.voice.recognizers import Recognizer
 from bilge.voice.speaker import SpeakerGate
 from bilge.voice.speech_output import SpeechOutput, tone
 from bilge.voice.vad import CHUNK, SAMPLE_RATE, SileroVAD
+
+if TYPE_CHECKING:
+    from bilge.tools.meetings import Meetings
 
 log = logging.getLogger(__name__)
 
@@ -115,6 +118,7 @@ class VoiceAssistant:
         services: Sequence[Service] = (),
         interpreter: Interpreter | None = None,
         recorder: MeetingRecorder | None = None,
+        meetings: "Meetings | None" = None,
     ):
         self.recognizer = recognizer
         # A small, fast model for the wake word and cut-ins; the full one only for what is then said. The wake
@@ -127,6 +131,7 @@ class VoiceAssistant:
         self.speaker_gate = speaker_gate
         self.interpreter = interpreter
         self.recorder = recorder
+        self.meetings = meetings
         self._services = tuple(services)
         self._on_event = on_event or (lambda kind, text: None)
         self.matcher = WakePhraseMatcher(self.options.wake_phrase)
@@ -200,12 +205,15 @@ class VoiceAssistant:
         self._set_status(Status.OFF)
 
     def _end_modes(self) -> None:
-        """A meeting being recorded is saved as far as it was transcribed; nothing waits for the model."""
+        """A meeting being recorded is saved as far as it was transcribed, and a file being written down is given up;
+        nothing waits for the model."""
         if self.recorder is not None:
             try:
                 self.recorder.abandon()
             except OSError:
                 log.exception("Could not save the meeting being recorded")
+        if self.meetings is not None:
+            self.meetings.close()
         if self.interpreter is not None:
             self.interpreter.close()
 

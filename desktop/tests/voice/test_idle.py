@@ -1,8 +1,10 @@
 import threading
 
 import numpy as np
+import pytest
 
 from bilge.voice.idle import IdleUnloadingRecognizer
+from bilge.voice.recognizers import RecognitionError
 
 SPEECH = np.zeros(16_000, dtype=np.float32)
 
@@ -77,3 +79,15 @@ def test_warming_loads_in_the_background():
     assert recognizer.is_loaded and Model.made == 2
     recognizer.close()
     assert Model.closed == 2
+
+
+def test_a_closed_recognizer_never_loads_the_model_again():
+    recognizer = make(Clock())
+    recognizer.close()
+    with pytest.raises(RecognitionError):
+        recognizer.transcribe(SPEECH)
+    recognizer.warm()
+    for thread in threading.enumerate():
+        if thread.name == "bilge-warm":
+            thread.join(2)
+    assert Model.made == 1 and Model.closed == 1 and not recognizer.is_loaded

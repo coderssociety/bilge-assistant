@@ -21,6 +21,8 @@ log = logging.getLogger(__name__)
 # Decoded audio kept ahead of the speaker: enough to ride out a slow segment, little enough to seek at once.
 AHEAD_SECONDS = 3.0
 START_TIMEOUT_SECONDS = 10.0
+# A seek past the end lands this far before it, so the episode's last words still play.
+END_MARGIN_SECONDS = 5.0
 _WAIT = 0.05
 
 
@@ -30,6 +32,11 @@ class Sink(Protocol):
 
 
 class Decoder(Protocol):
+    @property
+    def duration(self) -> float | None:
+        """The stream's length in seconds, when it says (an episode's file does; a station doesn't)."""
+        ...
+
     def blocks(self) -> Iterator[tuple[np.ndarray, float]]:
         """Mono float32 at the sink's rate, each with the stream time where it ends."""
         ...
@@ -61,6 +68,7 @@ class _Session:
         self._seek_to: float | None = None
         self._lock = threading.Lock()
         self.until = 0.0
+        self.duration: float | None = None
         self._thread = threading.Thread(target=self._run, name="bilge-player", daemon=True)
 
     def start(self) -> None:
@@ -93,6 +101,7 @@ class _Session:
             decoder = self._opener(self.source, self._sink.sample_rate, self.stopped)
             with self._lock:
                 self._decoder = decoder
+            self.duration = decoder.duration
             if self.stopped.is_set():
                 decoder.close()
                 return
@@ -108,27 +117,40 @@ class _Session:
 
     def _play(self, decoder: Decoder) -> None:
         background = self._sink.background
-        for samples, until in decoder.blocks():
-            with self._lock:
-                seek_to, self._seek_to = self._seek_to, None
-            if seek_to is not None:
-                decoder.seek(seek_to)
-                background.clear()
-                self.until = seek_to
-                continue
-            if self.stopped.is_set():
-                return
-            background.add(samples)
-            self.until = until
-            self.ready.set()
-            while background.queued > AHEAD_SECONDS * self._sink.sample_rate and not self.stopped.is_set():
-                if self._seek_to is not None:
-                    break
+        while True:
+            for samples, until in decoder.blocks():
+                seek_to = self._take_seek()
+                if seek_to is not None:
+                    self._jump(decoder, seek_to)
+                    continue
+                if self.stopped.is_set():
+                    return
+                background.add(samples)
+                self.until = until
+                self.ready.set()
+                while background.queued > AHEAD_SECONDS * self._sink.sample_rate and not self.stopped.is_set():
+                    if self._seek_to is not None:
+                        break
+                    self.stopped.wait(_WAIT)
+            # Decoded to the end: wait for the speaker to finish what is queued, unless a seek in those last seconds
+            # sends it back.
+            while background.queued and self._seek_to is None and not self.stopped.is_set():
                 self.stopped.wait(_WAIT)
-        # Played to the end: wait for the speaker to finish what is queued.
-        while background.queued and not self.stopped.is_set():
-            self.stopped.wait(_WAIT)
+            seek_to = self._take_seek()
+            if seek_to is None or self.stopped.is_set():
+                break
+            self._jump(decoder, seek_to)
         decoder.close()
+
+    def _take_seek(self) -> float | None:
+        with self._lock:
+            seek_to, self._seek_to = self._seek_to, None
+        return seek_to
+
+    def _jump(self, decoder: Decoder, seconds: float) -> None:
+        decoder.seek(seconds)
+        self._sink.background.clear()
+        self.until = seconds
 
 
 class MediaPlayer:
@@ -204,12 +226,16 @@ class MediaPlayer:
                 self._update(state.busy(self._playback, on))
 
     def seek(self, seconds: float) -> float | None:
-        """Moves the episode by `seconds` (back when negative); the new position, or None for a live station."""
+        """Moves the episode by `seconds` (back when negative), within its length; the new position, or None for a
+        live station."""
         with self._lock:
             session = self._session
             if session is None or not self._playback.is_active or self._playback.source.is_live:
                 return None
-            target = max(0.0, session.position + seconds)
+            position = session.position
+            target = max(0.0, position + seconds)
+            if session.duration is not None:
+                target = min(target, max(position, session.duration - END_MARGIN_SECONDS))
             session.seek(target)
             return target
 
@@ -296,6 +322,8 @@ class PyAVDecoder:
         self._stream = self._container.streams.audio[0]
         self._resampler = self._new_resampler()
         self._sought = False
+        length = self._container.duration
+        self.duration = length / av.time_base if length and length > 0 else None
 
     def _new_resampler(self):
         return self._av.AudioResampler(format="flt", layout="mono", rate=self._rate)

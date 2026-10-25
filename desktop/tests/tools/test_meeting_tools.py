@@ -58,7 +58,7 @@ class Clock:
         return self.now
 
 
-def make(tmp_path, language=AssistantLanguage.TURKISH):
+def make(tmp_path, language=AssistantLanguage.TURKISH, recognizer=None):
     folders = Folders(tmp_path)
     for folder in (folders.downloads(), folders.documents()):
         folder.mkdir(parents=True, exist_ok=True)
@@ -72,7 +72,7 @@ def make(tmp_path, language=AssistantLanguage.TURKISH):
         announced.append(text)
         done.set()
 
-    meetings = Meetings(recorder, notes, Recognizer(), folders, language, announce, clock=clock)
+    meetings = Meetings(recorder, notes, recognizer or Recognizer(), folders, language, announce, clock=clock)
     return meetings, announced, done, clock
 
 
@@ -166,3 +166,32 @@ def test_tools_are_described_in_english_too(tmp_path):
     assert names == ["startMeetingRecording", "stopMeetingRecording", "transcribeAudioFile", "readMeetingSummary"]
     assert meetings.start({}).startswith("I'm recording the meeting")
     assert claimed(meetings, "stop recording") == ["stopMeetingRecording"]
+
+
+class HeldRecognizer:
+    """Waits inside its first transcription until `release` is set."""
+
+    def __init__(self):
+        self.calls = 0
+        self.inside = threading.Event()
+        self.release = threading.Event()
+
+    def transcribe(self, samples):
+        self.calls += 1
+        self.inside.set()
+        self.release.wait(10)
+        return "Bütçeyi onaylıyoruz."
+
+
+def test_closing_gives_up_a_file_being_written_down_without_a_word(tmp_path):
+    recognizer = HeldRecognizer()
+    meetings, announced, _, _ = make(tmp_path, recognizer=recognizer)
+    write_wav(tmp_path / "İndirilenler" / "uzun.wav", seconds=120)
+    meetings.transcribe({"query": ""})
+    assert recognizer.inside.wait(10)
+    meetings.close()
+    recognizer.release.set()
+    job = next(thread for thread in threading.enumerate() if thread.name == "bilge-transcribe")
+    job.join(10)
+    assert not job.is_alive() and recognizer.calls == 1 and announced == []
+    assert not (tmp_path / "Belgeler" / "Bilge" / "Toplantılar").exists()

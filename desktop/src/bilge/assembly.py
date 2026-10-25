@@ -44,6 +44,7 @@ from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.builtin.units import convert_units
 from bilge.tools.builtin.world_clock import world_clock_tool
 from bilge.tools.builtin.youtube import summarize_video_tool
+from bilge.tools.desktop import sources
 from bilge.tools.memory_store import MemoryStore
 from bilge.tools.player import Player
 from bilge.tools.reading import TextReading, continue_reading_tool
@@ -145,6 +146,7 @@ def build_agent(
     people = ContactLookup(lambda: contact_source(settings), language)
     found = desktop.current(language)
     player = player or _media_player(language)
+    tool_player: Player = sources.TurnTakingPlayer(player, found.media) if found is not None else player
     alert = _alert(found, announce)
     alarms = _timer_service(language, alert) if found is not None else None
     if services is not None and settings.earthquake_alerts:
@@ -170,8 +172,8 @@ def build_agent(
         stocks.stocks(language),
         internet.read_web_page(language, text_reading),
         continue_reading_tool(text_reading, language),
-        radio.radio_tool(language, player, radio.StationMemory(config.data_dir() / "radio.json")),
-        podcasts.podcast_tool(language, player),
+        radio.radio_tool(language, tool_player, radio.StationMemory(config.data_dir() / "radio.json")),
+        podcasts.podcast_tool(language, tool_player),
         summarize_video_tool(language, text_reading, _pasted(found)),
         briefing_tool(briefing),
         find_contact_tool(people, language),
@@ -200,7 +202,7 @@ def build_agent(
     if found is not None and alarms is not None:
         last_reply = lambda: built[0].last_reply if built else None  # noqa: E731
         tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply, text_reading,
-                                                             people, settings.commands, player,
+                                                             people, settings.commands, tool_player,
                                                              lambda: settings.music_service)  # fmt: skip
         for tool in tools:
             registry.add(tool)
@@ -317,7 +319,7 @@ def _desktop_tools(
         *apps.app_tools(apps.AppCatalog(found.apps), language),
         sound.volume_tool(found.volume, language),
         sound.music_tool(found.media, language, found.music, player),
-        sound.music_search_tool(found.music, language, music_service),
+        sound.music_search_tool(found.music, language, music_service, player=player),
         playback.playback_tool(found.media, language, player),
         *hardware.hardware_tools(
             found.brightness, found.do_not_disturb, found.bluetooth, found.power, found.settings, language
@@ -479,11 +481,11 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
         raise
     options = Options(wake_phrase=voice.wake_phrase, follow_up=voice.follow_up, barge_in=voice.barge_in,
                       wake_word=voice.wake_word or not voice.hotkey)  # fmt: skip
-    interpreter, recorder = _listening_modes(agent, recognizer, language, root,
-                                             announce=lambda text: holder["assistant"].announce(text))  # fmt: skip
+    interpreter, recorder, meetings = _listening_modes(agent, recognizer, language, root,
+                                                       announce=lambda text: holder["assistant"].announce(text))  # fmt: skip
     assistant = VoiceAssistant(recognizer, speech, agent, language, options, gate, _making_way(player, on_event),
                                wake_recognizer=wake, services=services, interpreter=interpreter,
-                               recorder=recorder)  # fmt: skip
+                               recorder=recorder, meetings=meetings)  # fmt: skip
     holder["assistant"] = assistant
     front_end = FrontEnd(device, assistant.on_chunk, EchoCanceller() if voice.barge_in else None)
     return assistant, front_end
@@ -506,7 +508,7 @@ def _listening_modes(agent: Agent, recognizer, language: AssistantLanguage, root
     for tool in [*meetings.tools(), interpreter.tool()]:
         agent.registry.add(tool)
     agent.rules = [*meetings.rules(), interpreter.rule(), *agent.rules]
-    return interpreter, recorder
+    return interpreter, recorder, meetings
 
 
 def _interpreting_recognizer(recognizer, language: AssistantLanguage, root: Path):

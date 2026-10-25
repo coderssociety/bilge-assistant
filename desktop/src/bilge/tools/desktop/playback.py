@@ -7,11 +7,14 @@ from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import Media, RepeatMode
 from bilge.desktop.process import DesktopError, NotPossibleHere
 from bilge.tools.base import Tool, ToolError
+from bilge.tools.desktop import sources
 from bilge.tools.desktop.common import choice, failure, int_argument, integer, obj, string_argument
 from bilge.tools.player import Player
 
 SEEK_STEP_SECONDS = 10
 _MAX_SEEK_SECONDS = 3600
+# The player's position moves on while the seek is asked for; a shortfall beyond this means it stopped at an end.
+_CLAMPED_SECONDS = 1.0
 
 
 class PlaybackAction(StrEnum):
@@ -48,6 +51,7 @@ _TEXTS = {
         "live": "Canlı yayında ileri ya da geri saramam.",
         "own_forward": "Bölüm {amount} ileri sarıldı.", "own_back": "Bölüm {amount} geri sarıldı.",
         "own_restart": "Bölüm baştan başladı.",
+        "own_end": "Bölüm o kadar uzun değil; son saniyelerine sarıldı.",
         "own_unsupported": "Podcast bölümlerinde karışık çalma ya da tekrarlama yok.",
     },
     AssistantLanguage.ENGLISH: {
@@ -68,6 +72,7 @@ _TEXTS = {
         "live": "I can't skip around in a live broadcast.",
         "own_forward": "Skipped {amount} ahead in the episode.", "own_back": "Went back {amount} in the episode.",
         "own_restart": "The episode started over.",
+        "own_end": "The episode isn't that long; skipped to its last seconds.",
         "own_unsupported": "Podcast episodes have no shuffle or repeat.",
     },
 }  # fmt: skip
@@ -81,6 +86,9 @@ def playback_tool(media: Media, language: AssistantLanguage, player: Player | No
         playback = player.playback if player is not None else None
         if playback is None or not playback.is_active or playback.source is None:
             return None
+        if not playback.is_playing and (playback.source.is_live or sources.desktop_holds_track(media)):
+            # A paused station has nothing to seek in, and a song paused in the desktop player since is the one meant.
+            return None
         if playback.source.is_live:
             return texts["live"] if action in (PlaybackAction.SEEK, PlaybackAction.RESTART_TRACK) else None
         if action is PlaybackAction.RESTART_TRACK:
@@ -88,7 +96,10 @@ def playback_tool(media: Media, language: AssistantLanguage, player: Player | No
             return texts["own_restart"]
         if action is not PlaybackAction.SEEK:
             return texts["own_unsupported"]
-        player.seek(seconds)
+        before = player.position or 0.0
+        after = player.seek(seconds)
+        if after is not None and abs(after - (before + seconds)) > _CLAMPED_SECONDS:
+            return texts["own_end" if seconds > 0 else "own_restart"]
         return texts["own_forward" if seconds > 0 else "own_back"].format(amount=_amount(abs(seconds), texts))
 
     def act(action: PlaybackAction, seconds: int) -> str:

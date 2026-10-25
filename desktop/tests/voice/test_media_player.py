@@ -9,7 +9,7 @@ from bilge.core.media.playback_state import DUCKED, Kind, Source, State
 from bilge.tools import web_fetch
 from bilge.tools.player import PlaybackError
 from bilge.voice.audio_io import BackgroundBuffer
-from bilge.voice.media_player import MediaPlayer
+from bilge.voice.media_player import END_MARGIN_SECONDS, MediaPlayer
 
 RATE = 1000
 STATION = Source(Kind.RADIO, "TRT FM", "https://trt.example/trtfm")
@@ -28,6 +28,7 @@ class FakeDecoder:
 
     def __init__(self, length=None):
         self.length = length
+        self.duration = length
         self.time = 0.0
         self.sought = []
         self.closed = threading.Event()
@@ -130,6 +131,29 @@ def test_an_episode_is_sought_from_where_the_speaker_is(sink):
     assert target == pytest.approx(position + 30, abs=0.2)
     assert wait_for(lambda: opener.decoders[0].sought == [target])
     assert wait_for(lambda: player.position >= target)
+    player.stop()
+
+
+def test_going_back_in_the_last_seconds_still_works_after_decoding_finished(sink):
+    opener = Opener(length=2)
+    player = player_with(sink, opener)
+    player.play(EPISODE)
+    assert wait_for(lambda: opener.decoders[0].time >= 2 and sink.background.queued == 2 * RATE)
+    sink.background.take(RATE + RATE // 2)
+    assert player.seek(-1) == pytest.approx(0.5)
+    assert wait_for(lambda: opener.decoders[0].sought == [pytest.approx(0.5)])
+    assert wait_for(lambda: sink.background.queued > RATE)
+    assert player.playback.is_playing
+    player.stop()
+
+
+def test_a_seek_past_the_end_lands_just_before_it(sink):
+    opener = Opener(length=60)
+    player = player_with(sink, opener)
+    player.play(EPISODE)
+    assert player.seek(120) == pytest.approx(60 - END_MARGIN_SECONDS)
+    assert wait_for(lambda: opener.decoders[0].sought == [pytest.approx(60 - END_MARGIN_SECONDS)])
+    assert player.playback.is_playing
     player.stop()
 
 
