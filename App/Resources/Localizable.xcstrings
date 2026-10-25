@@ -1176,22 +1176,12 @@
         }
       }
     },
-    "altın": {
+    "Altın fiyatlarını şu an alamadım; kaynaklara ulaşılamadı.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "gold"
-          }
-        }
-      }
-    },
-    "Altın fiyatlarını henüz söyleyemiyorum.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "I can't tell gold prices yet."
+            "value": "I can't get gold prices right now; the sources couldn't be reached."
           }
         }
       }

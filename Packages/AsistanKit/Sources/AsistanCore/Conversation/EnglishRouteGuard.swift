@@ -70,6 +70,8 @@ public enum EnglishRouteGuard {
         case "conversation":
             let isArithmetic = words.contains { $0.contains(where: \.isNumber) } && words.contains(where: mathWords.contains)
             return isArithmetic ? "calculate" : action
+        case "exchangeRate":
+            return words.contains { $0 == "gold" || $0 == "ounce" } ? "goldPrice" : action
         default:
             return action
         }

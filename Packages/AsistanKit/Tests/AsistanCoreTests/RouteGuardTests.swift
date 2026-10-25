@@ -134,4 +134,13 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "quitApp", command: "son işlemi geri al") == "conversation")
         #expect(RouteGuard.review(action: "quitApp", command: "Safari'yi kapat") == "quitApp")
     }
+
+    @Test("gold goes to its own prices, currencies stay with the rates", arguments: [
+        ("100 gram altın kaç lira", "exchangeRate", "goldPrice"),
+        ("ons kaç dolar", "exchangeRate", "goldPrice"),
+        ("dolar kaç lira", "exchangeRate", "exchangeRate"),
+    ])
+    func gold(command: String, routed: String, expected: String) {
+        #expect(RouteGuard.review(action: routed, command: command) == expected)
+    }
 }

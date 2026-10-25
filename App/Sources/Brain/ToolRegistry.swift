@@ -74,6 +74,7 @@ struct ToolRegistry {
             DictationTool(session: dictation),
             BriefingTool(),
             PrayerTimesTool(),
+            GoldPriceTool(),
         ]
     }
 }

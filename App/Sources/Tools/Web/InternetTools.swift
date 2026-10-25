@@ -170,8 +170,6 @@ struct ExchangeRateTool: AssistantTool {
     @Generable
     enum Currency: CaseIterable {
         case lira, dollar, euro, pound, swissFranc, yen, yuan, canadianDollar, australianDollar, swedishKrona, norwegianKrone, danishKrone
-        /// Not a currency the rates source knows; chosen only so the tool can decline it.
-        case gold
 
         init?(code: String) {
             guard let match = Self.allCases.first(where: { $0.code == code }) else { return nil }
@@ -192,7 +190,6 @@ struct ExchangeRateTool: AssistantTool {
             case .swedishKrona: "SEK"
             case .norwegianKrone: "NOK"
             case .danishKrone: "DKK"
-            case .gold: "XAU"
             }
         }
 
@@ -211,7 +208,6 @@ struct ExchangeRateTool: AssistantTool {
             case .swedishKrona: String(localized: "İsveç kronu")
             case .norwegianKrone: String(localized: "Norveç kronu")
             case .danishKrone: String(localized: "Danimarka kronu")
-            case .gold: String(localized: "altın")
             }
         }
     }
@@ -233,10 +229,6 @@ struct ExchangeRateTool: AssistantTool {
         let parsed = CurrencyRequest.parse(command)
         var refined = arguments
         refined.amount = parsed.amount
-        if parsed.asksAboutGold {
-            refined.from = .gold
-            return refined
-        }
         if let from = parsed.from.flatMap(Currency.init(code:)) { refined.from = from }
         if let to = parsed.to.flatMap(Currency.init(code:)) {
             refined.to = to
@@ -254,9 +246,6 @@ struct ExchangeRateTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
-        guard arguments.from != .gold, arguments.to != .gold else {
-            return ToolReply.failure(String(localized: "Altın fiyatlarını henüz söyleyemiyorum."))
-        }
         let target = arguments.from == arguments.to ? Currency.lira : arguments.to
         guard arguments.from != target else {
             return ToolReply.failure(String(localized: "Hangi para birimini çevireceğimi anlayamadım."))
