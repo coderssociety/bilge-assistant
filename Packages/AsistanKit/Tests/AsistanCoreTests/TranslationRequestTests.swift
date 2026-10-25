@@ -31,4 +31,10 @@ struct TranslationRequestTests {
     func noTarget(command: String) {
         #expect(TranslationRequest.target(in: command) == nil)
     }
+
+    @Test("a routine's command keeps the language it is to be read in")
+    func routineCommand() throws {
+        let routine = try #require(RoutineRequest.parse("her sabah 8'de haberleri İngilizce oku", language: .turkish))
+        #expect(TranslationRequest.target(in: routine.command)?.code == "en")
+    }
 }
