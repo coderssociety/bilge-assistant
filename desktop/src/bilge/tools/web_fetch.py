@@ -6,12 +6,14 @@ again leaves a gap: the name could resolve to a local address the second time (D
 could then reach the router or a service on this machine.
 """
 
+import contextlib
 import functools
 import http.client
 import ipaddress
 import json
 import socket
 import ssl
+import threading
 import time
 from dataclasses import dataclass
 from enum import StrEnum
@@ -214,21 +216,30 @@ class Stream:
     caller stops reading. `length` is the whole file's size when the server says it; `ranged` that it started
     at the asked offset."""
 
-    def __init__(self, connection: http.client.HTTPConnection, reply: http.client.HTTPResponse, start: int):
+    def __init__(self, connection: "_PinnedConnection", reply: http.client.HTTPResponse, start: int):
         self._connection = connection
         self._reply = reply
+        # http.client's answer can't be read and closed at once: both let go of its file.
+        self._lock = threading.Lock()
         self.content_type = reply.getheader("Content-Type", "")
         self.ranged = start > 0 and reply.status == 206
         self.length = _whole_length(reply, start)
 
     def read(self, size: int) -> bytes:
         try:
-            return self._reply.read(size)
+            with self._lock:
+                return self._reply.read(size)
         except (OSError, http.client.HTTPException) as error:
             raise WebFetchError(Reason.CONNECT) from error
 
     def close(self) -> None:
-        self._connection.close()
+        """Also from another thread, to end a read waiting on the network. The socket is shut first, which ends
+        that read at once: a "Connection: close" answer owns the socket, so closing the connection alone would
+        leave it open, and the reply can only be closed once the read has let go of it."""
+        self._connection.shut()
+        with self._lock:
+            self._reply.close()
+            self._connection.close()
 
 
 def open_stream(url: str, language: AssistantLanguage = AssistantLanguage.TURKISH, start: int = 0) -> Stream:
@@ -422,3 +433,9 @@ class _PinnedConnection(http.client.HTTPConnection):
     def wait_at_most(self, seconds: float) -> None:
         if self._socket is not None:
             self._socket.settimeout(seconds)
+
+    def shut(self) -> None:
+        """Ends the connection under a read in progress on another thread."""
+        if self._socket is not None:
+            with contextlib.suppress(OSError):
+                self._socket.shutdown(socket.SHUT_RDWR)

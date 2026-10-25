@@ -309,6 +309,42 @@ def test_addresses_that_cannot_be_written_are_unsupported(url):
     assert raised.value.reason is web_fetch.Reason.UNSUPPORTED
 
 
+@pytest.mark.parametrize(
+    "head",
+    [
+        b"HTTP/1.0 200 OK\r\nContent-Type: audio/mpeg\r\n\r\n",
+        b"HTTP/1.1 200 OK\r\nContent-Type: audio/mpeg\r\nContent-Length: 1000000\r\n\r\n",
+    ],
+)
+def test_closing_a_stream_ends_a_waiting_read_and_the_connection(raw_server, head):
+    hung_up = threading.Event()
+
+    def radio(connection):
+        connection.sendall(head + b"x" * 10)
+        connection.settimeout(5)
+        if connection.recv(1) == b"":
+            hung_up.set()
+
+    server = raw_server(radio)
+    stream = web_fetch.open_stream(f"http://radio.example:{server.port}/live")
+    assert stream.read(10) == b"x" * 10
+    read = []
+
+    def wait_for_more():
+        with contextlib.suppress(web_fetch.WebFetchError):
+            read.append(stream.read(10))
+
+    reader = threading.Thread(target=wait_for_more)
+    reader.start()
+    time.sleep(0.2)
+    started = time.monotonic()
+    stream.close()
+    reader.join(2)
+    assert not reader.is_alive() and read in ([], [b""])
+    assert time.monotonic() - started < 1
+    assert hung_up.wait(2)
+
+
 def test_certificates_are_checked_against_the_systems_trust_store():
     import truststore
 
