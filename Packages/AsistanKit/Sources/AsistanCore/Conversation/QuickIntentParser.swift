@@ -4,7 +4,7 @@
 public enum QuickIntent: Sendable, Equatable {
     public enum Volume: Sendable, Equatable { case set(Int), up, down, change(Int), mute, unmute }
     public enum Media: Sendable, Equatable { case play, pause, next, previous, nowPlaying }
-    public enum System: Sendable, Equatable { case lockScreen, sleep, darkModeOn, darkModeOff }
+    public enum System: Sendable, Equatable { case lockScreen, screenOff, sleep, darkModeOn, darkModeOff }
     public enum CalendarRange: Sendable, Equatable { case today, tomorrow, thisWeek }
     public enum Folder: Sendable, Equatable { case desktop, downloads, documents }
     public enum TimerAction: Sendable, Equatable { case list, cancelOne, cancelAll }
@@ -153,6 +153,8 @@ public enum QuickIntentParser {
         if w.last == "kilitle", w.count <= 2, w.count == 1 || ["ekrani", "maci", "bilgisayari"].contains(w[0]) {
             return .system(.lockScreen)
         }
+        let screenOff: [[String]] = [["ekrani", "karart"], ["ekrani", "kapat"], ["ekrani", "uyut"]]
+        if screenOff.contains(w) { return .system(.screenOff) }
         let sleep: [[String]] = [["bilgisayari", "uyut"], ["maci", "uyut"], ["uyku", "moduna", "al"],
                                  ["bilgisayari", "uyku", "moduna", "al"], ["maci", "uyku", "moduna", "al"]]
         if sleep.contains(w) { return .system(.sleep) }

@@ -32,6 +32,8 @@ struct QuickIntentParserTests {
         ("Bu şarkının adı ne", .media(.nowPlaying)),
         ("Ekranı kilitle", .system(.lockScreen)),
         ("Mac'i kilitle", .system(.lockScreen)),
+        ("Ekranı karart", .system(.screenOff)),
+        ("ekranı kapatır mısın", .system(.screenOff)),
         ("Bilgisayarı uyut", .system(.sleep)),
         ("Karanlık modu aç", .system(.darkModeOn)),
         ("aydınlık moda geç", .system(.darkModeOff)),

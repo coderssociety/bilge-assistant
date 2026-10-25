@@ -5,7 +5,7 @@ public enum EnglishRouteGuard {
     private static let searchWords: Set<String> = [
         "search", "google", "look", "find", "youtube", "wikipedia", "web", "internet", "online", "maps", "browse",
     ]
-    private static let systemWords = ["lock", "sleep", "dark", "light", "appearance", "theme", "screensaver"]
+    private static let systemWords = ["lock", "sleep", "dark", "light", "appearance", "theme", "screensaver", "blank"]
     private static let shortcutOnlyWords = ["focus", "disturb", "bright"]
     private static let openVerbs: Set<String> = ["open", "launch", "start"]
     private static let questionWords: Set<String> = ["what", "whats", "any", "do", "how", "when", "is", "am", "anything"]
@@ -48,7 +48,8 @@ public enum EnglishRouteGuard {
             return words.contains(where: searchWords.contains) ? action : "conversation"
         case "systemAction":
             if words.contains(where: { word in shortcutOnlyWords.contains(where: word.hasPrefix) }) { return "runShortcut" }
-            let supported = words.contains { word in systemWords.contains(where: word.hasPrefix) }
+            let turnsScreenOff = words.contains { ["screen", "display", "monitor"].contains($0) } && words.contains("off")
+            let supported = turnsScreenOff || words.contains { word in systemWords.contains(where: word.hasPrefix) }
             return supported ? action : "runShortcut"
         case "weather":
             let aboutWeather = words.contains { word in weatherWords.contains(where: word.hasPrefix) }

@@ -24,6 +24,9 @@ struct RouteGuardTests {
         ("Karanlık moda geç", "systemAction", "systemAction"),
         ("Aydınlık moda geç", "systemAction", "systemAction"),
         ("Parlaklığı artır", "systemAction", "runShortcut"),
+        ("Ekranı karart", "systemAction", "systemAction"),
+        ("ekranı kapat", "systemAction", "systemAction"),
+        ("Ekran parlaklığını kapat", "systemAction", "runShortcut"),
     ])
     func systemActions(command: String, routed: String, expected: String) {
         #expect(RouteGuard.review(action: routed, command: command) == expected)

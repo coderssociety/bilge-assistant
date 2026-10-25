@@ -140,15 +140,17 @@ struct MediaTool: AssistantTool {
 
 struct SystemActionTool: AssistantTool {
     let name = "systemAction"
-    let description = "Yalnızca şunları yapar: ekranı kilitlemek, Mac'i uyutmak, karanlık/aydınlık görünüme geçmek. Odak ve rahatsız etme modları bu araçla yapılmaz."
+    let description = "Yalnızca şunları yapar: ekranı kilitlemek, ekranı kapatmak/karartmak, Mac'i uyutmak, karanlık/aydınlık görünüme geçmek. Odak ve rahatsız etme modları bu araçla yapılmaz."
+    private static let loginFramework = "/System/Library/PrivateFrameworks/login.framework/Versions/Current/login"
 
     @Generable
     enum Action {
-        case lockScreen, sleep, darkModeOn, darkModeOff, toggleDarkMode
+        case lockScreen, screenOff, sleep, darkModeOn, darkModeOff, toggleDarkMode
     }
 
     @Generable
     struct Arguments {
+        @Guide(description: "lockScreen kilitler (açmak için parola ister); screenOff yalnızca ekranı kapatır/karartır; sleep Mac'i uyutur")
         var action: Action
     }
 
@@ -156,6 +158,9 @@ struct SystemActionTool: AssistantTool {
         do {
             switch arguments.action {
             case .lockScreen:
+                try await Self.lockScreen()
+                return String(localized: "Ekran kilitlendi.")
+            case .screenOff:
                 _ = try await ProcessRunner.run("/usr/bin/pmset", ["displaysleepnow"])
                 return String(localized: "Ekran kapatıldı.")
             case .sleep:
@@ -180,5 +185,19 @@ struct SystemActionTool: AssistantTool {
         } catch {
             return ToolReply.failure(error)
         }
+    }
+
+    /// `pmset displaysleepnow` only blanks the screen, which stays unlocked when the password is not
+    /// required right away. SACLockScreenImmediate is what the ⌃⌘Q menu item calls; if the private
+    /// framework ever goes, System Events presses ⌃⌘Q instead.
+    private static func lockScreen() async throws {
+        let locked = await MainActor.run { () -> Bool in
+            guard let handle = dlopen(loginFramework, RTLD_LAZY), let symbol = dlsym(handle, "SACLockScreenImmediate")
+            else { return false }
+            _ = unsafeBitCast(symbol, to: (@convention(c) () -> Int32).self)()
+            return true
+        }
+        guard !locked else { return }
+        _ = try await AppleScriptRunner.run(#"tell application "System Events" to keystroke "q" using {control down, command down}"#)
     }
 }

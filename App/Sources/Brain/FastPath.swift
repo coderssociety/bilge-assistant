@@ -93,6 +93,7 @@ struct FastPath {
     private static func action(for system: QuickIntent.System) -> SystemActionTool.Action {
         switch system {
         case .lockScreen: .lockScreen
+        case .screenOff: .screenOff
         case .sleep: .sleep
         case .darkModeOn: .darkModeOn
         case .darkModeOff: .darkModeOff

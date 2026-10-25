@@ -31,6 +31,8 @@ struct EnglishRouteGuardTests {
         ("Wake me up at 7", "setTimer"),
         ("Search YouTube for cat videos", "searchWeb"),
         ("Lock the screen", "systemAction"),
+        ("Turn off the display", "systemAction"),
+        ("Blank the screen", "systemAction"),
         ("Turn on dark mode", "systemAction"),
         ("What's on my clipboard", "readClipboard"),
         ("Play some relaxing jazz", "playMusic"),

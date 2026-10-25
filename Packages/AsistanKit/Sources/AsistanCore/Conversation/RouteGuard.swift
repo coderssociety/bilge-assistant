@@ -6,7 +6,7 @@ public enum RouteGuard {
         "ara", "arar", "arat", "aratir", "arayin", "arasana", "bul", "bulur", "goster", "gosterir", "search",
     ]
     private static let searchSites = ["google", "youtube", "harita", "vikipedi", "wikipedia", "internet"]
-    private static let systemWords = ["kilit", "uyu", "uyku", "karanlik", "aydinlik", "koyu", "gorunum", "tema"]
+    private static let systemWords = ["kilit", "uyu", "uyku", "karanlik", "aydinlik", "koyu", "gorunum", "tema", "karart"]
     private static let shortcutOnlyWords = ["odak", "odag", "rahatsiz", "parlak"]
     private static let openVerbs: Set<String> = ["ac", "acar", "acsana", "baslat"]
     private static let weatherWords = [
@@ -58,7 +58,9 @@ public enum RouteGuard {
             return explicit ? action : "conversation"
         case "systemAction":
             if words.contains(where: { word in shortcutOnlyWords.contains(where: word.hasPrefix) }) { return "runShortcut" }
-            let supported = words.contains { word in systemWords.contains(where: word.hasPrefix) }
+            // "Ekranı karart/kapat" turns the display off; it went to runShortcut, which had no such shortcut.
+            let turnsScreenOff = words.contains { $0.hasPrefix("ekran") } && words.contains { $0.hasPrefix("kapat") }
+            let supported = turnsScreenOff || words.contains { word in systemWords.contains(where: word.hasPrefix) }
             return supported ? action : "runShortcut"
         case "weather":
             // "Bana bir tavsiye ver" was once answered with a weather report.
