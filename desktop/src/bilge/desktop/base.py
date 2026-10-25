@@ -143,12 +143,22 @@ class Clipboard(Protocol):
         ...
 
 
+# What `Keyboard.press` takes besides a single letter or digit.
+MODIFIER_KEYS = ("ctrl", "shift", "alt")
+NAMED_KEYS = ("tab", "left", "right", "page_up", "page_down", "home", "end", "return", "escape", "f5")
+
+
 class Keyboard(Protocol):
     def front_window(self) -> FrontWindow | None:
         """None when the platform doesn't say which app is in front."""
         ...
 
     def type(self, text: str) -> None: ...
+
+    def press(self, *keys: str) -> None:
+        """A shortcut into the app in front: the keys held down in order ("ctrl", "shift", "tab"), then released.
+        Each is one of MODIFIER_KEYS, NAMED_KEYS, a letter or a digit; DesktopError for anything else."""
+        ...
 
     def new_line(self) -> None:
         """Shift+Enter: a line break even where Enter would send a message."""

@@ -9,6 +9,11 @@ from bilge.desktop.process import DesktopError
 
 # How long an app gets to put its selection on the clipboard after Ctrl+C.
 _COPY_WAIT_SECONDS = 0.6
+# `Keyboard.press` names → virtual-key codes; letters and digits are their upper-case character codes.
+_VIRTUAL_KEYS = {
+    "ctrl": 0x11, "shift": 0x10, "alt": 0x12, "tab": 0x09, "left": 0x25, "right": 0x27, "page_up": 0x21,
+    "page_down": 0x22, "home": 0x24, "end": 0x23, "return": 0x0D, "escape": 0x1B, "f5": 0x74,
+}  # fmt: skip
 # In a console Ctrl+C stops the running program instead of copying.
 CONSOLES = frozenset(
     {
@@ -96,6 +101,18 @@ class WindowsKeyboard:
         for _ in range(max(0, count)):
             self.api.press(self.api.VK_BACK)
             time.sleep(0.008)
+
+    def press(self, *keys: str) -> None:
+        if keys:
+            self.api.press(*(_virtual_key(key) for key in keys))
+
+
+def _virtual_key(key: str) -> int:
+    if key in _VIRTUAL_KEYS:
+        return _VIRTUAL_KEYS[key]
+    if len(key) == 1 and key.isascii() and key.isalnum():
+        return ord(key.upper())
+    raise DesktopError(f"Unknown key: {key}")
 
 
 def _process_name(pid: int) -> str:

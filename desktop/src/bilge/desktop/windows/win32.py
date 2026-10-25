@@ -20,7 +20,9 @@ dwmapi = ctypes.WinDLL("dwmapi", use_last_error=True)
 CF_UNICODETEXT, CF_DIB = 13, 8
 GMEM_MOVEABLE = 0x0002
 INPUT_KEYBOARD = 1
-KEYEVENTF_KEYUP, KEYEVENTF_UNICODE = 0x0002, 0x0004
+KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE = 0x0001, 0x0002, 0x0004
+# Page Up/Down, End, Home, the arrows, Insert and Delete: without the extended flag they arrive as the number pad's.
+_EXTENDED_KEYS = frozenset({0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E})
 VK_SHIFT, VK_CONTROL, VK_RETURN, VK_BACK = 0x10, 0x11, 0x0D, 0x08
 VK_C, VK_V = 0x43, 0x56
 VK_F11 = 0x7A
@@ -216,7 +218,12 @@ def type_unicode(text: str, pause: float = 0.008) -> None:
 
 def press(*keys: int) -> None:
     """A shortcut: keys down in order, up in reverse."""
-    _send([_key(vk) for vk in keys] + [_key(vk, flags=KEYEVENTF_KEYUP) for vk in reversed(keys)])
+
+    def flags(vk: int) -> int:
+        return KEYEVENTF_EXTENDEDKEY if vk in _EXTENDED_KEYS else 0
+
+    _send([_key(vk, flags=flags(vk)) for vk in keys]
+          + [_key(vk, flags=flags(vk) | KEYEVENTF_KEYUP) for vk in reversed(keys)])  # fmt: skip
 
 
 class _Clipboard:

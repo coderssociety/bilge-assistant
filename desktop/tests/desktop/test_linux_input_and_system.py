@@ -134,6 +134,31 @@ def test_ydotool_1_x_takes_event_codes():
     assert runner.commands[-1] == ["ydotool", "key", "42:1", "28:1", "28:0", "42:0"]
 
 
+def test_shortcuts_are_pressed_with_each_typing_tool():
+    runner = FakeRunner({"xdotool"})
+    LinuxKeyboard(runner, X11).press("ctrl", "shift", "tab")
+    assert runner.commands == [["xdotool", "key", "--clearmodifiers", "ctrl+shift+Tab"]]
+
+    runner = FakeRunner({"wtype"})
+    LinuxKeyboard(runner, SWAY).press("alt", "left")
+    assert runner.commands == [["wtype", "-M", "alt", "-k", "Left", "-m", "alt"]]
+
+    runner = FakeRunner({"ydotool"}, {"ydotool type --help": MODERN_YDOTOOL_HELP})
+    LinuxKeyboard(runner, GNOME_WAYLAND).press("ctrl", "T")
+    assert runner.commands[-1] == ["ydotool", "key", "29:1", "20:1", "20:0", "29:0"]
+
+    runner = FakeRunner({"ydotool"}, {"ydotool type --help": LEGACY_YDOTOOL_HELP})
+    LinuxKeyboard(runner, GNOME_WAYLAND).press("page_down")
+    assert runner.commands[-1] == ["ydotool", "key", "pagedown"]
+
+
+def test_an_unknown_key_is_refused_before_anything_is_pressed():
+    runner = FakeRunner({"xdotool"})
+    with pytest.raises(DesktopError):
+        LinuxKeyboard(runner, X11).press("ctrl", "ş")
+    assert runner.commands == []
+
+
 def test_wtype_is_skipped_on_kde_and_ydotool_takes_over_when_wtype_is_refused():
     runner = FakeRunner({"wtype", "ydotool"})
     LinuxKeyboard(runner, KDE_WAYLAND).type("abc")
