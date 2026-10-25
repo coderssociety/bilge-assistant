@@ -13,6 +13,7 @@ from bilge.desktop.windows.office import MAIL_ITEM, OfficeError, Outlook, Outloo
 from bilge.tools.base import Risk, Tool, ToolError
 from bilge.tools.builtin.mail import MAX_POSITION, read_mail_tool
 from bilge.tools.desktop.common import int_argument, integer, obj, string_argument, text
+from bilge.tools.reading import TextReading
 
 # The whole message is read out before it is sent; a longer one is refused rather than cut short in the question.
 MAX_BODY = 600
@@ -93,7 +94,7 @@ class _Reply:
     body: str
 
 
-def mail_tools(outlook: Outlook, language: AssistantLanguage) -> list[Tool]:
+def mail_tools(outlook: Outlook, language: AssistantLanguage, reading: TextReading | None = None) -> list[Tool]:
     texts = _TEXTS[language]
     # The resolved recipient behind the last question, so what is sent is what the user heard.
     pending: dict[str, _Draft] = {}
@@ -226,7 +227,7 @@ def mail_tools(outlook: Outlook, language: AssistantLanguage) -> list[Tool]:
         return texts["replied"].format(name=draft.name)
 
     return [
-        read_mail_tool(lambda: OutlookMailbox(outlook), language, on_read=remember),
+        read_mail_tool(lambda: OutlookMailbox(outlook), language, on_read=remember, reading=reading),
         Tool(
             "sendEmail",
             texts["send"],

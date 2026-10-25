@@ -15,7 +15,6 @@ from enum import StrEnum
 import numpy as np
 
 from bilge.brain.agent import Agent
-from bilge.core import translation_request
 from bilge.core.audio.speech_segmenter import Configuration, SpeechSegmenter
 from bilge.core.conversation import confirmation_parser
 from bilge.core.conversation.barge_in_detector import BargeInDetector, Command, Stop
@@ -349,13 +348,13 @@ class VoiceAssistant:
         try:
             self._thinking = True
             try:
-                reply = (self.agent.handle_work_input(command) if work else self.agent.handle(command)).text
+                outcome = self.agent.handle_work_input(command) if work else self.agent.handle(command)
             finally:
                 self._thinking = False
             # Stopped or redirected while it was still thinking: the answer is no longer wanted.
             if not self._stopped_by_user and self._barge_command is None:
-                target = None if work else translation_request.target(command)
-                self._say(reply, target.code if target else None)
+                target = None if work else outcome.translation
+                self._say(outcome.text, target.code if target else None)
         except Exception as error:
             log.exception("The turn failed")
             self._event("error", str(error))

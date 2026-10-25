@@ -100,7 +100,7 @@ def build_agent(
         *calendar_tools(calendar, language, alert=_reminder_alert(alarms) if alarms is not None else None),
     ])  # fmt: skip
     if sys.platform != "win32":
-        registry.add(read_mail_tool(lambda: mailbox(settings.mail), language))
+        registry.add(read_mail_tool(lambda: mailbox(settings.mail), language, reading=text_reading))
     rules: list[Rule] = [
         rule("dailyBriefing", briefing.claims),
         rule("news", internet.news_source_rule_claims(language, news_reading)),
@@ -119,7 +119,8 @@ def build_agent(
         rules = [*desktop_rules, *rules]
         modes = desktop_modes
     agent = Agent(chat, registry, confirm=confirm, language=language, memory=memory.prompt_lines,
-                  action_log=ActionLog(config.data_dir() / "actions.jsonl"), rules=rules, modes=modes)  # fmt: skip
+                  action_log=ActionLog(config.data_dir() / "actions.jsonl"), rules=rules, modes=modes,
+                  reading=text_reading)  # fmt: skip
     built.append(agent)
     for tool in memory_tools(memory, language, lambda: agent.last_reply):
         registry.add(tool)
@@ -177,7 +178,7 @@ def _desktop_tools(
         *web.web_tools(found.opener, language),
         *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
-        *_office_tools(language),
+        *_office_tools(language, text_reading),
     ]
     rules = [
         rule("startDictation", lambda command: dictation_command.is_start(command, language)),
@@ -200,13 +201,13 @@ def _spreadsheet_apps(calc):
     return SpreadsheetApps({"excel": ExcelSheets(), "calc": calc})
 
 
-def _office_tools(language: AssistantLanguage) -> list[Tool]:
+def _office_tools(language: AssistantLanguage, text_reading: TextReading) -> list[Tool]:
     if sys.platform != "win32":
         return []
     from bilge.desktop.windows.office import Outlook
     from bilge.tools.desktop.mail import mail_tools
 
-    return mail_tools(Outlook(), language)
+    return mail_tools(Outlook(), language, text_reading)
 
 
 def voice_models(settings: config.Settings) -> tuple[ModelSpec, ...]:

@@ -169,3 +169,19 @@ def test_the_server_may_name_its_port():
     assert mailboxes.split_server("imaps://mail.example.org:1993/") == ("mail.example.org", 1993)
     with pytest.raises(mailboxes.MailError):
         mailboxes.split_server("mail.example.org:x")
+
+
+def test_a_long_message_read_on_its_own_goes_on_with_devamini_oku(monkeypatch):
+    import sys
+
+    from bilge.tools.reading import TextReading
+
+    offer = _mail("Anna <anna@example.org>", "Offer", "word " * 1500, "Fri, 16 Oct 2026 10:00:00 +0300")
+    monkeypatch.setattr(sys.modules[__name__], "INBOX", [*INBOX, (12, offer, False)])
+    box, _ = mailbox()
+    read = read_mail_tool(lambda: box, TR, reading=TextReading(TR))
+    first = read.run(read.refine({}, "son mailimi oku"))
+    assert first.startswith("E-posta: Anna - Offer, 16.10.2026 10:00\nword word") and first.endswith("(Devamı var.)")
+    more = read.refine({}, "devamını oku")
+    assert more["continue"] is True
+    assert read.run(more).startswith("Anna - Offer, bölüm 2:\nword")

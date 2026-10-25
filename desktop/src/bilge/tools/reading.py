@@ -9,6 +9,7 @@ from typing import Any
 from bilge.core.language import AssistantLanguage
 from bilge.core.tools import reading_continuation
 from bilge.core.tools.reading_continuation import Part, Reading
+from bilge.core.translation_request import SpeechLanguage
 from bilge.tools.base import Tool
 
 _TEXTS = {
@@ -38,11 +39,26 @@ class TextReading:
         self._clock = clock
         self._lock = threading.Lock()
         self._reading: Reading | None = None
+        # The language the current request wants what is read in, and the one the text being read is read in.
+        self._requested: SpeechLanguage | None = None
+        self._translation: SpeechLanguage | None = None
+
+    def requested(self, target: SpeechLanguage | None) -> None:
+        """Set for each request: "İngilizce maili Türkçe oku" reads in Turkish, and so does its "devamını oku"."""
+        with self._lock:
+            self._requested = target
+
+    def translation_for(self, command: str) -> SpeechLanguage | None:
+        """The language the text just read was read in, when the command goes on with it."""
+        with self._lock:
+            translation = self._translation
+        return translation if self.wants_more(command) else None
 
     def start(self, title: str, text: str, size: int) -> str:
         """The first part of a new text, which is remembered for "devamını oku"."""
         with self._lock:
             part, self._reading = reading_continuation.first(title, text, size, self._clock())
+            self._translation = self._requested
         return self._told(part, first=True)
 
     def wants_more(self, command: str) -> bool:
@@ -57,6 +73,8 @@ class TextReading:
             if reading is None or not reading_continuation.is_recent(reading, self._clock()):
                 return self._texts["nothing"]
             part, self._reading = reading_continuation.following(reading, self._clock())
+            # "Devamını Fransızca oku" changes the language for the rest too.
+            self._translation = self._requested
         if not part.text:
             return self._texts["ended"].format(title=part.title)
         return self._told(part, first=False)

@@ -17,9 +17,11 @@ from bilge.core import translation_request
 from bilge.core.conversation.conversation_flow import WorkSession
 from bilge.core.language import AssistantLanguage
 from bilge.core.speech import turkish_number_parser, turkish_time_of_day
+from bilge.core.translation_request import SpeechLanguage
 from bilge.llm.messages import Message, ToolCall
 from bilge.llm.providers import ChatProvider
 from bilge.tools.base import Registry, Tool, ToolError
+from bilge.tools.reading import TextReading
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +43,8 @@ class Outcome:
     text: str
     # The answer may echo fetched text, so the caller must not let it steer the next command.
     read_untrusted: bool = False
+    # The language the answer is in when the request asked for a translation; it is spoken in that language.
+    translation: SpeechLanguage | None = None
 
 
 _TEXTS = {
@@ -101,7 +105,9 @@ class Agent:
         clock: Callable[[], datetime] = datetime.now,
         rules: list[Rule] | None = None,
         modes: list[Mode] | None = None,
+        reading: TextReading | None = None,
     ):
+        """`reading`: the long text being read, whose "devamını oku" keeps the language it was translated into."""
         self.provider = provider
         self.registry = registry
         self.confirm = confirm
@@ -111,9 +117,11 @@ class Agent:
         self.clock = clock
         self.rules = rules or []
         self.modes = modes or []
+        self.reading = reading
         self._texts = _TEXTS[language]
         self._history: list[tuple[Message, Message, bool]] = []
         self._read_earlier = False
+        self._translation: SpeechLanguage | None = None
 
     @property
     def last_reply(self) -> str | None:
@@ -146,7 +154,12 @@ class Agent:
         # A reply to text fetched in an earlier turn is still in the conversation.
         self._read_earlier = any(untrusted for *_, untrusted in self._history)
         # "İngilizce maili Türkçe oku": the model reads and translates, so rules that answer by themselves step aside.
-        target = translation_request.target(command)
+        target = translation_request.target(command) or (
+            self.reading.translation_for(command) if self.reading else None
+        )
+        if self.reading is not None:
+            self.reading.requested(target)
+        self._translation = target
         wording = instructions.request(command, self.clock(), self.language)
         request = Message.user(wording + (instructions.translation(target, self.language) if target else ""))
 
@@ -193,7 +206,7 @@ class Agent:
         if text.strip():
             # Some APIs reject an empty assistant turn, which would break every following request.
             self._history = [*self._history, (request, Message("assistant", text), read_untrusted)][-HISTORY_TURNS:]
-        return Outcome(text, read_untrusted or self._read_earlier)
+        return Outcome(text, read_untrusted or self._read_earlier, self._translation)
 
     def _run(self, call: ToolCall, read_untrusted: bool) -> _Step:
         texts = self._texts

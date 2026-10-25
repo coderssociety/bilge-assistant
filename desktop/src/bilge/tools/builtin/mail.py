@@ -9,6 +9,7 @@ from bilge.core import mail_request
 from bilge.core.language import AssistantLanguage
 from bilge.tools.base import Tool, ToolError
 from bilge.tools.desktop.common import int_argument, integer, obj, string_argument, text
+from bilge.tools.reading import TextReading, continued
 
 LISTED = 5
 # Messages whose text is read; each is cut, so a newsletter can't fill the answer.
@@ -66,8 +67,10 @@ def read_mail_tool(
     mailbox: Callable[[], mailboxes.Mailbox | None],
     language: AssistantLanguage,
     on_read: Callable[[list[mailboxes.MailMessage]], None] | None = None,
+    reading: TextReading | None = None,
 ) -> Tool:
-    """`on_read` hears which messages were just read out or named, newest first, for "buna yanıt ver"."""
+    """`on_read` hears which messages were just read out or named, newest first, for "buna yanıt ver"; a long
+    message read on its own goes on with "devamını oku" through `reading`."""
     texts = _TEXTS[language]
 
     def told(messages: list[mailboxes.MailMessage]) -> None:
@@ -90,13 +93,19 @@ def read_mail_tool(
             if sender and not count:
                 return texts["no_sender"].format(sender=sender)
             return texts["only"].format(count=count) if count else texts["empty"]
-        return texts["one"].format(
-            sender=message.sender or "?", subject=message.subject,
-            when=f"{message.received:%d.%m.%Y %H:%M}" if message.received else "",
-            body=message.body[:ONE_MESSAGE_CHARACTERS],
-        )  # fmt: skip
+        title = f"{message.sender or '?'} - {message.subject}"
+        body = (
+            reading.start(title, message.body, ONE_MESSAGE_CHARACTERS)
+            if reading
+            else message.body[:ONE_MESSAGE_CHARACTERS]
+        )
+        return texts["one"].format(sender=message.sender or "?", subject=message.subject,
+                                   when=f"{message.received:%d.%m.%Y %H:%M}" if message.received else "",
+                                   body=body)  # fmt: skip
 
     def read(arguments: dict[str, Any]) -> str:
+        if arguments.get("continue") and reading is not None:
+            return reading.more()
         sender = string_argument(arguments, "sender")
         position = int_argument(arguments, "position")
         if sender or position:
@@ -124,7 +133,7 @@ def read_mail_tool(
             refined["sender"] = said_sender
         if said_position:
             refined["position"] = said_position
-        return refined
+        return continued(reading, refined, command)
 
     # Subjects and senders are written by whoever sent the mail.
     return Tool(
