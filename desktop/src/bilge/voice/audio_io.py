@@ -22,6 +22,8 @@ BlockHandler = Callable[[np.ndarray, np.ndarray], None]
 
 class AudioDevice(Protocol):
     sample_rate: int
+    # Bilge's own player (a radio station, a podcast), mixed under its voice.
+    background: "BackgroundBuffer"
 
     def start(self, on_block: BlockHandler) -> None:
         """Calls `on_block(microphone, played)` for every block, both mono float32 at `sample_rate`."""
@@ -77,6 +79,67 @@ class PlaybackBuffer:
         return out
 
 
+class BackgroundBuffer:
+    """Audio played under Bilge's voice. The level changes smoothly over one block, so turning a station down
+    while Bilge listens doesn't click; while held, nothing is taken, and playback goes on from the same place."""
+
+    def __init__(self) -> None:
+        self._clips: deque[np.ndarray] = deque()
+        self._queued = 0
+        self._lock = threading.Lock()
+        self._gain = 0.0
+        self._target = 0.0
+        self._holding = False
+
+    def add(self, samples: np.ndarray) -> None:
+        with self._lock:
+            self._clips.append(samples.astype(np.float32, copy=False))
+            self._queued += len(samples)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._clips.clear()
+            self._queued = 0
+
+    @property
+    def queued(self) -> int:
+        """Samples waiting to be played."""
+        with self._lock:
+            return self._queued
+
+    def set_level(self, gain: float, holding: bool) -> None:
+        with self._lock:
+            self._target = gain
+            self._holding = holding
+
+    def take(self, count: int) -> np.ndarray:
+        out = np.zeros(count, dtype=np.float32)
+        with self._lock:
+            if self._holding:
+                self._gain = 0.0
+                return out
+            filled = 0
+            while filled < count and self._clips:
+                clip = self._clips[0]
+                n = min(count - filled, len(clip))
+                out[filled : filled + n] = clip[:n]
+                filled += n
+                if n == len(clip):
+                    self._clips.popleft()
+                else:
+                    self._clips[0] = clip[n:]
+            self._queued -= filled
+            start, end = self._gain, self._target
+            self._gain = end
+        if start == end:
+            return out * end
+        return out * np.linspace(start, end, count, dtype=np.float32)
+
+
+def mixed(speech: np.ndarray, background: np.ndarray) -> np.ndarray:
+    return np.clip(speech + background, -1.0, 1.0)
+
+
 class SoundDevice:
     """The computer's microphone and speaker through PortAudio (WASAPI on Windows, PipeWire/PulseAudio on Linux)."""
 
@@ -87,6 +150,7 @@ class SoundDevice:
         self._devices = choose_devices(sd, input_device, output_device)
         self.sample_rate = int(sd.query_devices(self._devices[1])["default_samplerate"])
         self._buffer = PlaybackBuffer()
+        self.background = BackgroundBuffer()
         self._stream = None
 
     def start(self, on_block: BlockHandler) -> None:
@@ -99,7 +163,8 @@ class SoundDevice:
         def callback(indata, outdata, frames, time, status):
             if status:
                 log.debug("Audio status: %s", status)
-            played = self._buffer.take(frames)
+            # The station goes into the echo reference too, so the microphone hears the user over it.
+            played = mixed(self._buffer.take(frames), self.background.take(frames))
             outdata[:] = played[:, None]
             on_block(indata.mean(axis=1).astype(np.float32), played)
 
@@ -206,6 +271,7 @@ class SimulatedDevice:
         self._delay_line = np.zeros(int(echo_delay * sample_rate), dtype=np.float32)
         self._block = block
         self._buffer = PlaybackBuffer()
+        self.background = BackgroundBuffer()
         self._script: deque[np.ndarray] = deque()
         self._script_lock = threading.Lock()
         self._running = False
@@ -231,7 +297,7 @@ class SimulatedDevice:
             period = self._block / self.sample_rate
             next_time = time.monotonic()
             while self._running:
-                played = self._buffer.take(self._block)
+                played = mixed(self._buffer.take(self._block), self.background.take(self._block))
                 self.played_seconds += np.count_nonzero(played) / self.sample_rate
                 line = np.concatenate([self._delay_line, played])
                 echo, self._delay_line = line[: self._block], line[self._block :]
