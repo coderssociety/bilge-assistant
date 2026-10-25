@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 import pytest
 
@@ -48,6 +49,64 @@ def test_weather_reads_the_forecast(monkeypatch):
     assert "İzmir'de" in tool.run({})
     tomorrow = tool.run({"day_offset": 1})
     assert "yarın" in tomorrow and "80" in tomorrow
+
+
+def forecast_web(monkeypatch, asked):
+    def get(url, language=TR, max_bytes=0):
+        asked.append(url)
+        if url.startswith("https://geocoding-api"):
+            name = "Ankara" if "Ankara" in url else "İzmir"
+            body = {"results": [{"name": name, "latitude": 38.4, "longitude": 27.1}]}
+        else:
+            hours = 48
+            body = {
+                "current": {"temperature_2m": 21.4, "weather_code": 0},
+                "daily": {"time": ["a", "b"], "weather_code": [0, 61], "temperature_2m_max": [24, 19],
+                          "temperature_2m_min": [15, 12], "precipitation_probability_max": [10, 80]},
+                "hourly": {"temperature_2m": [10 + h % 24 / 2 for h in range(hours)],
+                           "precipitation_probability": [5 if h < 24 else 40 + h % 24 for h in range(hours)]},
+            }  # fmt: skip
+        return web_fetch.Response(url, 200, "application/json", json.dumps(body).encode())
+
+    monkeypatch.setattr(web_fetch, "get", get)
+
+
+def test_a_follow_up_without_a_city_stays_in_the_city_just_asked_about(monkeypatch):
+    asked = []
+    forecast_web(monkeypatch, asked)
+    now = [datetime(2026, 10, 15, 14, 0)]
+    tool = internet.weather(TR, lambda: "Ankara", internet.WeatherFollowUp(clock=lambda: now[0]))
+    tool.run(tool.refine({"city": "İzmir"}, "İzmir'de hava nasıl"))
+    follow_up = tool.refine({"city": "Ankara"}, "peki yarın?")
+    assert (follow_up["city"], follow_up["day_offset"]) == ("İzmir", 1)
+    assert tool.run(follow_up).startswith("İzmir'de yarın hava hafif yağmurlu")
+    now[0] += internet.FOLLOW_UP_WINDOW
+    assert tool.refine({}, "peki yarın?")["city"] is None
+
+
+def test_will_it_rain_reads_todays_chance_of_rain(monkeypatch):
+    forecast_web(monkeypatch, [])
+    tool = internet.weather(TR, lambda: "İzmir")
+    arguments = tool.refine({}, "yağmur yağacak mı")
+    assert arguments == {"city": None, "day_offset": 0, "rain": True}
+    assert tool.run(arguments) == (
+        "İzmir'de bugün hava açık, sıcaklık 15 ile 24 derece arasında. Yağış ihtimali yüzde 10."
+    )
+
+
+def test_a_part_of_the_day_reads_the_hourly_forecast(monkeypatch):
+    asked = []
+    forecast_web(monkeypatch, asked)
+    tool = internet.weather(TR, lambda: "İzmir")
+    evening = tool.refine({}, "akşam yağmur var mı")
+    assert evening == {"city": None, "day_offset": 0, "part": "evening", "rain": True}
+    assert tool.run(evening) == "İzmir'de bu akşam sıcaklık 19 ile 21 derece arasında, yağış ihtimali en fazla yüzde 5."
+    assert "hourly=temperature_2m%2Cprecipitation_probability" in asked[-1]
+    english = internet.weather(EN, lambda: "Izmir")
+    morning = english.refine({}, "will it rain tomorrow morning")
+    assert english.run(morning) == (
+        "In İzmir tomorrow morning it will be between 13 and 16 degrees, with at most a 51 percent chance of rain."
+    )
 
 
 def test_weather_without_a_connection_is_a_spoken_error(monkeypatch):

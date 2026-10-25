@@ -4,6 +4,7 @@ import math
 
 from bilge.core.language import AssistantLanguage
 from bilge.core.text import locative
+from bilge.core.web.weather_request import PartOfDay
 
 _RAIN_CHANCE_WORTH_MENTIONING = 30
 
@@ -76,15 +77,55 @@ def daily(
     code: int,
     rain_chance: int | None,
     language: AssistantLanguage = AssistantLanguage.TURKISH,
+    asked_about_rain: bool = False,
 ) -> str:
-    """`day_name` is "bugün", "yarın" or a weekday ("today", "tomorrow" or a weekday in English)."""
-    mentions_rain = rain_chance is not None and rain_chance >= _RAIN_CHANCE_WORTH_MENTIONING
+    """`day_name` is "bugün", "yarın" or a weekday ("today", "tomorrow" or a weekday in English). A question about
+    rain always hears the chance, even a small one."""
+    worth = asked_about_rain or (rain_chance or 0) >= _RAIN_CHANCE_WORTH_MENTIONING
+    mentions_rain = rain_chance is not None and worth
     low, high = _rounded(minimum), _rounded(maximum)
     if language is AssistantLanguage.ENGLISH:
         sentence = f"In {city} {day_name} it will be {condition(code, language)}, between {low} and {high} degrees."
         return sentence + (f" There's a {rain_chance} percent chance of rain." if mentions_rain else "")
     sentence = f"{locative(city)} {day_name} hava {condition(code)}, sıcaklık {low} ile {high} derece arasında."
     return sentence + (f" Yağış ihtimali yüzde {rain_chance}." if mentions_rain else "")
+
+
+_TURKISH_PARTS = {
+    PartOfDay.MORNING: "sabah", PartOfDay.NOON: "öğlen", PartOfDay.AFTERNOON: "öğleden sonra",
+    PartOfDay.EVENING: "akşam", PartOfDay.NIGHT: "gece",
+}  # fmt: skip
+
+
+def period(day_name: str, day_offset: int, part: PartOfDay, language: AssistantLanguage) -> str:
+    """ "bu akşam", "yarın sabah", "cuma gece" / "this evening", "tonight", "on Friday morning"."""
+    if language is AssistantLanguage.ENGLISH:
+        if part is PartOfDay.NOON:
+            return f"{day_name} at midday"
+        if day_offset == 0:
+            return "tonight" if part is PartOfDay.NIGHT else f"this {part.value}"
+        return f"{day_name} {part.value}"
+    name = _TURKISH_PARTS[part]
+    if day_offset == 0 and part in (PartOfDay.MORNING, PartOfDay.EVENING, PartOfDay.NIGHT):
+        return f"bu {name}"
+    return f"{day_name} {name}"
+
+
+def hourly(
+    city: str,
+    when: str,
+    minimum: float,
+    maximum: float,
+    rain_chance: int,
+    language: AssistantLanguage = AssistantLanguage.TURKISH,
+) -> str:
+    """`when` comes from `period`."""
+    low, high = _rounded(minimum), _rounded(maximum)
+    if language is AssistantLanguage.ENGLISH:
+        degrees = f"around {low} degrees" if low == high else f"between {low} and {high} degrees"
+        return f"In {city} {when} it will be {degrees}, with at most a {rain_chance} percent chance of rain."
+    degrees = f"{low} derece civarında" if low == high else f"{low} ile {high} derece arasında"
+    return f"{locative(city)} {when} sıcaklık {degrees}, yağış ihtimali en fazla yüzde {rain_chance}."
 
 
 def _rounded(value: float) -> int:

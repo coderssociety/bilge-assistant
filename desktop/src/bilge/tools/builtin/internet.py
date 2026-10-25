@@ -13,7 +13,8 @@ from urllib.parse import urlencode
 from bilge.brain.instructions import weekday_name
 from bilge.core import text
 from bilge.core.language import AssistantLanguage
-from bilge.core.web import html_text, news_request, news_source, rss_headlines, weather_report
+from bilge.core.tools import english_time_parser, relative_day_parser
+from bilge.core.web import html_text, news_request, news_source, rss_headlines, weather_report, weather_request
 from bilge.core.web import news_article as article_reference
 from bilge.tools import web_fetch
 from bilge.tools.base import Tool, ToolError
@@ -25,6 +26,7 @@ HEADLINE_COUNT = 5
 FEED_COUNT = 30
 # Enough for a long article; the model only sees the start of a longer page.
 PAGE_CHARACTERS = 12_000
+FORECAST_DAYS = 7
 
 
 def _json(url: str, language: AssistantLanguage) -> Any:
@@ -37,21 +39,64 @@ def _json(url: str, language: AssistantLanguage) -> Any:
         raise web_fetch.WebFetchError(web_fetch.Reason.UNEXPECTED) from error
 
 
-def weather(language: AssistantLanguage, default_city: Callable[[], str]) -> Tool:
+# How long "peki yarın?" still means the city just asked about.
+FOLLOW_UP_WINDOW = timedelta(minutes=5)
+
+
+class WeatherFollowUp:
+    """The city of the last weather answer, so a follow-up that names no city ("peki yarın?") stays there."""
+
+    def __init__(self, clock: Callable[[], datetime] = datetime.now) -> None:
+        self._clock = clock
+        self._last: tuple[str, datetime] | None = None
+        self._lock = threading.Lock()
+
+    def remember(self, city: str) -> None:
+        with self._lock:
+            self._last = (city, self._clock())
+
+    def recent_city(self) -> str | None:
+        with self._lock:
+            if self._last is None or self._clock() - self._last[1] >= FOLLOW_UP_WINDOW:
+                return None
+            return self._last[0]
+
+
+def weather(
+    language: AssistantLanguage, default_city: Callable[[], str], follow_up: WeatherFollowUp | None = None
+) -> Tool:
     english = language is EN
+    follow_up = follow_up or WeatherFollowUp()
 
     def refine(arguments: dict[str, Any], command: str) -> dict[str, Any]:
-        # A local model once filled in "Ankara" for "Bugün hava nasıl"; a city counts only if it was said.
+        # A local model once filled in "Ankara" for "Bugün hava nasıl"; a city counts only if it was said, or was
+        # the one just asked about.
         city = str(arguments.get("city") or "").strip()
-        if not city:
-            return arguments
-        stem = text.folded(city)[: max(3, len(city) - 1)]
-        said = any(word.startswith(stem) for word in text.folded(command).split())
-        return arguments if said else {**arguments, "city": None}
+        if city:
+            stem = text.folded(city)[: max(3, len(city) - 1)]
+            city = city if any(word.startswith(stem) for word in text.folded(command).split()) else ""
+        refined: dict[str, Any] = {**arguments, "city": city or follow_up.recent_city()}
+        parsed = (english_time_parser if english else relative_day_parser).day_offset(command, datetime.now())
+        if parsed is not None and 0 <= parsed < FORECAST_DAYS:
+            refined["day_offset"] = parsed
+        part = weather_request.part_of_day(command, english)
+        rain = weather_request.asks_about_rain(command, english)
+        if (part or rain) and _whole_number(refined.get("day_offset")) is None:
+            refined["day_offset"] = 0
+        if part:
+            refined["part"] = part.value
+        if rain:
+            refined["rain"] = True
+        return refined
 
     def run(arguments: dict[str, Any]) -> str:
-        city = str(arguments.get("city") or "").strip() or default_city()
+        asked = str(arguments.get("city") or "").strip()
+        city = asked or default_city()
         day = _whole_number(arguments.get("day_offset"))
+        try:
+            part = weather_request.PartOfDay(arguments.get("part"))
+        except ValueError:
+            part = None
         try:
             places = _json(
                 "https://geocoding-api.open-meteo.com/v1/search?"
@@ -63,29 +108,32 @@ def weather(language: AssistantLanguage, default_city: Callable[[], str]) -> Too
                 raise ToolError(
                     f"Couldn't find a place called '{city}'." if english else f"'{city}' diye bir yer bulamadım."
                 )
-            forecast = _json(
-                "https://api.open-meteo.com/v1/forecast?"
-                + urlencode(
-                    {
-                        "latitude": place["latitude"],
-                        "longitude": place["longitude"],
-                        "current": "temperature_2m,weather_code",
-                        "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-                        "timezone": "auto",
-                        "forecast_days": 7,
-                    }
-                ),
-                language,
-            )
+            query = {
+                "latitude": place["latitude"],
+                "longitude": place["longitude"],
+                "current": "temperature_2m,weather_code",
+                "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+                "timezone": "auto",
+                "forecast_days": FORECAST_DAYS,
+            }
+            if part is not None:
+                query["hourly"] = "temperature_2m,precipitation_probability"
+            forecast = _json("https://api.open-meteo.com/v1/forecast?" + urlencode(query), language)
         except web_fetch.WebFetchError as error:
             raise ToolError(
                 ("Couldn't get the weather. " if english else "Hava durumu alınamadı. ")
                 + web_fetch.describe(error, language)
             ) from error
+        if asked:
+            follow_up.remember(asked)
         daily = forecast["daily"]
         if not isinstance(day, int) or not 0 <= day < len(daily["time"]):
             current = forecast["current"]
             return weather_report.current(place["name"], current["temperature_2m"], current["weather_code"], language)
+        if part is not None and forecast.get("hourly"):
+            told = _hours(place["name"], forecast["hourly"], day, part, language)
+            if told is not None:
+                return told
         return weather_report.daily(
             place["name"],
             _day_name(day, language),
@@ -94,13 +142,15 @@ def weather(language: AssistantLanguage, default_city: Callable[[], str]) -> Too
             daily["weather_code"][day],
             daily["precipitation_probability_max"][day],
             language,
+            asked_about_rain=bool(arguments.get("rain")),
         )
 
     return Tool(
         "weather",
-        "Weather for a city: now, today, tomorrow or the coming days."
+        "Weather for a city: now, today, tomorrow, the coming days, a part of the day, or whether it will rain."
         if english
-        else "Bir şehrin hava durumunu söyler: şu an, bugün, yarın ya da önümüzdeki günler.",
+        else "Bir şehrin hava durumunu söyler: şu an, bugün, yarın, önümüzdeki günler, günün bir bölümü ya da yağmur "
+        "yağıp yağmayacağı.",
         run=run,
         parameters={
             "type": "object",
@@ -114,7 +164,7 @@ def weather(language: AssistantLanguage, default_city: Callable[[], str]) -> Too
                 "day_offset": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 6,
+                    "maximum": FORECAST_DAYS - 1,
                     "description": "Days from today: today 0, tomorrow 1; leave empty for right now"
                     if english
                     else "Kaç gün sonrası: bugün 0, yarın 1; 'şu an' ya da gün söylenmediyse boş bırak",
@@ -123,6 +173,20 @@ def weather(language: AssistantLanguage, default_city: Callable[[], str]) -> Too
         },
         refine=refine,
     )
+
+
+def _hours(
+    city: str, hourly: dict[str, Any], day: int, part: weather_request.PartOfDay, language: AssistantLanguage
+) -> str | None:
+    """The part of the day from Open-Meteo's hourly lists, which start at local midnight today."""
+    first, last = weather_request.HOURS[part]
+    window = slice(day * 24 + first, day * 24 + last)
+    temperatures = [t for t in hourly.get("temperature_2m", [])[window] if t is not None]
+    chances = [c for c in hourly.get("precipitation_probability", [])[window] if c is not None]
+    if not temperatures:
+        return None
+    when = weather_report.period(_day_name(day, language), day, part, language)
+    return weather_report.hourly(city, when, min(temperatures), max(temperatures), max(chances, default=0), language)
 
 
 def _day_name(offset: int, language: AssistantLanguage) -> str:
