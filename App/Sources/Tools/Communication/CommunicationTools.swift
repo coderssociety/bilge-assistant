@@ -262,9 +262,11 @@ struct ReadMailTool: AssistantTool {
             repeat with i from 1 to (total)
             if i > \(Self.maxReadMessages) then exit repeat
             set m to item i of unread
-            set body to content of m
+            \(Self.cleaned("content of m", into: "body", oneLine: false))
             if length of body > \(Self.maxBodyCharacters) then set body to text 1 thru \(Self.maxBodyCharacters) of body
-            set output to output & linefeed & linefeed & \(AppleScriptRunner.quoted(String(localized: "E-posta "))) & i & ": " & (sender of m) & " - " & (subject of m) & linefeed & body
+            \(Self.cleaned("sender of m", into: "shownSender", oneLine: true))
+            \(Self.cleaned("subject of m", into: "shownSubject", oneLine: true))
+            set output to output & linefeed & linefeed & \(AppleScriptRunner.quoted(String(localized: "E-posta "))) & i & ": " & shownSender & " - " & shownSubject & linefeed & body
             end repeat
             """ : ""
         let contentRead = arguments.withContent ? Self.maxReadMessages : 0
@@ -278,10 +280,13 @@ struct ReadMailTool: AssistantTool {
             repeat with i from 1 to (total)
             if i > \(Self.maxMessages) then exit repeat
             set m to item i of unread
-            set output to output & linefeed & "- " & (sender of m) & ": " & (subject of m)
+            \(Self.cleaned("sender of m", into: "shownSender", oneLine: true))
+            \(Self.cleaned("subject of m", into: "shownSubject", oneLine: true))
+            set output to output & linefeed & "- " & shownSender & ": " & shownSubject
             set readFlag to "0"
             if i is not greater than \(contentRead) then set readFlag to "1"
-            set refs to refs & linefeed & \(Self.referenceLine("m", flag: "readFlag"))
+            \(Self.setReference("m", flag: "readFlag", into: "refLine"))
+            set refs to refs & linefeed & refLine
             end repeat
             \(bodies)
             return output & refs
@@ -295,13 +300,31 @@ struct ReadMailTool: AssistantTool {
         }
     }
 
-    /// One `MailReadOutput` line for the message in the AppleScript variable `message`; the marker's control
-    /// character is built in the script rather than written into its source.
-    static func referenceLine(_ message: String, flag: String) -> String {
+    /// Statements setting `variable` to the `MailReadOutput` line for the message in the AppleScript variable
+    /// `message`; the marker's control character is built in the script rather than written into its source.
+    static func setReference(_ message: String, flag: String, into variable: String) -> String {
         let marker = "(character id \(MailReadOutput.marker.unicodeScalars.first!.value)) & "
             + AppleScriptRunner.quoted(String(MailReadOutput.marker.dropFirst()))
-        let fields = [marker, "(id of \(message) as text)", "(extract name from (sender of \(message)))",
-                      "(extract address from (sender of \(message)))", "(subject of \(message))", flag]
-        return fields.joined(separator: " & tab & ")
+        let fields = [marker, "(id of \(message) as text)", "refName", "refAddress", "refSubject", flag]
+        return [
+            cleaned("extract name from (sender of \(message))", into: "refName", oneLine: true),
+            cleaned("extract address from (sender of \(message))", into: "refAddress", oneLine: true),
+            cleaned("subject of \(message)", into: "refSubject", oneLine: true),
+            "set \(variable) to " + fields.joined(separator: " & tab & "),
+        ].joined(separator: "\n")
+    }
+
+    /// Statements setting `variable` to the text of `expression` without the marker's control character, so a
+    /// sender, subject or body can't add a reference line of its own; one-line fields also lose line breaks and tabs.
+    static func cleaned(_ expression: String, into variable: String, oneLine: Bool) -> String {
+        let marker = "character id \(MailReadOutput.marker.unicodeScalars.first!.value)"
+        let delimiters = oneLine ? "{\(marker), linefeed, return, tab}" : "{\(marker)}"
+        return """
+        set AppleScript's text item delimiters to \(delimiters)
+        set \(variable) to text items of ((\(expression)) as text)
+        set AppleScript's text item delimiters to \(oneLine ? "\" \"" : "\"\"")
+        set \(variable) to \(variable) as text
+        set AppleScript's text item delimiters to ""
+        """
     }
 }

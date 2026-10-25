@@ -75,7 +75,8 @@ struct ReplyMailTool: AssistantTool {
         repeat with m in found
         if (date received of m) > (date received of newest) then set newest to contents of m
         end repeat
-        return \(ReadMailTool.referenceLine("newest", flag: "\"0\""))
+        \(ReadMailTool.setReference("newest", flag: "\"0\"", into: "refLine"))
+        return refLine
         end tell
         """)
         return MailReadOutput.split(output).references.first
