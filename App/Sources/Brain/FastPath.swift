@@ -36,7 +36,7 @@ struct FastPath {
         case let .openFolder(folder):
             return await make("files", FileTool.self) { .init(action: .openFolder, query: nil, folder: Self.folder(for: folder)) }
         case let .timers(action):
-            return await make("manageTimers", ManageTimersTool.self) { .init(action: action == .list ? .list : .cancelAll) }
+            return await make("manageTimers", ManageTimersTool.self) { Self.arguments(for: action) }
         case let .openApp(name):
             guard let tool = tools["openApp"] as? OpenAppTool, await tool.catalog.resolve(name) != nil else { return nil }
             return await tool.makeCall(.init(appName: name))
@@ -63,11 +63,20 @@ struct FastPath {
 
     private static func arguments(for volume: QuickIntent.Volume) -> VolumeTool.Arguments {
         switch volume {
-        case let .set(level): .init(action: .set, level: level)
-        case .up: .init(action: .increase, level: nil)
-        case .down: .init(action: .decrease, level: nil)
-        case .mute: .init(action: .mute, level: nil)
-        case .unmute: .init(action: .unmute, level: nil)
+        case let .set(level): .init(action: .set, level: level, amount: nil)
+        case .up: .init(action: .increase, level: nil, amount: nil)
+        case .down: .init(action: .decrease, level: nil, amount: nil)
+        case let .change(amount): .init(action: amount > 0 ? .increase : .decrease, level: nil, amount: abs(amount))
+        case .mute: .init(action: .mute, level: nil, amount: nil)
+        case .unmute: .init(action: .unmute, level: nil, amount: nil)
+        }
+    }
+
+    private static func arguments(for timers: QuickIntent.TimerAction) -> ManageTimersTool.Arguments {
+        switch timers {
+        case .list: .init(action: .list, label: nil, position: nil)
+        case .cancelOne: .init(action: .cancel, label: nil, position: nil)
+        case .cancelAll: .init(action: .cancelAll, label: nil, position: nil)
         }
     }
 
@@ -84,6 +93,7 @@ struct FastPath {
     private static func action(for system: QuickIntent.System) -> SystemActionTool.Action {
         switch system {
         case .lockScreen: .lockScreen
+        case .screenOff: .screenOff
         case .sleep: .sleep
         case .darkModeOn: .darkModeOn
         case .darkModeOff: .darkModeOff

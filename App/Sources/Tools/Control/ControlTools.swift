@@ -4,15 +4,20 @@ import FoundationModels
 
 struct WindowTool: AssistantTool {
     let name = "windowControl"
-    let description = "Öndeki pencereyi küçültür, tam ekran yapar, ekranın soluna/sağına yerleştirir ya da büyütür; bir uygulamayı ya da diğer uygulamaları gizler."
+    let description = "Öndeki pencereyi küçültür, geri getirir, kapatır, tam ekran yapar ya da tam ekrandan çıkarır, ekranın soluna/sağına yerleştirir ya da büyütür; bir uygulamayı ya da diğer uygulamaları gizler."
+    /// How far a window may be from the screen's visible frame and still count as zoomed to fill it.
+    private static let zoomTolerance: CGFloat = 8
+    /// Time for a closed or resized window to settle before it is checked.
+    private static let settleDelay: Duration = .milliseconds(300)
 
     @Generable
     enum Action {
-        case minimize, fullScreen, leftHalf, rightHalf, maximize, hideApp, hideOthers, showAll
+        case minimize, restore, close, fullScreen, exitFullScreen, leftHalf, rightHalf, maximize, hideApp, hideOthers, showAll
     }
 
     @Generable
     struct Arguments {
+        @Guide(description: "restore küçültülmüş pencereyi geri getirir ya da büyütülmüş pencereyi eski boyutuna döndürür")
         var action: Action
         @Guide(description: "hideApp için gizlenecek uygulamanın eksiz adı; öndeki uygulama için boş bırak")
         var appName: String?
@@ -20,14 +25,14 @@ struct WindowTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         do {
-            return try await MainActor.run { try Self.perform(arguments) }
+            return try await Self.perform(arguments)
         } catch {
             return ToolReply.failure(error)
         }
     }
 
     @MainActor
-    private static func perform(_ arguments: Arguments) throws -> String {
+    private static func perform(_ arguments: Arguments) async throws -> String {
         switch arguments.action {
         case .hideApp:
             guard let app = runningApp(named: arguments.appName) else {
@@ -43,29 +48,93 @@ struct WindowTool: AssistantTool {
             regularApps().forEach { $0.unhide() }
             return String(localized: "Tüm uygulamalar gösteriliyor.")
         case .minimize:
-            AccessibilityControl.set(try AccessibilityControl.focusedWindow(), kAXMinimizedAttribute, kCFBooleanTrue)
-            return String(localized: "Pencere küçültüldü.")
+            return AccessibilityControl.set(try AccessibilityControl.focusedWindow(), kAXMinimizedAttribute, kCFBooleanTrue)
+                ? String(localized: "Pencere küçültüldü.")
+                : ToolReply.failure(String(localized: "Pencere küçültülemedi."))
         case .fullScreen:
-            AccessibilityControl.set(try AccessibilityControl.focusedWindow(), "AXFullScreen", kCFBooleanTrue)
-            return String(localized: "Pencere tam ekran yapıldı.")
+            return AccessibilityControl.set(try AccessibilityControl.focusedWindow(), "AXFullScreen", kCFBooleanTrue)
+                ? String(localized: "Pencere tam ekran yapıldı.")
+                : ToolReply.failure(String(localized: "Bu pencere tam ekran yapılamadı."))
+        case .exitFullScreen:
+            return try exitFullScreen(AccessibilityControl.focusedWindow())
+        case .restore:
+            return try await restore()
+        case .close:
+            return try await close()
         case .leftHalf, .rightHalf, .maximize:
-            let window = try AccessibilityControl.focusedWindow()
-            guard let screen = NSScreen.main, let primary = NSScreen.screens.first else { throw AccessibilityError.noWindow }
-            var frame = screen.visibleFrame
-            if arguments.action != .maximize {
-                frame.size.width /= 2
-                if arguments.action == .rightHalf { frame.origin.x += frame.width }
-            }
-            // AX positions are measured from the top-left of the primary screen.
-            var origin = CGPoint(x: frame.minX, y: primary.frame.maxY - frame.maxY)
-            var size = frame.size
-            if let position = AXValueCreate(.cgPoint, &origin) { AccessibilityControl.set(window, kAXPositionAttribute, position) }
-            if let dimensions = AXValueCreate(.cgSize, &size) { AccessibilityControl.set(window, kAXSizeAttribute, dimensions) }
-            return switch arguments.action {
-            case .leftHalf: String(localized: "Pencere ekranın soluna yerleşti.")
-            case .rightHalf: String(localized: "Pencere ekranın sağına yerleşti.")
-            default: String(localized: "Pencere büyütüldü.")
-            }
+            return try place(arguments.action)
+        }
+    }
+
+    @MainActor
+    private static func exitFullScreen(_ window: AXUIElement) -> String {
+        guard AccessibilityControl.attribute(window, "AXFullScreen") as? Bool == true else {
+            return ToolReply.failure(String(localized: "Pencere tam ekranda değil."))
+        }
+        return AccessibilityControl.set(window, "AXFullScreen", kCFBooleanFalse)
+            ? String(localized: "Pencere tam ekrandan çıktı.")
+            : ToolReply.failure(String(localized: "Pencere tam ekrandan çıkarılamadı."))
+    }
+
+    /// Brings back a minimized window, else leaves full screen, else un-zooms a window that fills the
+    /// screen. The zoom button toggles, so it is only pressed on a filling window, and the size is
+    /// checked afterwards: a window resized by hand has no smaller size to return to.
+    @MainActor
+    private static func restore() async throws -> String {
+        let windows = try AccessibilityControl.frontWindows()
+        if let minimized = windows.first(where: { AccessibilityControl.attribute($0, kAXMinimizedAttribute) as? Bool == true }) {
+            return AccessibilityControl.set(minimized, kAXMinimizedAttribute, kCFBooleanFalse)
+                ? String(localized: "Pencere geri getirildi.")
+                : ToolReply.failure(String(localized: "Pencere geri getirilemedi."))
+        }
+        let window = try AccessibilityControl.focusedWindow()
+        if AccessibilityControl.attribute(window, "AXFullScreen") as? Bool == true { return exitFullScreen(window) }
+        guard let before = AccessibilityControl.size(of: window), let screen = NSScreen.main?.visibleFrame.size,
+              abs(before.width - screen.width) <= zoomTolerance, abs(before.height - screen.height) <= zoomTolerance
+        else { return ToolReply.failure(String(localized: "Geri alınacak küçültülmüş, tam ekran ya da büyütülmüş bir pencere yok.")) }
+        guard AccessibilityControl.pressButton(kAXZoomButtonAttribute, of: window) else {
+            return ToolReply.failure(String(localized: "Pencere eski boyutuna döndürülemedi."))
+        }
+        try await Task.sleep(for: settleDelay)
+        return AccessibilityControl.size(of: window) != before
+            ? String(localized: "Pencere eski boyutuna döndü.")
+            : ToolReply.failure(String(localized: "Pencerenin daha küçük bir önceki boyutu yok."))
+    }
+
+    /// An app may ask to save first, so the window is checked after the press.
+    @MainActor
+    private static func close() async throws -> String {
+        let window = try AccessibilityControl.focusedWindow()
+        guard AccessibilityControl.pressButton(kAXCloseButtonAttribute, of: window) else {
+            return ToolReply.failure(String(localized: "Pencere kapatılamadı."))
+        }
+        try await Task.sleep(for: settleDelay)
+        let stillOpen = try AccessibilityControl.frontWindows().contains { CFEqual($0, window) }
+        return stillOpen
+            ? String(localized: "Pencere hâlâ açık; uygulama kapatmadan önce bir şey soruyor olabilir.")
+            : String(localized: "Pencere kapatıldı.")
+    }
+
+    @MainActor
+    private static func place(_ action: Action) throws -> String {
+        let window = try AccessibilityControl.focusedWindow()
+        guard let screen = NSScreen.main, let primary = NSScreen.screens.first else { throw AccessibilityError.noWindow }
+        var frame = screen.visibleFrame
+        if action != .maximize {
+            frame.size.width /= 2
+            if action == .rightHalf { frame.origin.x += frame.width }
+        }
+        // AX positions are measured from the top-left of the primary screen.
+        var origin = CGPoint(x: frame.minX, y: primary.frame.maxY - frame.maxY)
+        var size = frame.size
+        guard let position = AXValueCreate(.cgPoint, &origin), let dimensions = AXValueCreate(.cgSize, &size),
+              AccessibilityControl.set(window, kAXPositionAttribute, position),
+              AccessibilityControl.set(window, kAXSizeAttribute, dimensions)
+        else { return ToolReply.failure(String(localized: "Bu pencere taşınamadı ya da boyutlandırılamadı.")) }
+        return switch action {
+        case .leftHalf: String(localized: "Pencere ekranın soluna yerleşti.")
+        case .rightHalf: String(localized: "Pencere ekranın sağına yerleşti.")
+        default: String(localized: "Pencere büyütüldü.")
         }
     }
 

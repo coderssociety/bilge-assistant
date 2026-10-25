@@ -17,12 +17,14 @@ struct DictationTests {
         ("yeni satır", DictationCommand.newLine), ("Alt satıra geç", .newLine), ("yeni paragraf", .newParagraph),
         ("son cümleyi sil", .deleteLast), ("Sonuncuyu sil", .deleteLast), ("geri al", .deleteLast),
         ("dikteyi bitir", .finish), ("Dikte bitti", .finish), ("tamam bitti", .finish),
+        ("Dikteyi durdur", .finish), ("yazmayı bırak", .finish), ("Dikteyi bitir lütfen.", .finish),
+        ("dikteyi sonlandır", .finish), ("lütfen yeni satır", .newLine),
     ])
     func commands(text: String, expected: DictationCommand) {
         #expect(DictationCommand.parse(text) == expected)
     }
 
-    @Test("ordinary speech is text, not a command", arguments: ["yeni bir satır alalım dedi", "sil baştan başladık"])
+    @Test("ordinary speech is text, not a command", arguments: ["yeni bir satır alalım dedi", "sil baştan başladık", "lütfen", "artık bitti mi"])
     func text(text: String) {
         #expect(DictationCommand.parse(text) == nil)
     }

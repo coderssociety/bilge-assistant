@@ -10,7 +10,12 @@ public enum DictationCommand: Equatable, Sendable {
         "sonu sil": .deleteLast, "son yazdigini sil": .deleteLast,
         "dikteyi bitir": .finish, "dikte bitti": .finish, "tamam bitti": .finish, "dikteyi kapat": .finish,
         "dikte modunu kapat": .finish, "yazmayi bitir": .finish, "bitti": .finish,
+        "dikteyi durdur": .finish, "dikteyi sonlandir": .finish, "dikteyi kes": .finish, "dikte modunu bitir": .finish,
+        "dikte modunu durdur": .finish, "dikteden cik": .finish, "dikte modundan cik": .finish,
+        "yazmayi birak": .finish, "yazmayi durdur": .finish, "yazmayi kes": .finish,
     ]
+    /// Said around a command ("dikteyi bitir lütfen"); without them the command would be typed as text.
+    private static let politeness: Set<String> = ["lutfen", "artik", "hemen", "simdi"]
 
     private static let englishPhrases: [String: DictationCommand] = [
         "new line": .newLine, "next line": .newLine, "line break": .newLine,
@@ -20,10 +25,16 @@ public enum DictationCommand: Equatable, Sendable {
         "stop dictation": .finish, "end dictation": .finish, "finish dictation": .finish, "dictation off": .finish,
         "stop dictating": .finish, "im done": .finish, "done": .finish, "turn off dictation": .finish,
         "turn dictation off": .finish, "disable dictation": .finish, "dictation mode off": .finish,
+        "stop typing": .finish, "stop writing": .finish, "exit dictation": .finish, "quit dictation": .finish,
     ]
+    private static let englishPoliteness: Set<String> = ["please", "now", "ok", "okay"]
 
     public static func parse(_ text: String, language: AssistantLanguage = .turkish) -> DictationCommand? {
-        (language == .english ? englishPhrases : phrases)[TurkishText.folded(text)]
+        let (table, polite) = language == .english ? (englishPhrases, englishPoliteness) : (phrases, politeness)
+        var words = TurkishText.folded(text).split(separator: " ").map(String.init)
+        while words.count > 1, let first = words.first, polite.contains(first) { words.removeFirst() }
+        while words.count > 1, let last = words.last, polite.contains(last) { words.removeLast() }
+        return table[words.joined(separator: " ")]
     }
 
     /// "Dikte modunu başlat", "dikteye başla", "yazdırmaya başla"; "start dictation", "dictate".

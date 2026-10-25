@@ -2,12 +2,12 @@
 /// on purpose: anything with extra content (a label, a second action, an unknown word) returns nil
 /// and goes to the model, so the fast path can only be faster, never wronger.
 public enum QuickIntent: Sendable, Equatable {
-    public enum Volume: Sendable, Equatable { case set(Int), up, down, mute, unmute }
+    public enum Volume: Sendable, Equatable { case set(Int), up, down, change(Int), mute, unmute }
     public enum Media: Sendable, Equatable { case play, pause, next, previous, nowPlaying }
-    public enum System: Sendable, Equatable { case lockScreen, sleep, darkModeOn, darkModeOff }
+    public enum System: Sendable, Equatable { case lockScreen, screenOff, sleep, darkModeOn, darkModeOff }
     public enum CalendarRange: Sendable, Equatable { case today, tomorrow, thisWeek }
     public enum Folder: Sendable, Equatable { case desktop, downloads, documents }
-    public enum TimerAction: Sendable, Equatable { case list, cancelAll }
+    public enum TimerAction: Sendable, Equatable { case list, cancelOne, cancelAll }
 
     case dateTime
     case battery
@@ -106,6 +106,11 @@ public enum QuickIntentParser {
         let upVerbs: Set<String> = ["artir", "arttir", "yukselt"]
         let downVerbs: Set<String> = ["kis", "azalt", "dusur", "alcalt"]
         let rest = Array(w.dropFirst())
+        if let verb = rest.last, upVerbs.contains(verb) || downVerbs.contains(verb),
+           let amount = rest.dropLast().compactMap({ Int($0) }).first,
+           rest.dropLast().allSatisfy({ ["yuzde", "puan"].contains($0) || Int($0) != nil }) {
+            return .volume(.change(upVerbs.contains(verb) ? min(amount, 100) : -min(amount, 100)))
+        }
         if let verb = rest.last, setVerbs.contains(verb), let level = rest.dropLast().compactMap(leadingNumber).first,
            rest.dropLast().allSatisfy({ $0 == "yuzde" || leadingNumber($0) != nil }) {
             return .volume(.set(min(level, 100)))
@@ -148,6 +153,8 @@ public enum QuickIntentParser {
         if w.last == "kilitle", w.count <= 2, w.count == 1 || ["ekrani", "maci", "bilgisayari"].contains(w[0]) {
             return .system(.lockScreen)
         }
+        let screenOff: [[String]] = [["ekrani", "karart"], ["ekrani", "kapat"], ["ekrani", "uyut"]]
+        if screenOff.contains(w) { return .system(.screenOff) }
         let sleep: [[String]] = [["bilgisayari", "uyut"], ["maci", "uyut"], ["uyku", "moduna", "al"],
                                  ["bilgisayari", "uyku", "moduna", "al"], ["maci", "uyku", "moduna", "al"]]
         if sleep.contains(w) { return .system(.sleep) }
@@ -207,8 +214,16 @@ public enum QuickIntentParser {
             if [["kapat"], ["sil"], ["iptal", "et"], ["iptal"]].contains(verb) { return .timers(.cancelAll) }
             if verb == ["listele"] || verb == ["oku"] { return .timers(.list) }
         }
+        let singular: Set<String> = ["zamanlayiciyi", "alarmi"]
+        if body.count >= 2, w == body, singular.contains(body[0]),
+           [["kapat"], ["sil"], ["iptal", "et"], ["durdur"]].contains(Array(body.dropFirst())) {
+            return .timers(.cancelOne)
+        }
         let listPhrases: [[String]] = [["kurulu", "zamanlayicilar", "neler"], ["kurulu", "alarmlar", "neler"],
-                                       ["hangi", "alarmlar", "kurulu"], ["hangi", "zamanlayicilar", "kurulu"]]
+                                       ["hangi", "alarmlar", "kurulu"], ["hangi", "zamanlayicilar", "kurulu"],
+                                       ["kac", "dakika", "kaldi"], ["kac", "saniye", "kaldi"],
+                                       ["zamanlayicida", "ne", "kadar", "kaldi"], ["zamanlayicida", "kac", "dakika", "kaldi"],
+                                       ["zamanlayicinin", "bitmesine", "ne", "kadar", "kaldi"], ["alarma", "ne", "kadar", "kaldi"]]
         return listPhrases.contains(w) ? .timers(.list) : nil
     }
 

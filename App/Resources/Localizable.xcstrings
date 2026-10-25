@@ -92,6 +92,16 @@
         }
       }
     },
+    "%@ ağına bağlı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "connected to %@"
+          }
+        }
+      }
+    },
     "%@ günü": {
       "localizations": {
         "en": {
@@ -566,6 +576,16 @@
         }
       }
     },
+    "%@ zamanlayıcısı iptal edildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canceled the %@ timer."
+          }
+        }
+      }
+    },
     "%@ zaten kapalı.": {
       "localizations": {
         "en": {
@@ -684,6 +704,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm sending %1$@ (%2$@) this by iMessage: %3$@. Say yes or send to send it."
+          }
+        }
+      }
+    },
+    "%@, saat %@, %@ kaldı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ at %2$@, %3$@ left"
           }
         }
       }
@@ -1396,6 +1426,16 @@
         }
       }
     },
+    "ağ bilgisi okunamadı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "its network couldn't be read"
+          }
+        }
+      }
+    },
     "Aşağı kaydırdım.": {
       "localizations": {
         "en": {
@@ -1612,6 +1652,26 @@
         }
       }
     },
+    "bir ağa bağlı değil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not connected to a network"
+          }
+        }
+      }
+    },
+    "bir ağa bağlı; ağın adını macOS yalnızca Konum izni olan uygulamalara söylüyor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "connected to a network; macOS only tells apps with Location access its name"
+          }
+        }
+      }
+    },
     "Bir etkinlik": {
       "localizations": {
         "en": {
@@ -1822,6 +1882,26 @@
         }
       }
     },
+    "Bu pencere tam ekran yapılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This window can't go full screen."
+          }
+        }
+      }
+    },
+    "Bu pencere taşınamadı ya da boyutlandırılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This window couldn't be moved or resized."
+          }
+        }
+      }
+    },
     "Bu pencerede %lld sekme var.": {
       "localizations": {
         "en": {
@@ -1858,6 +1938,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't have permission to control this app. You need to allow it in System Settings > Privacy & Security > Automation."
+          }
+        }
+      }
+    },
+    "Bu zamanlayıcı az önce doldu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That timer just went off."
           }
         }
       }
@@ -1938,6 +2028,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "This needs Accessibility permission. Turn on Bilge in System Settings > Privacy & Security > Accessibility."
+          }
+        }
+      }
+    },
+    "Böyle bir zamanlayıcı bulamadım. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find that timer. "
           }
         }
       }
@@ -2248,6 +2348,16 @@
         }
       }
     },
+    "Duraklatılmış şarkı: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused: %@."
+          }
+        }
+      }
+    },
     "Durdur": {
       "localizations": {
         "en": {
@@ -2430,6 +2540,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Display turned off."
+          }
+        }
+      }
+    },
+    "Ekran kilitlendi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen locked."
           }
         }
       }
@@ -2662,6 +2782,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't have any changes to undo."
+          }
+        }
+      }
+    },
+    "Geri alınacak küçültülmüş, tam ekran ya da büyütülmüş bir pencere yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no minimized, full-screen or zoomed window to restore."
           }
         }
       }
@@ -2952,6 +3082,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't tell which currency to convert."
+          }
+        }
+      }
+    },
+    "Hangisini iptal edeyim? ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which one should I cancel? "
           }
         }
       }
@@ -3946,6 +4086,16 @@
         }
       }
     },
+    "Müzik": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music"
+          }
+        }
+      }
+    },
     "Müzik kitaplığında '%@' bulamadım.": {
       "localizations": {
         "en": {
@@ -4176,6 +4326,76 @@
         }
       }
     },
+    "Pencere eski boyutuna döndü.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window is back to its earlier size."
+          }
+        }
+      }
+    },
+    "Pencere eski boyutuna döndürülemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't return the window to its earlier size."
+          }
+        }
+      }
+    },
+    "Pencere geri getirildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window restored."
+          }
+        }
+      }
+    },
+    "Pencere geri getirilemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't restore the window."
+          }
+        }
+      }
+    },
+    "Pencere hâlâ açık; uygulama kapatmadan önce bir şey soruyor olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window is still open; the app may be asking something before it closes."
+          }
+        }
+      }
+    },
+    "Pencere kapatılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't close the window."
+          }
+        }
+      }
+    },
+    "Pencere kapatıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window closed."
+          }
+        }
+      }
+    },
     "Pencere küçültüldü.": {
       "localizations": {
         "en": {
@@ -4186,12 +4406,62 @@
         }
       }
     },
+    "Pencere küçültülemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't minimize the window."
+          }
+        }
+      }
+    },
     "Pencere tam ekran yapıldı.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Window is now full screen."
+          }
+        }
+      }
+    },
+    "Pencere tam ekranda değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window isn't in full screen."
+          }
+        }
+      }
+    },
+    "Pencere tam ekrandan çıkarılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't take the window out of full screen."
+          }
+        }
+      }
+    },
+    "Pencere tam ekrandan çıktı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window left full screen."
+          }
+        }
+      }
+    },
+    "Pencerenin daha küçük bir önceki boyutu yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window has no smaller earlier size."
           }
         }
       }
@@ -4228,6 +4498,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "You declined"
+          }
+        }
+      }
+    },
+    "Saat %@ zamanlayıcısı iptal edildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canceled the %@ timer."
+          }
+        }
+      }
+    },
+    "saat %@, %@ kaldı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "at %1$@, %2$@ left"
           }
         }
       }
@@ -4774,6 +5064,26 @@
         }
       }
     },
+    "Spotify'da '%@' için arama sonuçlarını açtım; çalmak istediğini seçebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I opened Spotify's search results for '%@'; pick the one you want to play."
+          }
+        }
+      }
+    },
+    "Spotify'da arama açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open a search in Spotify."
+          }
+        }
+      }
+    },
     "Sunucu yanıt vermedi (%lld).": {
       "localizations": {
         "en": {
@@ -5250,6 +5560,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Announce upcoming meetings and due reminders out loud"
+          }
+        }
+      }
+    },
+    "Yaklaşık %@ daha yeter.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %@ of battery left."
+          }
+        }
+      }
+    },
+    "Yaklaşık %@ içinde dolar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full in about %@."
           }
         }
       }

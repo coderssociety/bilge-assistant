@@ -19,6 +19,13 @@ public enum TimerSchedule {
         return now.addingTimeInterval(duration)
     }
 
+    /// Seconds left, as said aloud: whole seconds under a minute, otherwise rounded up to whole
+    /// minutes, so "4 dakika 59 saniye" is "5 dakika" and nothing reads "0 dakika".
+    public static func spokenRemaining(until fireDate: Date, now: Date) -> Int {
+        let seconds = Int(max(0, fireDate.timeIntervalSince(now)).rounded(.up))
+        return seconds < 60 ? seconds : (seconds + 59) / 60 * 60
+    }
+
     public static func cleanLabel(_ label: String?) -> String? {
         guard let trimmed = label?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else { return nil }
         guard trimmed.count > maxLabelLength else { return trimmed }

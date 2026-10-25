@@ -31,6 +31,13 @@ final class TimerService {
         return timer
     }
 
+    func cancel(_ id: UUID) -> Bool {
+        guard let task = tasks.removeValue(forKey: id) else { return false }
+        task.cancel()
+        timers.removeAll { $0.id == id }
+        return true
+    }
+
     func cancelAll() -> Int {
         let count = timers.count
         tasks.values.forEach { $0.cancel() }

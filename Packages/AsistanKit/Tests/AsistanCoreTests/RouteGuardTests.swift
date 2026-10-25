@@ -15,6 +15,14 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: routed, command: command) == expected)
     }
 
+    @Test("closing a window is not quitting the app", arguments: [
+        ("Safari penceresini kapat", "quitApp", "windowControl"),
+        ("Safari'yi kapat", "quitApp", "quitApp"),
+    ])
+    func closeWindow(command: String, routed: String, expected: String) {
+        #expect(RouteGuard.review(action: routed, command: command) == expected)
+    }
+
     @Test("system actions are limited to lock, sleep and appearance", arguments: [
         ("Odak modunu aç", "systemAction", "runShortcut"),
         ("Rahatsız etme modunu aç", "systemAction", "runShortcut"),
@@ -24,6 +32,9 @@ struct RouteGuardTests {
         ("Karanlık moda geç", "systemAction", "systemAction"),
         ("Aydınlık moda geç", "systemAction", "systemAction"),
         ("Parlaklığı artır", "systemAction", "runShortcut"),
+        ("Ekranı karart", "systemAction", "systemAction"),
+        ("ekranı kapat", "systemAction", "systemAction"),
+        ("Ekran parlaklığını kapat", "systemAction", "runShortcut"),
     ])
     func systemActions(command: String, routed: String, expected: String) {
         #expect(RouteGuard.review(action: routed, command: command) == expected)

@@ -1,5 +1,7 @@
 extension QuickIntent {
-    public enum Window: Sendable, Equatable { case minimize, fullScreen, leftHalf, rightHalf, maximize, hideOthers }
+    public enum Window: Sendable, Equatable {
+        case minimize, restore, close, fullScreen, exitFullScreen, leftHalf, rightHalf, maximize, hideOthers
+    }
     public enum SystemInfoTopic: Sendable, Equatable { case disk, uptime, osVersion, network }
     public enum SettingsPane: String, Sendable, Equatable, CaseIterable {
         case wifi, bluetooth, network, sound, displays, battery, notifications, focus, privacy, keyboard,
@@ -38,8 +40,14 @@ enum MacQuickIntents {
         switch body {
         case ["kucult"], ["simge", "durumuna", "kucult"], ["dock", "a", "indir"]:
             return w.first == "pencereyi" ? .window(.minimize) : nil
+        case ["geri", "getir"], ["eski", "haline", "getir"], ["eski", "boyutuna", "getir"], ["eski", "boyutuna", "dondur"]:
+            return w.first == "pencereyi" ? .window(.restore) : nil
+        case ["kapat"]:
+            return w.first == "pencereyi" ? .window(.close) : nil
         case ["tam", "ekran", "yap"], ["tam", "ekrana", "al"], ["tam", "ekran"]:
             return .window(.fullScreen)
+        case ["tam", "ekrandan", "cik"], ["tam", "ekrani", "kapat"], ["tam", "ekran", "modundan", "cik"]:
+            return .window(.exitFullScreen)
         case ["sola", "al"], ["sola", "yasla"], ["ekranin", "soluna", "al"], ["sol", "yariya", "al"]:
             return w.first == "pencereyi" ? .window(.leftHalf) : nil
         case ["saga", "al"], ["saga", "yasla"], ["ekranin", "sagina", "al"], ["sag", "yariya", "al"]:
@@ -81,7 +89,10 @@ enum MacQuickIntents {
             ["bilgisayar", "kac", "gundur", "acik"],
         ]
         if uptime.contains(w) { return .systemInfo(.uptime) }
-        let network: Set<[String]> = [["ip", "adresim", "ne"], ["ip", "adresim", "kac"], ["yerel", "ip", "adresim", "ne"]]
+        let network: Set<[String]> = [
+            ["ip", "adresim", "ne"], ["ip", "adresim", "kac"], ["yerel", "ip", "adresim", "ne"], ["hangi", "aga", "bagliyim"],
+            ["hangi", "aga", "bagliyiz"], ["bagli", "oldugum", "ag", "ne"],
+        ]
         if network.contains(w) { return .systemInfo(.network) }
         let os: Set<[String]> = [["macos", "surumu", "ne"], ["hangi", "macos", "surumu", "yuklu"], ["isletim", "sistemi", "surumu", "ne"]]
         return os.contains(w) ? .systemInfo(.osVersion) : nil

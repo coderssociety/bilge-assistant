@@ -27,6 +27,8 @@ struct AppointmentTimeTests {
         #expect(refine("cumartesi saat ikide halı saha maçı ekle", model: Moment(dayOffset: 0, hour: 9, minute: 0))
             == Moment(dayOffset: 4, hour: 14, minute: 0))
         #expect(refine("yarın saat üç buçukta dişçi") == Moment(dayOffset: 1, hour: 15, minute: 30))
+        #expect(refine("yarın üçü çeyrek geçe toplantı") == Moment(dayOffset: 1, hour: 15, minute: 15))
+        #expect(refine("yarın sabah üçü çeyrek geçe uçak") == Moment(dayOffset: 1, hour: 3, minute: 15))
     }
 
     @Test("keeps the model's day when the text names none, but drops an invented hour")

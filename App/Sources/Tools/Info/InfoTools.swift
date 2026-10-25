@@ -67,7 +67,7 @@ struct CalculatorTool: AssistantTool {
 
 struct BatteryTool: AssistantTool {
     let name = "batteryStatus"
-    let description = "Pil doluluk yüzdesini ve şarj durumunu verir."
+    let description = "Pil doluluk yüzdesini, şarj durumunu ve pilin ne kadar yeteceğini ya da ne zaman dolacağını verir."
 
     @Generable
     struct Arguments {}
@@ -86,7 +86,15 @@ struct BatteryTool: AssistantTool {
         let state = charging
             ? String(localized: "şarj oluyor")
             : onPower ? String(localized: "prize bağlı") : String(localized: "pilden çalışıyor")
-        return String(localized: "Pil yüzde \(capacity), \(state).")
+        let summary = String(localized: "Pil yüzde \(capacity), \(state).")
+        // macOS reports -1 minutes while it is still estimating.
+        if charging, let minutes = details[kIOPSTimeToFullChargeKey] as? Int, minutes > 0 {
+            return summary + " " + String(localized: "Yaklaşık \(Duration.seconds(minutes * 60).spoken) içinde dolar.")
+        }
+        if !onPower, let minutes = details[kIOPSTimeToEmptyKey] as? Int, minutes > 0 {
+            return summary + " " + String(localized: "Yaklaşık \(Duration.seconds(minutes * 60).spoken) daha yeter.")
+        }
+        return summary
     }
 }
 

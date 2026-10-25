@@ -6,7 +6,7 @@ public enum RouteGuard {
         "ara", "arar", "arat", "aratir", "arayin", "arasana", "bul", "bulur", "goster", "gosterir", "search",
     ]
     private static let searchSites = ["google", "youtube", "harita", "vikipedi", "wikipedia", "internet"]
-    private static let systemWords = ["kilit", "uyu", "uyku", "karanlik", "aydinlik", "koyu", "gorunum", "tema"]
+    private static let systemWords = ["kilit", "uyu", "uyku", "karanlik", "aydinlik", "koyu", "gorunum", "tema", "karart"]
     private static let shortcutOnlyWords = ["odak", "odag", "rahatsiz", "parlak"]
     private static let openVerbs: Set<String> = ["ac", "acar", "acsana", "baslat"]
     private static let weatherWords = [
@@ -47,6 +47,8 @@ public enum RouteGuard {
         if isDictation(words), action != "createNote" { return "typeText" }
         // "geri al" (undo) outside a spreadsheet was once routed to quitApp.
         if action == "quitApp", words.contains("geri"), words.contains(where: { $0.hasPrefix("al") }) { return "conversation" }
+        // Closing a window must not quit the whole app.
+        if action == "quitApp", words.contains(where: { $0.hasPrefix("pencere") }) { return "windowControl" }
         switch action {
         case "setTimer":
             // Timers live in the app and fire only today; "yarın sabah süt almayı hatırlat" was set as one.
@@ -59,7 +61,9 @@ public enum RouteGuard {
             return explicit ? action : "conversation"
         case "systemAction":
             if words.contains(where: { word in shortcutOnlyWords.contains(where: word.hasPrefix) }) { return "runShortcut" }
-            let supported = words.contains { word in systemWords.contains(where: word.hasPrefix) }
+            // "Ekranı karart/kapat" turns the display off; it went to runShortcut, which had no such shortcut.
+            let turnsScreenOff = words.contains { $0.hasPrefix("ekran") } && words.contains { $0.hasPrefix("kapat") }
+            let supported = turnsScreenOff || words.contains { word in systemWords.contains(where: word.hasPrefix) }
             return supported ? action : "runShortcut"
         case "weather":
             // "Bana bir tavsiye ver" was once answered with a weather report.
