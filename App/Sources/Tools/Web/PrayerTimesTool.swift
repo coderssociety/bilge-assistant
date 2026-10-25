@@ -99,31 +99,34 @@ struct PrayerTimesTool: RuleRoutedTool {
         return PrayerTimesParser.diyanetDays(from: month)
     }
 
-    /// One request per day: today, tomorrow (for times already past) and the day asked about.
+    /// One request per day: today, tomorrow (for times already past) and the day asked about, counted in the
+    /// place's time zone, which only Aladhan's first answer tells.
     private static func aladhan(_ place: Place, offsets: [Int]) async throws -> [PrayerDay] {
-        let zone = if case .province = place { PrayerTimesParser.turkeyTimeZone } else { TimeZone.current }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = zone
-        var days: [PrayerDay] = []
-        for offset in offsets {
-            guard let date = calendar.date(byAdding: .day, value: offset, to: .now) else { continue }
-            let parts = calendar.dateComponents([.day, .month, .year], from: date)
-            let stamp = String(format: "%02d-%02d-%04d", parts.day ?? 1, parts.month ?? 1, parts.year ?? 2000)
-            var url: URLComponents
-            switch place {
-            case let .province(province):
-                url = URLComponents(string: "https://api.aladhan.com/v1/timingsByCity/\(stamp)")!
-                url.queryItems = [.init(name: "city", value: province.name), .init(name: "country", value: "Turkey")]
-            case let .other(name):
-                url = URLComponents(string: "https://api.aladhan.com/v1/timingsByAddress/\(stamp)")!
-                url.queryItems = [.init(name: "address", value: name)]
-            }
-            url.queryItems?.append(.init(name: "method", value: "13"))
-            guard let day = PrayerTimesParser.aladhanDay(from: try await WebFetch.data(from: url.url!)) else {
-                throw WebFetchError.unreadable
-            }
-            days.append(day)
+        let guess = if case .province = place { PrayerTimesParser.turkeyTimeZone } else { TimeZone.current }
+        let now = Date.now
+        let first = try await aladhanDay(place, date: PrayerTimesParser.aladhanDates(offsets: [0], now: now, timeZone: guess)[0])
+        let wanted = PrayerTimesParser.aladhanDates(offsets: offsets, now: now, timeZone: first.timeZone)
+        var days = [first]
+        for date in wanted where !days.contains(where: { PrayerTimesParser.aladhanDate(of: $0) == date }) {
+            days.append(try await aladhanDay(place, date: date))
         }
-        return days
+        return days.filter { wanted.contains(PrayerTimesParser.aladhanDate(of: $0)) }
+    }
+
+    private static func aladhanDay(_ place: Place, date: String) async throws -> PrayerDay {
+        var url: URLComponents
+        switch place {
+        case let .province(province):
+            url = URLComponents(string: "https://api.aladhan.com/v1/timingsByCity/\(date)")!
+            url.queryItems = [.init(name: "city", value: province.name), .init(name: "country", value: "Turkey")]
+        case let .other(name):
+            url = URLComponents(string: "https://api.aladhan.com/v1/timingsByAddress/\(date)")!
+            url.queryItems = [.init(name: "address", value: name)]
+        }
+        url.queryItems?.append(.init(name: "method", value: "13"))
+        guard let day = PrayerTimesParser.aladhanDay(from: try await WebFetch.data(from: url.url!)) else {
+            throw WebFetchError.unreadable
+        }
+        return day
     }
 }
