@@ -3,17 +3,51 @@ import Foundation
 import FoundationModels
 
 /// "Alışveriş notumda ne yazıyor?", "son notumu oku". Note text is user content, but it is still
-/// answered by the tool-less session, like screen text.
+/// answered by the tool-less session, like screen text. "Notlarım neler" lists the latest titles instead.
 struct ReadNotesTool: AssistantTool {
     let name = "readNotes"
-    let description = "Notlar uygulamasında bir notu arar ve içeriğini okur; konu söylenmezse en son notu okur."
+    let description = "Notlar uygulamasında bir notu arar ve içeriğini okur; konu söylenmezse en son notu okur. Notların listesini de söyler."
     let answersWithLanguageModel = true
     let readingLayout: ContinuedReading.Layout? = .text(maxCharacters: 3000)
+    private static let listedNotes = 30
+    private static let listLayout = ContinuedReading.Layout.list(separator: "; ", perPart: 10)
 
     @Generable
     struct Arguments {
         @Guide(description: "Aranan notun konusu ya da içindeki bir kelime; en son not isteniyorsa boş bırak")
         var query: String?
+        @Guide(description: "Notların listesi isteniyorsa true")
+        var list: Bool
+    }
+
+    /// Whether to list is read from the words alone ("notlarım neler"), never guessed.
+    func arguments(fromCommand command: String) -> Arguments? {
+        NoteRequest.asksForList(command, language: AppLanguage.current) ? Arguments(query: nil, list: true) : nil
+    }
+
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        Arguments(query: arguments.query, list: false)
+    }
+
+    func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
+        guard arguments.list else {
+            return PreparedToolCall(toolName: name, argumentsDescription: String(describing: arguments), risk: risk,
+                                    confirmationQuestion: nil, answersWithLanguageModel: answersWithLanguageModel,
+                                    readingLayout: readingLayout, execute: { try await call(arguments: arguments) })
+        }
+        return PreparedToolCall(toolName: name, argumentsDescription: "list", risk: risk, confirmationQuestion: nil,
+                                readingLayout: Self.listLayout, execute: { await Self.listNotes() })
+    }
+
+    private static func listNotes() async -> String {
+        do {
+            let entries = try await NotesLibrary.index()
+            let recent = NoteIndex.recent(entries, limit: listedNotes)
+            guard !recent.isEmpty else { return ToolReply.failure(String(localized: "Hiç not bulamadım.")) }
+            return String(localized: "\(entries.count) notun var, en son düzenlenenler: \(recent.map(\.name).joined(separator: "; "))")
+        } catch {
+            return ToolReply.failure(error)
+        }
     }
 
     func call(arguments: Arguments) async throws -> String {

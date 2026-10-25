@@ -828,6 +828,16 @@
         }
       }
     },
+    "%lld notun var, en son düzenlenenler: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have %lld notes; the most recently edited: %@"
+          }
+        }
+      }
+    },
     "%lld saat": {
       "localizations": {
         "en": {
@@ -864,6 +874,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't find a shortcut named '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında bir not bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a note called '%@'."
           }
         }
       }
@@ -1070,6 +1090,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shall I run the shortcut '%@'?"
+          }
+        }
+      }
+    },
+    "'%@' notu kilitli, ona ekleyemem.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The '%@' note is locked, so I can't add to it."
+          }
+        }
+      }
+    },
+    "'%@' notuna ekledim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added it to the '%@' note."
+          }
+        }
+      }
+    },
+    "'%@' notunda ekler var; bozulmasın diye ona yazmadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The '%@' note has attachments, so I left it alone to keep them intact."
+          }
+        }
+      }
+    },
+    "'%@' notunun sonuna şunu ekleyeyim mi: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I add this to the end of the '%@' note: %@"
           }
         }
       }
@@ -4212,6 +4272,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Norwegian krone"
+          }
+        }
+      }
+    },
+    "Nota ne eklememi istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch what to add to the note."
+          }
+        }
+      }
+    },
+    "Nota yalnızca onayla eklerim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I only add to a note once you confirm."
+          }
+        }
+      }
+    },
+    "Notlar'dan beklenmedik bir yanıt geldi; notu kontrol etmen iyi olur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes gave an unexpected answer; you may want to check the note."
           }
         }
       }

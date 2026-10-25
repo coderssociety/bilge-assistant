@@ -28,6 +28,8 @@ public enum EnglishRouteGuard {
 
     public static func review(action: String, command: String, previousAction: String? = nil) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
+        if NoteRequest.addition(in: command, language: .english) != nil { return "appendToNote" }
+        if NoteRequest.asksForList(command, language: .english) { return "readNotes" }
         // "Type see you tomorrow" was read as a timer because of "tomorrow".
         if isDictation(words), action != "createNote" { return "typeText" }
         // Only answers about the selection; copying or sending it keeps its own action.

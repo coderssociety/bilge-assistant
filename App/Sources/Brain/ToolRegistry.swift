@@ -45,6 +45,7 @@ struct ToolRegistry {
             FindContactTool(),
             CompleteReminderTool(),
             ReadNotesTool(),
+            AppendNoteTool(),
             PlayMusicTool(),
             SystemInfoTool(),
             WiFiTool(),

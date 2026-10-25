@@ -29,12 +29,6 @@ struct CreateNoteTool: AssistantTool {
 
     /// Notes stores HTML; escape the text so it is shown literally.
     private static func html(title: String, body: String) -> String {
-        "<h1>\(escape(title))</h1>" + (body.isEmpty ? "" : "<div>\(escape(body))</div>")
-    }
-
-    private static func escape(_ text: String) -> String {
-        text.replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
+        "<h1>\(NoteHTML.escape(title))</h1>" + (body.isEmpty ? "" : "<div>\(NoteHTML.escape(body))</div>")
     }
 }

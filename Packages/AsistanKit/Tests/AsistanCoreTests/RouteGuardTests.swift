@@ -128,6 +128,20 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "files", command: command) == expected)
     }
 
+    @Test("adding to a named note goes to the note, not to reminders or dictation", arguments: [
+        ("alışveriş notuma süt ekle", "addReminder"), ("alışveriş notuma süt ekle", "createNote"),
+        ("market notuma ekmek yaz", "typeText"), ("toplantı notuna şunu ekle: bütçe onaylandı", "conversation"),
+    ])
+    func appendsToNote(command: String, modelAction: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == "appendToNote")
+    }
+
+    @Test("listing notes reads the notes", arguments: [("notlarım neler", "openApp"), ("son notlarım", "conversation")])
+    func listsNotes(command: String, modelAction: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == "readNotes")
+        #expect(RouteGuard.review(action: "addReminder", command: "süt almayı listeme ekle") == "addReminder")
+    }
+
     @Test("undo is never taken for quitting an app")
     func undoIsNotQuit() {
         #expect(RouteGuard.review(action: "quitApp", command: "geri al") == "conversation")

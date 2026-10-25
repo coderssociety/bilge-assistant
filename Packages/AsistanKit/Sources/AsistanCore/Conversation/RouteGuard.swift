@@ -46,6 +46,9 @@ public enum RouteGuard {
     /// `previousAction` is the tool of the turn just before, for follow-ups like "peki yarın?" after a weather answer.
     public static func review(action: String, command: String, previousAction: String? = nil) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
+        // "Alışveriş notuma süt ekle" is not a reminder, and "…notuma süt yaz" is not dictation.
+        if NoteRequest.addition(in: command) != nil { return "appendToNote" }
+        if NoteRequest.asksForList(command) { return "readNotes" }
         // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.
         if isDictation(words), action != "createNote" { return "typeText" }
         // "geri al" (undo) outside a spreadsheet was once routed to quitApp.
