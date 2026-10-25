@@ -43,6 +43,12 @@ class MailPage(QWidget):
     def apply(self, settings: config.Settings) -> None:
         settings.mail = self._chosen()
 
+    def problem(self) -> str | None:
+        # Only a password the server accepted is stored; one typed and never tested would be silently dropped.
+        if self.secret.text().strip() and self._verified is None:
+            return t("mail.untested")
+        return None
+
     def save_secrets(self) -> None:
         if self._verified is not None:
             config.store_api_key(assembly.IMAP_SECRET, self._verified)

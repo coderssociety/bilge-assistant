@@ -508,6 +508,25 @@ def test_a_home_assistant_token_is_kept_only_after_the_server_accepted_it(qapp, 
     assert "doğru" not in (tmp_path / "settings.json").read_text(encoding="utf-8")
 
 
+def test_a_secret_typed_but_never_tested_is_not_said_to_be_saved(qapp, isolated, tmp_path):
+    from bilge.app.settings import SettingsWindow
+
+    texts.use(AssistantLanguage.TURKISH)
+    window = SettingsWindow(config.Settings(), tmp_path / "settings.json")
+    calendar = window.pages["calendar"]
+    calendar.kind.setCurrentIndex(calendar.kind.findData("caldav"))
+    fields = [(window.pages["home"].token, "Ev:"), (window.pages["mail"].secret, "E-posta:"),
+              (calendar.secret, "Takvim:")]  # fmt: skip
+    for field, warning in fields:
+        field.setText("denenmemiş")
+        window.save()
+        assert window.message.text().startswith(warning) and "denenmedi" in window.message.text()
+        assert not (tmp_path / "settings.json").exists() and isolated == {}
+        field.clear()
+    window.save()
+    assert (tmp_path / "settings.json").exists() and isolated == {}
+
+
 def test_routines_page_lists_and_deletes_routines(qapp, isolated, tmp_path):
     from bilge.app.settings.routines import RoutinesPage
     from bilge.core.routines.routine_schedule import EVERY_DAY, WEEKDAYS, Routine
