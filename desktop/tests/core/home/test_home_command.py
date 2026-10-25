@@ -45,6 +45,26 @@ def test_only_changing_a_lock_the_garage_or_the_alarm_guards_the_house():
     assert not home_command.guards_the_house("is the front door locked", EN)
 
 
+@pytest.mark.parametrize(
+    ("said", "language"),
+    [("Kapının kilidini açar mısın?", TR), ("garaj kapısını açar mısın?", TR), ("kapıyı açar mısın", TR),
+     ("alarmı kapatır mısın?", TR), ("Can you unlock the front door?", EN), ("open the front door", EN),
+     ("could you open the garage door?", EN), ("please disarm the alarm", EN),
+     ("is it possible to open the front door?", EN)],
+)  # fmt: skip
+def test_asking_politely_for_a_guard_to_change_still_asks_first(said, language):
+    assert home_command.guards_the_house(said, language)
+
+
+@pytest.mark.parametrize(
+    ("said", "language"),
+    [("kapı kilitli mi?", TR), ("garaj kapısı açık mı", TR), ("alarm kurulu mu?", TR), ("kapı kilitlendi mi", TR),
+     ("is the front door locked?", EN), ("is the garage door open", EN), ("are the doors locked?", EN)],
+)  # fmt: skip
+def test_asking_how_a_guard_is_changes_nothing(said, language):
+    assert not home_command.guards_the_house(said, language)
+
+
 def test_the_address_is_a_plain_http_address():
     assert home_command.base_address("http://homeassistant.local:8123/") == "http://homeassistant.local:8123"
     assert home_command.base_address(" https://ev.example.org/ha ") == "https://ev.example.org/ha"

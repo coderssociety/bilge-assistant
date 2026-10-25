@@ -126,6 +126,15 @@ def test_locks_ask_first_and_asking_about_them_does_not():
     assert len(sent) == 1 and len(asked) == 1
 
 
+def test_a_polite_question_to_unlock_asks_first_and_a_routine_never_unlocks():
+    home, sent = server(answering("home_assistant_action_done.json"))
+    agent, asked, _ = agent_with_home(home, answers=[False])
+    agent.handle("Kapının kilidini açar mısın?")
+    assert asked == ["Home Assistant'a “Kapının kilidini açar mısın?” diyeyim mi?"] and sent == []
+    assert "onayın gerekiyor" in agent.handle("garaj kapısını aç", unattended=True).text
+    assert sent == [] and len(asked) == 1
+
+
 def test_home_assistant_is_set_up_only_with_an_address_and_a_token(monkeypatch):
     keys = {}
     monkeypatch.setattr(config, "api_key", lambda name: keys.get(name))
