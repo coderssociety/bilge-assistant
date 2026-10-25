@@ -15,8 +15,8 @@ import psutil
 from bilge.core.conversation.quick_intent_parser import SettingsPane
 from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import Folders, Network, ScreenshotArea, Screenshots, Session, SettingsPanes
-from bilge.desktop.process import DesktopError
-from bilge.tools.base import Risk, Tool
+from bilge.desktop.process import DesktopError, NotPossibleHere
+from bilge.tools.base import Risk, Tool, ToolError
 from bilge.tools.desktop.common import choice, failure, obj, string_argument
 
 EN, TR = AssistantLanguage.ENGLISH, AssistantLanguage.TURKISH
@@ -46,6 +46,8 @@ _TEXTS = {
         "sleep_question": "Bilgisayarı uyutayım mı?",
         "dark_on": "Karanlık mod açık.",
         "dark_off": "Karanlık mod kapalı.",
+        "no_theme_variant": "Kullandığın temanın {kind} bir sürümü yüklü değil; Görünüm ayarlarından başka bir tema seçebilirsin.",
+        "dark_kind": "karanlık", "light_kind": "aydınlık",
         "battery": "Pil doluluk yüzdesini ve şarj durumunu verir.",
         "no_battery": "Bu bilgisayarda pil yok, prize bağlı çalışıyor.",
         "battery_state": "Pil yüzde {percent}, {state}.",
@@ -67,6 +69,7 @@ _TEXTS = {
         "settings": "Sistem ayarlarının bir bölümünü açar: Wi-Fi, Bluetooth, ses, ekran, pil, bildirimler, gizlilik, klavye, duvar kağıdı, yazılım güncelleme gibi.",
         "settings_opened": "Ayarları açtım.",
         "settings_main": "Bu masaüstünde o bölüm yok; ayarların ana penceresini açtım.",
+        "settings_tiling": "Bu pencere yöneticisinin bir ayarlar uygulaması yok; ayarları kendi yapılandırma dosyasında yaparsın. Wi-Fi için nm-connection-editor, ses için pavucontrol, Bluetooth için blueman kurulursa onları açabilirim.",
         "screenshot": "Ekran görüntüsü alır: tüm ekran, öndeki pencere ya da fareyle seçilen alan; Resimler klasörüne kaydeder ya da panoya kopyalar.",
         "area": "Belirtilmediyse wholeScreen",
         "to_clipboard": "Panoya kopyalanması istendiyse true",
@@ -84,6 +87,8 @@ _TEXTS = {
         "sleep_question": "Shall I put the computer to sleep?",
         "dark_on": "Dark mode is on.",
         "dark_off": "Dark mode is off.",
+        "no_theme_variant": "Your theme has no {kind} version installed; you can pick another theme in the appearance settings.",
+        "dark_kind": "dark", "light_kind": "light",
         "battery": "Gives the battery level and whether it's charging.",
         "no_battery": "This computer has no battery; it runs on mains power.",
         "battery_state": "The battery is at {percent} percent, {state}.",
@@ -105,6 +110,7 @@ _TEXTS = {
         "settings": "Opens a page of the system settings: Wi-Fi, Bluetooth, sound, displays, battery, notifications, privacy, keyboard, wallpaper, software updates and so on.",
         "settings_opened": "I opened the settings.",
         "settings_main": "This desktop has no such page; I opened the main settings window.",
+        "settings_tiling": "This window manager has no settings app; it is set up in its own configuration file. If nm-connection-editor (Wi-Fi), pavucontrol (sound) or blueman (Bluetooth) is installed, I can open those.",
         "screenshot": "Takes a screenshot of the whole screen, the window in front, or an area chosen with the mouse; saves it in Pictures or copies it.",
         "area": "wholeScreen unless said otherwise",
         "to_clipboard": "true if it should be copied",
@@ -135,6 +141,9 @@ def system_action_tool(session: Session, language: AssistantLanguage) -> Tool:
             else:
                 dark = action == SystemAction.DARK_MODE_ON
             session.set_dark_mode(dark)
+        except NotPossibleHere as error:
+            kind = texts["dark_kind" if dark else "light_kind"]
+            raise ToolError(texts["no_theme_variant"].format(kind=kind)) from error
         except DesktopError as error:
             raise failure(error, language) from error
         return texts["dark_on" if dark else "dark_off"]
@@ -260,6 +269,8 @@ def settings_tool(settings: SettingsPanes, language: AssistantLanguage) -> Tool:
     def run(arguments: dict[str, Any]) -> str:
         try:
             found = settings.open(string_argument(arguments, "pane"))
+        except NotPossibleHere as error:
+            raise ToolError(texts["settings_tiling"]) from error
         except DesktopError as error:
             raise failure(error, language) from error
         return texts["settings_opened" if found else "settings_main"]
