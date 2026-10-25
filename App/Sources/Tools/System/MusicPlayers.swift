@@ -61,6 +61,19 @@ enum MusicPlayers {
         return zip(apps, states).map { ($0, $1) }
     }
 
+    /// Radio or a podcast is about to play in Bilge; Music and Spotify stop talking over it.
+    static func pauseAll() async {
+        let open = await MainActor.run { running() }
+        guard !open.isEmpty else { return }
+        do {
+            for player in try await states(of: open) where player.state == .playing {
+                _ = try await AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(player.app.rawValue)) to pause")
+            }
+        } catch {
+            Log.tools.error("Could not pause the music apps: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     /// Skips the query when it could not change the choice.
     static func controlTarget() async throws -> MusicApp? {
         let open = await MainActor.run { running() }

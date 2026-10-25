@@ -64,6 +64,9 @@ targets:
         NSBluetoothAlwaysUsageDescription: Bilge, istediğinde Bluetooth'u açıp kapatmak ve açık olup olmadığını söylemek için Bluetooth'a erişir.
         NSContactsUsageDescription: Bilge, sorduğunda birinin telefonunu ya da e-postasını bulmak ve senin onayınla mesaj göndermek için kişilerine erişir.
         NSLocalNetworkUsageDescription: Bilge, akıllı ev komutlarını yalnızca ayarlarda girdiğin Home Assistant adresine göndermek için yerel ağa erişir.
+        # Many Turkish radio stations stream over plain http; this exempts only AVFoundation media, not other loads.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoadsForMedia: true
     entitlements:
       path: App/Resources/Asistan.entitlements
       properties:

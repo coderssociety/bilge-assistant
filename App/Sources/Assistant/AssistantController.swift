@@ -20,6 +20,14 @@ final class AssistantController {
         /// A meeting is being recorded and transcribed.
         case recording
         case failed(String)
+
+        /// Taking a command, answering or asking; not waiting for the wake phrase.
+        var holdsAttention: Bool {
+            switch self {
+            case .awake, .transcribing, .thinking, .speaking, .confirming: true
+            case .off, .loading, .listening, .recording, .failed: false
+            }
+        }
     }
 
     private static let wakeProbeSeconds = 2.5
@@ -29,7 +37,13 @@ final class AssistantController {
     /// A routine waits this long at most for a conversation or a meeting recording to end.
     private static let routineLongestWait = Duration.seconds(15 * 60)
 
-    private(set) var status: Status = .off
+    private(set) var status: Status = .off {
+        didSet {
+            if status.holdsAttention != oldValue.holdsAttention { onAttentionChange?(status.holdsAttention) }
+        }
+    }
+    /// Told when Bilge starts and stops listening to a command or speaking, so playback can make way.
+    @ObservationIgnored var onAttentionChange: ((Bool) -> Void)?
     private(set) var lastHeard: String?
     private(set) var lastReply: String?
     private(set) var pendingConfirmation: String?

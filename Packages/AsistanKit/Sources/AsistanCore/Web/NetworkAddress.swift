@@ -19,6 +19,15 @@ public enum NetworkAddress {
         return true
     }
 
+    /// A URL's host that may be reached: an IP literal on the public internet, or a name that is not a local one.
+    /// The address a name resolves to still has to be checked when connecting.
+    public static func isPublicHost(_ host: String) -> Bool {
+        let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        guard !bare.isEmpty else { return false }
+        let isIPLiteral = bare.contains(":") || Int(bare.split(separator: ".").last ?? "") != nil
+        return isIPLiteral ? isPublic(bare) : !isLocalName(bare)
+    }
+
     /// Host names that never leave the machine or the local network.
     public static func isLocalName(_ host: String) -> Bool {
         let host = host.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))

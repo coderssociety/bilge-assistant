@@ -112,6 +112,16 @@
         }
       }
     },
+    "%@ duraklatılmış.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is paused."
+          }
+        }
+      }
+    },
     "%@ geri sardım.": {
       "localizations": {
         "en": {
@@ -178,6 +188,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't find an e-mail from %@."
+          }
+        }
+      }
+    },
+    "%@ podcastinin bölümlerini okuyamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't read the episodes of %@."
+          }
+        }
+      }
+    },
+    "%@ podcastinin son bölümü %@ yayınlandı: %@. O zamandan beri yeni bölüm yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The latest episode of %1$@ came out %2$@: %3$@. There hasn't been a new one since."
+          }
+        }
+      }
+    },
+    "%@ podcastinin son bölümü çalıyor: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing the latest episode of %1$@: %2$@."
+          }
+        }
+      }
+    },
+    "%@ podcastinin son bölümü: %@. Ne zaman yayınlandığı belli değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The latest episode of %1$@ is %2$@. Its release date isn't given."
+          }
+        }
+      }
+    },
+    "%@ podcastinin son bölümünü başlatamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't start the latest episode of %@."
           }
         }
       }
@@ -646,6 +706,26 @@
         }
       }
     },
+    "%@ yayınına bağlanamadım; istasyon şu an yayın yapmıyor olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't connect to %@; the station may be off the air right now."
+          }
+        }
+      }
+    },
+    "%@ yeniden çalıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is playing again."
+          }
+        }
+      }
+    },
     "%@ zamanlayıcısı iptal edildi.": {
       "localizations": {
         "en": {
@@ -942,6 +1022,16 @@
         }
       }
     },
+    "%lld gün önce": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days ago"
+          }
+        }
+      }
+    },
     "%lld kestirmen var: %@": {
       "localizations": {
         "en": {
@@ -1034,6 +1124,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't find a note called '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında bir podcast bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a podcast called '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında bir radyo bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a radio station called '%@'."
           }
         }
       }
@@ -2562,6 +2672,26 @@
         }
       }
     },
+    "Bu videonun altyazısı yok, o yüzden özetleyemiyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This video has no captions, so I can't summarize it."
+          }
+        }
+      }
+    },
+    "Bu videoyu açamadım; özel, kaldırılmış ya da yaş sınırlı olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't open this video; it may be private, removed or age-restricted."
+          }
+        }
+      }
+    },
     "Bu zamanlayıcı az önce doldu.": {
       "localizations": {
         "en": {
@@ -2688,6 +2818,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "All Mac commands: apps, calendar, reminders, music, files, Excel, dictation, browser, messages and email"
+          }
+        }
+      }
+    },
+    "Canlı radyo yayınında ileri ya da geri saramam.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't skip forward or back in a live radio stream."
           }
         }
       }
@@ -3078,6 +3218,16 @@
         }
       }
     },
+    "dün": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "yesterday"
+          }
+        }
+      }
+    },
     "Düğmeye bastıktan sonra cümleyi normal sesinle oku.": {
       "localizations": {
         "en": {
@@ -3386,6 +3536,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't figure out the event's day or time."
+          }
+        }
+      }
+    },
+    "Evet, %@ podcastinin %@ yayınlanan yeni bir bölümü var: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yes, %1$@ has a new episode out %2$@: %3$@."
           }
         }
       }
@@ -3866,12 +4026,52 @@
         }
       }
     },
+    "Hangi podcast'i istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which podcast you mean."
+          }
+        }
+      }
+    },
+    "Hangi radyoyu açayım? Örneğin Power FM, TRT FM ya da Virgin Radio diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which station should I play? You can say Power FM, TRT FM or Virgin Radio, for example."
+          }
+        }
+      }
+    },
+    "Hangi radyoyu istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which radio station you want."
+          }
+        }
+      }
+    },
     "Hangi vakti sorduğunu anlayamadım.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't tell which prayer time you're asking about."
+          }
+        }
+      }
+    },
+    "Hangi videoyu özetleyeceğimi anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which video to summarize."
           }
         }
       }
@@ -5812,6 +6012,86 @@
         }
       }
     },
+    "Podcast bilgisine ulaşamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't get the podcast information. %@"
+          }
+        }
+      }
+    },
+    "Podcast'e devam ediyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resuming the podcast."
+          }
+        }
+      }
+    },
+    "Podcast'i duraklattım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I paused the podcast."
+          }
+        }
+      }
+    },
+    "Podcast'in sesi yüzde %lld.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podcast volume is at %lld percent."
+          }
+        }
+      }
+    },
+    "Radyo listesine ulaşamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't reach the radio directory. %@"
+          }
+        }
+      }
+    },
+    "Radyonun sesi yüzde %lld.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Radio volume is at %lld percent."
+          }
+        }
+      }
+    },
+    "Radyoyu duraklattım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I paused the radio."
+          }
+        }
+      }
+    },
+    "Radyoyu kapattım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I turned the radio off."
+          }
+        }
+      }
+    },
     "Reddettin": {
       "localizations": {
         "en": {
@@ -6744,6 +7024,16 @@
         }
       }
     },
+    "Tarayıcıdaki videoya ulaşamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't reach the video in the browser. %@"
+          }
+        }
+      }
+    },
     "Tekrar açık.": {
       "localizations": {
         "en": {
@@ -7040,6 +7330,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Video: %@ (%@ altyazısından)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video: %@ (from its %@ captions)"
+          }
+        }
+      }
+    },
+    "Video: %@ (otomatik %@ altyazısından)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video: %@ (from its automatic %@ captions)"
+          }
+        }
+      }
+    },
+    "Videonun altyazısını alamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't get the video's captions. %@"
+          }
+        }
+      }
+    },
+    "Videonun bilgilerini alamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't get the video's details. %@"
           }
         }
       }
@@ -7851,6 +8181,16 @@
         }
       }
     },
+    "Özetleyecek bir YouTube videosu bulamadım. Videoyu tarayıcıda aç ya da adresini kopyalayıp yine söyler misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a YouTube video to summarize. Could you open it in the browser, or copy its address, and ask again?"
+          }
+        }
+      }
+    },
     "Üzgünüm, bir sorun oluştu. Tekrar dener misin?": {
       "localizations": {
         "en": {
@@ -8067,6 +8407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing is being recorded right now."
+          }
+        }
+      }
+    },
+    "Şu an çalan bir radyo ya da podcast yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No radio station or podcast is playing right now."
           }
         }
       }

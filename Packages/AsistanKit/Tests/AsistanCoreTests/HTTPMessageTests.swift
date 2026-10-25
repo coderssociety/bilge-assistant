@@ -30,6 +30,28 @@ struct HTTPMessageTests {
         #expect(!text.contains("Evil"))
     }
 
+    @Test("renders a POST request with its body and length")
+    func post() throws {
+        let url = try #require(URL(string: "https://www.youtube.com/youtubei/v1/player?prettyPrint=false"))
+        let body = Data(#"{"videoId":"abc"}"#.utf8)
+        let text = String(decoding: HTTPRequest.post(url, headers: [("Content-Type", "application/json")], body: body), as: UTF8.self)
+        #expect(text.hasPrefix("POST /youtubei/v1/player?prettyPrint=false HTTP/1.1\r\nHost: www.youtube.com\r\n"))
+        #expect(text.contains("Content-Type: application/json\r\nContent-Length: 17\r\n"))
+        #expect(text.hasSuffix("Connection: close\r\n\r\n{\"videoId\":\"abc\"}"))
+    }
+
+    @Test("a response read only up to a limit gives the body that arrived")
+    func truncatedOnPurpose() throws {
+        let plain = try HTTPResponse.parse(raw("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\nabc"), truncated: true)
+        #expect(String(decoding: plain.body, as: UTF8.self) == "abc")
+        let chunked = try HTTPResponse.parse(raw("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\nWiki\r\nFF\r\nped"),
+                                             truncated: true)
+        #expect(String(decoding: chunked.body, as: UTF8.self) == "Wikiped")
+        let cutInSize = try HTTPResponse.parse(raw("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n4\r\nWiki\r\nF"),
+                                               truncated: true)
+        #expect(String(decoding: cutInSize.body, as: UTF8.self) == "Wiki")
+    }
+
     @Test("parses status, headers and a Content-Length body")
     func contentLength() throws {
         let response = try HTTPResponse.parse(raw("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloEXTRA"))

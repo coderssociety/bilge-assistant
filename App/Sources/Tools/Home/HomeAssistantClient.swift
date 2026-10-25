@@ -71,7 +71,7 @@ enum HomeAssistantClient {
                     try await withTaskCancellationHandler {
                         try await PublicHTTPClient.ready(connection)
                         try await PublicHTTPClient.send(request, on: connection)
-                        let data = try await PublicHTTPClient.receiveAll(connection, limit: maxBodyBytes + headerAllowance)
+                        let (data, _) = try await PublicHTTPClient.receiveAll(connection, limit: maxBodyBytes + headerAllowance)
                         return try HTTPResponse.parse(data)
                     } onCancel: {
                         connection.cancel()

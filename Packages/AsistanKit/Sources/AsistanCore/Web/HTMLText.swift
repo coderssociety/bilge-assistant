@@ -21,8 +21,7 @@ public enum HTMLText {
             text = text.replacingOccurrences(of: "</?\(tag)\\b[^>]*>", with: "\n", options: [.regularExpression, .caseInsensitive])
         }
         text = text.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
-        for (entity, value) in entities { text = text.replacingOccurrences(of: entity, with: value) }
-        text = decodeNumericEntities(text)
+        text = decodingEntities(text)
         let lines = text.split(separator: "\n").map {
             $0.split(whereSeparator: \.isWhitespace).joined(separator: " ")
         }
@@ -55,6 +54,13 @@ public enum HTMLText {
         else { return nil }
         let title = extract(String(html[range])).trimmingCharacters(in: .whitespacesAndNewlines)
         return title.isEmpty ? nil : title
+    }
+
+    /// Named entities common in articles, and numeric ones.
+    public static func decodingEntities(_ text: String) -> String {
+        var text = text
+        for (entity, value) in entities { text = text.replacingOccurrences(of: entity, with: value) }
+        return decodeNumericEntities(text)
     }
 
     private static func decodeNumericEntities(_ text: String) -> String {

@@ -82,7 +82,7 @@ struct VolumeTool: AssistantTool {
 
 struct MediaTool: AssistantTool {
     let name = "controlMusic"
-    let description = "Müziği ya da tarayıcıdaki videoyu oynatır, duraklatır, sonrakine/öncekine geçer; Müzik ve Spotify'da ileri/geri sarar, baştan başlatır, karıştırmayı ve tekrarı açıp kapatır, çalanı söyler."
+    let description = "Müziği, Bilge'de çalan radyoyu ya da podcast'i, tarayıcıdaki videoyu oynatır, duraklatır, sonrakine/öncekine geçer; Müzik ve Spotify'da ileri/geri sarar, baştan başlatır, karıştırmayı ve tekrarı açıp kapatır, çalanı söyler."
     private static let defaultSeekSeconds = 15
 
     @Generable
@@ -105,6 +105,7 @@ struct MediaTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
+        if let reply = await Self.streamReply(arguments) { return reply }
         do {
             switch arguments.action {
             case .play, .pause, .toggle, .next, .previous: return try await transport(arguments.action)
@@ -113,6 +114,24 @@ struct MediaTool: AssistantTool {
             }
         } catch {
             return ToolReply.failure(error)
+        }
+    }
+
+    /// Radio or a podcast playing in Bilge takes play, pause, seeking and "what is playing" before Music and Spotify;
+    /// next, previous, shuffle and repeat stay theirs.
+    @MainActor
+    private static func streamReply(_ arguments: Arguments) -> String? {
+        let player = StreamPlayer.shared
+        guard player.current != nil else { return nil }
+        let seconds = arguments.seconds ?? defaultSeekSeconds
+        switch arguments.action {
+        case .pause: return StreamReplies.pause()
+        case .play: return StreamReplies.resume()
+        case .toggle: return player.state == .playing ? StreamReplies.pause() : StreamReplies.resume()
+        case .nowPlaying: return StreamReplies.nowPlaying()
+        case .seekForward: return StreamReplies.seek(by: seconds)
+        case .seekBackward: return StreamReplies.seek(by: -seconds)
+        default: return nil
         }
     }
 

@@ -99,6 +99,7 @@ final class AppEnvironment {
                                             recorder: meetings)
         announcer.target = assistant
         brain.confirmer = assistant
+        assistant.onAttentionChange = { StreamPlayer.shared.setDucked($0) }
         self.settings = settings
         self.speech = speech
         self.timers = timers
