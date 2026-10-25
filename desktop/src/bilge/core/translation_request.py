@@ -55,6 +55,23 @@ _READING_WORDS = ("olarak", "oku", "cevir", "anlat", "soyle", "seslendir", "konu
 # "Fransızca de": too short to match as a beginning.
 _SHORT_READING_WORDS = frozenset({"de", "da"})
 _ENGLISH_CUES = frozenset({"in", "into", "to"})
+# "ingilizceden", "almancaya", "türkçesini".
+_LONGEST_ENDING = 5
+
+
+def by_code(code: str) -> SpeechLanguage | None:
+    return next((language for *_, language in _LANGUAGES if language.code == code), None)
+
+
+def mentioned(command: str) -> list[SpeechLanguage]:
+    """Every language named, in the order said and once each, whatever case ending it has ("Türkçeden Almancaya")."""
+    found: list[SpeechLanguage] = []
+    for word in text.folded(command).split():
+        for turkish, english, language in _LANGUAGES:
+            named = word == english or (word.startswith(turkish) and len(word) - len(turkish) <= _LONGEST_ENDING)
+            if named and language not in found:
+                found.append(language)
+    return found
 
 
 def target(command: str) -> SpeechLanguage | None:
