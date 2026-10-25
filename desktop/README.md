@@ -146,6 +146,10 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 | Calendar | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “süt almayı işaretle” | CalDAV or an iCal address | the same, or Outlook |
 | Spreadsheet | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel or LibreOffice Calc |
 | Mail | “okunmamış e-postalarım”, “içeriğini oku”, “buna yanıt ver: yarın uygunum”, “Ahmet'e yarın geleceğimi yaz” | IMAP, reading only (Settings → Mail) | Outlook |
+| Notes | “not al: …”, “alışveriş notuma süt ekle”, “notlarım neler”, “alışveriş notunu oku” | Markdown files in Documents/Bilge Notlar | the same |
+| Contacts | “Ahmet'in numarası ne”, “Ayşe'nin e-postası”; also the address for “Ahmet'e mail at” on Windows | the CalDAV account's address book, when the server offers one (CardDAV) | Outlook's contacts |
+| Your commands | “yedekleme komutunu çalıştır”, “komutlarım neler” | command lines you add under Settings → Commands, run without a shell; the first run of each asks | the same |
+| Text messages | “Ahmet'e mesaj at: geliyorum” | a phone paired through KDE Connect or GSConnect (`kdeconnect-cli`) | not yet |
 | System | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` or Plasma, `nmcli`, the desktop's screenshot tool | built in |
 | Screen and power | “parlaklığı yüzde 50 yap”, “rahatsız etmeyini aç”, “Bluetooth'u kapat”, “bilgisayarı yeniden başlat” | GNOME or Plasma, `brightnessctl` or `ddcutil`; `bluetoothctl` or `rfkill`; `systemctl` | WMI (laptop screens); the radio switch; `shutdown` (Do Not Disturb has no API: Bilge says to press Win+N) |
 | Conversions and world time | “10 mil kaç kilometre”, “2 litre kaç bardak”, “Tokyo'da saat kaç”, “New York ile aramızda kaç saat fark var” | built in | built in |
@@ -159,7 +163,7 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 
 Moving files to the trash, closing apps, writing over a filled cell, adding to or changing the calendar, turning
 Wi-Fi or Bluetooth off, restarting, shutting down or logging out asks first, and so does anything that could carry text Bilge has read somewhere else. An e-mail is read out, with the
-address it goes to, before it is sent. Typing is refused in terminals,
+address it goes to, before it is sent, and so is a text message with its number. Typing is refused in terminals,
 code editors, remote desktops, virtual machines and password managers. GNOME on Wayland doesn't tell other
 programs which window is in front, so there Bilge asks before typing.
 
