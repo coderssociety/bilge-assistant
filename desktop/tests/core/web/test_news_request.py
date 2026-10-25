@@ -84,3 +84,11 @@ def test_what_was_read_is_kept_for_a_request_about_one_of_the_headlines_the_last
     memory.next(FEED, "general", 2, START + timedelta(seconds=10))
     assert memory.heard_items(START + timedelta(seconds=20)) == (FEED[2:4], [*FEED[2:4], *FEED[:2]])
     assert memory.heard_items(START + news_request.LIFETIME + timedelta(seconds=11)) == ([], [])
+
+
+def test_headlines_are_remembered_per_source_and_the_source_just_read_is_kept_for_a_follow_up() -> None:
+    memory = HeadlineMemory()
+    memory.next(FEED, "general", 5, START, "anadolu")
+    assert memory.next(FEED, "general", 5, START + timedelta(seconds=5), "trtHaber").kind is Kind.FIRST
+    assert memory.recent_source(START + timedelta(seconds=10)) == "trtHaber"
+    assert memory.recent_source(START + news_request.CONTINUATION_WINDOW + timedelta(seconds=6)) is None

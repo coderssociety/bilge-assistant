@@ -47,7 +47,12 @@ def is_topic_word(word: str) -> bool:
 def is_continuation(command: str) -> bool:
     """A follow-up such as "bu kadar mı" or "başka var mı": routed to the news without asking for news or naming a
     topic, it goes on with the headlines just read."""
-    return topic(command) is None and not any(w.startswith(n) for w in _words(command) for n in _NEWS_WORDS)
+    return topic(command) is None and not names_news(command)
+
+
+def names_news(command: str) -> bool:
+    """ "Haber", "başlık", "news" in any form."""
+    return any(w.startswith(n) for w in _words(command) for n in _NEWS_WORDS)
 
 
 class Kind(Enum):
@@ -72,31 +77,38 @@ class Reading:
 class HeadlineMemory:
     def __init__(self) -> None:
         self._read: dict[str, tuple[frozenset[str], datetime]] = {}
-        self._last: tuple[str, datetime] | None = None
+        self._last: tuple[str, str, datetime] | None = None
         # What was read out, newest reading first, for "o haberi aç".
         self._heard: list[tuple[list[Item], datetime]] = []
 
     def recent_topic(self, at: datetime) -> str | None:
-        if self._last is None or at - self._last[1] >= CONTINUATION_WINDOW:
+        if self._last is None or at - self._last[2] >= CONTINUATION_WINDOW:
             return None
         return self._last[0]
+
+    def recent_source(self, at: datetime) -> str | None:
+        """Where the headlines just read came from, for "bu kadar mı" and "başka bir kaynak"."""
+        if self._last is None or at - self._last[2] >= CONTINUATION_WINDOW or not self._last[1]:
+            return None
+        return self._last[1]
 
     def heard_items(self, at: datetime) -> tuple[list[Item], list[Item]]:
         """The headlines read out within the lifetime: the last reading in its order, and all of them."""
         recent = [items for items, read_at in self._heard if at - read_at < LIFETIME]
         return (recent[0] if recent else []), [item for items in recent for item in items]
 
-    def next(self, items: list[Item], topic: str, count: int, at: datetime) -> Reading:
-        """The next `count` of `items` (the feed, newest first) not yet read for `topic`."""
-        titles, read_at = self._read.get(topic, (frozenset(), at))
+    def next(self, items: list[Item], topic: str, count: int, at: datetime, source: str = "") -> Reading:
+        """The next `count` of `items` (the feed, newest first) not yet read for `topic` from `source`."""
+        key = f"{source}/{topic}" if source else topic
+        titles, read_at = self._read.get(key, (frozenset(), at))
         earlier = titles if at - read_at < LIFETIME else frozenset()
         fresh = [item for item in items if item.title not in earlier]
         if not fresh:
             reading = Reading(items[:count], Kind.AGAIN)
-            self._read[topic] = (frozenset(reading.headlines), at)
+            self._read[key] = (frozenset(reading.headlines), at)
         else:
             reading = Reading(fresh[:count], Kind.NEXT if earlier else Kind.FIRST)
-            self._read[topic] = (earlier | frozenset(reading.headlines), at)
-        self._last = (topic, at)
+            self._read[key] = (earlier | frozenset(reading.headlines), at)
+        self._last = (topic, source, at)
         self._heard = [(reading.items, at), *((i, t) for i, t in self._heard if at - t < LIFETIME)]
         return reading

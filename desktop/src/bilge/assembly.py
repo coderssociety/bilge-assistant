@@ -80,7 +80,10 @@ def build_agent(
         briefing_tool(briefing),
         *calendar_tools(calendar, language),
     ])  # fmt: skip
-    rules: list[Rule] = [rule("dailyBriefing", briefing.claims)]
+    rules: list[Rule] = [
+        rule("dailyBriefing", briefing.claims),
+        rule("news", internet.news_source_rule_claims(language, news_reading)),
+    ]
     modes: list[Mode] = []
     found = desktop.current(language)
     registry.add(internet.news_article(language, news_reading, found.opener.open if found is not None else None))

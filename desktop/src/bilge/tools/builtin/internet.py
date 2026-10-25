@@ -13,7 +13,7 @@ from urllib.parse import urlencode
 from bilge.brain.instructions import weekday_name
 from bilge.core import text
 from bilge.core.language import AssistantLanguage
-from bilge.core.web import html_text, news_request, rss_headlines, weather_report
+from bilge.core.web import html_text, news_request, news_source, rss_headlines, weather_report
 from bilge.core.web import news_article as article_reference
 from bilge.tools import web_fetch
 from bilge.tools.base import Tool, ToolError
@@ -241,15 +241,6 @@ def _number(value: float, language: AssistantLanguage) -> str:
     return formatted
 
 
-NEWS_FEEDS = {
-    TR: {c: f"https://www.aa.com.tr/tr/rss/default?cat={slug}" for c, slug in
-         {"general": "guncel", "economy": "ekonomi", "sports": "spor", "world": "dunya", "technology": "bilim-teknoloji"}.items()},
-    EN: {c: f"https://feeds.bbci.co.uk/{path}" for c, path in
-         {"general": "news/rss.xml", "economy": "news/business/rss.xml", "sports": "sport/rss.xml",
-          "world": "news/world/rss.xml", "technology": "news/technology/rss.xml"}.items()},
-}  # fmt: skip
-
-
 # As each feed names its topic.
 NEWS_TOPIC_NAMES = {
     TR: {"economy": "ekonomi", "sports": "spor", "world": "dünya", "technology": "bilim-teknoloji"},
@@ -257,19 +248,21 @@ NEWS_TOPIC_NAMES = {
 }
 
 
-def _news_introduction(kind: news_request.Kind, category: str, language: AssistantLanguage) -> str:
+def _news_introduction(
+    kind: news_request.Kind, category: str, source: news_source.NewsSource, language: AssistantLanguage
+) -> str:
     name = NEWS_TOPIC_NAMES[language].get(category)
     if language is EN:
         if kind is news_request.Kind.NEXT:
             return "The next headlines. "
         if kind is news_request.Kind.AGAIN:
             return "Nothing new since I last read them; the latest are still these. "
-        return f"Latest {name} headlines from BBC News. " if name else "Latest headlines from BBC News. "
+        return f"Latest {name} headlines {source.from_}. " if name else f"Latest headlines {source.from_}. "
     if kind is news_request.Kind.NEXT:
         return "Sıradaki başlıklar. "
     if kind is news_request.Kind.AGAIN:
         return "Son okuduğumdan beri yeni başlık yok; en son başlıklar yine şunlar. "
-    return f"Anadolu Ajansı'ndan son {name} başlıkları. " if name else "Anadolu Ajansı'ndan son başlıklar. "
+    return f"{source.from_} son {name} başlıkları. " if name else f"{source.from_} son başlıklar. "
 
 
 class NewsReading:
@@ -283,9 +276,16 @@ class NewsReading:
         with self._lock:
             return self._memory.recent_topic(datetime.now())
 
-    def next(self, items: list[rss_headlines.Item], topic: str, count: int) -> news_request.Reading:
+    def recent_source(self) -> news_source.NewsSource | None:
         with self._lock:
-            return self._memory.next(items, topic, count, datetime.now())
+            found = self._memory.recent_source(datetime.now())
+        return news_source.NewsSource(found) if found else None
+
+    def next(
+        self, items: list[rss_headlines.Item], topic: str, count: int, source: news_source.NewsSource
+    ) -> news_request.Reading:
+        with self._lock:
+            return self._memory.next(items, topic, count, datetime.now(), source.value)
 
     def article(self, words: str, asked: bool = False) -> article_reference.Request | None:
         with self._lock:
@@ -301,38 +301,53 @@ class NewsReading:
 def news(language: AssistantLanguage, reading: NewsReading | None = None) -> Tool:
     english = language is EN
     reading = reading or NewsReading()
+    sources = news_source.sources(language)
 
     def refine(arguments: dict[str, Any], command: str) -> dict[str, Any]:
-        """A topic said in the command wins over the model's choice; "bu kadar mı" goes on with the topic just read."""
-        named = news_request.topic(command)
-        if named is None and news_request.is_continuation(command):
-            named = reading.recent_topic()
-        return {**arguments, "category": named} if named else arguments
+        """A topic or source said in the command wins over the model's choice; "bu kadar mı" goes on with what was
+        just read, and "başka bir kaynak" turns to the next source."""
+        continues = news_request.is_continuation(command)
+        topic = news_request.topic(command) or (reading.recent_topic() if continues else None)
+        topic = topic or str(arguments.get("category") or "general")
+        source = news_source.named(command, language)
+        if source is None and news_source.asks_for_another(command):
+            source = (reading.recent_source() or news_source.preferred(language)).next(topic)
+        elif source is None and continues:
+            source = reading.recent_source()
+        return {"category": topic, "source": source.value if source else None}
 
     def run(arguments: dict[str, Any]) -> str:
         category = arguments.get("category") or "general"
-        if category not in NEWS_FEEDS[language]:
+        if category not in news_request.TOPICS:
+            category = "general"
+        source = next((s for s in sources if s.value == arguments.get("source")), news_source.preferred(language))
+        # A source without a feed of its own for the topic gives its general headlines, which the introduction says.
+        if source.feed(category) is None:
             category = "general"
         try:
-            feed = rss_headlines.items(web_fetch.get(NEWS_FEEDS[language][category], language).body, FEED_COUNT)
+            feed = rss_headlines.items(web_fetch.get(source.feed(category) or "", language).body, FEED_COUNT)
         except web_fetch.WebFetchError as error:
             raise ToolError(("Couldn't get the news. " if english else "Haberler alınamadı. ") + str(error)) from error
         if not feed:
             raise ToolError("No headlines found." if english else "Haber başlığı bulunamadı.")
-        read = reading.next(feed, category, HEADLINE_COUNT)
-        return _news_introduction(read.kind, category, language) + " ".join(
+        read = reading.next(feed, category, HEADLINE_COUNT, source)
+        return _news_introduction(read.kind, category, source, language) + " ".join(
             h if h.endswith(".") else h + "." for h in read.headlines
         )
 
     return Tool(
         "news",
-        "Reads the latest headlines: general, economy, sports, world or technology (BBC News)."
+        "Reads the latest headlines: general, economy, sports, world or technology (BBC News, The Guardian or NPR)."
         if english
-        else "Son haber başlıklarını okur: gündem, ekonomi, spor, dünya ya da bilim-teknoloji (Anadolu Ajansı).",
+        else "Son haber başlıklarını okur: gündem, ekonomi, spor, dünya ya da bilim-teknoloji (Anadolu Ajansı, TRT "
+        "Haber ya da BBC Türkçe).",
         run=run,
         parameters={
             "type": "object",
-            "properties": {"category": {"type": "string", "enum": list(NEWS_FEEDS[language])}},
+            "properties": {
+                "category": {"type": "string", "enum": list(news_request.TOPICS)},
+                "source": {"type": "string", "enum": [source.value for source in sources]},
+            },
         },
         refine=refine,
         untrusted_output=True,
@@ -340,6 +355,18 @@ def news(language: AssistantLanguage, reading: NewsReading | None = None) -> Too
             "Shall I read the latest headlines?" if english else "Son haber başlıklarını okuyayım mı?"
         ),
     )
+
+
+def news_source_rule_claims(language: AssistantLanguage, reading: NewsReading) -> Callable[[str], bool]:
+    """ "Başka bir kaynak" after the headlines, and "TRT haberleri": routed to the news by rule, since a model may take
+    the first for small talk."""
+
+    def claims(command: str) -> bool:
+        if news_source.asks_for_another(command):
+            return reading.recent_topic() is not None
+        return news_source.named(command, language) is not None and news_request.names_news(command)
+
+    return claims
 
 
 def news_article(

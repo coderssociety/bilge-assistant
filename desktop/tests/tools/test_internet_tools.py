@@ -83,7 +83,7 @@ def test_news_names_the_topic_and_goes_on_when_asked_again(monkeypatch):
     fake_web(monkeypatch, {"https://www.aa.com.tr/tr/rss/default?cat=bilim-teknoloji": _feed(7)})
     tool = internet.news(TR)
     arguments = tool.refine({"category": "general"}, "Teknoloji haberlerinden başlık var mı")
-    assert arguments == {"category": "technology"}
+    assert arguments == {"category": "technology", "source": None}
     assert tool.run(arguments).startswith("Anadolu Ajansı'ndan son bilim-teknoloji başlıkları. Haber 1.")
     follow_up = tool.refine({"category": "general"}, "Bu kadar mı")
     assert tool.run(follow_up) == "Sıradaki başlıklar. Haber 6. Haber 7."
@@ -92,7 +92,36 @@ def test_news_names_the_topic_and_goes_on_when_asked_again(monkeypatch):
 
 def test_news_keeps_the_models_topic_when_the_command_asks_for_news(monkeypatch):
     tool = internet.news(TR)
-    assert tool.refine({"category": "general"}, "Bugünün önemli haberleri var mı") == {"category": "general"}
+    assert tool.refine({"category": "general"}, "Bugünün önemli haberleri var mı") == {
+        "category": "general",
+        "source": None,
+    }
+
+
+def test_another_source_after_the_headlines_reads_the_next_one(monkeypatch):
+    fake_web(
+        monkeypatch,
+        {"https://www.aa.com.tr/tr/rss": _feed(3), "https://www.trthaber.com/manset_articles.rss": _feed(2)},
+    )
+    reading = internet.NewsReading()
+    tool = internet.news(TR, reading)
+    claims = internet.news_source_rule_claims(TR, reading)
+    assert not claims("Başka bir kaynak")
+    assert tool.run(tool.refine({}, "Bugünün haberleri")).startswith("Anadolu Ajansı'ndan son başlıklar.")
+    assert claims("Başka bir kaynak")
+    arguments = tool.refine({}, "Başka bir kaynak")
+    assert arguments == {"category": "general", "source": "trtHaber"}
+    assert tool.run(arguments) == "TRT Haber'den son başlıklar. Haber 1. Haber 2."
+    assert tool.refine({}, "bu kadar mı")["source"] == "trtHaber"
+
+
+def test_a_named_source_is_read_and_one_without_the_topic_gives_its_general_headlines(monkeypatch):
+    fake_web(monkeypatch, {"https://feeds.bbci.co.uk/turkce/rss.xml": _feed(1)})
+    tool = internet.news(TR)
+    assert internet.news_source_rule_claims(TR, internet.NewsReading())("BBC teknoloji haberleri")
+    arguments = tool.refine({"category": "general"}, "BBC teknoloji haberleri")
+    assert arguments == {"category": "technology", "source": "bbcTurkish"}
+    assert tool.run(arguments) == "BBC Türkçe'den son başlıklar. Haber 1."
 
 
 def _linked_feed() -> bytes:
