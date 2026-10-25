@@ -200,7 +200,9 @@ final class AssistantBrain: CommandHandling {
             return
         }
         // Before the model check: ending a recording must work, and save the transcript, even without a model.
-        if try await handleSessionCommand(command, continuation: continuation) { return }
+        // "Her gün 18'de kaydı bitir" sets up a routine rather than ending a recording now.
+        let isRoutine = RoutineRequest.parse(command, language: language) != nil
+        if !isRoutine, try await handleSessionCommand(command, continuation: continuation) { return }
         guard let router, unavailableReason == nil else {
             continuation.yield(unavailableReason ?? String(localized: "Dil modeli kullanılamıyor."))
             return
@@ -214,7 +216,7 @@ final class AssistantBrain: CommandHandling {
         // "Bunu Ahmet'e gönder" (send this to Ahmet): what was on screen when the command was heard, read only when it points.
         context.screen = ContextIntent.points(command, language: language) ? await ScreenContextReader.snapshot() : nil
         // "Her gün 8'de haberleri oku ve hava durumunu söyle" is one routine; its parts are split when it runs.
-        if RoutineRequest.parse(command, language: language) == nil, let parts = CompoundCommand.split(command, language: language) {
+        if !isRoutine, let parts = CompoundCommand.split(command, language: language) {
             try await handleCompound(command, parts: parts, router: router, unattended: unattended, continuation: continuation)
             return
         }

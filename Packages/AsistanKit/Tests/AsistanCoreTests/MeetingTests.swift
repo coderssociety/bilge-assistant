@@ -9,6 +9,7 @@ struct MeetingCommandTests {
         ("toplantıyı kaydet", .startRecording),
         ("kayda başla", .startRecording),
         ("toplantı kaydını başlat lütfen", .startRecording),
+        ("bu toplantıyı kaydeder misin", .startRecording),
         ("kaydı bitir", .stopRecording),
         ("Kaydı durdur.", .stopRecording),
         ("toplantı bitti", .stopRecording),
@@ -23,6 +24,8 @@ struct MeetingCommandTests {
 
     @Test("English phrases", arguments: [
         ("record the meeting", MeetingCommand.startRecording),
+        ("start recording the meeting", .startRecording),
+        ("record this meeting please", .startRecording),
         ("start recording", .startRecording),
         ("stop recording", .stopRecording),
         ("the meeting is over", .stopRecording),
@@ -36,12 +39,17 @@ struct MeetingCommandTests {
     @Test("other recordings and meeting talk are not meeting commands", arguments: [
         "ekran kaydını başlat", "toplantıyı takvime kaydet", "dosyayı kaydet", "yarın toplantı var mı",
         "toplantım ne zaman", "bu belgeyi özetle", "kaydet",
+        "yarınki toplantıyı takvime kaydet", "toplantı kaydını sil", "her pazartesi 10'da toplantıyı kaydet",
+        "toplantıyı kaydetmeyi hatırlat", "saat 3'te toplantıyı kaydet",
     ])
     func notTurkish(text: String) {
         #expect(MeetingCommand.parse(text) == nil)
     }
 
-    @Test("English requests that are not meeting commands", arguments: ["start screen recording", "add a meeting tomorrow", "record"])
+    @Test("English requests that are not meeting commands", arguments: [
+        "start screen recording", "add a meeting tomorrow", "record", "remind me to record the meeting tomorrow",
+        "delete the meeting recording", "every monday at 10 record the meeting", "save the meeting to my calendar",
+    ])
     func notEnglish(text: String) {
         #expect(MeetingCommand.parse(text, language: .english) == nil)
     }

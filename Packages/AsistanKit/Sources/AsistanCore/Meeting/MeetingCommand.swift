@@ -14,20 +14,26 @@ public enum MeetingCommand: Equatable, Sendable {
 
     public static let audioExtensions: Set<String> = ["m4a", "mp3", "wav", "mp4", "aac", "aif", "aiff", "caf", "mov", "m4v"]
     private static let maxStopWords = 6
-    private static let maxStartWords = 8
 
     private static let turkishRecordPrefixes = ["kayd", "kayit"]
     private static let turkishStartPrefixes = ["basla", "baslat"]
     private static let turkishStopPrefixes = ["bitir", "durdur", "kapat", "sonlandir", "bitti"]
-    /// Recording something else: the screen, a calendar entry, a note.
-    private static let turkishOtherRecordings = ["ekran", "takvim", "not", "hatirlatici", "video", "kamera", "dosya", "belge"]
+    /// A start is said as nothing but the recording, the meeting, "başla" and these, so "toplantı kaydını sil",
+    /// "yarınki toplantıyı takvime kaydet" and "her pazartesi 10'da toplantıyı kaydet" start nothing now.
+    private static let turkishStartFillers: Set<String> = [
+        "bu", "su", "lutfen", "bilge", "simdi", "hemen", "misin", "musun", "misiniz", "musunuz", "eder", "edebilir",
+        "edin", "artik",
+    ]
     private static let turkishTranscribePhrases = ["yaziya dok", "yaziya gecir", "yaziya cevir", "metne dok", "metne cevir",
                                                    "metne gecir", "desifre", "transkript"]
     private static let turkishAudioPrefixes = ["ses", "kayd", "kayit", "dosya", "video", "m4a", "mp3", "wav", "mp4", "toplanti"]
 
     private static let englishStops: Set<String> = ["stop", "end", "finish", "off", "done", "over", "pause"]
     private static let englishStarts: Set<String> = ["start", "begin", "starting"]
-    private static let englishOtherRecordings: Set<String> = ["screen", "video", "camera", "calendar", "note", "reminder"]
+    private static let englishStartFillers: Set<String> = [
+        "the", "this", "a", "our", "my", "please", "now", "bilge", "can", "could", "would", "will", "you", "i", "want",
+        "to", "lets", "let", "us", "go", "ahead", "and",
+    ]
     private static let englishAudioPrefixes = ["audio", "recording", "file", "voice", "memo", "video", "download", "m4a", "mp3",
                                                "wav", "mp4", "meeting", "podcast"]
     private static let englishRecentWords: Set<String> = ["last", "latest", "recent", "newest", "downloaded", "downloads", "download"]
@@ -54,9 +60,12 @@ public enum MeetingCommand: Equatable, Sendable {
         let meeting = words.contains { $0.hasPrefix("toplanti") }
         let stops = words.contains { word in turkishStopPrefixes.contains(where: word.hasPrefix) }
         if (recording || meeting), stops, words.count <= maxStopWords { return .stopRecording }
-        let other = words.contains { word in turkishOtherRecordings.contains(where: word.hasPrefix) }
         let starts = words.contains { word in turkishStartPrefixes.contains(where: word.hasPrefix) }
-        guard recording, !stops, !other, words.count <= maxStartWords, meeting || starts else { return nil }
+        let onlyStartWords = words.allSatisfy { word in
+            turkishStartFillers.contains(word) || word.hasPrefix("toplanti")
+                || (turkishRecordPrefixes + turkishStartPrefixes).contains(where: word.hasPrefix)
+        }
+        guard recording, !stops, onlyStartWords, meeting || starts else { return nil }
         return .startRecording
     }
 
@@ -69,9 +78,11 @@ public enum MeetingCommand: Equatable, Sendable {
         let meeting = words.contains { $0.hasPrefix("meeting") }
         let stops = words.contains(where: englishStops.contains)
         if (recording || meeting), stops, words.count <= maxStopWords { return .stopRecording }
-        let other = words.contains(where: englishOtherRecordings.contains)
         let starts = words.contains(where: englishStarts.contains)
-        guard recording, !stops, !other, words.count <= maxStartWords, meeting || starts else { return nil }
+        let onlyStartWords = words.allSatisfy { word in
+            englishStartFillers.contains(word) || englishStarts.contains(word) || word.hasPrefix("record") || word.hasPrefix("meeting")
+        }
+        guard recording, !stops, onlyStartWords, meeting || starts else { return nil }
         return .startRecording
     }
 }
