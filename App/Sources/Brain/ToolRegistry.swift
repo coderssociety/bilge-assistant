@@ -51,6 +51,7 @@ struct ToolRegistry {
             ReadNotesTool(),
             AppendNoteTool(),
             PlayMusicTool(),
+            RadioTool(),
             SystemInfoTool(),
             WiFiTool(),
             ScreenshotTool(),

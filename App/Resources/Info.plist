@@ -24,6 +24,11 @@
 	<string>public.app-category.productivity</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsForMedia</key>
+		<true/>
+	</dict>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Bilge, senin isteğinle uygulamaları kontrol etmek (müzik, notlar, Mail, Mesajlar, tarayıcı) için Apple Events kullanır. Gönderme işlemleri her zaman onayınla yapılır.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>

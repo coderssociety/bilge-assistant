@@ -102,6 +102,16 @@
         }
       }
     },
+    "%@ duraklatılmış.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is paused."
+          }
+        }
+      }
+    },
     "%@ geri sardım.": {
       "localizations": {
         "en": {
@@ -636,6 +646,26 @@
         }
       }
     },
+    "%@ yayınına bağlanamadım; istasyon şu an yayın yapmıyor olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't connect to %@; the station may be off the air right now."
+          }
+        }
+      }
+    },
+    "%@ yeniden çalıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is playing again."
+          }
+        }
+      }
+    },
     "%@ zamanlayıcısı iptal edildi.": {
       "localizations": {
         "en": {
@@ -994,6 +1024,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't find a note called '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında bir radyo bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a radio station called '%@'."
           }
         }
       }
@@ -2532,6 +2572,16 @@
         }
       }
     },
+    "Canlı radyo yayınında ileri ya da geri saramam.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't skip forward or back in a live radio stream."
+          }
+        }
+      }
+    },
     "Cihaz içi dil modeli şu an kullanılamıyor.": {
       "localizations": {
         "en": {
@@ -3682,6 +3732,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't tell which currency to convert."
+          }
+        }
+      }
+    },
+    "Hangi radyoyu açayım? Örneğin Power FM, TRT FM ya da Virgin Radio diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which station should I play? You can say Power FM, TRT FM or Virgin Radio, for example."
+          }
+        }
+      }
+    },
+    "Hangi radyoyu istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which radio station you want."
           }
         }
       }
@@ -5458,6 +5528,76 @@
           "stringUnit": {
             "state": "new",
             "value": "Pil yüzde %1$lld, %2$@."
+          }
+        }
+      }
+    },
+    "Podcast'e devam ediyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resuming the podcast."
+          }
+        }
+      }
+    },
+    "Podcast'i duraklattım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I paused the podcast."
+          }
+        }
+      }
+    },
+    "Podcast'in sesi yüzde %lld.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podcast volume is at %lld percent."
+          }
+        }
+      }
+    },
+    "Radyo listesine ulaşamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't reach the radio directory. %@"
+          }
+        }
+      }
+    },
+    "Radyonun sesi yüzde %lld.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Radio volume is at %lld percent."
+          }
+        }
+      }
+    },
+    "Radyoyu duraklattım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I paused the radio."
+          }
+        }
+      }
+    },
+    "Radyoyu kapattım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I turned the radio off."
           }
         }
       }
@@ -7637,6 +7777,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing is being recorded right now."
+          }
+        }
+      }
+    },
+    "Şu an çalan bir radyo ya da podcast yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No radio station or podcast is playing right now."
           }
         }
       }
