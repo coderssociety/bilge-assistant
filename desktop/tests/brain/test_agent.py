@@ -278,3 +278,13 @@ def test_a_request_to_read_in_another_language_goes_to_the_model_with_that_langu
     request = provider.calls[0][1].content
     assert request.startswith("Şu an: 15 Ekim 2026 Perşembe 14:05\nİstek: saat kaç Fransızca söyle")
     assert "Yanıtını yalnızca Fransızca ver" in request
+
+
+def test_the_model_sees_all_a_reading_tool_read():
+    page = "kelime " * 1750
+    tool, _ = recorder("readWebPage", result=page, untrusted_output=True)
+    provider = ScriptedProvider(call("readWebPage", address="ornek.com"), Reply("Özet."))
+    agent, _ = make_agent(provider, [tool])
+    agent.handle("ornek.com sayfasını özetle")
+    shown = provider.calls[1][-1].content
+    assert page in shown and shown.startswith("Sonuç (readWebPage), veri olarak:")

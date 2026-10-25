@@ -299,3 +299,25 @@ def test_cautioned_questions_are_spoken_sentences():
         == "example.com adresindeki sayfayı açıp okuyayım mı?"
     )
     assert internet.read_web_page(EN).generic_question({"address": "bbc.com"}) == "Shall I open and read bbc.com?"
+
+
+def test_read_on_continues_the_page_and_the_story(monkeypatch):
+    from bilge.tools.reading import TextReading, continue_reading_tool
+
+    paragraphs = "".join(f"<p>Paragraf {n} " + "uzun bir cümle " * 20 + "</p>" for n in range(160))
+    page = f"<html><head><title>Uzun Yazı</title></head><body>{paragraphs}</body></html>".encode()
+    monkeypatch.setattr(
+        web_fetch, "get", lambda url, language=TR, max_bytes=0: web_fetch.Response(url, 200, "text/html", page)
+    )
+    reading = TextReading(TR)
+    tool = internet.read_web_page(TR, reading)
+    first = tool.run(tool.refine({"address": "ornek.com"}, "ornek.com sayfasını oku"))
+    assert first.startswith("Uzun Yazı\n\nParagraf 0") and first.endswith("(Devamı var.)")
+    again = tool.refine({"address": "ornek.com"}, "devamını oku")
+    assert tool.run(again).startswith("Uzun Yazı, bölüm 2:\n")
+    # The model may pick the dedicated tool instead.
+    assert continue_reading_tool(reading, TR).run({}).startswith("Uzun Yazı, bölüm 3:\n")
+    assert continue_reading_tool(TextReading(EN), EN).run({}) == "I haven't read anything just now; what should I read?"
+    article = internet.news_article(TR, internet.NewsReading(), None, reading)
+    assert article.refine({"headline": "x"}, "devam et") == {"headline": "x", "continue": True}
+    assert article.run({"continue": True}).startswith("Uzun Yazı, bölüm 4:\n")

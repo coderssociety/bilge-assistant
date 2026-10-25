@@ -18,6 +18,7 @@ from bilge.core.web import html_text, news_request, news_source, rss_headlines, 
 from bilge.core.web import news_article as article_reference
 from bilge.tools import web_fetch
 from bilge.tools.base import Tool, ToolError
+from bilge.tools.reading import TextReading, continued
 
 log = logging.getLogger(__name__)
 EN, TR = AssistantLanguage.ENGLISH, AssistantLanguage.TURKISH
@@ -461,13 +462,19 @@ def news_source_rule_claims(language: AssistantLanguage, reading: NewsReading) -
 
 
 def news_article(
-    language: AssistantLanguage, reading: NewsReading, open_link: Callable[[str], None] | None = None
+    language: AssistantLanguage,
+    reading: NewsReading,
+    open_link: Callable[[str], None] | None = None,
+    text_reading: TextReading | None = None,
 ) -> Tool:
     """ "Claude'un keşfettiği buluşu aç", "üçüncü haberi anlat": one of the headlines just read, fetched for the model
     to tell in short; "aç" also shows it in the browser."""
     english = language is EN
 
     def refine(arguments: dict[str, Any], command: str) -> dict[str, Any]:
+        arguments = continued(text_reading, arguments, command)
+        if arguments.get("continue"):
+            return arguments
         # The user's own words first; the model's paraphrase of them when those don't point at a headline.
         found = reading.article(command) or reading.article(str(arguments.get("headline") or ""), asked=True)
         if found is None:
@@ -475,6 +482,8 @@ def news_article(
         return {**arguments, "link": found.item.link, "open": found.in_browser or bool(arguments.get("open"))}
 
     def run(arguments: dict[str, Any]) -> str:
+        if arguments.get("continue") and text_reading is not None:
+            return text_reading.more()
         item = reading.was_read(str(arguments.get("link") or ""))
         if item is None or item.link is None:
             raise ToolError(
@@ -500,7 +509,7 @@ def news_article(
             raise ToolError(
                 ("Couldn't open the story. " if english else "Haber açılamadı. ") + web_fetch.describe(error, language)
             ) from error
-        body = html_text.extract(response.text())[:PAGE_CHARACTERS]
+        body = _first_part(text_reading, item.title, html_text.extract(response.text()))
         note = ("(Opened in the browser.)\n" if english else "(Haber tarayıcıda açıldı.)\n") if opened else ""
         return f"{'Story' if english else 'Haber'}: {item.title}\n{note}\n{body}"
 
@@ -532,10 +541,18 @@ def news_article(
     )
 
 
-def read_web_page(language: AssistantLanguage) -> Tool:
+def _first_part(text_reading: TextReading | None, title: str, body: str) -> str:
+    if text_reading is None:
+        return body[:PAGE_CHARACTERS]
+    return text_reading.start(title, body, PAGE_CHARACTERS)
+
+
+def read_web_page(language: AssistantLanguage, text_reading: TextReading | None = None) -> Tool:
     english = language is EN
 
     def run(arguments: dict[str, Any]) -> str:
+        if arguments.get("continue") and text_reading is not None:
+            return text_reading.more()
         address = str(arguments.get("address") or "").strip()
         if not address:
             raise ToolError("Which page?" if english else "Hangi sayfa?")
@@ -550,7 +567,7 @@ def read_web_page(language: AssistantLanguage) -> Tool:
             ) from error
         page = response.text()
         title = html_text.title(page)
-        body = html_text.extract(page)[:PAGE_CHARACTERS]
+        body = _first_part(text_reading, title or address, html_text.extract(page))
         return f"{title}\n\n{body}" if title else body
 
     return Tool(
@@ -569,6 +586,7 @@ def read_web_page(language: AssistantLanguage) -> Tool:
             },
             "required": ["address"],
         },
+        refine=lambda arguments, command: continued(text_reading, arguments, command),
         untrusted_output=True,
         spoken_action=lambda a: (
             f"Shall I open and read {a.get('address') or 'the page'}?"

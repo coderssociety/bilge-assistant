@@ -25,6 +25,7 @@ from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
 from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.memory_store import MemoryStore
+from bilge.tools.reading import TextReading, continue_reading_tool
 
 if TYPE_CHECKING:
     from bilge.tools.desktop.timers import TimerService
@@ -75,6 +76,7 @@ def build_agent(
 
     briefing = Briefing(language, weather, calendar, settings.voice.wake_phrase)
     news_reading = internet.NewsReading()
+    text_reading = TextReading(language)
     found = desktop.current(language)
     alarms = _timer_service(found, language, announce) if found is not None else None
     registry = Registry([
@@ -83,7 +85,8 @@ def build_agent(
         weather,
         internet.exchange_rate(language),
         internet.news(language, news_reading),
-        internet.read_web_page(language),
+        internet.read_web_page(language, text_reading),
+        continue_reading_tool(text_reading, language),
         briefing_tool(briefing),
         *calendar_tools(calendar, language, alert=_reminder_alert(alarms) if alarms is not None else None),
     ])  # fmt: skip
@@ -93,12 +96,13 @@ def build_agent(
         rule("exchangeRate", internet.asks_for_gold(language), lambda _: {"gold": True}),
     ]
     modes: list[Mode] = []
-    registry.add(internet.news_article(language, news_reading, found.opener.open if found is not None else None))
+    opener = found.opener.open if found is not None else None
+    registry.add(internet.news_article(language, news_reading, opener, text_reading))
     # Tools that refer to "the previous answer" are built before the agent that remembers it.
     built: list[Agent] = []
     if found is not None and alarms is not None:
         last_reply = lambda: built[0].last_reply if built else None  # noqa: E731
-        tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply)
+        tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply, text_reading)
         for tool in tools:
             registry.add(tool)
         rules = [*desktop_rules, *rules]
@@ -137,6 +141,7 @@ def _desktop_tools(
     language: AssistantLanguage,
     alarms: "TimerService",
     last_reply: Callable[[], str | None],
+    text_reading: TextReading,
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
@@ -153,7 +158,7 @@ def _desktop_tools(
         *clipboard.clipboard_tools(found.clipboard, language, last_reply),
         typing.type_text_tool(found.keyboard, language),
         typing.start_dictation_tool(dictation, language),
-        *files.file_tools(found.folders, found.opener, language),
+        *files.file_tools(found.folders, found.opener, language, text_reading),
         *web.web_tools(found.opener, language),
         *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),

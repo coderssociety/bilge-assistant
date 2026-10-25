@@ -8,7 +8,8 @@ from bilge.core.language import AssistantLanguage
 from bilge.desktop import file_search
 from bilge.tools import documents
 from bilge.tools.base import ToolError
-from bilge.tools.desktop.files import FileTools, file_tools, is_executable
+from bilge.tools.desktop.files import DOCUMENT_CHARACTERS, FileTools, file_tools, is_executable
+from bilge.tools.reading import TextReading
 
 TR = AssistantLanguage.TURKISH
 
@@ -192,3 +193,24 @@ def test_windows_opens_only_documents_and_media():
     assert _safe_on_windows("rapor.pdf") and _safe_on_windows("tatil.JPG")
     for name in ("kur.exe", "fatura.exe.", "fatura.pdf ", "belge.pdf:gizli", "makro.docm", "kısayol.lnk", "x.pif"):
         assert not _safe_on_windows(name), name
+
+
+def test_read_on_goes_on_with_the_next_part_of_the_document(home):
+    words = " ".join(f"söz{n}" for n in range(3000))
+    (home / "Belgeler" / "uzun rapor.txt").write_text(words, encoding="utf-8")
+    reading = TextReading(TR)
+    read = {t.name: t for t in file_tools(folders(home), Opener(), TR, reading)}["readDocument"]
+    first = read.run(read.refine({"query": "uzun rapor"}, "uzun raporu oku"))
+    assert first.startswith("Belge: uzun rapor.txt\nsöz0 ") and first.endswith("(Devamı var.)")
+    assert len(first) < DOCUMENT_CHARACTERS + 100
+    arguments = read.refine({"query": "uzun rapor"}, "devamını oku")
+    assert arguments["continue"]
+    second = read.run(arguments)
+    assert second.startswith("uzun rapor.txt, bölüm 2:\n") and "söz0 " not in second
+    while "(Devamı var.)" in second:
+        second = read.run(arguments)
+    assert second.endswith("söz2999\n(Metnin sonu.)")
+    assert read.run(arguments) == "'uzun rapor.txt' metninin sonuna geldim; okunacak başka bir şey kalmadı."
+    # Without a recent reading, "devamını oku" is an ordinary request.
+    fresh = {t.name: t for t in file_tools(folders(home), Opener(), TR, TextReading(TR))}["readDocument"]
+    assert "continue" not in fresh.refine({"query": "rapor", "continue": True}, "devamını oku")

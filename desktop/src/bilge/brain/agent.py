@@ -26,8 +26,9 @@ log = logging.getLogger(__name__)
 MAX_STEPS = 8
 # Earlier exchanges kept for follow-ups ("ya yarın?"); only the spoken text, not the tool traffic.
 HISTORY_TURNS = 3
-# Enough for a page summary; longer results are cut so one fetched document can't crowd out the request.
-MAX_RESULT_CHARACTERS = 4000
+# Above the longest part a tool reads (a 12,000-character web page or story with its title), so the model gets all
+# a tool read; only something unexpected is cut, and long texts go on with "devamını oku".
+MAX_RESULT_CHARACTERS = 13_000
 MAX_ERROR_CHARACTERS = 300
 
 

@@ -18,6 +18,7 @@ from bilge.desktop.process import DesktopError
 from bilge.tools import documents
 from bilge.tools.base import Risk, Tool, ToolError
 from bilge.tools.desktop.common import choice, failure, obj, string_argument, text
+from bilge.tools.reading import TextReading, continued
 
 MAX_RESULTS = 5
 DOCUMENT_CHARACTERS = 6000
@@ -138,11 +139,14 @@ _TYPE_WORDS = {
 
 
 class FileTools:
-    def __init__(self, folders: Folders, opener: Opener, language: AssistantLanguage):
+    def __init__(
+        self, folders: Folders, opener: Opener, language: AssistantLanguage, reading: TextReading | None = None
+    ):
         self.folders = folders
         self.opener = opener
         self.language = language
         self.texts = _TEXTS[language]
+        self.reading = reading
         # The file named in a trash question, so the one moved is exactly the one the user agreed to.
         self._pending_trash: dict[str, Path] = {}
 
@@ -249,6 +253,8 @@ class FileTools:
 
     def read_document(self, arguments: dict[str, Any]) -> str:
         texts = self.texts
+        if arguments.get("continue") and self.reading is not None:
+            return self.reading.more()
         query = string_argument(arguments, "query")
         file = self._locate_document(query)
         if file is None:
@@ -260,7 +266,11 @@ class FileTools:
         if not content:
             empty = "scanned_pdf" if file.suffix.lower() == ".pdf" else "empty_document"
             raise ToolError(texts[empty].format(name=file.name))
-        return texts["document"].format(name=file.name, text=content[:DOCUMENT_CHARACTERS])
+        if self.reading is None:
+            return texts["document"].format(name=file.name, text=content[:DOCUMENT_CHARACTERS])
+        return texts["document"].format(
+            name=file.name, text=self.reading.start(file.name, content, DOCUMENT_CHARACTERS)
+        )
 
     def _locate_document(self, query: str) -> Path | None:
         """A name search first. Phrasings like "son indirilen PDF" name no file, so they fall back to the newest
@@ -298,8 +308,10 @@ def is_executable(path: Path) -> bool:
     return stat.S_ISREG(mode) and os.access(path, os.X_OK)
 
 
-def file_tools(folders: Folders, opener: Opener, language: AssistantLanguage) -> list[Tool]:
-    tools = FileTools(folders, opener, language)
+def file_tools(
+    folders: Folders, opener: Opener, language: AssistantLanguage, reading: TextReading | None = None
+) -> list[Tool]:
+    tools = FileTools(folders, opener, language, reading)
     texts = tools.texts
     return [
         Tool(
@@ -339,5 +351,6 @@ def file_tools(folders: Folders, opener: Opener, language: AssistantLanguage) ->
             run=tools.read_document,
             untrusted_output=True,
             parameters=obj(query=text(texts["read_query"])),
+            refine=lambda arguments, command: continued(reading, arguments, command),
         ),
     ]
