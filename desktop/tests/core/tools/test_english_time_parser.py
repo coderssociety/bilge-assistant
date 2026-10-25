@@ -74,3 +74,26 @@ def test_durations(text, seconds):
 def test_nothing_to_read():
     assert english_time_parser.parse("Add milk to my list") is None
     assert english_time_parser.parse("Turn the volume to 30 percent") is None
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [("on November 15", 31), ("the 15th of November", 31), ("October 1st", 351), ("May I add it", None)],
+)
+def test_dates(text, expected):
+    assert english_time_parser.day_offset(text, now=THURSDAY) == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "seconds"),
+    [
+        ("remind me in half an hour", 1800),
+        ("remind me in 2 hours", 7200),
+        ("20 minutes from now", 1200),
+        ("remind me in 3 days", None),
+        ("remind me at 3 in the afternoon", None),
+        ("a 2 hour meeting", None),
+    ],
+)
+def test_time_from_now(text, seconds):
+    assert english_time_parser.seconds_from_now(text) == seconds

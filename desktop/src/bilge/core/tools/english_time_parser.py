@@ -1,10 +1,10 @@
 """English counterparts of relative_day_parser and timer_phrase_parser: "tomorrow", "next Friday",
-"in 3 days"; "10:30", "7 pm", "at ten", "noon"; "in 10 minutes", "half an hour"."""
+"in 3 days", "November 15"; "10:30", "7 pm", "at ten", "noon"; "in 10 minutes", "half an hour"."""
 
 import re
-from datetime import datetime, tzinfo
+from datetime import date, datetime, tzinfo
 
-from bilge.core.tools.relative_day_parser import calendar_weekday
+from bilge.core.tools.relative_day_parser import calendar_weekday, offset_to_date
 from bilge.core.tools.timer_phrase_parser import Result
 
 _UNITS: dict[str, int] = {
@@ -26,6 +26,15 @@ _DURATION_UNITS: dict[str, int] = {
     "minute": 60, "minutes": 60, "min": 60, "mins": 60,
     "second": 1, "seconds": 1, "sec": 1, "secs": 1,
 }  # fmt: skip
+_MONTHS: dict[str, int] = {
+    "january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6, "july": 7, "august": 8,
+    "september": 9, "october": 10, "november": 11, "december": 12,
+}  # fmt: skip
+_MONTH = "(" + "|".join(_MONTHS) + ")"
+_DATES = (
+    (re.compile(_MONTH + r"\s+(\d{1,2})(?:st|nd|rd|th)?\b"), 2, 1),
+    (re.compile(r"\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?" + _MONTH + r"\b"), 1, 2),
+)
 PART_OF_DAY_WORDS = frozenset(["morning", "afternoon", "evening", "night", "tonight", "noon", "midnight"])
 
 _CLOCK = re.compile(r"\b(\d{1,2}):(\d{2})\s*(?:([ap])\.?\s*m\b)?")
@@ -33,6 +42,10 @@ _HOUR_WITH_MERIDIEM = re.compile(r"(?:^|[^\d:])(\d{1,2})\s*([ap])\.?\s*m\b")
 
 
 def day_offset(text: str, now: datetime, tz: tzinfo | None = None) -> int | None:
+    local = now.astimezone(tz) if tz is not None else now
+    absolute = _date_offset(text.lower(), local.date())
+    if absolute is not None:
+        return absolute
     words = _words(text)
     if "in" in words:
         index = words.index("in")
@@ -44,7 +57,7 @@ def day_offset(text: str, now: datetime, tz: tzinfo | None = None) -> int | None
         target = _WEEKDAYS.get(word)
         if target is None:
             continue
-        today = calendar_weekday(now.astimezone(tz) if tz is not None else now)
+        today = calendar_weekday(local)
         offset = (target - today + 7) % 7 or 7
         next_week = index > 0 and words[index - 1] == "next" and offset < 7
         return offset + 7 if next_week else offset
@@ -55,6 +68,24 @@ def day_offset(text: str, now: datetime, tz: tzinfo | None = None) -> int | None
     if "today" in words or "tonight" in words:
         return 0
     return None
+
+
+def _date_offset(lowered: str, today: date) -> int | None:
+    """ "November 15", "the 15th of November"."""
+    for pattern, day_group, month_group in _DATES:
+        found = pattern.search(lowered)
+        if found is not None:
+            return offset_to_date(today, _MONTHS[found.group(month_group)], int(found.group(day_group)))
+    return None
+
+
+def seconds_from_now(text: str) -> int | None:
+    """ "in half an hour" → 1800, "2 hours from now" → 7200; None when no duration ahead is said or a clock time is."""
+    words = _words(text)
+    ahead = "in" in words or "later" in words or _contains(words, ["from", "now"])
+    if not ahead or _clock_time(text, appointment=True) is not None:
+        return None
+    return _duration(words) or None
 
 
 def parse(text: str, appointment: bool = True) -> Result | None:
