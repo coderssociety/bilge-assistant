@@ -106,4 +106,13 @@ struct RoutineRequestTests {
     func listingForms(said: String, language: AssistantLanguage) {
         #expect(RoutineRequest.asksForList(said, language: language))
     }
+
+    @Test("plural parts of the day shift the hour like singular ones", arguments: [
+        ("akşamları 8'de haberleri oku", 20), ("geceleri 11'de ışıkları kapat", 23), ("sabahları 8'de haberleri oku", 8),
+        ("geceleri 12'de ışıkları kapat", 0), ("akşamları saat 7 buçukta hava durumunu söyle", 19),
+    ])
+    func pluralPartsOfDay(said: String, hour: Int) {
+        #expect(RoutineRequest.parse(said, language: .turkish)?.hour == hour)
+        #expect(RoutineRequest.parse(said, language: .turkish)?.days == RoutineSchedule.everyDay)
+    }
 }

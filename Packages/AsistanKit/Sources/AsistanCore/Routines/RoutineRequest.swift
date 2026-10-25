@@ -197,11 +197,17 @@ public struct RoutineRequest: Equatable, Sendable {
         return (afternoon(hour, folded: folded), half ? 30 : 0)
     }
 
+    /// "akşamları", "geceleri", "sabahları" count as much as "akşam"; "geçen" is not "gece".
     private static func afternoon(_ hour: Int, folded: String) -> Int {
         let words = Set(folded.split(separator: " ").map(String.init))
-        if words.contains("sabah") || hour >= 12 { return hour }
-        if words.contains("aksam") || (words.contains("ogleden") && words.contains("sonra")) { return hour + 12 }
-        if words.contains("gece") { return hour > lastAfternoonHour ? hour + 12 : hour }
+        let says = { (part: String) in words.contains { $0.hasPrefix(part) } }
+        if says("sabah") || hour > 12 { return hour }
+        if words.contains("gece") || says("gecele") {
+            if hour == 12 { return 0 }
+            return hour > lastAfternoonHour ? hour + 12 : hour
+        }
+        if hour == 12 { return hour }
+        if says("aksam") || (words.contains("ogleden") && words.contains("sonra")) { return hour + 12 }
         return (1...lastAfternoonHour).contains(hour) ? hour + 12 : hour
     }
 
