@@ -13,7 +13,15 @@ from bilge.brain.instructions import weekday_name
 from bilge.core import text
 from bilge.core.language import AssistantLanguage
 from bilge.core.tools import currency_request, english_time_parser, relative_day_parser
-from bilge.core.web import html_text, news_request, news_source, rss_headlines, weather_report, weather_request
+from bilge.core.web import (
+    gold_prices,
+    html_text,
+    news_request,
+    news_source,
+    rss_headlines,
+    weather_report,
+    weather_request,
+)
 from bilge.core.web import news_article as article_reference
 from bilge.tools import web_fetch
 from bilge.tools.base import Tool, ToolError
@@ -201,14 +209,14 @@ CURRENCIES = {
 
 
 _TEXTS = {
-    TR: {"gold": "Altın fiyatlarını henüz söyleyemiyorum; şimdilik yalnızca döviz kurlarını biliyorum."},
-    EN: {"gold": "I can't tell gold prices yet; for now I only know exchange rates."},
+    TR: {"gold": "Altın bir döviz değil; altın fiyatlarını altın fiyatı aracı söyler."},
+    EN: {"gold": "Gold isn't a currency; the gold price tool tells gold prices."},
 }
 
 
 def asks_for_gold(language: AssistantLanguage) -> Callable[[str], bool]:
-    """ "Gram altın kaç lira": answered by rule, so no model treats gold as a currency or guesses a price."""
-    return lambda command: currency_request.asks_for_gold(command, language is EN)
+    """ "Gram altın kaç lira": routed to the gold price tool by rule, so no model treats gold as a currency."""
+    return lambda command: gold_prices.claims(command, language is EN)
 
 
 def exchange_rate(language: AssistantLanguage) -> Tool:

@@ -139,14 +139,15 @@ def test_the_amount_and_currencies_come_from_the_words():
     }
 
 
-def test_gold_is_refused_rather_than_taken_for_a_currency():
+def test_gold_is_sent_to_the_gold_price_tool_rather_than_taken_for_a_currency():
     tool = internet.exchange_rate(TR)
     arguments = tool.refine({"from": "TRY"}, "gram altın kaç lira")
-    with pytest.raises(ToolError, match="Altın fiyatlarını henüz söyleyemiyorum"):
+    with pytest.raises(ToolError, match="Altın bir döviz değil"):
         tool.run(arguments)
-    with pytest.raises(ToolError, match="can't tell gold prices"):
+    with pytest.raises(ToolError, match="Gold isn't a currency"):
         internet.exchange_rate(EN).run({"gold": True})
     assert internet.asks_for_gold(TR)("çeyrek altın ne kadar")
+    assert internet.asks_for_gold(TR)("ons kaç dolar")
     assert not internet.asks_for_gold(TR)("dolar ne kadar")
 
 

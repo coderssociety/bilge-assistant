@@ -1,0 +1,66 @@
+[
+ {
+  "Alis": "6.423",
+  "Satis": "6.476",
+  "Kod": "HH_T",
+  "Aciklama": "Has",
+  "GuncellenmeZamani": "25.10.2026 19:59:01",
+  "IsMobile": true
+ },
+ {
+  "Alis": "6.398",
+  "Satis": "6.510",
+  "Kod": "GA",
+  "Aciklama": "Gram Altın ",
+  "GuncellenmeZamani": "25.10.2026 19:59:01",
+  "IsMobile": true
+ },
+ {
+  "Alis": "42.241",
+  "Satis": "43.304",
+  "Kod": "A_T",
+  "Aciklama": "Ata Toptan",
+  "GuncellenmeZamani": "25.10.2026 19:59:01",
+  "IsMobile": true
+ },
+ {
+  "Alis": "41.085",
+  "Satis": "42.475",
+  "Kod": "T",
+  "Aciklama": "Teklik",
+  "GuncellenmeZamani": "25.10.2026 19:59:01",
+  "IsMobile": false
+ },
+ {
+  "Alis": "10.279",
+  "Satis": "10.662",
+  "Kod": "C",
+  "Aciklama": "Çeyrek",
+  "GuncellenmeZamani": "25.10.2026 19:59:01",
+  "IsMobile": true
+ },
+ {
+  "Alis": "20.540",
+  "Satis": "21.445",
+  "Kod": "Y",
+  "Aciklama": "Yarım",
+  "GuncellenmeZamani": "25.10.2026 19:59:01",
+  "IsMobile": true
+ },
+ {
+  "Alis": "80,15",
+  "Satis": "88,83",
+  "Kod": "AG_T",
+  "Aciklama": "Gümüş",
+  "GuncellenmeZamani": "25.10.2026 19:59:01",
+  "IsMobile": true
+ },
+ {
+  "Alis": "3.996,14",
+  "Satis": "3.996,14",
+  "Kod": "XAUUSD",
+  "Aciklama": "ONS",
+  "GuncellenmeZamani": "25.10.2026 19:59:00",
+  "IsMobile": true
+ }
+]
