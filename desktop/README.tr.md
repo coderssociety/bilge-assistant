@@ -141,6 +141,7 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 |---|---|---|---|
 | Uygulamalar | “Firefox'u aç”, “hesap makinesini kapat”, “açık uygulamalar neler” | menü girdileri, `gio` | Başlat menüsü |
 | Ses | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor”, “30 saniye ileri sar”, “karışık çal” | `wpctl`, `pactl` ya da `amixer`; MPRIS çalarlar | Core Audio; sistemin medya denetimleri |
+| Müzik | “Tarkan çal”, “YouTube'da Kuzu Kuzu aç”, “YouTube Music'te Sezen Aksu çal”, “Deezer'da … çal”, “Apple Music'te Tarkan çal” | ilk eşleşen şarkıyı tarayıcıda YouTube, YouTube Music, Deezer ya da Apple Music'te açar (Deezer uygulaması yüklüyse onda); Spotify aramasını gösterir; servis söylenmezse Ayarlar → Genel'deki (ya da `bilge music`; otomatik: Spotify yüklüyse Spotify, değilse YouTube Music) | aynı |
 | Dosyalar | “kira sözleşmesini bul”, “son indirdiğim PDF'i özetle”, “eski faturayı çöpe at” | freedesktop çöp kutusu | Geri Dönüşüm Kutusu |
 | Yazma | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` ya da `ydotool` (Wayland) | yerleşik |
 | Takvim | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “süt almayı işaretle” | CalDAV ya da bir iCal adresi | aynısı ya da Outlook |

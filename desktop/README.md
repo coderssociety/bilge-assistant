@@ -141,6 +141,7 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 |---|---|---|---|
 | Apps | “Firefox'u aç”, “hesap makinesini kapat”, “açık uygulamalar neler” | menu entries, `gio` | the Start menu |
 | Sound | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor”, “30 saniye ileri sar”, “karışık çal” | `wpctl`, `pactl` or `amixer`; MPRIS players | Core Audio; the system media controls |
+| Music | “Tarkan çal”, “YouTube'da Kuzu Kuzu aç”, “YouTube Music'te Sezen Aksu çal”, “Deezer'da … çal”, “play Tarkan on Apple Music” | opens the first matching song on YouTube, YouTube Music, Deezer or Apple Music in the browser (Deezer's app when installed); Spotify shows its search; with no service named, the one in Settings → General (or `bilge music`; automatic: Spotify when installed, else YouTube Music) | the same |
 | Files | “kira sözleşmesini bul”, “son indirdiğim PDF'i özetle”, “eski faturayı çöpe at” | the freedesktop trash | the Recycle Bin |
 | Typing | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` or `ydotool` (Wayland) | built in |
 | Calendar | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “süt almayı işaretle” | CalDAV or an iCal address | the same, or Outlook |
