@@ -433,3 +433,26 @@ def test_garbage_is_collected_on_the_window_thread(qapp):
     finally:
         collector.stop()
     assert gc.isenabled()
+
+
+def test_routines_page_lists_and_deletes_routines(qapp, isolated, tmp_path):
+    from bilge.app.settings.routines import RoutinesPage
+    from bilge.core.routines.routine_schedule import EVERY_DAY, WEEKDAYS, Routine
+    from bilge.tools.builtin.routines import RoutineStore
+
+    texts.use(AssistantLanguage.TURKISH)
+    store = RoutineStore(tmp_path / "data" / "routines.json")
+    store.add(Routine("a", EVERY_DAY, 21, 0, "hava durumunu söyle"))
+    store.add(Routine("b", WEEKDAYS, 7, 0, "haberleri oku"))
+    page = RoutinesPage(store)
+    shown = [page.entries.item(i).text() for i in range(page.entries.count())]
+    assert shown == ["hafta içi her gün 07:00'de “haberleri oku”", "her gün 21:00'de “hava durumunu söyle”"]
+    page.entries.setCurrentRow(0)
+    page._delete()
+    assert [r.id for r in store.load()] == ["a"]
+    page.entries.setCurrentRow(0)
+    page._delete()
+    assert page.entries.item(0).text() == "Kurulu rutin yok."
+    page.entries.setCurrentRow(0)
+    page._delete()
+    assert store.load() == []

@@ -9,7 +9,7 @@ def test_safe_tools_run_and_risky_ones_ask():
 
 
 def test_after_untrusted_content_exfiltrating_tools_are_refused():
-    for name in ["readWebPage", "openWebsite", "searchWeb", "typeText", "remember"]:
+    for name in ["readWebPage", "openWebsite", "searchWeb", "typeText", "remember", "addRoutine"]:
         assert decide(name, Risk.SAFE, read_untrusted=True).action is Action.REFUSE
 
 

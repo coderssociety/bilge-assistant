@@ -39,6 +39,7 @@ _TURKISH = {
     "tab.recognition": "Tanıma",
     "tab.calendar": "Takvim",
     "tab.mail": "E-posta",
+    "tab.routines": "Rutinler",
     "tab.memory": "Hafıza",
     "tab.history": "Geçmiş",
     "tab.about": "Hakkında",
@@ -144,6 +145,10 @@ _TURKISH = {
     "mail.test": "Bağlantıyı dene",
     "mail.ok": "Bağlandı: {count} okunmamış e-posta.",
     "mail.failed": "Bağlanamadı: {error}",
+    "routines.intro": "Sesle kurduğun rutinler (“her gece 21'de hava durumunu söyle”). Bilge dinlerken çalışırlar; onay gerektiren bir adımı sen yokken yapmazlar.",
+    "routines.delete": "Seçileni sil",
+    "routines.empty": "Kurulu rutin yok.",
+    "routines.failed": "Rutinler okunamadı: {error}",
     "memory.intro": "Bilge'den hatırlamasını istediklerin:",
     "memory.forget": "Seçileni unut",
     "memory.forget_all": "Hepsini unut",
@@ -211,6 +216,7 @@ _ENGLISH = {
     "tab.recognition": "Recognition",
     "tab.calendar": "Calendar",
     "tab.mail": "Mail",
+    "tab.routines": "Routines",
     "tab.memory": "Memory",
     "tab.history": "History",
     "tab.about": "About",
@@ -316,6 +322,10 @@ _ENGLISH = {
     "mail.test": "Test the connection",
     "mail.ok": "Connected: {count} unread e-mails.",
     "mail.failed": "Couldn't connect: {error}",
+    "routines.intro": "The routines you set up by voice (“every night at 9 tell me the weather”). They run while Bilge listens, and never take a step that needs your yes while you're away.",
+    "routines.delete": "Delete selected",
+    "routines.empty": "There are no routines.",
+    "routines.failed": "Couldn't read the routines: {error}",
     "memory.intro": "What you asked Bilge to remember:",
     "memory.forget": "Forget selected",
     "memory.forget_all": "Forget everything",
@@ -357,6 +367,10 @@ def use(language: AssistantLanguage, wake_word: bool = True) -> None:
     global _language, _wake_word
     _language = language
     _wake_word = wake_word
+
+
+def language() -> AssistantLanguage:
+    return _language
 
 
 def status(name: str) -> str:

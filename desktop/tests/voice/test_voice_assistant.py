@@ -365,3 +365,52 @@ def test_interrupting_a_reply_leaves_the_services_running():
     assistant.interrupt()
     assert service.events == ["start"]
     assistant.stop()
+
+
+class RoutineAgent(EchoAgent):
+    def __init__(self):
+        super().__init__()
+        self.unattended = []
+        self.forgotten = 0
+
+    def handle(self, command, unattended=False):
+        self.unattended.append(unattended)
+        return super().handle(command)
+
+    def forget_conversation(self):
+        self.forgotten += 1
+
+
+def test_a_routine_runs_unattended_and_its_reply_is_announced():
+    agent = RoutineAgent()
+    assistant, speech, _ = make(ScriptedRecognizer(), agent=agent)
+    assistant.start()
+    assistant.run_unattended("hava durumunu söyle")
+    assert wait(lambda: speech.said == ["Tamam: hava durumunu söyle"])
+    assert agent.commands == ["hava durumunu söyle"] and agent.unattended == [True]
+    assert wait(lambda: assistant.status is Status.LISTENING)
+    assert agent.forgotten == 1
+    assistant.stop()
+
+
+def test_a_routine_waits_while_the_user_is_talking_to_bilge():
+    agent = RoutineAgent()
+    assistant, speech, _ = make(ScriptedRecognizer("Bilge"), agent=agent)
+    assistant.start()
+    assistant._handle_utterance(SPEECH)
+    assert assistant.flow.is_awaiting_speech
+    assistant.run_unattended("haberleri oku")
+    time.sleep(0.4)
+    assert agent.commands == []
+    with assistant._flow_lock:
+        assistant.flow.reset()
+    assert wait(lambda: agent.commands == ["haberleri oku"])
+    assistant.stop()
+
+
+def test_no_routine_runs_once_listening_stopped():
+    agent = RoutineAgent()
+    assistant, speech, _ = make(ScriptedRecognizer(), agent=agent)
+    assistant.run_unattended("haberleri oku")
+    time.sleep(0.1)
+    assert agent.commands == [] and speech.said == []
