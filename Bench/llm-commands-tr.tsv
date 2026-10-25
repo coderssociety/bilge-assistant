@@ -43,5 +43,5 @@ Ekmek almayı anımsatıcılarıma ekle	addReminder
 Masaüstündeki eski fatura dosyasını sil	moveFileToTrash
 Kestirmelerimi listele	listShortcuts
 Sabah rutini kestirmesini çalıştır	runShortcut
-Rahatsız etme modunu aç	runShortcut
+Rahatsız etme modunu aç	systemAction
 Ekranda ne yazıyor	readScreen

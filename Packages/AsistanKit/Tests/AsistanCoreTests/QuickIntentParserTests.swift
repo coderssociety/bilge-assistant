@@ -85,11 +85,11 @@ struct QuickIntentParserTests {
         "alarmları kapat ve müziği aç",
         "çay zamanlayıcısını iptal et",              // names one timer
         "kopyaladığım metni Notlar'a yapıştır",
-        "Rahatsız etme modunu aç",                    // Focus → Shortcuts
+        "Uyku odağını aç",                            // a named Focus
         "Sesi biraz aç ve müziği başlat",             // two actions
         "Türkiye'nin başkenti neresi",
-        "Bluetooth'u kapat",
-        "Bilgisayarı kapat",
+        "Bluetooth'u kapat ve müziği aç",
+        "Bilgisayarı kapatmadan önce kaydet",
         "ondan sonra müziği aç",
         "Saat kaçta toplantım var",
     ])

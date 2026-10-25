@@ -1,13 +1,14 @@
 /// Deterministic checks on the model's routing decision for confusions it keeps making even with
-/// explicit instructions: answering questions by opening a web search, treating Focus modes as
-/// "lock screen", and reading the calendar when the user asked to open the Calendar app.
+/// explicit instructions: answering questions by opening a web search, sending Focus, brightness or
+/// Bluetooth to a shortcut or "lock screen", and reading the calendar when the user asked to open the
+/// Calendar app.
 public enum RouteGuard {
     private static let searchVerbs: Set<String> = [
         "ara", "arar", "arat", "aratir", "arayin", "arasana", "bul", "bulur", "goster", "gosterir", "search",
     ]
     private static let searchSites = ["google", "youtube", "harita", "vikipedi", "wikipedia", "internet"]
     private static let systemWords = ["kilit", "uyu", "uyku", "karanlik", "aydinlik", "koyu", "gorunum", "tema", "karart"]
-    private static let shortcutOnlyWords = ["odak", "odag", "rahatsiz", "parlak"]
+    private static let focusWords = ["odak", "odag", "rahatsiz"]
     private static let openVerbs: Set<String> = ["ac", "acar", "acsana", "baslat"]
     private static let weatherWords = [
         "hava", "derece", "sicak", "soguk", "yagmur", "yagis", "kar", "ruzgar", "gunes", "bulut", "nem", "firtina",
@@ -52,6 +53,7 @@ public enum RouteGuard {
         if action == "quitApp", words.contains("geri"), words.contains(where: { $0.hasPrefix("al") }) { return "conversation" }
         // Closing a window must not quit the whole app.
         if action == "quitApp", words.contains(where: { $0.hasPrefix("pencere") }) { return "windowControl" }
+        if let control = macControl(action: action, words: words, command: command) { return control }
         switch action {
         case "setTimer":
             // Timers live in the app and fire only today; "yarın sabah süt almayı hatırlat" was set as one.
@@ -63,10 +65,10 @@ public enum RouteGuard {
             let explicit = words.contains { searchVerbs.contains($0) || searchSites.contains(where: $0.hasPrefix) }
             return explicit ? action : "conversation"
         case "systemAction":
-            if words.contains(where: { word in shortcutOnlyWords.contains(where: word.hasPrefix) }) { return "runShortcut" }
             // "Ekranı karart/kapat" turns the display off; it went to runShortcut, which had no such shortcut.
             let turnsScreenOff = words.contains { $0.hasPrefix("ekran") } && words.contains { $0.hasPrefix("kapat") }
             let supported = turnsScreenOff || words.contains { word in systemWords.contains(where: word.hasPrefix) }
+                || MacControlRequest.power(command, language: .turkish) != nil
             return supported ? action : "runShortcut"
         case "weather":
             // "Bana bir tavsiye ver" was once answered with a weather report.
@@ -88,6 +90,18 @@ public enum RouteGuard {
         default:
             return action
         }
+    }
+
+    /// Focus, brightness, Bluetooth and power have their own actions now; the model still sends them to
+    /// runShortcut, systemAction, setWiFi or quitApp ("Mac'i kapat"). A named shortcut stays a shortcut.
+    private static func macControl(action: String, words: [String], command: String) -> String? {
+        guard ["runShortcut", "systemAction", "setWiFi", "quitApp", "openApp"].contains(action),
+              !words.contains(where: { $0.hasPrefix("kestirme") || $0.hasPrefix("ayar") }) else { return nil }
+        if words.contains(where: { $0.hasPrefix("parlak") }) { return "setBrightness" }
+        if words.contains(where: { $0.hasPrefix("bluetooth") }) { return "setBluetooth" }
+        if words.contains(where: { word in focusWords.contains(where: word.hasPrefix) }) { return "systemAction" }
+        if action != "systemAction", MacControlRequest.power(command, language: .turkish) != nil { return "systemAction" }
+        return nil
     }
 
     /// "Yaz" is also "summer" ("yaz şarkıları"), so it only counts with "şunu"/"buraya" or as the last word.

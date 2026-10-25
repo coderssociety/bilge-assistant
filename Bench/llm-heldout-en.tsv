@@ -21,7 +21,7 @@ Put lunch with Kerem on my calendar for Wednesday at noon	addCalendarEvent
 Add renew passport to my to-dos for next week	addReminder
 Delete the file draft.txt	moveFileToTrash
 Run my Commute shortcut	runShortcut
-Dim the screen	runShortcut
+Dim the screen	setBrightness
 Read what's on the screen	readScreen
 Give me Selin's email	findContact
 I've finished the tax forms, tick it off	completeReminder

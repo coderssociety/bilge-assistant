@@ -29,7 +29,7 @@ Tarif notu diye yeni not aç	createNote
 Pazartesi sabah dokuzda ekip toplantısı ekle	addCalendarEvent
 Yarın faturayı ödememi anımsatıcıya ekle	addReminder
 Masaüstündeki deneme dosyasını çöp kutusuna at	moveFileToTrash
-Odak modunu aç	runShortcut
+Odak modunu aç	systemAction
 Nasılsın bugün	conversation
 Dünyanın en büyük okyanusu hangisi	conversation
 Bana bir tavsiye ver	conversation

@@ -3,6 +3,8 @@ extension QuickIntent {
         case minimize, restore, close, fullScreen, exitFullScreen, leftHalf, rightHalf, maximize, hideOthers
     }
     public enum SystemInfoTopic: Sendable, Equatable { case disk, uptime, osVersion, network }
+    public enum Brightness: Sendable, Equatable { case up, down, change(Int), set(Int) }
+    public enum Bluetooth: Sendable, Equatable { case on, off, status }
     public enum SettingsPane: String, Sendable, Equatable, CaseIterable {
         case wifi, bluetooth, network, sound, displays, battery, notifications, focus, privacy, keyboard,
              general, wallpaper, softwareUpdate, storage, accessibility, trackpad, mouse
@@ -13,7 +15,7 @@ extension QuickIntent {
 /// QuickIntentParser: exact, narrow phrasings only; everything else goes to the model.
 enum MacQuickIntents {
     static func parse(_ w: [String]) -> QuickIntent? {
-        screenshot(w) ?? wifi(w) ?? window(w) ?? settings(w) ?? systemInfo(w)
+        screenshot(w) ?? wifi(w) ?? window(w) ?? settings(w) ?? systemInfo(w) ?? MacControlQuickIntents.parse(w)
     }
 
     private static func screenshot(_ w: [String]) -> QuickIntent? {

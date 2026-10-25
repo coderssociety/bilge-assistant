@@ -30,6 +30,8 @@ struct ToolRegistry {
             VolumeTool(),
             MediaTool(),
             SystemActionTool(),
+            BrightnessTool(),
+            BluetoothTool(),
             FileTool(),
             CalendarQueryTool(),
             RemindersQueryTool(),

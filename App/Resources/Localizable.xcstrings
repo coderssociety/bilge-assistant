@@ -1074,6 +1074,26 @@
         }
       }
     },
+    "'%@' kestirmesiyle odak modunu açtım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I turned on Focus with the '%@' shortcut."
+          }
+        }
+      }
+    },
+    "'%@' kestirmesiyle odak modunu kapattım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I turned off Focus with the '%@' shortcut."
+          }
+        }
+      }
+    },
     "'%@' sonucu: %@": {
       "localizations": {
         "en": {
@@ -1702,12 +1722,122 @@
         }
       }
     },
+    "Bluetooth açık.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth is on."
+          }
+        }
+      }
+    },
+    "Bluetooth açıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth is now on."
+          }
+        }
+      }
+    },
+    "Bluetooth değişmedi. Sistem Ayarları > Gizlilik ve Güvenlik > Bluetooth'ta Bilge'ye izin verilmiş olmalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth didn't change. Bilge needs permission in System Settings > Privacy & Security > Bluetooth."
+          }
+        }
+      }
+    },
+    "Bluetooth kapalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth is off."
+          }
+        }
+      }
+    },
+    "Bluetooth kapatıldı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth is now off."
+          }
+        }
+      }
+    },
+    "Bluetooth zaten açık.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth is already on."
+          }
+        }
+      }
+    },
+    "Bluetooth zaten kapalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bluetooth is already off."
+          }
+        }
+      }
+    },
+    "Bluetooth'u bu macOS sürümünde kontrol edemiyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't control Bluetooth on this version of macOS."
+          }
+        }
+      }
+    },
+    "Bluetooth'u kapatırsam Bluetooth klavye, fare ve kulaklıkların bağlantısı kesilir. Kapatayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If I turn Bluetooth off, Bluetooth keyboards, mice and headphones will disconnect. Turn it off?"
+          }
+        }
+      }
+    },
     "Bu ay": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "This month"
+          }
+        }
+      }
+    },
+    "Bu ekranın parlaklığını Mac'ten değiştiremiyorum; harici ekranlarda ekranın kendi düğmelerini kullanman gerekiyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't change this display's brightness from the Mac; on an external display, use the display's own buttons."
+          }
+        }
+      }
+    },
+    "Bu işlem yalnızca sesli komutla yapılabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This can only be done by voice command."
           }
         }
       }
@@ -3246,6 +3376,16 @@
         }
       }
     },
+    "Hedef parlaklık belirtilmedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No target brightness was given."
+          }
+        }
+      }
+    },
     "Hedef seviye belirtilmedi.": {
       "localizations": {
         "en": {
@@ -3496,12 +3636,42 @@
         }
       }
     },
+    "Kestirmeler açılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shortcuts couldn't be opened."
+          }
+        }
+      }
+    },
+    "Kestirmeler açıldı. Yeni bir kestirmeye Odak Ayarla eylemini ekleyip adını koyman yeterli.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shortcuts is open. Add the Set Focus action to a new shortcut and give it that name."
+          }
+        }
+      }
+    },
     "Kestirmeler okunamadı.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't read your shortcuts."
+          }
+        }
+      }
+    },
+    "Kestirmeler uygulaması bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Shortcuts app wasn't found."
           }
         }
       }
@@ -3906,12 +4076,52 @@
         }
       }
     },
+    "Mac kapatılıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shutting down the Mac."
+          }
+        }
+      }
+    },
     "Mac uyku moduna alınıyor.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Putting your Mac to sleep."
+          }
+        }
+      }
+    },
+    "Mac yeniden başlatılıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restarting the Mac."
+          }
+        }
+      }
+    },
+    "Mac'i kapatayım mı? Açık uygulamalar kapanacak.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I shut down the Mac? Open apps will quit."
+          }
+        }
+      }
+    },
+    "Mac'i yeniden başlatayım mı? Açık uygulamalar kapanacak.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I restart the Mac? Open apps will quit."
           }
         }
       }
@@ -4246,6 +4456,26 @@
         }
       }
     },
+    "Odak modunu açabilmem için Kestirmeler'de adında \"Rahatsız Etme Aç\" geçen ve Odak Ayarla eylemini içeren bir kestirme gerekiyor. Kestirmeler'i açayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To turn on a Focus I need a shortcut with the Set Focus action and \"Do Not Disturb On\" in its name. Shall I open Shortcuts?"
+          }
+        }
+      }
+    },
+    "Odak modunu kapatabilmem için Kestirmeler'de adında \"Rahatsız Etme Kapat\" geçen ve Odak Ayarla eylemini içeren bir kestirme gerekiyor. Kestirmeler'i açayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To turn off a Focus I need a shortcut with the Set Focus action and \"Do Not Disturb Off\" in its name. Shall I open Shortcuts?"
+          }
+        }
+      }
+    },
     "Okunacak bir pencere bulamadım.": {
       "localizations": {
         "en": {
@@ -4326,6 +4556,26 @@
         }
       }
     },
+    "Oturum kapatılıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logging out."
+          }
+        }
+      }
+    },
+    "Oturumu kapatayım mı? Açık uygulamalar kapanacak.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I log you out? Open apps will quit."
+          }
+        }
+      }
+    },
     "Panoda metin yok.": {
       "localizations": {
         "en": {
@@ -4362,6 +4612,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "I didn't catch what you want me to copy to the clipboard."
+          }
+        }
+      }
+    },
+    "Parlaklık değiştirilemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The brightness couldn't be changed."
+          }
+        }
+      }
+    },
+    "Parlaklık yüzde %lld.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brightness is at %lld percent."
+          }
+        }
+      }
+    },
+    "Parlaklığı ayarladım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I adjusted the brightness."
           }
         }
       }
@@ -5400,6 +5680,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Consistency: %@. From now on I'll respond only to your voice."
+          }
+        }
+      }
+    },
+    "Tuş gönderilemedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The key couldn't be sent."
           }
         }
       }

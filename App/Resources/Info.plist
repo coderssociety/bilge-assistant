@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Bilge, senin isteğinle uygulamaları kontrol etmek (müzik, notlar, Mail, Mesajlar, tarayıcı) için Apple Events kullanır. Gönderme işlemleri her zaman onayınla yapılır.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bilge, istediğinde Bluetooth'u açıp kapatmak ve açık olup olmadığını söylemek için Bluetooth'a erişir.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Bilge, takvimindeki etkinlikleri okumak ve senin onayınla yenilerini eklemek için takvime erişir.</string>
 	<key>NSContactsUsageDescription</key>

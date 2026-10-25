@@ -45,4 +45,21 @@ extension FastPath {
         case .mouse: .mouse
         }
     }
+
+    static func arguments(for brightness: QuickIntent.Brightness) -> BrightnessTool.Arguments {
+        switch brightness {
+        case .up: .init(action: .increase, level: nil, amount: nil)
+        case .down: .init(action: .decrease, level: nil, amount: nil)
+        case let .change(amount): .init(action: amount > 0 ? .increase : .decrease, level: nil, amount: abs(amount))
+        case let .set(level): .init(action: .set, level: level, amount: nil)
+        }
+    }
+
+    static func action(for bluetooth: QuickIntent.Bluetooth) -> BluetoothTool.Action {
+        switch bluetooth {
+        case .on: .on
+        case .off: .off
+        case .status: .status
+        }
+    }
 }

@@ -37,7 +37,9 @@ enum RouterInstructions {
         ("ekranda ne yazıyor", "readScreen"),
         ("bu hata ne diyor", "readScreen"),
         ("bu sayfayı özetle", "readScreen"),
-        ("uyku odağını aç", "runShortcut"),
+        ("uyku odağını aç", "systemAction"),
+        ("ekranı biraz daha parlak yap", "setBrightness"),
+        ("bluetooth kapalı mı", "setBluetooth"),
         ("kaç zamanlayıcım var", "manageTimers"),
         ("Mehmet'in telefonu kaç", "findContact"),
         ("Zeynep'in e-postası ne", "findContact"),
@@ -107,7 +109,9 @@ enum RouterInstructions {
         ("run the work mode shortcut", "runShortcut"),
         ("what does the screen say", "readScreen"),
         ("what does this error mean", "readScreen"),
-        ("turn on sleep focus", "runShortcut"),
+        ("turn on sleep focus", "systemAction"),
+        ("make the screen dimmer", "setBrightness"),
+        ("is bluetooth on", "setBluetooth"),
         ("how many timers are running", "manageTimers"),
         ("what's Mehmet's phone number", "findContact"),
         ("what's Zeynep's email address", "findContact"),
@@ -169,14 +173,14 @@ enum RouterInstructions {
         """
     }
 
-    /// Unchanged from the Turkish-only version, which routed all 185 benchmark commands correctly.
+    /// Based on the Turkish-only version, which routed all 185 benchmark commands correctly.
     private static let turkishRules = """
         - If the user wants something done on the Mac, or asks about the Mac's current state (time, date, battery, calendar, reminders, music, files, volume, timers), choose the matching action, never conversation.
         - "<name> aç" / "<name>'ı aç" with an application name means openApp, even for apps like Takvim, Notlar, Müzik or Mail.
         - Questions about the song that is playing are controlMusic.
         - "hatırlat" after a duration ("10 dakika sonra") or at a time today is setTimer; adding something to the to-do list or for another day is addReminder.
         - Appointments and meetings to put on the calendar are addCalendarEvent; asking what is on the calendar is readCalendar.
-        - Turning on Focus/Do Not Disturb, brightness or anything else not covered by an action is runShortcut.
+        - Focus/Do Not Disturb, restarting, shutting down and logging out are systemAction; screen brightness is setBrightness; Bluetooth is setBluetooth. Anything else not covered by an action is runShortcut.
         - Questions about the assistant itself (what it can do, who it is) are conversation.
         - A short follow-up such as "peki yarın?" or "biraz daha" continues the previous action.
         - Questions that ask for knowledge ("…neresi", "…hangisi", "…kimdir", "kaç yaşında") are conversation. Use searchWeb only when the user explicitly asks to search or look something up on the web.
@@ -200,7 +204,7 @@ enum RouterInstructions {
         - Questions about the song that is playing are controlMusic.
         - "remind me" after a duration ("in 10 minutes") or at a time today is setTimer; adding something to the to-do list or for another day is addReminder.
         - Appointments and meetings to put on the calendar are addCalendarEvent; asking what is on the calendar is readCalendar.
-        - Turning on Focus/Do Not Disturb, brightness or anything else not covered by an action is runShortcut.
+        - Focus/Do Not Disturb, restarting, shutting down and logging out are systemAction; screen brightness is setBrightness; Bluetooth is setBluetooth. Anything else not covered by an action is runShortcut.
         - Questions about the assistant itself (what it can do, who it is) are conversation.
         - A short follow-up such as "what about tomorrow?" or "a bit more" continues the previous action.
         - Questions that ask for knowledge ("where is…", "which…", "who is…", "how old is…") are conversation. Use searchWeb only when the user explicitly asks to search or look something up on the web.

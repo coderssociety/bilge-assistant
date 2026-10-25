@@ -140,23 +140,56 @@ struct MediaTool: AssistantTool {
 
 struct SystemActionTool: AssistantTool {
     let name = "systemAction"
-    let description = "Yalnızca şunları yapar: ekranı kilitlemek, ekranı kapatmak/karartmak, Mac'i uyutmak, karanlık/aydınlık görünüme geçmek. Odak ve rahatsız etme modları bu araçla yapılmaz."
+    let description = "Ekranı kilitler ya da kapatır, Mac'i uyutur, yeniden başlatır, kapatır, oturumu kapatır, karanlık/aydınlık görünüme geçer, Rahatsız Etme/odak modunu açar ya da kapatır."
     private static let loginFramework = "/System/Library/PrivateFrameworks/login.framework/Versions/Current/login"
 
     @Generable
     enum Action {
-        case lockScreen, screenOff, sleep, darkModeOn, darkModeOff, toggleDarkMode
+        case lockScreen, screenOff, sleep, darkModeOn, darkModeOff, toggleDarkMode, focusOn, focusOff, restart, shutDown, logOut
     }
 
     @Generable
     struct Arguments {
-        @Guide(description: "lockScreen kilitler (açmak için parola ister); screenOff yalnızca ekranı kapatır/karartır; sleep Mac'i uyutur")
+        @Guide(description: "lockScreen kilitler (açmak için parola ister); screenOff yalnızca ekranı kapatır/karartır; sleep Mac'i uyutur; shutDown Mac'i tamamen kapatır; focusOn/focusOff Rahatsız Etme/odak modu")
         var action: Action
+        @Guide(description: "Sadece focusOn/focusOff için odağın adı: 'uyku odağını aç' → 'uyku'. Söylenmediyse boş bırak.")
+        var focusName: String?
+    }
+
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        let language = AppLanguage.current
+        if let focusOn = MacControlRequest.focus(command, language: language) {
+            return Arguments(action: focusOn ? .focusOn : .focusOff, focusName: command)
+        }
+        switch MacControlRequest.power(command, language: language) {
+        case .restart: return Arguments(action: .restart, focusName: nil)
+        case .shutDown: return Arguments(action: .shutDown, focusName: nil)
+        case .logOut: return Arguments(action: .logOut, focusName: nil)
+        case nil: return arguments
+        }
+    }
+
+    /// Power actions close every app, so only an explicit yes runs them; Focus needs a user shortcut.
+    func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
+        let description = String(describing: arguments)
+        switch arguments.action {
+        case .restart, .shutDown, .logOut:
+            return PreparedToolCall(toolName: name, argumentsDescription: description, risk: .needsConfirmation,
+                                    confirmationQuestion: Self.powerQuestion(arguments.action), requiresExplicitYes: true,
+                                    execute: { try await Self.power(arguments.action) })
+        case .focusOn, .focusOff:
+            return await FocusControl.makeCall(toolName: name, turnOn: arguments.action == .focusOn, command: arguments.focusName ?? "")
+        default:
+            return PreparedToolCall(toolName: name, argumentsDescription: description, risk: risk, confirmationQuestion: nil,
+                                    execute: { try await call(arguments: arguments) })
+        }
     }
 
     func call(arguments: Arguments) async throws -> String {
         do {
             switch arguments.action {
+            case .focusOn, .focusOff, .restart, .shutDown, .logOut:
+                return ToolReply.failure(String(localized: "Bu işlem yalnızca sesli komutla yapılabilir."))
             case .lockScreen:
                 try await Self.lockScreen()
                 return String(localized: "Ekran kilitlendi.")
@@ -182,6 +215,29 @@ struct SystemActionTool: AssistantTool {
                     ? String(localized: "Karanlık mod açık.")
                     : String(localized: "Karanlık mod kapalı.")
             }
+        } catch {
+            return ToolReply.failure(error)
+        }
+    }
+
+    private static func powerQuestion(_ action: Action) -> String {
+        switch action {
+        case .restart: String(localized: "Mac'i yeniden başlatayım mı? Açık uygulamalar kapanacak.")
+        case .logOut: String(localized: "Oturumu kapatayım mı? Açık uygulamalar kapanacak.")
+        default: String(localized: "Mac'i kapatayım mı? Açık uygulamalar kapanacak.")
+        }
+    }
+
+    /// System Events asks the apps to quit, so one with unsaved work can still stop it.
+    private static func power(_ action: Action) async throws -> String {
+        let (command, reply) = switch action {
+        case .restart: ("restart", String(localized: "Mac yeniden başlatılıyor."))
+        case .logOut: ("log out", String(localized: "Oturum kapatılıyor."))
+        default: ("shut down", String(localized: "Mac kapatılıyor."))
+        }
+        do {
+            _ = try await AppleScriptRunner.run("tell application \"System Events\" to \(command)")
+            return reply
         } catch {
             return ToolReply.failure(error)
         }

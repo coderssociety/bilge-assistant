@@ -20,7 +20,7 @@ struct FastPath {
         case let .media(media):
             return await make("controlMusic", MediaTool.self) { .init(action: Self.action(for: media)) }
         case let .system(system):
-            return await make("systemAction", SystemActionTool.self) { .init(action: Self.action(for: system)) }
+            return await make("systemAction", SystemActionTool.self) { .init(action: Self.action(for: system), focusName: nil) }
         case let .calendar(range):
             return await make("readCalendar", CalendarQueryTool.self) { .init(range: Self.range(for: range)) }
         case let .calculate(expression):
@@ -53,6 +53,10 @@ struct FastPath {
             return await make("openSettings", SettingsPaneTool.self) { .init(pane: Self.pane(for: pane)) }
         case let .systemInfo(topic):
             return await make("systemInfo", SystemInfoTool.self) { .init(topic: Self.topic(for: topic)) }
+        case let .brightness(change):
+            return await make("setBrightness", BrightnessTool.self) { Self.arguments(for: change) }
+        case let .bluetooth(action):
+            return await make("setBluetooth", BluetoothTool.self) { .init(action: Self.action(for: action)) }
         }
     }
 
@@ -97,6 +101,11 @@ struct FastPath {
         case .sleep: .sleep
         case .darkModeOn: .darkModeOn
         case .darkModeOff: .darkModeOff
+        case .focusOn: .focusOn
+        case .focusOff: .focusOff
+        case .restart: .restart
+        case .shutDown: .shutDown
+        case .logOut: .logOut
         }
     }
 

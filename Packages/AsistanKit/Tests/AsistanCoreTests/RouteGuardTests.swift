@@ -23,18 +23,28 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: routed, command: command) == expected)
     }
 
-    @Test("system actions are limited to lock, sleep and appearance", arguments: [
-        ("Odak modunu aç", "systemAction", "runShortcut"),
-        ("Rahatsız etme modunu aç", "systemAction", "runShortcut"),
-        ("Uyku odağını aç", "systemAction", "runShortcut"),
+    @Test("system actions cover lock, sleep, appearance, Focus and power", arguments: [
+        ("Odak modunu aç", "systemAction", "systemAction"),
+        ("Rahatsız etme modunu aç", "systemAction", "systemAction"),
+        ("Uyku odağını aç", "systemAction", "systemAction"),
+        ("Rahatsız etme modunu aç", "runShortcut", "systemAction"),
+        ("Bilgisayarı yeniden başlat", "systemAction", "systemAction"),
+        ("Mac'i kapat", "quitApp", "systemAction"),
+        ("Safari'yi kapat", "quitApp", "quitApp"),
+        ("Sabah rutini kestirmesini çalıştır", "runShortcut", "runShortcut"),
+        ("Odak kestirmesini çalıştır", "runShortcut", "runShortcut"),
+        ("Bluetooth'u kapat", "setWiFi", "setBluetooth"),
+        ("Bluetooth ayarlarını aç", "openSettings", "openSettings"),
+        ("Parlaklığı yüzde 50 yap", "runShortcut", "setBrightness"),
         ("Ekranı kilitle", "systemAction", "systemAction"),
         ("Bilgisayarı uyut", "systemAction", "systemAction"),
         ("Karanlık moda geç", "systemAction", "systemAction"),
         ("Aydınlık moda geç", "systemAction", "systemAction"),
-        ("Parlaklığı artır", "systemAction", "runShortcut"),
+        ("Parlaklığı artır", "systemAction", "setBrightness"),
         ("Ekranı karart", "systemAction", "systemAction"),
         ("ekranı kapat", "systemAction", "systemAction"),
-        ("Ekran parlaklığını kapat", "systemAction", "runShortcut"),
+        ("Ekran parlaklığını kapat", "systemAction", "setBrightness"),
+        ("Işıkları aç", "systemAction", "runShortcut"),
     ])
     func systemActions(command: String, routed: String, expected: String) {
         #expect(RouteGuard.review(action: routed, command: command) == expected)

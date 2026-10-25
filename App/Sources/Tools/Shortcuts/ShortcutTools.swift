@@ -3,7 +3,7 @@ import Foundation
 import FoundationModels
 
 /// The user's own Shortcuts are the extension point for anything without a public API
-/// (Focus modes, brightness, smart home). Running one needs confirmation: a shortcut can do anything.
+/// (Focus modes, smart home). Running one needs confirmation: a shortcut can do anything.
 enum ShortcutsCatalog {
     private static let executable = "/usr/bin/shortcuts"
 
@@ -64,7 +64,7 @@ struct ListShortcutsTool: AssistantTool {
 
 struct RunShortcutTool: AssistantTool {
     let name = "runShortcut"
-    let description = "Kestirmeler uygulamasındaki bir kestirmeyi adıyla çalıştırır. Odak modu, parlaklık gibi ayarlar için de kullanılır."
+    let description = "Kestirmeler uygulamasındaki bir kestirmeyi adıyla çalıştırır; başka bir aracın yapmadığı işler için de kullanılır."
     let risk = ToolRisk.needsConfirmation
 
     @Generable

@@ -4,7 +4,9 @@
 public enum QuickIntent: Sendable, Equatable {
     public enum Volume: Sendable, Equatable { case set(Int), up, down, change(Int), mute, unmute }
     public enum Media: Sendable, Equatable { case play, pause, next, previous, nowPlaying }
-    public enum System: Sendable, Equatable { case lockScreen, screenOff, sleep, darkModeOn, darkModeOff }
+    public enum System: Sendable, Equatable {
+        case lockScreen, screenOff, sleep, darkModeOn, darkModeOff, focusOn, focusOff, restart, shutDown, logOut
+    }
     public enum CalendarRange: Sendable, Equatable { case today, tomorrow, thisWeek }
     public enum Folder: Sendable, Equatable { case desktop, downloads, documents }
     public enum TimerAction: Sendable, Equatable { case list, cancelOne, cancelAll }
@@ -29,6 +31,8 @@ public enum QuickIntent: Sendable, Equatable {
     case window(Window)
     case settings(SettingsPane)
     case systemInfo(SystemInfoTopic)
+    case brightness(Brightness)
+    case bluetooth(Bluetooth)
 }
 
 public enum QuickIntentParser {
@@ -260,7 +264,7 @@ public enum QuickIntentParser {
 
     private static let nonAppPrefixes = [
         "ses", "muzi", "sarki", "bilgisayar", "mac", "ekran", "bluetooth", "wifi", "wi", "internet", "odak",
-        "rahatsiz", "mod", "karanlik", "aydinlik", "isik", "masaustu", "indirilen", "belge", "klasor", "dosya",
+        "odag", "rahatsiz", "mod", "karanlik", "aydinlik", "isik", "masaustu", "indirilen", "belge", "klasor", "dosya",
         "pencere", "zamanlayici", "alarm", "parlaklik", "bildirim", "kamera", "mikrofon", "ondan", "sonra", "ve", "ayar",
     ]
 

@@ -61,6 +61,7 @@ targets:
         NSAppleEventsUsageDescription: Bilge, senin isteğinle uygulamaları kontrol etmek (müzik, notlar, Mail, Mesajlar, tarayıcı) için Apple Events kullanır. Gönderme işlemleri her zaman onayınla yapılır.
         NSCalendarsFullAccessUsageDescription: Bilge, takvimindeki etkinlikleri okumak ve senin onayınla yenilerini eklemek için takvime erişir.
         NSRemindersFullAccessUsageDescription: Bilge, anımsatıcılarını okumak ve senin onayınla yenilerini eklemek için anımsatıcılara erişir.
+        NSBluetoothAlwaysUsageDescription: Bilge, istediğinde Bluetooth'u açıp kapatmak ve açık olup olmadığını söylemek için Bluetooth'a erişir.
         NSContactsUsageDescription: Bilge, sorduğunda birinin telefonunu ya da e-postasını bulmak ve senin onayınla mesaj göndermek için kişilerine erişir.
     entitlements:
       path: App/Resources/Asistan.entitlements

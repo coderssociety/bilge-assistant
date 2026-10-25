@@ -37,7 +37,7 @@ Remind me to pay rent on Monday	addReminder
 Move report.pdf to the trash	moveFileToTrash
 List my shortcuts	listShortcuts
 Run the shortcut called Good Morning	runShortcut
-Turn on do not disturb	runShortcut
+Turn on do not disturb	systemAction
 What's on my screen	readScreen
 What is Ahmet's phone number	findContact
 I bought the bread, mark it done	completeReminder

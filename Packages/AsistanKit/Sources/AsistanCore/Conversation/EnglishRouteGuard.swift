@@ -6,7 +6,8 @@ public enum EnglishRouteGuard {
         "search", "google", "look", "find", "youtube", "wikipedia", "web", "internet", "online", "maps", "browse",
     ]
     private static let systemWords = ["lock", "sleep", "dark", "light", "appearance", "theme", "screensaver", "blank"]
-    private static let shortcutOnlyWords = ["focus", "disturb", "bright"]
+    private static let focusWords: Set<String> = ["focus", "disturb", "dnd"]
+    private static let brightnessWords = ["bright", "dim"]
     private static let openVerbs: Set<String> = ["open", "launch", "start"]
     private static let questionWords: Set<String> = ["what", "whats", "any", "do", "how", "when", "is", "am", "anything"]
     private static let weatherWords = [
@@ -36,6 +37,7 @@ public enum EnglishRouteGuard {
         }
         if stopsTimer(words), action != "manageTimers" { return "manageTimers" }
         if takesNote(words), action != "createNote" { return "createNote" }
+        if let control = macControl(action: action, words: words, command: command) { return control }
         switch action {
         case "quitApp" where words.contains { $0.hasPrefix("window") }:
             return "windowControl"
@@ -48,9 +50,9 @@ public enum EnglishRouteGuard {
         case "searchWeb":
             return words.contains(where: searchWords.contains) ? action : "conversation"
         case "systemAction":
-            if words.contains(where: { word in shortcutOnlyWords.contains(where: word.hasPrefix) }) { return "runShortcut" }
             let turnsScreenOff = words.contains { ["screen", "display", "monitor"].contains($0) } && words.contains("off")
             let supported = turnsScreenOff || words.contains { word in systemWords.contains(where: word.hasPrefix) }
+                || MacControlRequest.power(command, language: .english) != nil
             return supported ? action : "runShortcut"
         case "weather":
             let aboutWeather = words.contains { word in weatherWords.contains(where: word.hasPrefix) }
@@ -73,6 +75,17 @@ public enum EnglishRouteGuard {
         default:
             return action
         }
+    }
+
+    /// Focus, brightness, Bluetooth and power have their own actions; a named shortcut stays a shortcut.
+    private static func macControl(action: String, words: [String], command: String) -> String? {
+        guard ["runShortcut", "systemAction", "setWiFi", "quitApp", "openApp"].contains(action),
+              !words.contains(where: { $0.hasPrefix("shortcut") || $0.hasPrefix("setting") }) else { return nil }
+        if words.contains(where: { word in brightnessWords.contains(where: word.hasPrefix) }) { return "setBrightness" }
+        if words.contains("bluetooth") { return "setBluetooth" }
+        if words.contains(where: focusWords.contains) { return "systemAction" }
+        if action != "systemAction", MacControlRequest.power(command, language: .english) != nil { return "systemAction" }
+        return nil
     }
 
     /// "Stop the timer", "cancel my alarms"; not "remind me to turn off the oven timer".
