@@ -154,6 +154,8 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | Depremler | “son depremler”, “İzmir'de deprem var mı”, “en son deprem nerede”; hava durumu şehrinin 150 km yakınında 4 ve üzeri bir deprem olunca sorulmadan söyler | AFAD, ulaşılamazsa Kandilli Rasathanesi | aynı |
 | Futbol | “Galatasaray maçı kaç kaç”, “Fenerbahçe ne zaman oynuyor”, “puan durumu”, “dün maç sonuçları” | ESPN'den Süper Lig | aynı |
 | Borsa | “borsa nasıl”, “BIST 100 kaç”, “THY hissesi”, “Aselsan bugün” | Yahoo Finance'ten Borsa İstanbul; yalnızca rakamlar, asla tavsiye değil | aynı |
+| Radyo ve podcast | “radyo aç”, “Power FM aç”, “radyonun sesini kıs”, “hangi radyo çalıyor”, “Fularsız Entellik podcastinin son bölümünü aç”, “Nasıl Olunur'un yeni bölümü var mı”, “durdur”, “30 saniye ileri sar” | Bilge'nin içinde çalar; Bilge dinlerken ve konuşurken sesi kısılır (podcast bölümü duraklar); istasyonlar radio-browser.info'dan, podcast'ler Apple'ın podcast aramasından ve kendi akışlarından | aynı |
+| YouTube | “şu videoyu özetle: …”, “panodaki videoyu özetle”, “devamını özetle” | videonun altyazısından (önce Türkçe); adres panodan ya da seçili metinden alınır | aynı |
 | Çeviri | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | ses 31 dilde konuşur | aynı |
 | Diğer | zamanlayıcılar ve alarmlar, site ve arama açma, günlük özet | | |
 

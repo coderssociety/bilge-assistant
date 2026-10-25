@@ -154,6 +154,8 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 | Earthquakes | “son depremler”, “İzmir'de deprem var mı”, “en son deprem nerede”; said unasked when a magnitude 4+ earthquake happens within 150 km of the weather city | AFAD, or Kandilli Observatory when AFAD can't be reached | the same |
 | Football | “Galatasaray maçı kaç kaç”, “Fenerbahçe ne zaman oynuyor”, “puan durumu”, “dün maç sonuçları” | the Süper Lig from ESPN | the same |
 | Stocks | “borsa nasıl”, “BIST 100 kaç”, “THY hissesi”, “Aselsan bugün” | Borsa İstanbul from Yahoo Finance; figures only, never advice | the same |
+| Radio and podcasts | “radyo aç”, “Power FM aç”, “radyonun sesini kıs”, “hangi radyo çalıyor”, “Fularsız Entellik podcastinin son bölümünü aç”, “Nasıl Olunur'un yeni bölümü var mı”, “durdur”, “30 saniye ileri sar” | played inside Bilge, turned down (or, for an episode, paused) while it listens and speaks; stations from radio-browser.info, podcasts from Apple's podcast search and their own feeds | the same |
+| YouTube | “şu videoyu özetle: …”, “panodaki videoyu özetle”, “devamını özetle” | from the video's captions (Turkish first); the address is taken from the clipboard or the selection | the same |
 | Translation | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | the voice speaks 31 languages | the same |
 | Other | timers and alarms, opening sites and searches, the daily briefing | | |
 
