@@ -43,6 +43,13 @@ public enum RouteGuard {
         return "conversation"
     }
 
+    /// Earthquake questions are told apart by their words, so that tool stays out of the router model's prompt:
+    /// its action, or nil for everything else.
+    public static func infoTopic(_ command: String, language: AssistantLanguage = .turkish) -> String? {
+        if EarthquakeRequest.isRequest(command, language: language) { return "earthquakes" }
+        return nil
+    }
+
     /// `previousAction` is the tool of the turn just before, for follow-ups like "peki yarın?" after a weather answer.
     public static func review(action: String, command: String, previousAction: String? = nil) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)

@@ -73,6 +73,7 @@ struct ToolRegistry {
             BrowserTool(),
             DictationTool(session: dictation),
             BriefingTool(),
+            EarthquakeTool(),
         ]
     }
 }

@@ -2082,6 +2082,16 @@
         }
       }
     },
+    "Deprem bilgisi alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get earthquake data. %@"
+          }
+        }
+      }
+    },
     "Desteklenmeyen ses biçimi.": {
       "localizations": {
         "en": {
@@ -2872,6 +2882,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Appearance"
+          }
+        }
+      }
+    },
+    "Güncel bilgiye ulaşamadım; %@ alınan bilgiye göre: ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't get fresh data; as of %@: "
           }
         }
       }
