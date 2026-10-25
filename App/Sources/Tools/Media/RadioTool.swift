@@ -47,9 +47,9 @@ struct RadioTool: RuleRoutedTool {
         guard let name = requested ?? defaults.string(forKey: Self.lastStationKey) else {
             return String(localized: "Hangi radyoyu açayım? Örneğin Power FM, TRT FM ya da Virgin Radio diyebilirsin.")
         }
-        await MusicPlayers.pauseAll()
         if requested == nil, let address = defaults.url(forKey: Self.lastStationURLKey),
            await StreamPlayer.shared.play(.init(kind: .radio, title: name, show: nil, url: address)) {
+            await MusicPlayers.pauseAll()
             return String(localized: "\(name) çalıyor.")
         }
         do {
@@ -58,6 +58,7 @@ struct RadioTool: RuleRoutedTool {
             for station in stations.prefix(Self.candidatesToTry) {
                 guard let url = station.streamURL else { continue }
                 if await StreamPlayer.shared.play(.init(kind: .radio, title: name, show: nil, url: url)) {
+                    await MusicPlayers.pauseAll()
                     defaults.set(name, forKey: Self.lastStationKey)
                     defaults.set(url, forKey: Self.lastStationURLKey)
                     return String(localized: "\(name) çalıyor.")

@@ -46,8 +46,8 @@ struct PodcastTool: RuleRoutedTool {
                 return ToolReply.failure(String(localized: "\(show.name) podcastinin bölümlerini okuyamadım."))
             }
             if case .checkNew = command { return Self.newEpisodeReply(show: show, episode: episode) }
-            await MusicPlayers.pauseAll()
             let started = await StreamPlayer.shared.play(.init(kind: .podcast, title: episode.title, show: show.name, url: audio))
+            if started { await MusicPlayers.pauseAll() }
             return started
                 ? String(localized: "\(show.name) podcastinin son bölümü çalıyor: \(episode.title).")
                 : ToolReply.failure(String(localized: "\(show.name) podcastinin son bölümünü başlatamadım."))
