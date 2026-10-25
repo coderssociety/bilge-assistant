@@ -231,21 +231,42 @@ struct SendMessageTool: AssistantTool {
 /// Unread mail in the inbox. Senders and subjects are untrusted text, answered by the tool-less session.
 struct ReadMailTool: AssistantTool {
     let name = "readMail"
-    let description = "Mail'deki okunmamış e-postaları söyler: kaç tane olduğunu, kimden geldiklerini ve konularını."
+    let description = "Mail'deki okunmamış e-postaları söyler: kaç tane olduğunu, kimden geldiklerini, konularını ve istenirse ne yazdıklarını."
     let answersWithLanguageModel = true
     private static let maxMessages = 8
+    /// Messages whose text is read; each is cut, so a newsletter can't fill the answer.
+    private static let maxReadMessages = 3
+    private static let maxBodyCharacters = 1500
 
     @Generable
     struct Arguments {
         @Guide(description: "Belirli bir göndericiden gelenler isteniyorsa onun eksiz adı; yoksa boş bırak")
         var sender: String?
+        @Guide(description: "E-postaların ne yazdığı, içeriği isteniyorsa true")
+        var withContent: Bool
+    }
+
+    /// "İçeriğini oku" asks for the text even when the model only lists the messages again.
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        var refined = arguments
+        refined.withContent = arguments.withContent || MailRequest.asksForContent(command)
+        return refined
     }
 
     func call(arguments: Arguments) async throws -> String {
         let filter = arguments.sender?.trimmingCharacters(in: .whitespaces).nilIfEmpty
             .map { " and sender contains \(AppleScriptRunner.quoted($0))" } ?? ""
+        let bodies = arguments.withContent ? """
+            repeat with i from 1 to (total)
+            if i > \(Self.maxReadMessages) then exit repeat
+            set m to item i of unread
+            set body to content of m
+            if length of body > \(Self.maxBodyCharacters) then set body to text 1 thru \(Self.maxBodyCharacters) of body
+            set output to output & linefeed & linefeed & \(AppleScriptRunner.quoted(String(localized: "E-posta "))) & i & ": " & (sender of m) & " - " & (subject of m) & linefeed & body
+            end repeat
+            """ : ""
         do {
-            let listing = try await AppleScriptRunner.run("""
+            return try await AppleScriptRunner.run("""
             tell application "Mail"
             set unread to (messages of inbox whose read status is false\(filter))
             set total to count of unread
@@ -255,10 +276,10 @@ struct ReadMailTool: AssistantTool {
             set m to item i of unread
             set output to output & linefeed & "- " & (sender of m) & ": " & (subject of m)
             end repeat
+            \(bodies)
             return output
             end tell
             """)
-            return listing
         } catch {
             return ToolReply.failure(error)
         }
