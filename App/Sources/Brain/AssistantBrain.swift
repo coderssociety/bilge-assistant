@@ -274,8 +274,10 @@ final class AssistantBrain: CommandHandling {
         unattended: Bool,
         continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws {
-        if let reading = context.reading, reading.isCurrent(at: .now), ReadingRequest.isContinuation(command, language: language) {
-            try await continueReading(command, into: continuation)
+        if var reading = context.reading, reading.continues(with: command, language: language, at: .now),
+           let part = reading.next(at: .now) {
+            context.reading = reading
+            try await continueReading(command, part: part, of: reading, into: continuation)
             return
         }
         // "İngilizce maili Türkçe oku": what a tool reads goes through the model, to be read in that language.
@@ -321,15 +323,12 @@ final class AssistantBrain: CommandHandling {
         return reading.firstPart
     }
 
-    private func continueReading(_ command: String, into continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
-        guard var reading = context.reading, let part = reading.next(at: .now) else {
-            localModel.turnNeededNoModel()
-            let reply = String(localized: "Okuyacak başka bir şey kalmadı, hepsini okudum.")
-            previousTurn = .init(command: command, action: Self.continueReadingAction, result: reply)
-            continuation.yield(reply)
-            return
-        }
-        context.reading = reading
+    private func continueReading(
+        _ command: String,
+        part: String,
+        of reading: ContinuedReading,
+        into continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws {
         let reply: String
         if reading.answersWithLanguageModel {
             reply = try await answer(command, from: part, translation: reading.translation, into: continuation)

@@ -159,4 +159,17 @@ struct ContinuedReadingTests {
     func beyondReading(command: String, language: AssistantLanguage, expected: Bool) {
         #expect(ReadingRequest.asksBeyondReading(command, language: language) == expected)
     }
+
+    @Test("\"devam et\" and \"next\" go to the reading only while more of it is left", arguments: [
+        ("devam et", AssistantLanguage.turkish), ("sonraki", .turkish), ("next", .english), ("continue", .english),
+    ])
+    func continuesOnlyWithMore(said: String, language: AssistantLanguage) throws {
+        var reading = try #require(ContinuedReading("A\nB", layout: .list(separator: "\n", perPart: 1),
+                                                    answersWithLanguageModel: false, at: start))
+        #expect(reading.continues(with: said, language: language, at: start))
+        _ = reading.next(at: start)
+        #expect(!reading.continues(with: said, language: language, at: start))
+        let answered = try #require(ContinuedReading("Hava güneşli.", layout: nil, answersWithLanguageModel: true, at: start))
+        #expect(!answered.continues(with: said, language: language, at: start))
+    }
 }
