@@ -97,6 +97,7 @@ def test_a_mode_without_its_own_input_handling_passes_input_on():
     [
         ("sesi yüzde 40 yap", "setVolume", {"action": "set", "level": 40}),
         ("sesi kapat", "setVolume", {"action": "mute"}),
+        ("sesi yüzde 20 artır", "setVolume", {"action": "increase", "by": 20}),
         ("müziği durdur", "controlMusic", {"action": "pause"}),
         ("sonraki şarkı", "controlMusic", {"action": "next"}),
         ("ekranı kilitle", "systemAction", {"action": "lockScreen"}),

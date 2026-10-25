@@ -23,7 +23,13 @@ class VolumeStep(StrEnum):
     UNMUTE = "unmute"
 
 
-VolumeChange = SetVolume | VolumeStep
+@dataclass(frozen=True)
+class ChangeVolume:
+    up: bool
+    by: int
+
+
+VolumeChange = SetVolume | ChangeVolume | VolumeStep
 
 
 class MediaAction(StrEnum):
@@ -328,6 +334,8 @@ def _battery(w: list[str]) -> QuickIntent | None:
 _SET_VOLUME_VERBS = frozenset({"yap", "getir", "ayarla", "indir", "cek", "dusur", "cikar"})
 _UP_VOLUME_VERBS = frozenset({"artir", "arttir", "yukselt"})
 _DOWN_VOLUME_VERBS = frozenset({"kis", "azalt", "dusur", "alcalt"})
+# With a bare number these change the volume by it ("sesi 20 düşür"); with a dative ending they set it ("20'ye").
+_BY_OR_SET_VERBS = {"indir": False, "dusur": False, "cikar": True}
 _MAX_VOLUME_WORDS = 4
 
 
@@ -338,9 +346,15 @@ def _volume(w: list[str]) -> QuickIntent | None:
         return None
     rest = w[1:]
     level_words = rest[:-1]
-    if rest[-1] in _SET_VOLUME_VERBS:
-        level = next((n for n in map(_leading_number, level_words) if n is not None), None)
-        if level is not None and all(word == "yuzde" or _leading_number(word) is not None for word in level_words):
+    level = next((n for n in map(_leading_number, level_words) if n is not None), None)
+    only_level = level is not None and all(word == "yuzde" or _leading_number(word) is not None for word in level_words)
+    if only_level and level is not None:
+        verb, bare = rest[-1], level_words[-1].isdigit()
+        if verb in _BY_OR_SET_VERBS and bare:
+            return Volume(ChangeVolume(_BY_OR_SET_VERBS[verb], min(level, _MAX_VOLUME)))
+        if verb in _UP_VOLUME_VERBS | _DOWN_VOLUME_VERBS and bare:
+            return Volume(ChangeVolume(verb in _UP_VOLUME_VERBS, min(level, _MAX_VOLUME)))
+        if verb in _SET_VOLUME_VERBS:
             return Volume(SetVolume(min(level, _MAX_VOLUME)))
     if rest == ["kapat"]:
         return Volume(VolumeStep.MUTE)

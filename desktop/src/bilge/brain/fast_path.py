@@ -30,6 +30,8 @@ def _tool_and_arguments(intent: q.QuickIntent | None) -> tuple[str, dict] | None
             return "readReminders", {}
         case q.Volume(change=q.SetVolume(level=level)):
             return "setVolume", {"action": "set", "level": level}
+        case q.Volume(change=q.ChangeVolume(up=up, by=by)):
+            return "setVolume", {"action": "increase" if up else "decrease", "by": by}
         case q.Volume(change=step):
             return "setVolume", {"action": _VOLUME_STEPS[step]}
         case q.Media(action=action):

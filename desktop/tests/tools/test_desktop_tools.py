@@ -86,6 +86,27 @@ def test_volume_steps_stay_within_bounds():
         tool.run({"action": "set"})
 
 
+def test_volume_changes_by_the_amount_said():
+    fake = FakeVolume(40)
+    tool = sound.volume_tool(fake, TR)
+    assert tool.run({"action": "increase", "by": 20}) == "Ses seviyesi yüzde 60."
+    assert tool.run({"action": "decrease"}) == "Ses seviyesi yüzde 50."
+    assert tool.refine({"action": "increase"}, "sesi yüzde 25 artır") == {"action": "increase", "by": 25}
+    assert tool.refine({"action": "increase", "by": 10}, "sesi yüzde 80'e çıkar") == {
+        "action": "set", "level": 80, "by": None}  # fmt: skip
+    assert tool.refine({"action": "set", "level": 3}, "sesi yüzde 30 yap")["level"] == 30
+    assert tool.refine({"action": "mute"}, "sesi yüzde 30 yap") == {"action": "mute"}
+
+
+def test_unmuting_sound_that_is_on_turns_it_up():
+    fake = FakeVolume(30)
+    tool = sound.volume_tool(fake, TR)
+    assert tool.run({"action": "unmute"}) == "Ses seviyesi yüzde 40."
+    fake.muted = True
+    assert tool.run({"action": "unmute"}) == "Ses açıldı, seviye yüzde 40."
+    assert not fake.muted
+
+
 def test_missing_sound_program_is_named_to_the_user():
     class Broken(FakeVolume):
         def state(self):
