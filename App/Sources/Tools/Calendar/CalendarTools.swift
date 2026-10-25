@@ -5,7 +5,7 @@ import FoundationModels
 struct CalendarQueryTool: AssistantTool {
     let name = "readCalendar"
     let description = "Takvimdeki etkinlikleri okur: bugün, yarın, belirli bir gün, bu hafta, haftaya ya da bu ay."
-    private static let maxEvents = 12
+    let readingLayout: ContinuedReading.Layout? = .list(separator: "; ", perPart: 12)
 
     @Generable
     enum Range {
@@ -42,12 +42,8 @@ struct CalendarQueryTool: AssistantTool {
             let events = try await CalendarAccess.shared.events(from: interval.start, to: interval.end)
             guard !events.isEmpty else { return String(localized: "\(label) takvimde etkinlik yok.") }
             let dayFormat = Self.dayFormat(for: period)
-            let lines = events.prefix(Self.maxEvents).map { Self.describe($0, dayFormat: dayFormat) }
-            var answer = String(localized: "\(label) \(events.count) etkinlik var: \(lines.joined(separator: "; "))")
-            if events.count > Self.maxEvents {
-                answer += String(localized: " Bunlardan başka \(events.count - Self.maxEvents) etkinlik daha var.")
-            }
-            return answer
+            let lines = events.map { Self.describe($0, dayFormat: dayFormat) }
+            return String(localized: "\(label) \(events.count) etkinlik var: \(lines.joined(separator: "; "))")
         } catch {
             return ToolReply.failure(error)
         }

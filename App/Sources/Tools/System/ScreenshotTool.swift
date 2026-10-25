@@ -21,6 +21,9 @@ struct ScreenshotTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
+        guard ScreenReader.hasCaptureAccess() else {
+            return ToolReply.failure(String(localized: "Ekran görüntüsü almak için Ekran Kaydı izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Ekran ve Sistem Sesi Kaydı'ndan Bilge'ye izin ver."))
+        }
         var options = ["-x"]
         switch arguments.area {
         case .wholeScreen: break

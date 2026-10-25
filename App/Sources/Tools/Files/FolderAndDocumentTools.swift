@@ -49,13 +49,20 @@ struct ReadDocumentTool: AssistantTool {
     let name = "readDocument"
     let description = "Bir belgeyi (PDF, metin, Word, RTF) açmadan okur; özetler ya da içeriğiyle ilgili soruyu yanıtlar."
     let answersWithLanguageModel = true
-    private static let maxCharacters = 6000
-    static let readableExtensions: Set<String> = ["pdf", "txt", "md", "rtf", "rtfd", "docx", "doc", "html", "htm", "csv"]
+    let readingLayout: ContinuedReading.Layout? = .text(maxCharacters: 6000)
+    static let readableExtensions: Set<String> = ["pdf", "txt", "md", "rtf", "rtfd", "docx", "doc", "odt", "html", "htm", "csv"]
 
     @Generable
     struct Arguments {
-        @Guide(description: "Belge adında geçen kelimeler. 'Son indirdiğim PDF' gibi isteklerde yalnızca türü yaz ('pdf', 'word'); tür de yoksa boş bırak")
+        @Guide(description: "Belge adında geçen kelimeler. 'Son indirdiğim PDF' gibi isteklerde yalnızca türü yaz ('pdf', 'word', 'excel', 'sunum'); tür de yoksa boş bırak")
         var query: String?
+    }
+
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        var refined = arguments
+        let query = FileQuery.parse(arguments.query ?? "").addingFilters(of: FileQuery.parse(command))
+        refined.query = query.isEmpty ? nil : query.text
+        return refined
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -64,33 +71,28 @@ struct ReadDocumentTool: AssistantTool {
                 return ToolReply.failure(arguments.query.map { String(localized: "'\($0)' adında okunabilir bir belge bulamadım.") }
                     ?? String(localized: "İndirilenler'de okunabilir bir belge bulamadım."))
             }
+            // Excel, Numbers, Pages and Keynote files keep their text in formats no system framework reads.
+            guard Self.readableExtensions.contains(file.pathExtension.lowercased()) else {
+                return ToolReply.failure(String(localized: "'\(file.lastPathComponent)' dosyasını okuyamıyorum; PDF, Word, metin ve CSV belgelerini okuyabilirim. PDF olarak dışa aktarırsan okurum."))
+            }
             let text = try await Self.text(of: file).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else {
                 return ToolReply.failure(String(localized: "'\(file.lastPathComponent)' içinde okunabilir yazı yok."))
             }
-            return String(localized: "Belge: \(file.lastPathComponent)\n\(String(text.prefix(Self.maxCharacters)))")
+            return String(localized: "Belge: \(file.lastPathComponent)\n\(text)")
         } catch {
             return ToolReply.failure(error)
         }
     }
 
-    private static let typeWords: [String: Set<String>] = [
-        "pdf": ["pdf"], "word": ["docx", "doc"], "metin": ["txt", "md", "rtf"], "tablo": ["csv"],
-    ]
-
-    /// A name search first. Phrasings like "son indirilen PDF" name no file, so they fall back to the
-    /// newest download of the mentioned type (or of any readable type).
+    /// A search by name or time first. Phrasings like "son indirilen PDF" name no file, so they take the
+    /// newest download of the mentioned kind (or of any readable kind).
     private static func locate(_ query: String?) async throws -> URL? {
-        let query = query?.trimmingCharacters(in: .whitespaces) ?? ""
-        if !query.isEmpty,
-           let found = try await FileSearch.find(query, limit: 20).first(where: { readableExtensions.contains($0.pathExtension.lowercased()) }) {
-            return found
+        let query = FileQuery.parse(query ?? "")
+        let extensions = query.kinds.isEmpty ? readableExtensions : query.extensions
+        if !query.nameWords.isEmpty || query.period != nil {
+            return try await FileSearch.find(query, limit: 20).first { extensions.contains($0.pathExtension.lowercased()) }
         }
-        let words = TurkishText.folded(query).split(separator: " ").map(String.init)
-        let wanted = words.compactMap { word in typeWords.first { word.hasPrefix($0.key) }?.value }.reduce(Set<String>()) { $0.union($1) }
-        let mentionsDownload = words.contains { $0.hasPrefix("indir") || $0 == "son" }
-        guard query.isEmpty || !wanted.isEmpty || mentionsDownload else { return nil }
-        let extensions = wanted.isEmpty ? readableExtensions : wanted
         let downloads = (try? FileManager.default.contentsOfDirectory(at: .downloadsDirectory, includingPropertiesForKeys: nil)) ?? []
         return FileSearch.sortedByRecency(downloads).first { extensions.contains($0.pathExtension.lowercased()) }
     }

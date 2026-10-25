@@ -23,11 +23,17 @@ enum ScreenReader {
 
     private static let maxCharacters = 2500
 
-    static func readText(scope: Scope) async throws -> String {
+    /// Without Screen Recording permission captures show only the wallpaper; false asks the system for it.
+    static func hasCaptureAccess() -> Bool {
         guard CGPreflightScreenCaptureAccess() else {
             CGRequestScreenCaptureAccess()
-            throw ScreenReaderError.permissionMissing
+            return false
         }
+        return true
+    }
+
+    static func readText(scope: Scope) async throws -> String {
+        guard hasCaptureAccess() else { throw ScreenReaderError.permissionMissing }
         let image = try await capture(scope)
         let text = try await TextRecognition.text(in: image)
         return String(text.prefix(maxCharacters))

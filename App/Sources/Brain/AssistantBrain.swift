@@ -7,6 +7,9 @@ import FoundationModels
 @MainActor
 final class AssistantBrain: CommandHandling {
     static let maximumResponseTokens = 250
+    private static let continueReadingAction = "continueReading"
+    private static let followUpMaterialLimit = 6000
+    private static var moreToRead: String { " " + String(localized: "Devamı var; istersen “devam et” de.") }
 
     private let model = SystemLanguageModel.default
     private let router: CommandRouter?
@@ -15,7 +18,8 @@ final class AssistantBrain: CommandHandling {
     /// The memory revision `conversation` was created with; a new fact means new instructions.
     private var conversationMemoryRevision = 0
     private var previousTurn: CommandRouter.PreviousTurn? {
-        didSet { context.lastReply = previousTurn?.result }
+        // "Bunu kopyala" and "bunu hatırla" take what was said, never a failed tool's raw result.
+        didSet { context.lastReply = previousTurn?.result.flatMap { ToolReply.isFailure($0) ? nil : $0 } }
     }
     private let context: ConversationContext
     private let memory: MemoryStore
@@ -215,13 +219,18 @@ final class AssistantBrain: CommandHandling {
         router: CommandRouter,
         continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws {
+        if let reading = context.reading, reading.isCurrent(at: .now), ReadingRequest.isContinuation(command, language: language) {
+            try await continueReading(command, into: continuation)
+            return
+        }
         // "İngilizce maili Türkçe oku": what a tool reads goes through the model, to be read in that language.
         let translation = TranslationRequest.target(in: command)
         switch try await router.route(command, previous: previousTurn) {
         case let .tool(call):
             let viaModel = call.answersWithLanguageModel || translation != nil
             if !viaModel { localModel.turnNeededNoModel() }
-            let result = try await run(call, for: command, continuation: continuation)
+            let output = try await run(call, for: command, continuation: continuation)
+            let result = keepReading(output, of: call, viaModel: viaModel)
             if viaModel, !ToolReply.isFailure(result) {
                 let answer = try await answer(command, from: result, translation: translation, into: continuation)
                 previousTurn = .init(command: command, action: call.toolName, result: answer)
@@ -229,11 +238,51 @@ final class AssistantBrain: CommandHandling {
                 previousTurn = .init(command: command, action: call.toolName, result: result)
                 continuation.yield(ToolReply.spoken(result))
             }
+            if context.reading?.hasMore == true { continuation.yield(Self.moreToRead) }
         case .conversation:
+            // "İkinci maddeyi açıkla" after a reading: the conversation never saw what the tool read.
+            if let reading = context.reading, reading.isCurrent(at: .now), ReadingRequest.refersToReading(command, language: language) {
+                let material = String(reading.lastPart.prefix(Self.followUpMaterialLimit))
+                let reply = try await answer(command, from: material, translation: translation, into: continuation)
+                previousTurn = .init(command: command, action: CommandRouter.conversationAction, result: reply)
+                return
+            }
             let request = translation.map { command + BrainInstructions.replyLanguage($0, language: language) } ?? command
             let reply = try await streamConversation(request, into: continuation)
             previousTurn = .init(command: command, action: CommandRouter.conversationAction, result: reply)
         }
+    }
+
+    /// Keeps what a tool read for "devamını oku" and questions about it, and gives the part to read now:
+    /// the first part of a long text, the whole of a short one.
+    private func keepReading(_ result: String, of call: PreparedToolCall, viaModel: Bool) -> String {
+        context.reading = nil
+        guard !ToolReply.isFailure(result), call.readingLayout != nil || viaModel,
+              let reading = ContinuedReading(result, layout: call.readingLayout, answersWithLanguageModel: viaModel, at: .now)
+        else { return result }
+        context.reading = reading
+        return reading.firstPart
+    }
+
+    private func continueReading(_ command: String, into continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
+        guard var reading = context.reading, let part = reading.next(at: .now) else {
+            localModel.turnNeededNoModel()
+            let reply = String(localized: "Okuyacak başka bir şey kalmadı, hepsini okudum.")
+            previousTurn = .init(command: command, action: Self.continueReadingAction, result: reply)
+            continuation.yield(reply)
+            return
+        }
+        context.reading = reading
+        let reply: String
+        if reading.answersWithLanguageModel {
+            reply = try await answer(command, from: part, into: continuation)
+        } else {
+            localModel.turnNeededNoModel()
+            reply = part
+            continuation.yield(part)
+        }
+        previousTurn = .init(command: command, action: Self.continueReadingAction, result: reply)
+        if reading.hasMore { continuation.yield(Self.moreToRead) }
     }
 
     /// Runs a prepared call, asking first when it is risky. Anything but a clear "yes" cancels.

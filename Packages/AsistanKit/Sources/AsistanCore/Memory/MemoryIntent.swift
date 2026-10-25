@@ -8,9 +8,8 @@ public enum MemoryIntent: Equatable, Sendable {
         case matching(String)
     }
 
-    private static let rememberWords: Set<String> = [
-        "hatirla", "hatirlasana", "hatirlayin", "hatirlamani", "unutma", "unutmayin", "unutmasana",
-    ]
+    private static let dontForgetWords: Set<String> = ["unutma", "unutmayin", "unutmasana"]
+    private static let rememberWords: Set<String> = dontForgetWords.union(["hatirla", "hatirlasana", "hatirlayin", "hatirlamani"])
     private static let forgetWords: Set<String> = ["unut", "unutsana", "unutun", "unutur"]
     private static let clearVerbs: Set<String> = ["sil", "temizle", "bosalt", "sifirla"]
     private static let questionWords: Set<String> = ["ne", "neler", "neleri", "nedir"]
@@ -23,7 +22,8 @@ public enum MemoryIntent: Equatable, Sendable {
         if language == .english { return EnglishMemoryIntent.parse(command) }
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         if words.contains(where: { $0.hasPrefix("hatirlat") }) { return nil }
-        let mentionsMemory = words.contains { $0.hasPrefix("hafiza") }
+        // "Hafızanda", "hafızanı": the assistant's; "Mac'in hafızası ne kadar dolu" asks about the computer.
+        let mentionsMemory = words.contains { $0.hasPrefix("hafizan") || $0.hasPrefix("hafizada") }
         let asks = words.contains(where: questionWords.contains)
         if (words.contains("hatirliyorsun") && asks) || (words.contains("hakkimda") && words.contains("biliyorsun"))
             || (mentionsMemory && asks) {
@@ -32,6 +32,7 @@ public enum MemoryIntent: Equatable, Sendable {
         if words.contains(where: forgetWords.contains) || (mentionsMemory && words.contains(where: clearVerbs.contains)) {
             return .forget
         }
+        if isReminder(words) { return nil }
         if words.contains(where: rememberWords.contains) || containsPhrase(words, "aklinda", ["tut", "olsun", "tutar"]) {
             return .remember
         }
@@ -70,6 +71,22 @@ public enum MemoryIntent: Equatable, Sendable {
         }
         let fact = kept.joined(separator: " ").trimmingCharacters(in: .whitespaces.union(.punctuationCharacters))
         return fact.isEmpty ? nil : fact
+    }
+
+    /// Where a fact says "-dığını" or "-acağını": "kahvemi şekersiz içtiğimi unutma".
+    private static let factEndings = ["digi", "dugu", "tigi", "tugu", "acagi", "ecegi"]
+    private static let timeWords = [
+        "bugun", "yarin", "aksam", "sabah", "ogle", "gece", "hafta", "pazartesi", "sali", "carsamba", "persembe", "cuma",
+        "pazar", "saat", "dakika",
+    ]
+
+    /// "Yarın toplantıyı unutma", "ilacımı içmeyi unutma": something to be reminded of, not a fact to keep.
+    private static func isReminder(_ words: [String]) -> Bool {
+        guard let index = words.firstIndex(where: dontForgetWords.contains) else { return false }
+        let object = index > 0 ? words[index - 1] : ""
+        if fillerWords.contains(object) || factEndings.contains(where: object.contains) { return false }
+        if object.hasSuffix("mayi") || object.hasSuffix("meyi") { return true }
+        return words.contains { word in timeWords.contains(where: word.hasPrefix) }
     }
 
     private static func containsPhrase(_ words: [String], _ first: String, _ seconds: Set<String>) -> Bool {

@@ -221,19 +221,30 @@ struct ReadSelectionTool: AssistantTool {
         }
     }
 
-    /// Asks Accessibility first; apps that don't expose the selection get ⌘C, and the clipboard is restored.
+    /// Asks Accessibility first; apps that don't expose the selection get ⌘C, and the clipboard is restored
+    /// with every item and type it held (an image or a file, not only text).
     @MainActor
     private static func selection() async throws -> String? {
         if let text = try AccessibilityControl.selectedText(), !text.isEmpty { return text }
         let pasteboard = NSPasteboard.general
-        let saved = pasteboard.string(forType: .string)
+        let saved = (pasteboard.pasteboardItems ?? []).map(copy)
         let before = pasteboard.changeCount
         AccessibilityControl.copySelection()
         try await Task.sleep(for: .milliseconds(250))
         guard pasteboard.changeCount != before else { return nil }
         let copied = pasteboard.string(forType: .string)
         pasteboard.clearContents()
-        if let saved { pasteboard.setString(saved, forType: .string) }
+        if !saved.isEmpty { pasteboard.writeObjects(saved) }
         return copied
+    }
+
+    /// Items belong to one pasteboard, so the data is copied into new ones before it is cleared.
+    @MainActor
+    private static func copy(_ item: NSPasteboardItem) -> NSPasteboardItem {
+        let copy = NSPasteboardItem()
+        for type in item.types {
+            if let data = item.data(forType: type) { copy.setData(data, forType: type) }
+        }
+        return copy
     }
 }

@@ -33,4 +33,12 @@ struct ScriptErrorOutputTests {
     func rejected(output: String) {
         #expect(ScriptErrorOutput.parse(output) == nil)
     }
+
+    @Test("common error codes have a meaning", arguments: [
+        (-1743, ScriptErrorOutput.Reason.notAuthorized), (-1712, .timedOut), (-600, .appNotRunning), (-609, .appNotRunning),
+        (-1728, .notFound), (-1719, .notFound), (-10004, .notPermitted), (-2753, .other),
+    ])
+    func reasons(code: Int, expected: ScriptErrorOutput.Reason) {
+        #expect(ScriptErrorOutput.reason(for: code) == expected)
+    }
 }

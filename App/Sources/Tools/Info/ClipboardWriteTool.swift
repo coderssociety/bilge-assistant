@@ -8,6 +8,8 @@ final class ConversationContext {
     var lastReply: String?
     /// What was on screen when the current command was heard, read only for commands that point ("bunu").
     var screen: ScreenContext?
+    /// What the last tool read, in parts, for "devamını oku" and questions about it.
+    var reading: ContinuedReading?
 }
 
 struct CopyToClipboardTool: AssistantTool {

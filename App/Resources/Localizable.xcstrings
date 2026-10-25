@@ -22,16 +22,6 @@
         }
       }
     },
-    " Bunlardan başka %lld etkinlik daha var.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": " There are %lld more."
-          }
-        }
-      }
-    },
     " bölü ": {
       "localizations": {
         "en": {
@@ -980,6 +970,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't find a place called '%@'."
+          }
+        }
+      }
+    },
+    "'%@' dosyasını okuyamıyorum; PDF, Word, metin ve CSV belgelerini okuyabilirim. PDF olarak dışa aktarırsan okurum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't read '%@'; I can read PDF, Word, text and CSV documents. If you export it as a PDF, I'll read it."
           }
         }
       }
@@ -2102,6 +2102,16 @@
         }
       }
     },
+    "Devamı var; istersen “devam et” de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's more; say “continue” if you want it."
+          }
+        }
+      }
+    },
     "Dikkat, bu adım okuduğum bir içeriğe dayanıyor.": {
       "localizations": {
         "en": {
@@ -2480,6 +2490,16 @@
           "stringUnit": {
             "state": "new",
             "value": "Ekledim: %1$@, %2$@."
+          }
+        }
+      }
+    },
+    "Ekran görüntüsü almak için Ekran Kaydı izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Ekran ve Sistem Sesi Kaydı'ndan Bilge'ye izin ver.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To take a screenshot, I need Screen Recording permission. Allow Bilge in System Settings > Privacy & Security > Screen & System Audio Recording."
           }
         }
       }
@@ -3326,6 +3346,26 @@
         }
       }
     },
+    "İndirilenler'de bu türde bir dosya yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no file of that kind in Downloads."
+          }
+        }
+      }
+    },
+    "İstenen şey uygulamada bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app couldn't find what was asked for."
+          }
+        }
+      }
+    },
     "Kadın %@": {
       "localizations": {
         "en": {
@@ -3436,12 +3476,12 @@
         }
       }
     },
-    "Kestirmeler okunamadı. %@": {
+    "Kestirmeler okunamadı.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't read your shortcuts. %@"
+            "value": "Couldn't read your shortcuts."
           }
         }
       }
@@ -4202,6 +4242,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unread emails: "
+          }
+        }
+      }
+    },
+    "Okuyacak başka bir şey kalmadı, hepsini okudum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's nothing more to read; that was all of it."
           }
         }
       }
@@ -5454,6 +5504,26 @@
         }
       }
     },
+    "Uygulama bu işleme izin vermedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app didn't allow this."
+          }
+        }
+      }
+    },
+    "Uygulama bu komutu yerine getiremedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app couldn't carry out this command."
+          }
+        }
+      }
+    },
     "Uygulama her açıldığında dinlemeye başla": {
       "localizations": {
         "en": {
@@ -5470,6 +5540,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The app didn't respond in time."
+          }
+        }
+      }
+    },
+    "Uygulama çalışmıyor ya da yanıt veremeden kapandı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app isn't running, or it quit before it could answer."
           }
         }
       }
@@ -5504,12 +5584,12 @@
         }
       }
     },
-    "Wi-Fi değiştirilemedi. %@": {
+    "Wi-Fi değiştirilemedi.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't change Wi-Fi. %@"
+            "value": "Couldn't change Wi-Fi."
           }
         }
       }

@@ -24,17 +24,20 @@ enum WiFiControl {
     static func setPower(_ on: Bool) async throws {
         guard let device = await device() else { throw WiFiError.noDevice }
         let output = try await ProcessRunner.run(tool, ["-setairportpower", device, on ? "on" : "off"])
-        guard output.status == 0 else { throw WiFiError.failed(output.standardError) }
+        guard output.status == 0 else {
+            Log.tools.error("networksetup failed (\(output.status)): \(output.standardError)")
+            throw WiFiError.failed
+        }
     }
 
     enum WiFiError: LocalizedError {
         case noDevice
-        case failed(String)
+        case failed
 
         var errorDescription: String? {
             switch self {
             case .noDevice: String(localized: "Bu Mac'te Wi-Fi bulunamadı.")
-            case let .failed(detail): String(localized: "Wi-Fi değiştirilemedi. \(detail)")
+            case .failed: String(localized: "Wi-Fi değiştirilemedi.")
             }
         }
     }

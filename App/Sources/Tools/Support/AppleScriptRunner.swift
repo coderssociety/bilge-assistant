@@ -3,22 +3,24 @@ import Foundation
 
 enum AppleScriptError: LocalizedError {
     case compilationFailed
-    case executionFailed(code: Int, message: String)
+    case executionFailed(code: Int)
     case processFailed(status: Int32)
 
-    static let notAuthorizedCode = -1743
-    static let timedOutCode = -1712
-
+    /// Spoken, so never osascript's English message; that goes to the log.
     var errorDescription: String? {
         switch self {
         case .compilationFailed:
             String(localized: "Betik derlenemedi.")
-        case let .executionFailed(code, _) where code == Self.timedOutCode:
-            String(localized: "Uygulama zamanında yanıt vermedi.")
-        case let .executionFailed(code, _) where code == Self.notAuthorizedCode:
-            String(localized: "Bu uygulamayı kontrol etme izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon'dan izin verilmeli.")
-        case let .executionFailed(_, message):
-            message
+        case let .executionFailed(code):
+            switch ScriptErrorOutput.reason(for: code) {
+            case .notAuthorized:
+                String(localized: "Bu uygulamayı kontrol etme izni yok. Sistem Ayarları > Gizlilik ve Güvenlik > Otomasyon'dan izin verilmeli.")
+            case .timedOut: String(localized: "Uygulama zamanında yanıt vermedi.")
+            case .appNotRunning: String(localized: "Uygulama çalışmıyor ya da yanıt veremeden kapandı.")
+            case .notFound: String(localized: "İstenen şey uygulamada bulunamadı.")
+            case .notPermitted: String(localized: "Uygulama bu işleme izin vermedi.")
+            case .other: String(localized: "Uygulama bu komutu yerine getiremedi.")
+            }
         case .processFailed:
             String(localized: "Uygulama zamanında yanıt vermedi.")
         }
@@ -71,7 +73,8 @@ enum AppleScriptRunner {
             Log.tools.error("AppleScript did not compile: \(failure.message)")
             return .compilationFailed
         case .execution:
-            return .executionFailed(code: failure.code, message: failure.message)
+            Log.tools.error("AppleScript failed (\(failure.code)): \(failure.message)")
+            return .executionFailed(code: failure.code)
         }
     }
 }

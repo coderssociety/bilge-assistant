@@ -22,6 +22,24 @@ struct AgentTests {
         #expect(CompoundCommand.split(text) == nil)
     }
 
+    @Test("keeps a message, note or reminder whole when its text holds a sequence word", arguments: [
+        "Ayşe'ye ekmek al ve eve gel yaz", "Ahmet'e işten daha sonra çıkacağımı mesaj at",
+        "Elif'e toplantıyı bitir ve sonra ara diye mail atar mısın", "yarın sabah ekmek al ve faturayı öde diye hatırlat",
+        "markete git ve süt al diye not al",
+    ])
+    func keepsMessages(text: String) {
+        #expect(CompoundCommand.split(text) == nil)
+    }
+
+    @Test("splits off a message that names its own recipient", arguments: [
+        ("Ahmet'in numarasını bul ve ona mesaj at", ["Ahmet'in numarasını bul", "ona mesaj at"]),
+        ("Safari'yi aç ve sonra Ahmet'e geliyorum yaz", ["Safari'yi aç", "Ahmet'e geliyorum yaz"]),
+        ("müziği durdur ve bana yarın toplantıyı hatırlat", ["müziği durdur", "bana yarın toplantıyı hatırlat"]),
+    ])
+    func splitsAddressedMessages(text: String, expected: [String]) {
+        #expect(CompoundCommand.split(text) == expected)
+    }
+
     @Test("parses planner replies")
     func steps() {
         #expect(AgentStep.parse(#"{"tool": "openApp", "arguments": {"appName": "Safari"}}"#)

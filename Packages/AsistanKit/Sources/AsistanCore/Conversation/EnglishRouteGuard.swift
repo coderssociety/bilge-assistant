@@ -24,6 +24,7 @@ public enum EnglishRouteGuard {
     private static let playbackWords: Set<String> = ["next", "previous", "skip", "pause", "resume"]
     private static let selectionWords: Set<String> = ["selected", "highlighted", "selection"]
     private static let stopWords: Set<String> = ["stop", "cancel", "delete", "clear", "remove", "turn"]
+    private static let readWords: Set<String> = ["read", "summarize", "summarise", "say", "says", "content", "contents"]
 
     public static func review(action: String, command: String, previousAction: String? = nil) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
@@ -40,7 +41,7 @@ public enum EnglishRouteGuard {
             return "windowControl"
         case "setTimer":
             // Timers live in the app and fire only today.
-            let reminds = words.contains { $0.hasPrefix("remind") }
+            let reminds = words.contains { $0.hasPrefix("remind") || $0 == "forget" }
             let otherDay = words.contains(where: otherDayWords.contains)
             let hasTime = words.contains { word in word.contains(where: \.isNumber) || timeWords.contains(where: word.hasPrefix) }
             return reminds && (otherDay || !hasTime) ? "addReminder" : action
@@ -57,6 +58,8 @@ public enum EnglishRouteGuard {
         case "openApp":
             let searches = words.contains { $0 == "search" || $0 == "find" } && words.contains(where: searchWords.contains)
             return searches ? "searchWeb" : action
+        case "files":
+            return words.contains(where: readWords.contains) ? "readDocument" : action
         case "readCalendar":
             let opensApp = words.first.map(openVerbs.contains) == true && !words.contains(where: questionWords.contains)
             return opensApp ? "openApp" : action

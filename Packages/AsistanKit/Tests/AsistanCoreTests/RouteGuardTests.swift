@@ -110,12 +110,22 @@ struct RouteGuardTests {
         ("Yarın sabah süt almayı hatırlat", "setTimer", "addReminder"),
         ("Süt almayı unutma diye hatırlat", "setTimer", "addReminder"),
         ("Pazartesi faturayı ödememi hatırlat", "setTimer", "addReminder"),
+        ("yarın toplantıyı unutma", "setTimer", "addReminder"),
         ("20 dakika sonra çayı hatırlat", "setTimer", "setTimer"),
         ("20:00 ilacımı hatırlat", "setTimer", "setTimer"),
         ("10 dakikalık zamanlayıcı kur", "setTimer", "setTimer"),
     ])
     func reminderDay(command: String, action: String, expected: String) {
         #expect(RouteGuard.review(action: action, command: command) == expected)
+    }
+
+    @Test("reading a file is readDocument, opening it stays files", arguments: [
+        ("son indirdiğim PDF'i özetle", "readDocument"), ("indirdiğim belgede ne yazıyor", "readDocument"),
+        ("son indirilen dosyayı oku", "readDocument"), ("raporun içeriğini anlat", "readDocument"),
+        ("son indirdiğim PDF'i aç", "files"), ("Belgeler klasörünü göster", "files"),
+    ])
+    func readsFile(command: String, expected: String) {
+        #expect(RouteGuard.review(action: "files", command: command) == expected)
     }
 
     @Test("undo is never taken for quitting an app")

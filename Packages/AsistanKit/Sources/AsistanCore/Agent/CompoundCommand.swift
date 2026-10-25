@@ -41,9 +41,44 @@ public enum CompoundCommand {
             index += 1
         }
         parts.append(current)
+        if let last = parts.last, isMessageContent(last) { return nil }
         let commands = parts.map { $0.joined(separator: " ").trimmingCharacters(in: .punctuationCharacters.union(.whitespaces)) }
         guard commands.count >= 2, commands.allSatisfy({ $0.split(separator: " ").count >= minimumPartWords }) else { return nil }
         return commands
+    }
+
+    private static let questionParticles: Set<String> = ["mi", "misin", "musun", "misiniz", "musunuz", "lutfen"]
+    private static let writeVerbs: Set<String> = ["yaz", "yazar", "yazsana", "yazin", "yazabilir"]
+    private static let sendVerbs: Set<String> = [
+        "at", "atar", "atsana", "atabilir", "gonder", "gonderir", "gondersene", "gonderebilir", "yolla", "yollar",
+        "yollasana", "yollayabilir", "cek", "ceker", "cekebilir",
+    ]
+    private static let messageNouns = ["mesaj", "mail", "eposta", "e posta", "sms", "whatsapp"]
+    private static let noteVerbs: Set<String> = ["al", "alir", "alsana", "alabilir", "et", "eder", "etsene", "edebilir"]
+    private static let ownTargets: Set<String> = ["bana", "bize", "kendime"]
+
+    /// Turkish puts the verb last, so a message, note or reminder ends with its verb and its text may itself
+    /// hold "ve <verb>" or "daha sonra": "Ayşe'ye ekmek al ve eve gel yaz". The last part is a command of its
+    /// own only when it names whom it is for ("…bul ve ona mesaj at", "…aç ve Ahmet'e mesaj at").
+    private static func isMessageContent(_ tokens: [String]) -> Bool {
+        let folded = tokens.map { TurkishText.folded($0) }
+        let words = Array(folded.reversed().drop(while: questionParticles.contains).reversed())
+        guard let verb = words.last else { return false }
+        let object = words.dropLast().last ?? ""
+        let endsWithRequest = verb.hasPrefix("hatirlat") || writeVerbs.contains(verb)
+            || (sendVerbs.contains(verb) && messageNouns.contains(where: object.hasPrefix))
+            || (noteVerbs.contains(verb) && object.hasPrefix("not"))
+        guard endsWithRequest else { return false }
+        let namesTarget = tokens.contains(where: isAddressee)
+            || folded.contains { references.contains($0) || ownTargets.contains($0) }
+        return !namesTarget
+    }
+
+    /// "Ahmet'e", "Can'a": a name in the dative, which Turkish writes after an apostrophe.
+    private static func isAddressee(_ token: String) -> Bool {
+        let pieces = token.lowercased().split(whereSeparator: { $0 == "'" || $0 == "’" })
+        guard pieces.count == 2 else { return false }
+        return ["e", "a", "ye", "ya", "ne", "na"].contains(pieces[1].trimmingCharacters(in: .punctuationCharacters))
     }
 
     private static let references: Set<String> = [
