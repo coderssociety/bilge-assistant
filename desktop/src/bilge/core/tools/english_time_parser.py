@@ -35,6 +35,7 @@ _DATES = (
     (re.compile(_MONTH + r"\s+(\d{1,2})(?:st|nd|rd|th)?\b"), 2, 1),
     (re.compile(r"\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?" + _MONTH + r"\b"), 1, 2),
 )
+_LAST_SMALL_HOUR = 5
 PART_OF_DAY_WORDS = frozenset(["morning", "afternoon", "evening", "night", "tonight", "noon", "midnight"])
 
 _CLOCK = re.compile(r"\b(\d{1,2}):(\d{2})\s*(?:([ap])\.?\s*m\b)?")
@@ -116,7 +117,12 @@ def _clock_time(text: str, appointment: bool) -> tuple[int, int] | None:
     hour = _bare_hour(words)
     if hour is None:
         return None
-    evening = "evening" in words or "tonight" in words or "night" in words
+    if "morning" in words:
+        return hour, 0
+    if "night" in words:
+        # "at 12 at night" is midnight and "at 2 at night" the small hours; "at 9 at night" is 21:00.
+        return (0 if hour == 12 else hour if hour <= _LAST_SMALL_HOUR else hour + 12), 0
+    evening = "evening" in words or "tonight" in words
     afternoon = (appointment and hour < 7) or (evening and hour < 12)
     return (hour + 12 if afternoon else hour), 0
 
