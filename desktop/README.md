@@ -140,20 +140,22 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 | | Examples | On Linux | On Windows |
 |---|---|---|---|
 | Apps | “Firefox'u aç”, “hesap makinesini kapat”, “açık uygulamalar neler” | menu entries, `gio` | the Start menu |
-| Sound | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor” | `wpctl`, `pactl` or `amixer`; MPRIS players | Core Audio; the system media controls |
+| Sound | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor”, “30 saniye ileri sar”, “karışık çal” | `wpctl`, `pactl` or `amixer`; MPRIS players | Core Audio; the system media controls |
 | Files | “kira sözleşmesini bul”, “son indirdiğim PDF'i özetle”, “eski faturayı çöpe at” | the freedesktop trash | the Recycle Bin |
 | Typing | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` or `ydotool` (Wayland) | built in |
 | Calendar | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “süt almayı işaretle” | CalDAV or an iCal address | the same, or Outlook |
 | Spreadsheet | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel or LibreOffice Calc |
 | Mail | “okunmamış e-postalarım”, “içeriğini oku”, “Ahmet'e yarın geleceğimi yaz” | | Outlook |
 | System | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` or Plasma, `nmcli`, the desktop's screenshot tool | built in |
+| Screen and power | “parlaklığı yüzde 50 yap”, “rahatsız etmeyini aç”, “Bluetooth'u kapat”, “bilgisayarı yeniden başlat” | GNOME or Plasma, `brightnessctl` or `ddcutil`; `bluetoothctl` or `rfkill`; `systemctl` | WMI (laptop screens); the radio switch; `shutdown` (Do Not Disturb has no API: Bilge says to press Win+N) |
+| Conversions and world time | “10 mil kaç kilometre”, “2 litre kaç bardak”, “Tokyo'da saat kaç”, “New York ile aramızda kaç saat fark var” | built in | built in |
 | Clipboard | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” | `wl-clipboard`, `xclip` or `xsel` | built in |
 | News | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı, TRT Haber, BBC Türkçe (BBC News, The Guardian, NPR in English); “aç” also opens the story in the browser | the same |
 | Translation | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | the voice speaks 31 languages | the same |
 | Other | timers and alarms, opening sites and searches, the daily briefing | | |
 
-Moving files to the trash, closing apps, writing over a filled cell, adding to the calendar or turning Wi-Fi off
-asks first, and so does anything that could carry text Bilge has read somewhere else. An e-mail is read out, with the
+Moving files to the trash, closing apps, writing over a filled cell, adding to the calendar, turning Wi-Fi or
+Bluetooth off, restarting, shutting down or logging out asks first, and so does anything that could carry text Bilge has read somewhere else. An e-mail is read out, with the
 address it goes to, before it is sent. Typing is refused in terminals,
 code editors, remote desktops, virtual machines and password managers. GNOME on Wayland doesn't tell other
 programs which window is in front, so there Bilge asks before typing.
