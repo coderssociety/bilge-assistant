@@ -46,8 +46,8 @@ def _tool_and_arguments(intent: q.QuickIntent | None) -> tuple[str, dict] | None
             return "readClipboard", {}
         case q.OpenFolder(folder=folder):
             return "files", {"action": "openFolder", "folder": folder.value}
-        case q.Timers(action=action):
-            return "manageTimers", {"action": action.value}
+        case q.Timers(action=action, label=label):
+            return "manageTimers", {"action": action.value, **({"label": label} if label else {})}
         case q.OpenApp(name=name):
             return "openApp", {"appName": name}
         case q.QuitApp(name=name):

@@ -2,6 +2,7 @@ import pytest
 
 from bilge.core.conversation import quick_intent_parser
 from bilge.core.conversation.quick_intent_parser import (
+    Alarm,
     Battery,
     Calculate,
     Calendar,
@@ -82,6 +83,14 @@ def parse(text: str) -> QuickIntent | None:
         ("Bütün alarmları kapat", Timers(TimerAction.CANCEL_ALL)),
         ("zamanlayıcıları iptal et", Timers(TimerAction.CANCEL_ALL)),
         ("kurulu zamanlayıcılar neler", Timers(TimerAction.LIST)),
+        ("çay zamanlayıcısını iptal et", Timers(TimerAction.CANCEL, "çay")),
+        ("alarmı iptal et", Timers(TimerAction.CANCEL)),
+        ("zamanlayıcıyı kapat", Timers(TimerAction.CANCEL)),
+        ("kaç dakika kaldı", Timers(TimerAction.REMAINING)),
+        ("sekize çeyrek kala alarm kur", Alarm(hour=7, minute=45)),
+        ("dokuzu çeyrek geçe uyandır", Alarm(hour=9, minute=15)),
+        ("bir buçuk saat sonra uyar", Timer(seconds=5400)),
+        ("üç çeyrek saat sonra uyar", Timer(seconds=2700)),
         ("Kopyaladığım metni okur musun", Clipboard()),
         ("panodaki yazıyı oku", Clipboard()),
     ],
@@ -93,6 +102,8 @@ def test_recognizes_everyday_commands_without_the_model(command, expected):
 @pytest.mark.parametrize(
     "command",
     [
+        "saat yedi alarmını iptal et",  # a time, not a label
+        "çay alarmı iptal et",
         "Yirmi dakika sonra çayı hatırlat",  # has a label
         "Yarın saat onda diş hekimi randevusu ekle",  # writes to calendar
         "İndirilenler klasöründeki faturayı aç",  # a file, not the folder

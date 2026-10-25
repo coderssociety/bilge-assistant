@@ -28,6 +28,17 @@ def fire_date(
     return now + timedelta(seconds=duration)
 
 
+def nearer_half_day(hour: int, minute: int, now: datetime, tz: tzinfo | None = None) -> int:
+    """For a clock time said without a part of the day ("sekize çeyrek kala"): of the morning and the evening
+    reading, the hour that comes first."""
+    other = (hour + 12) % 24
+    first = fire_date(None, None, hour, minute, now, tz)
+    second = fire_date(None, None, other, minute, now, tz)
+    if first is None or second is None:
+        return hour
+    return hour if first <= second else other
+
+
 def clean_label(label: str | None) -> str | None:
     trimmed = label.strip() if label is not None else ""
     if not trimmed:

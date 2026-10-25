@@ -125,6 +125,8 @@ def _desktop_tools(
     dictation = typing.DictationSession(found.keyboard, language)
     sheet = spreadsheet.SpreadsheetSession(language)
     sheet_tool = spreadsheet.SpreadsheetTool(_spreadsheet_apps(LibreOfficeCalc(Runner())), sheet, language)
+    timer_service = timers.TimerService(alert, language, store=config.data_dir() / "timers.json")
+    timer_service.restore()
     tools = [
         *apps.app_tools(apps.AppCatalog(found.apps), language),
         sound.volume_tool(found.volume, language),
@@ -135,7 +137,7 @@ def _desktop_tools(
         typing.start_dictation_tool(dictation, language),
         *files.file_tools(found.folders, found.opener, language),
         *web.web_tools(found.opener, language),
-        *timers.timer_tools(timers.TimerService(alert, language), language),
+        *timers.timer_tools(timer_service, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
         *_office_tools(language),
     ]

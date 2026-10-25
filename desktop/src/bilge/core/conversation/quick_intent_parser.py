@@ -55,7 +55,9 @@ class Folder(StrEnum):
 
 class TimerAction(StrEnum):
     LIST = "list"
+    CANCEL = "cancel"
     CANCEL_ALL = "cancelAll"
+    REMAINING = "remaining"
 
 
 class WindowAction(StrEnum):
@@ -122,6 +124,7 @@ class OpenFolder:
 @dataclass(frozen=True)
 class Timers:
     action: TimerAction
+    label: str | None = None
 
 
 @dataclass(frozen=True)
@@ -237,6 +240,9 @@ def parse(text: str) -> QuickIntent | None:
         intent = rule(words)
         if intent is not None:
             return intent
+    intent = _one_timer(words, kept)
+    if intent is not None:
+        return intent
     intent = mac_quick_intents.parse(words)
     if intent is not None:
         return intent
@@ -488,13 +494,40 @@ def _timers(w: list[str]) -> QuickIntent | None:
             return Timers(TimerAction.CANCEL_ALL)
         if verb in (["listele"], ["oku"]):
             return Timers(TimerAction.LIST)
+    if w in _TIMER_REMAINING_PHRASES:
+        return Timers(TimerAction.REMAINING)
     return Timers(TimerAction.LIST) if w in _TIMER_LIST_PHRASES else None
+
+
+_TIMER_REMAINING_PHRASES = (
+    ["kac", "dakika", "kaldi"], ["zamanlayicida", "ne", "kadar", "kaldi"], ["zamanlayicida", "kac", "dakika", "kaldi"],
+    ["alarma", "ne", "kadar", "kaldi"], ["alarma", "kac", "dakika", "kaldi"],
+    ["zamanlayicinin", "bitmesine", "ne", "kadar", "kaldi"],
+)  # fmt: skip
+_ONE_TIMER_SUBJECTS = frozenset({"zamanlayicisini", "zamanlayiciyi", "alarmini", "alarmi"})
+_MAX_TIMER_LABEL_WORDS = 2
+
+
+def _one_timer(w: list[str], original: list[str]) -> QuickIntent | None:
+    """ "çay zamanlayıcısını iptal et", "alarmı iptal et": one timer, named by its label or the only one set."""
+    for verb in _CANCEL_VERBS:
+        size = len(verb) + 1
+        if len(w) <= len(verb) or w[-len(verb) :] != verb or w[-size] not in _ONE_TIMER_SUBJECTS:
+            continue
+        label_words = original[: len(w) - size]
+        if len(label_words) > _MAX_TIMER_LABEL_WORDS or any(_leading_number(word) is not None for word in label_words):
+            return None
+        if label_words and w[-size] in ("zamanlayiciyi", "alarmi"):
+            # "çay alarmı" would be "çay alarmını"; a word before the bare form is something else.
+            return None
+        return Timers(TimerAction.CANCEL, " ".join(label_words) or None)
+    return None
 
 
 _TIMER_TRIGGERS = frozenset({"zamanlayici", "zamanlayicisi", "alarm", "uyar", "uyandir"})
 _TIMER_ALLOWED = _TIMER_TRIGGERS | {
     "dakika", "dakikalik", "saniye", "saniyelik", "saat", "saatlik", "sonra", "kur", "baslat", "ayarla", "beni",
-    "bucuk", "yarin", "bir", "yarim", "ceyrek",
+    "bucuk", "yarin", "bir", "yarim", "ceyrek", "kala", "gece",
 }  # fmt: skip
 
 
