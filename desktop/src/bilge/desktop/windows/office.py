@@ -1,10 +1,11 @@
 """Microsoft Excel and Outlook, driven over COM while they are open. They are never started by Bilge."""
 
+import re
 from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta
 from typing import Any
 
-from bilge import calendars
+from bilge import calendars, mailboxes
 from bilge.core.spreadsheet.cell_reference import CellReference, SpreadsheetNumber, SpreadsheetValue
 from bilge.desktop.calc import MAX_CELLS, CalcError, Location
 from bilge.desktop.windows import com
@@ -16,6 +17,8 @@ MAIL_ITEM, APPOINTMENT_ITEM, TASK_ITEM = 0, 1, 3
 # Outlook writes "no date" as 1 January 4501.
 _NO_DATE_YEAR = 4000
 _SMTP_ADDRESS = "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
+# A name in an Outlook filter keeps only these, so it can't change the filter itself.
+_FILTER_UNSAFE = re.compile(r"[^\w .@-]")
 
 
 class OfficeError(Exception):
@@ -244,6 +247,56 @@ def smtp_address(recipient) -> str | None:
         if "@" in found:
             return found
     return None
+
+
+def sender_filter(name: str) -> str:
+    """Outlook's DASL filter for mail whose sender's name or address contains `name`."""
+    like = "LIKE '%" + _FILTER_UNSAFE.sub("", name).strip().replace("'", "''") + "%'"
+    return '@SQL="urn:schemas:httpmail:fromname" ' + like + ' OR "urn:schemas:httpmail:fromemail" ' + like
+
+
+def _mail_message(item, with_body: bool) -> mailboxes.MailMessage:
+    received = getattr(item, "ReceivedTime", None)
+    # Reports and receipts in the inbox may have no sender.
+    return mailboxes.MailMessage(
+        str(getattr(item, "SenderName", "") or "?"), str(getattr(item, "SenderEmailAddress", "") or ""),
+        str(getattr(item, "Subject", "") or ""), received if isinstance(received, datetime) else None,
+        (getattr(item, "Body", "") or "").strip() if with_body else "", str(getattr(item, "EntryID", "") or ""),
+    )  # fmt: skip
+
+
+class OutlookMailbox:
+    """The inbox of the Outlook that is open."""
+
+    def __init__(self, outlook: Outlook):
+        self.outlook = outlook
+
+    def _guarded(self, action):
+        try:
+            return self.outlook.call(action)
+        except OfficeError as error:
+            reason = "outlook_failed" if error.reason == "failed" else error.reason
+            raise mailboxes.MailError(reason, str(error)) from error
+
+    def unread(self, listed: int, with_bodies: int) -> tuple[int, list[mailboxes.MailMessage]]:
+        def read(app):
+            items = self.outlook.folder(app, INBOX).Items.Restrict("[UnRead] = True")
+            items.Sort("[ReceivedTime]", True)
+            newest = [m for _, m in zip(range(listed), each(items), strict=False)]
+            return int(items.Count), [_mail_message(m, n < with_bodies) for n, m in enumerate(newest)]
+
+        return self._guarded(read)
+
+    def message(self, sender: str, position: int) -> tuple[int, mailboxes.MailMessage | None]:
+        def pick(app):
+            items = self.outlook.folder(app, INBOX).Items
+            if sender:
+                items = items.Restrict(sender_filter(sender))
+            items.Sort("[ReceivedTime]", True)
+            chosen = next((m for n, m in zip(range(position), each(items), strict=False) if n == position - 1), None)
+            return int(items.Count), _mail_message(chosen, True) if chosen is not None else None
+
+        return self._guarded(pick)
 
 
 class OutlookCalendar:

@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from bilge import calendars, config, desktop
+from bilge import calendars, config, desktop, mailboxes
 from bilge.brain.action_log import ActionLog
 from bilge.brain.agent import Agent, Confirmer
 from bilge.brain.routing import Mode, Rule, rule
@@ -23,6 +23,7 @@ from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
+from bilge.tools.builtin.mail import read_mail_tool
 from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.memory_store import MemoryStore
 from bilge.tools.reading import TextReading, continue_reading_tool
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 CALDAV_SECRET = "caldav"
 ICS_SECRET = "calendar-ics"
+IMAP_SECRET = "imap"
 
 
 def models_dir() -> Path:
@@ -52,6 +54,13 @@ def calendar_source(settings: config.CalendarSettings) -> calendars.CalendarSour
         url = config.api_key(ICS_SECRET)
         return calendars.ICSSource(url) if url else None
     return None
+
+
+def mailbox(settings: config.MailSettings) -> mailboxes.Mailbox | None:
+    """The IMAP account; on Windows mail comes from Outlook instead."""
+    if not settings.server:
+        return None
+    return mailboxes.IMAPMailbox(settings.server, settings.username, config.api_key(IMAP_SECRET) or "")
 
 
 def build_agent(
@@ -90,6 +99,8 @@ def build_agent(
         briefing_tool(briefing),
         *calendar_tools(calendar, language, alert=_reminder_alert(alarms) if alarms is not None else None),
     ])  # fmt: skip
+    if sys.platform != "win32":
+        registry.add(read_mail_tool(lambda: mailbox(settings.mail), language))
     rules: list[Rule] = [
         rule("dailyBriefing", briefing.claims),
         rule("news", internet.news_source_rule_claims(language, news_reading)),

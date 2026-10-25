@@ -118,6 +118,44 @@ def test_settings_are_saved_with_keys_in_the_key_store(qapp, isolated, tmp_path)
     assert saved and settings.model.provider == "lmstudio"
 
 
+def test_a_mail_password_is_kept_only_after_the_server_answered(qapp, isolated, tmp_path, monkeypatch):
+    import sys
+
+    from bilge import mailboxes
+    from bilge.app.settings import SettingsWindow
+
+    if sys.platform == "win32":
+        return
+    texts.use(AssistantLanguage.TURKISH)
+    logins = []
+
+    class Server:
+        def __init__(self, server, username, password):
+            logins.append((server, username, password))
+
+        def unread(self, listed, with_bodies):
+            if logins[-1][2] != "doğru":
+                raise mailboxes.MailError("login")
+            return 3, []
+
+    monkeypatch.setattr(mailboxes, "IMAPMailbox", Server)
+    window = SettingsWindow(config.Settings(), tmp_path / "settings.json")
+    page = window.pages["mail"]
+    page.server.setText("imap.example.org")
+    page.user.setText("ayse@example.org")
+    page.secret.setText("yanlış")
+    page.test.click()
+    assert wait(lambda: page.message.text().startswith("Bağlanamadı"), qapp)
+    page.secret.setText("doğru")
+    page.test.click()
+    assert wait(lambda: page.message.text() == "Bağlandı: 3 okunmamış e-posta.", qapp)
+    window.save()
+    assert config.load_settings(tmp_path / "settings.json").mail == config.MailSettings(
+        "imap.example.org", "ayse@example.org"
+    )
+    assert isolated == {"imap": "doğru"}
+
+
 def test_setup_collects_every_choice(qapp, isolated, tmp_path):
     from bilge.app.setup import SetupWizard
 
