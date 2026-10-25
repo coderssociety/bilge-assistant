@@ -11,6 +11,8 @@ struct PodcastTool: RuleRoutedTool {
     /// Long feeds list the newest episodes first; this much holds dozens of them.
     private static let feedBytes = 1_500_000
     private static let feedItems = 60
+    /// An oldest-first feed is read again this far, every item, for the newest episodes at its end.
+    private static let fullFeedBytes = 8_000_000
     private static let newEpisodeDays = 7
 
     @Generable
@@ -40,9 +42,7 @@ struct PodcastTool: RuleRoutedTool {
             guard let show = try await Self.show(named: query, language: language) else {
                 return ToolReply.failure(String(localized: "'\(query)' adında bir podcast bulamadım."))
             }
-            let feed = try await WebFetch.prefix(from: show.feedURL, maxBytes: Self.feedBytes)
-            guard let episode = PodcastEpisodes.latest(RSSHeadlines.items(feed, limit: Self.feedItems)),
-                  let audio = episode.enclosure else {
+            guard let episode = PodcastEpisodes.latest(try await Self.episodes(of: show)), let audio = episode.enclosure else {
                 return ToolReply.failure(String(localized: "\(show.name) podcastinin bölümlerini okuyamadım."))
             }
             if case .checkNew = command { return Self.newEpisodeReply(show: show, episode: episode) }
@@ -64,6 +64,22 @@ struct PodcastTool: RuleRoutedTool {
         ]
         let shows = PodcastSearch.shows(from: try await WebFetch.data(from: components.url!))
         return PodcastSearch.best(shows, for: query)
+    }
+
+    private static func episodes(of show: PodcastShow) async throws -> [RSSHeadlines.Item] {
+        let feed = try await WebFetch.prefix(from: show.feedURL, maxBytes: feedBytes)
+        let items = RSSHeadlines.items(feed, limit: feedItems)
+        guard PodcastEpisodes.mayContinueWithNewer(items, itemLimit: feedItems, bytesRead: feed.count, byteLimit: feedBytes) else {
+            return items
+        }
+        do {
+            return RSSHeadlines.items(try await WebFetch.prefix(from: show.feedURL, maxBytes: fullFeedBytes), limit: .max)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            Log.tools.error("Could not read further into an oldest-first feed: \(error.localizedDescription, privacy: .public)")
+            return items
+        }
     }
 
     private static func newEpisodeReply(show: PodcastShow, episode: RSSHeadlines.Item) -> String {

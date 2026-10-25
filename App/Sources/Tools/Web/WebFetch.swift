@@ -34,6 +34,8 @@ enum WebFetch {
     /// For the whole fetch, redirects included; otherwise five slow hops could take over a minute.
     private static let totalTimeout: Duration = .seconds(25)
     private static let maxBytes = 3_000_000
+    /// A prefix is read on purpose from something larger, like an oldest-first podcast feed read for its end.
+    private static let maxPrefixBytes = 8_000_000
     private static let maxRedirects = 5
     private static let allowedPorts: Set<Int> = [80, 443]
     /// Wikimedia throttles agents that give no contact address (HTTP 429 on its search API).
@@ -66,7 +68,7 @@ enum WebFetch {
     /// The first `maxBytes` of something that may be larger, like a podcast feed with thousands of episodes
     /// whose newest are at the top. The data may end mid-document.
     static func prefix(from url: URL, maxBytes: Int) async throws -> Data {
-        try await fetch(url, maxBytes: min(maxBytes, Self.maxBytes), truncating: true)
+        try await fetch(url, maxBytes: min(maxBytes, maxPrefixBytes), truncating: true)
     }
 
     /// A JSON POST for an API that answers nothing else (YouTube's player). Redirects are not followed.
@@ -117,15 +119,13 @@ enum WebFetch {
         var hints = addrinfo()
         hints.ai_socktype = SOCK_STREAM
         var list: UnsafeMutablePointer<addrinfo>?
-        guard getaddrinfo(host.trimmingCharacters(in: CharacterSet(charactersIn: "[]")), nil, &hints, &list) == 0, let first = list else {
-            throw WebFetchError.unreachable
-        }
+        let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        guard getaddrinfo(bare, nil, &hints, &list) == 0, let first = list else { throw WebFetchError.unreachable }
         defer { freeaddrinfo(list) }
         return sequence(first: first) { $0.pointee.ai_next }.compactMap { info in
             var name = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-            guard getnameinfo(info.pointee.ai_addr, info.pointee.ai_addrlen, &name, socklen_t(name.count), nil, 0, NI_NUMERICHOST) == 0 else {
-                return nil
-            }
+            let found = getnameinfo(info.pointee.ai_addr, info.pointee.ai_addrlen, &name, socklen_t(name.count), nil, 0, NI_NUMERICHOST)
+            guard found == 0 else { return nil }
             return String(cString: name).split(separator: "%").first.map(String.init)
         }
     }
