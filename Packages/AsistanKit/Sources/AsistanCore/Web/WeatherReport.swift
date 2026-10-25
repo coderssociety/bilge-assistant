@@ -29,17 +29,92 @@ public enum WeatherReport {
         return "\(TurkishGrammar.locative(city)) şu an hava \(condition(code: code)), \(rounded(temperature)) derece."
     }
 
-    /// `dayName` is "bugün", "yarın" or a weekday ("today", "tomorrow" or a weekday in English).
+    /// `dayName` is "bugün", "yarın" or a weekday ("today", "tomorrow" or a weekday in English). A low rain
+    /// chance is left out unless the question was about rain.
     public static func daily(city: String, dayName: String, minimum: Double, maximum: Double, code: Int,
-                             rainChance: Int?, language: AssistantLanguage = .turkish) -> String {
+                             rainChance: Int?, mentionRain: Bool = false, language: AssistantLanguage = .turkish) -> String {
         if language == .english {
-            var sentence = "In \(city) \(dayName) it will be \(englishCondition(code: code)), between \(rounded(minimum)) and \(rounded(maximum)) degrees."
-            if let rainChance, rainChance >= 30 { sentence += " There's a \(rainChance) percent chance of rain." }
-            return sentence
+            let sentence = "In \(city) \(dayName) it will be \(englishCondition(code: code)), \(englishRange(minimum, maximum))."
+            return sentence + rainSentence(rainChance, mention: mentionRain, language: language)
         }
-        var sentence = "\(TurkishGrammar.locative(city)) \(dayName) hava \(condition(code: code)), sıcaklık \(rounded(minimum)) ile \(rounded(maximum)) derece arasında."
-        if let rainChance, rainChance >= 30 { sentence += " Yağış ihtimali yüzde \(rainChance)." }
-        return sentence
+        let sentence = "\(TurkishGrammar.locative(city)) \(dayName) hava \(condition(code: code)), \(turkishRange(minimum, maximum))."
+        return sentence + rainSentence(rainChance, mention: mentionRain, language: language)
+    }
+
+    /// The forecast for part of a day: "İzmir'de bugün akşam hava yağmurlu…".
+    public static func partOfDay(city: String, dayName: String, part: WeatherQuestion.PartOfDay, window: HourlyWindow,
+                                 mentionRain: Bool, language: AssistantLanguage = .turkish) -> String {
+        if language == .english {
+            let when = englishMoment(dayName: dayName, part: part)
+            let sentence = "In \(city) \(when) it will be \(englishCondition(code: window.code)), \(englishRange(window.minimum, window.maximum))."
+            return sentence + rainSentence(window.rainChance, mention: mentionRain, language: language)
+        }
+        let sentence = "\(TurkishGrammar.locative(city)) \(dayName) \(turkishName(part)) hava \(condition(code: window.code)), "
+            + "\(turkishRange(window.minimum, window.maximum))."
+        return sentence + rainSentence(window.rainChance, mention: mentionRain, language: language)
+    }
+
+    public struct HourlyWindow: Equatable, Sendable {
+        public let minimum: Double
+        public let maximum: Double
+        /// The most severe weather in the window; WMO codes grow with severity.
+        public let code: Int
+        public let rainChance: Int?
+    }
+
+    /// Summarizes Open-Meteo's hourly arrays, which start at local midnight today, for `hours` of `dayOffset`.
+    public static func window(hours: Range<Int>, dayOffset: Int, temperatures: [Double], codes: [Int],
+                              rainChances: [Int?]) -> HourlyWindow? {
+        let count = min(temperatures.count, codes.count, rainChances.count)
+        let (lower, upper) = (dayOffset * 24 + hours.lowerBound, min(dayOffset * 24 + hours.upperBound, count))
+        guard dayOffset >= 0, lower < upper else { return nil }
+        let indices = lower..<upper
+        guard let minimum = temperatures[indices].min(), let maximum = temperatures[indices].max(), let code = codes[indices].max()
+        else { return nil }
+        return HourlyWindow(minimum: minimum, maximum: maximum, code: code, rainChance: rainChances[indices].compactMap { $0 }.max())
+    }
+
+    private static func turkishRange(_ minimum: Double, _ maximum: Double) -> String {
+        rounded(minimum) == rounded(maximum)
+            ? "sıcaklık \(rounded(maximum)) derece"
+            : "sıcaklık \(rounded(minimum)) ile \(rounded(maximum)) derece arasında"
+    }
+
+    private static func englishRange(_ minimum: Double, _ maximum: Double) -> String {
+        rounded(minimum) == rounded(maximum)
+            ? "\(rounded(maximum)) degrees"
+            : "between \(rounded(minimum)) and \(rounded(maximum)) degrees"
+    }
+
+    private static func rainSentence(_ chance: Int?, mention: Bool, language: AssistantLanguage) -> String {
+        guard let chance, mention || chance >= 30 else { return "" }
+        return language == .english ? " There's a \(chance) percent chance of rain." : " Yağış ihtimali yüzde \(chance)."
+    }
+
+    private static func turkishName(_ part: WeatherQuestion.PartOfDay) -> String {
+        switch part {
+        case .morning: "sabah"
+        case .noon: "öğlen"
+        case .afternoon: "öğleden sonra"
+        case .evening: "akşam"
+        case .night: "gece"
+        }
+    }
+
+    private static func englishMoment(dayName: String, part: WeatherQuestion.PartOfDay) -> String {
+        let name = switch part {
+        case .morning: "morning"
+        case .noon: "around noon"
+        case .afternoon: "afternoon"
+        case .evening: "evening"
+        case .night: "night"
+        }
+        guard dayName == "today" else { return "\(dayName) \(name)" }
+        return switch part {
+        case .noon: "today around noon"
+        case .night: "tonight"
+        default: "this \(name)"
+        }
     }
 
     private static func englishCondition(code: Int) -> String {

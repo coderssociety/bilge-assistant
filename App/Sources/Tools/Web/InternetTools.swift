@@ -2,6 +2,20 @@ import AppKit
 import AsistanCore
 import Foundation
 import FoundationModels
+import Synchronization
+
+/// The city of the last weather answer while the app runs.
+final class WeatherReading: Sendable {
+    private let followUp = Mutex(WeatherFollowUp())
+
+    func recentCity() -> String? {
+        followUp.withLock { $0.city(at: .now) }
+    }
+
+    func remember(city: String) {
+        followUp.withLock { $0.remember(city: city, at: .now) }
+    }
+}
 
 struct WeatherTool: AssistantTool {
     let name = "weather"
@@ -9,6 +23,32 @@ struct WeatherTool: AssistantTool {
     /// Weather questions without a city use the city set in Settings.
     static let defaultCityKey = "weatherCity"
     static let fallbackCity = "İstanbul"
+    var reading = WeatherReading()
+
+    @Generable
+    enum PartOfDay {
+        case morning, noon, afternoon, evening, night
+
+        init(_ part: WeatherQuestion.PartOfDay) {
+            self = switch part {
+            case .morning: .morning
+            case .noon: .noon
+            case .afternoon: .afternoon
+            case .evening: .evening
+            case .night: .night
+            }
+        }
+
+        var part: WeatherQuestion.PartOfDay {
+            switch self {
+            case .morning: .morning
+            case .noon: .noon
+            case .afternoon: .afternoon
+            case .evening: .evening
+            case .night: .night
+            }
+        }
+    }
 
     @Generable
     struct Arguments {
@@ -16,16 +56,24 @@ struct WeatherTool: AssistantTool {
         var city: String?
         @Guide(description: "Kaç gün sonrası: bugün 0, yarın 1; 'şu an' ya da gün söylenmediyse boş bırak", .range(0...6))
         var dayOffset: Int?
+        @Guide(description: "Günün bir bölümü soruluyorsa: sabah, öğlen, öğleden sonra, akşam, gece; yoksa boş bırak")
+        var partOfDay: PartOfDay?
+        @Guide(description: "Yağmur, kar ya da şemsiye soruluyorsa true")
+        var asksAboutRain: Bool?
     }
 
     /// The model once filled in "Ankara" for "Bugün hava nasıl"; a city counts only if it was said.
+    /// Without one, a follow-up ("peki yarın?") stays in the city just asked about.
     func refine(_ arguments: Arguments, command: String) -> Arguments {
-        guard let city = arguments.city?.trimmingCharacters(in: .whitespaces), !city.isEmpty else { return arguments }
+        let focus = WeatherQuestion.focus(in: command, modelDayOffset: arguments.dayOffset, language: AppLanguage.current, now: .now)
+        return Arguments(city: Self.saidCity(arguments.city, in: command) ?? reading.recentCity(), dayOffset: focus.dayOffset,
+                         partOfDay: focus.partOfDay.map(PartOfDay.init), asksAboutRain: focus.asksAboutRain)
+    }
+
+    private static func saidCity(_ city: String?, in command: String) -> String? {
+        guard let city = city?.trimmingCharacters(in: .whitespaces), !city.isEmpty else { return nil }
         let stem = String(TurkishText.folded(city).prefix(max(3, city.count - 1)))
-        let said = TurkishText.folded(command).split(separator: " ").contains { $0.hasPrefix(stem) }
-        var refined = arguments
-        if !said { refined.city = nil }
-        return refined
+        return TurkishText.folded(command).split(separator: " ").contains { $0.hasPrefix(stem) } ? city : nil
     }
 
     private struct Places: Decodable {
@@ -38,6 +86,11 @@ struct WeatherTool: AssistantTool {
             let temperature_2m: Double
             let weather_code: Int
         }
+        struct Hourly: Decodable {
+            let temperature_2m: [Double]
+            let weather_code: [Int]
+            let precipitation_probability: [Int?]
+        }
         struct Daily: Decodable {
             let time: [String]
             let weather_code: [Int]
@@ -46,11 +99,13 @@ struct WeatherTool: AssistantTool {
             let precipitation_probability_max: [Int?]
         }
         let current: Current
+        let hourly: Hourly
         let daily: Daily
     }
 
     func call(arguments: Arguments) async throws -> String {
-        let city = arguments.city?.trimmingCharacters(in: .whitespaces).nilIfEmpty
+        let saidCity = arguments.city?.trimmingCharacters(in: .whitespaces).nilIfEmpty
+        let city = saidCity
             ?? UserDefaults.standard.string(forKey: Self.defaultCityKey)?.nilIfEmpty
             ?? Self.fallbackCity
         do {
@@ -63,21 +118,36 @@ struct WeatherTool: AssistantTool {
             forecast.queryItems = [
                 .init(name: "latitude", value: String(place.latitude)), .init(name: "longitude", value: String(place.longitude)),
                 .init(name: "current", value: "temperature_2m,weather_code"),
+                .init(name: "hourly", value: "temperature_2m,weather_code,precipitation_probability"),
                 .init(name: "daily", value: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"),
                 .init(name: "timezone", value: "auto"), .init(name: "forecast_days", value: "7"),
             ]
             let weather = try await WebFetch.json(Forecast.self, from: forecast.url!)
-            guard let day = arguments.dayOffset, day < weather.daily.time.count else {
-                return WeatherReport.current(city: place.name, temperature: weather.current.temperature_2m, code: weather.current.weather_code,
-                                             language: AppLanguage.current)
-            }
-            let daily = weather.daily
-            return WeatherReport.daily(city: place.name, dayName: Self.dayName(offset: day), minimum: daily.temperature_2m_min[day],
-                                       maximum: daily.temperature_2m_max[day], code: daily.weather_code[day],
-                                       rainChance: daily.precipitation_probability_max[day], language: AppLanguage.current)
+            if let saidCity { reading.remember(city: saidCity) }
+            return Self.report(weather, city: place.name, arguments: arguments)
         } catch {
             return ToolReply.failure(String(localized: "Hava durumu alınamadı. \(error.localizedDescription)"))
         }
+    }
+
+    private static func report(_ weather: Forecast, city: String, arguments: Arguments) -> String {
+        let language = AppLanguage.current
+        let mentionRain = arguments.asksAboutRain == true
+        guard let day = arguments.dayOffset, day < weather.daily.time.count else {
+            return WeatherReport.current(city: city, temperature: weather.current.temperature_2m, code: weather.current.weather_code,
+                                         language: language)
+        }
+        let hourly = weather.hourly
+        if let part = arguments.partOfDay?.part,
+           let window = WeatherReport.window(hours: part.hours, dayOffset: day, temperatures: hourly.temperature_2m,
+                                             codes: hourly.weather_code, rainChances: hourly.precipitation_probability) {
+            return WeatherReport.partOfDay(city: city, dayName: dayName(offset: day), part: part, window: window,
+                                           mentionRain: mentionRain, language: language)
+        }
+        let daily = weather.daily
+        return WeatherReport.daily(city: city, dayName: dayName(offset: day), minimum: daily.temperature_2m_min[day],
+                                   maximum: daily.temperature_2m_max[day], code: daily.weather_code[day],
+                                   rainChance: daily.precipitation_probability_max[day], mentionRain: mentionRain, language: language)
     }
 
     private static func dayName(offset: Int) -> String {

@@ -13,6 +13,7 @@ struct ToolRegistry {
     var spreadsheet = SpreadsheetSession()
     var dictation = DictationSession()
     var news = NewsReading()
+    var weather = WeatherReading()
     var language = AssistantLanguage.turkish
 
     func makeTools() -> [any AssistantTool] {
@@ -55,7 +56,7 @@ struct ToolRegistry {
             WindowTool(),
             TypeTextTool(),
             ReadSelectionTool(),
-            WeatherTool(),
+            WeatherTool(reading: weather),
             ExchangeRateTool(),
             NewsTool(reading: news),
             NewsSourceTool(news: NewsTool(reading: news)),

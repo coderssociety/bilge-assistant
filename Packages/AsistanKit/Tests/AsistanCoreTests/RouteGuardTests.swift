@@ -81,6 +81,13 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "weather", command: command) == expected)
     }
 
+    @Test("a weather follow-up without weather words stays with the weather")
+    func weatherFollowUp() {
+        #expect(RouteGuard.review(action: "weather", command: "peki yarın?", previousAction: "weather") == "weather")
+        #expect(RouteGuard.review(action: "weather", command: "peki yarın?", previousAction: "news") == "conversation")
+        #expect(EnglishRouteGuard.review(action: "weather", command: "what about tomorrow", previousAction: "weather") == "weather")
+    }
+
     @Test("a place to show on a map is a search, not just opening the app")
     func mapSearch() {
         #expect(RouteGuard.review(action: "openApp", command: "Haritalarda Kadıköy'ü göster") == "searchWeb")

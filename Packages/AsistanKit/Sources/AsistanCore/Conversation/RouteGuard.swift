@@ -40,7 +40,8 @@ public enum RouteGuard {
         return "conversation"
     }
 
-    public static func review(action: String, command: String) -> String {
+    /// `previousAction` is the tool of the turn just before, for follow-ups like "peki yarın?" after a weather answer.
+    public static func review(action: String, command: String, previousAction: String? = nil) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.
         if isDictation(words), action != "createNote" { return "typeText" }
@@ -63,7 +64,7 @@ public enum RouteGuard {
         case "weather":
             // "Bana bir tavsiye ver" was once answered with a weather report.
             let aboutWeather = words.contains { word in weatherWords.contains(where: word.hasPrefix) }
-            return aboutWeather ? action : "conversation"
+            return aboutWeather || previousAction == action ? action : "conversation"
         case "openApp":
             // "Haritalarda Kadıköy'ü göster" opened Maps without the place.
             let searches = words.contains { searchVerbs.contains($0) && !openVerbs.contains($0) }

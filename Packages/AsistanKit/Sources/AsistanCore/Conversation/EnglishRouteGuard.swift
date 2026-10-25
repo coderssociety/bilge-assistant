@@ -25,7 +25,7 @@ public enum EnglishRouteGuard {
     private static let selectionWords: Set<String> = ["selected", "highlighted", "selection"]
     private static let stopWords: Set<String> = ["stop", "cancel", "delete", "clear", "remove", "turn"]
 
-    public static func review(action: String, command: String) -> String {
+    public static func review(action: String, command: String, previousAction: String? = nil) -> String {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         // "Type see you tomorrow" was read as a timer because of "tomorrow".
         if isDictation(words), action != "createNote" { return "typeText" }
@@ -52,7 +52,7 @@ public enum EnglishRouteGuard {
             return supported ? action : "runShortcut"
         case "weather":
             let aboutWeather = words.contains { word in weatherWords.contains(where: word.hasPrefix) }
-            return aboutWeather ? action : "conversation"
+            return aboutWeather || previousAction == action ? action : "conversation"
         case "openApp":
             let searches = words.contains { $0 == "search" || $0 == "find" } && words.contains(where: searchWords.contains)
             return searches ? "searchWeb" : action

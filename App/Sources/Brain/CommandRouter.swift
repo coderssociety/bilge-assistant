@@ -85,8 +85,8 @@ final class CommandRouter {
         let response = try await session.respond(to: prompt, schema: decisionSchema, options: options)
         let modelAction = try response.content.value(String.self, forProperty: Self.actionProperty)
         let action = language == .turkish
-            ? RouteGuard.review(action: modelAction, command: resolved)
-            : EnglishRouteGuard.review(action: modelAction, command: resolved)
+            ? RouteGuard.review(action: modelAction, command: resolved, previousAction: previous?.action)
+            : EnglishRouteGuard.review(action: modelAction, command: resolved, previousAction: previous?.action)
         Log.brain.info("Routed to \(action, privacy: .public) (model: \(modelAction, privacy: .public))")
         guard let tool = tools[action] else { return .conversation }
         return try await prepare(tool, prompt: prompt, resolvedCommand: resolved)
