@@ -2,10 +2,13 @@
 so reading what is selected needs no copy shortcut."""
 
 from bilge.desktop.linux.environment import Environment
-from bilge.desktop.process import MissingProgram, Runner
+from bilge.desktop.process import DesktopError, MissingProgram, Runner
 
 _WAYLAND = ("wl-paste", "wl-copy")
 _X11 = ("xclip", "xsel")
+# What wl-paste and xclip print when there is just nothing (or no text) to paste, as opposed to a real failure
+# such as no display to talk to.
+_NOTHING_COPIED = ("nothing is copied", "no selection", "no suitable type", "not available", "target string")
 
 
 class LinuxClipboard:
@@ -37,8 +40,13 @@ class LinuxClipboard:
         else:
             argv = ["xsel", "--primary" if primary else "--clipboard", "--output"]
         done = self._runner.run(argv, timeout=5)
+        if done.ok:
+            return done.stdout
         # An empty clipboard is an error for wl-paste and xclip; for the user it is just nothing.
-        return done.stdout if done.ok else ""
+        message = done.stderr.strip()
+        if any(phrase in message.lower() for phrase in _NOTHING_COPIED):
+            return ""
+        raise DesktopError(f"{argv[0]} could not read the clipboard (exit {done.status}): {message[:200]}")
 
     def write(self, text: str) -> None:
         tool = self._tool()
@@ -48,8 +56,11 @@ class LinuxClipboard:
             argv = ["xclip", "-selection", "clipboard", "-in"]
         else:
             argv = ["xsel", "--clipboard", "--input"]
-        # These stay running to serve the copied text, so their output is not awaited.
-        self._runner.run(argv, input=text, timeout=5, capture=False)
+        # These stay running to serve the copied text, so their output is not awaited; the exit status of the
+        # program started still tells whether it took the text.
+        done = self._runner.run(argv, input=text, timeout=5, capture=False)
+        if not done.ok:
+            raise DesktopError(f"{argv[0]} could not set the clipboard (exit {done.status})")
 
 
 def image_command(runner: Runner, environment: Environment) -> list[str]:

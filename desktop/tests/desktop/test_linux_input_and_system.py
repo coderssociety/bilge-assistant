@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import FrontWindow, ScreenshotArea
 from bilge.desktop.linux import environment
 from bilge.desktop.linux.clipboard import LinuxClipboard
@@ -16,6 +17,8 @@ from bilge.desktop.linux.system import (
     user_dir,
 )
 from bilge.desktop.process import Completed, DesktopError, MissingProgram
+from bilge.tools.base import ToolError
+from bilge.tools.desktop.clipboard import clipboard_tools
 
 from .fakes import FakeRunner
 
@@ -249,3 +252,27 @@ def test_translated_user_folders_come_from_user_dirs(tmp_path):
     environ = {"HOME": str(tmp_path)}
     assert user_dir("DESKTOP", "Desktop", environ) == tmp_path / "Masaüstü"
     assert user_dir("DOWNLOAD", "Downloads", environ) == tmp_path / "Downloads"
+
+
+@pytest.mark.parametrize(
+    "stderr", ["Nothing is copied", "No suitable type of content copied", "Error: target STRING not available"]
+)
+def test_nothing_copied_reads_as_empty(stderr):
+    runner = FakeRunner({"wl-copy", "wl-paste"}, {"wl-paste": Completed(1, "", stderr)})
+    assert LinuxClipboard(runner, GNOME_WAYLAND).read() == ""
+
+
+def test_a_clipboard_program_that_fails_is_an_error_not_an_empty_clipboard():
+    runner = FakeRunner({"xclip"}, {"xclip": Completed(1, "", "Error: Can't open display: (null)")})
+    with pytest.raises(DesktopError, match="open display"):
+        LinuxClipboard(runner, X11).read()
+    runner = FakeRunner({"wl-copy"}, {"wl-copy": Completed(1, "", "")})
+    with pytest.raises(DesktopError):
+        LinuxClipboard(runner, GNOME_WAYLAND).write("metin")
+
+
+def test_the_clipboard_tool_says_reading_failed():
+    runner = FakeRunner({"xclip"}, {"xclip": Completed(1, "", "Error: Can't open display")})
+    tools = {t.name: t for t in clipboard_tools(LinuxClipboard(runner, X11), AssistantLanguage.TURKISH, lambda: None)}
+    with pytest.raises(ToolError, match="Panoyu okuyamadım"):
+        tools["readClipboard"].run({})
