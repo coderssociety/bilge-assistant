@@ -8,11 +8,13 @@ could then reach the router or a service on this machine.
 
 import http.client
 import ipaddress
+import json
 import socket
 import ssl
 import time
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Any
 from urllib.parse import urljoin, urlsplit
 
 from bilge.core.language import AssistantLanguage
@@ -129,6 +131,17 @@ def get(url: str, language: AssistantLanguage = AssistantLanguage.TURKISH, max_b
         time.sleep(RETRY_DELAY_SECONDS)
         response = _follow(url, language, max_bytes)
     return response
+
+
+def get_json(url: str, language: AssistantLanguage = AssistantLanguage.TURKISH) -> Any:
+    """The decoded body of a 200 answer; anything else is a fetch error."""
+    response = get(url, language)
+    if response.status != 200:
+        raise WebFetchError(Reason.STATUS, response.status)
+    try:
+        return json.loads(response.body)
+    except ValueError as error:
+        raise WebFetchError(Reason.UNEXPECTED) from error
 
 
 def _follow(url: str, language: AssistantLanguage, max_bytes: int) -> Response:

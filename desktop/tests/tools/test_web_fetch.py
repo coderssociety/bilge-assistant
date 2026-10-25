@@ -138,3 +138,16 @@ def test_a_failed_page_is_explained_without_english_in_a_turkish_sentence(monkey
     with pytest.raises(ToolError) as caught:
         internet.read_web_page(AssistantLanguage.TURKISH).run({"address": "ornek.com.tr"})
     assert str(caught.value) == "Sayfa açılamadı. Adresi bulamadım; internet bağlantısı çalışıyor mu?"
+
+
+@pytest.mark.parametrize(
+    ("status", "body", "reason"),
+    [(429, b"{}", web_fetch.Reason.STATUS), (200, b"<html>maintenance</html>", web_fetch.Reason.UNEXPECTED)],
+)
+def test_json_is_read_only_from_a_good_answer(monkeypatch, status, body, reason):
+    monkeypatch.setattr(web_fetch, "get", lambda url, language: web_fetch.Response(url, status, "", body))
+    with pytest.raises(web_fetch.WebFetchError) as raised:
+        web_fetch.get_json("https://example.com/data.json")
+    assert raised.value.reason is reason
+    monkeypatch.setattr(web_fetch, "get", lambda url, language: web_fetch.Response(url, 200, "", b'{"ok": 1}'))
+    assert web_fetch.get_json("https://example.com/data.json") == {"ok": 1}

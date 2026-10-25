@@ -1,7 +1,6 @@
 """Data from the internet: weather (Open-Meteo), exchange rates (European Central Bank via Frankfurter), news
 headlines (Anadolu Ajansı / BBC) and reading a web page. None of these need an account or a key."""
 
-import json
 import logging
 import math
 import threading
@@ -31,13 +30,7 @@ FORECAST_DAYS = 7
 
 
 def _json(url: str, language: AssistantLanguage) -> Any:
-    response = web_fetch.get(url, language)
-    if response.status != 200:
-        raise web_fetch.WebFetchError(web_fetch.Reason.STATUS, response.status)
-    try:
-        return json.loads(response.body)
-    except ValueError as error:
-        raise web_fetch.WebFetchError(web_fetch.Reason.UNEXPECTED) from error
+    return web_fetch.get_json(url, language)
 
 
 # How long "peki yarın?" still means the city just asked about.
