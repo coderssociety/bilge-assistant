@@ -10,7 +10,7 @@ from bilge.desktop.base import MediaCommand, NowPlaying
 from bilge.tools import web_fetch
 from bilge.tools.base import ToolError
 from bilge.tools.builtin import podcasts, radio
-from bilge.tools.desktop import playback, sound
+from bilge.tools.desktop import playback, sound, sources
 from bilge.tools.player import PlaybackError
 
 from .fake_player import FakePlayer
@@ -20,12 +20,19 @@ STATION = Source(Kind.RADIO, "Power FM", "https://power.example/live.m3u8", True
 EPISODE = Source(Kind.EPISODE, "Fularsız Entellik", "https://cdn.example/1.mp3", title="Popülizm")
 
 
+SONG = NowPlaying("Spotify", True, "Gülümse")
+PAUSED_SONG = NowPlaying("Spotify", False, "Gülümse")
+
+
 class FakeMedia:
-    def __init__(self):
+    """The desktop player; `now` is None when no player is open."""
+
+    def __init__(self, now=SONG):
+        self.now = now
         self.sent = []
 
     def now_playing(self):
-        return NowPlaying("Spotify", True, "Gülümse")
+        return self.now
 
     def send(self, command):
         self.sent.append(command)
@@ -47,7 +54,7 @@ def playing(source):
 
 
 def test_durdur_stops_the_radio_and_devam_et_tunes_in_again():
-    media, player = FakeMedia(), playing(STATION)
+    media, player = FakeMedia(None), playing(STATION)
     music = sound.music_tool(media, TR, player=player)
     assert music.run({"action": "pause"}) == "Power FM kapatıldı."
     assert player.playback.state is State.PAUSED
@@ -57,7 +64,7 @@ def test_durdur_stops_the_radio_and_devam_et_tunes_in_again():
 
 def test_an_episode_pauses_and_says_its_title_when_asked():
     player = playing(EPISODE)
-    music = sound.music_tool(FakeMedia(), EN, player=player)
+    music = sound.music_tool(FakeMedia(None), EN, player=player)
     assert music.run({"action": "nowPlaying"}) == "Playing Fularsız Entellik: Popülizm"
     assert music.run({"action": "toggle"}) == "Fularsız Entellik is paused."
     assert music.run({"action": "toggle"}) == "Fularsız Entellik is playing again."
@@ -92,7 +99,7 @@ def test_a_station_that_will_not_come_back_is_said():
 
     player.resume = fail
     with pytest.raises(ToolError, match="Power FM yeniden açılamadı. Sunucuya bağlanamadım."):
-        sound.music_tool(FakeMedia(), TR, player=player).run({"action": "play"})
+        sound.music_tool(FakeMedia(None), TR, player=player).run({"action": "play"})
 
 
 def test_seeking_moves_the_episode_and_not_the_desktop_player():
@@ -114,6 +121,77 @@ def test_shuffle_with_the_radio_on_still_reaches_the_desktop_player():
     media.set_shuffle = lambda on: media.sent.append(("shuffle", on)) or "Spotify"
     playback.playback_tool(media, TR, playing(STATION)).run({"action": "shuffleOn"})
     assert media.sent == [("shuffle", True)]
+
+
+def test_a_song_paused_in_the_desktop_player_since_is_what_devam_et_resumes():
+    media, player = FakeMedia(None), playing(STATION)
+    music = sound.music_tool(media, TR, player=player)
+    music.run({"action": "pause"})
+    media.now = PAUSED_SONG
+    assert music.run({"action": "play"}) == "Spotify çalıyor."
+    assert media.sent == [MediaCommand.PLAY] and player.resumed == 0
+
+
+def test_a_paused_episode_does_not_take_a_seek_meant_for_the_desktop_song():
+    media, player = FakeMedia(PAUSED_SONG), playing(EPISODE)
+    player.pause()
+    assert playback.playback_tool(media, TR, player).run({"action": "seek", "seconds": -30}) == (
+        "Spotify 30 saniye geri sarıldı."
+    )
+    assert media.sent == [("seek", -30)] and player.sought == []
+
+
+def test_a_paused_station_has_nothing_to_seek_in():
+    media, player = FakeMedia(None), playing(STATION)
+    player.pause()
+    assert playback.playback_tool(media, TR, player).run({"action": "seek"}) == "Açık bir müzik çalar bulamadım."
+
+
+def test_an_unknown_action_is_refused_and_never_starts_a_paused_player():
+    media, player = FakeMedia(None), playing(EPISODE)
+    player.pause()
+    with pytest.raises(ToolError, match="yapamıyorum"):
+        sound.music_tool(media, TR, player=player).run({"action": "stop"})
+    assert player.playback.state is State.PAUSED and player.resumed == 0 and media.sent == []
+
+
+def test_muzigi_ac_with_the_radio_on_turns_to_the_waiting_song_and_lets_the_station_go():
+    media, player = FakeMedia(PAUSED_SONG), playing(STATION)
+    assert sound.music_tool(media, TR, player=player).run({"action": "play"}) == "Spotify çalıyor."
+    assert media.sent == [MediaCommand.PLAY] and player.playback.state is State.STOPPED
+
+
+def test_muzigi_ac_with_the_radio_on_and_no_song_waiting_says_it_already_plays():
+    media, player = FakeMedia(None), playing(STATION)
+    assert sound.music_tool(media, TR, player=player).run({"action": "play"}) == "Power FM zaten çalıyor."
+    assert player.playback.is_playing
+
+
+def test_the_station_starting_pauses_the_desktop_song_only_once_it_plays():
+    media = FakeMedia()
+    radio_player = sources.TurnTakingPlayer(FakePlayer(), media)
+    radio_player.play(STATION)
+    assert media.sent == [MediaCommand.PAUSE]
+    media.sent.clear()
+    broken = sources.TurnTakingPlayer(FakePlayer(error=PlaybackError()), media)
+    with pytest.raises(PlaybackError):
+        broken.play(STATION)
+    assert media.sent == []
+
+
+def test_a_named_song_lets_the_station_go_and_pauses_an_episode():
+    class Launcher:
+        def has_app(self, service):
+            return False
+
+        def open(self, address):
+            pass
+
+    for source, after in ((STATION, State.STOPPED), (EPISODE, State.PAUSED)):
+        player = playing(source)
+        search = sound.music_search_tool(Launcher(), TR, lambda: "youtube", lambda *_: [], player=player)
+        search.run({"query": "Tarkan"})
+        assert player.playback.state is after
 
 
 @pytest.mark.parametrize(

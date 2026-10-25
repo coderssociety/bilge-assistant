@@ -7,6 +7,7 @@ from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import Media, RepeatMode
 from bilge.desktop.process import DesktopError, NotPossibleHere
 from bilge.tools.base import Tool, ToolError
+from bilge.tools.desktop import sources
 from bilge.tools.desktop.common import choice, failure, int_argument, integer, obj, string_argument
 from bilge.tools.player import Player
 
@@ -80,6 +81,9 @@ def playback_tool(media: Media, language: AssistantLanguage, player: Player | No
     def own(action: PlaybackAction, seconds: int) -> str | None:
         playback = player.playback if player is not None else None
         if playback is None or not playback.is_active or playback.source is None:
+            return None
+        if not playback.is_playing and (playback.source.is_live or sources.desktop_holds_track(media)):
+            # A paused station has nothing to seek in, and a song paused in the desktop player since is the one meant.
             return None
         if playback.source.is_live:
             return texts["live"] if action in (PlaybackAction.SEEK, PlaybackAction.RESTART_TRACK) else None
