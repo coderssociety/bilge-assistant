@@ -190,3 +190,18 @@ def test_a_failing_routine_does_not_stop_the_others(tmp_path):
     clock.now = NOW + timedelta(seconds=15)
     service.check()
     assert ran == ["birinci", "ikinci"]
+
+
+def test_a_routine_carrying_a_listening_mode_command_is_set_up_rather_than_run_now(monkeypatch, tmp_path):
+    from bilge import assembly, desktop
+
+    from .test_meeting_tools import Folders, Provider, Recognizer
+
+    monkeypatch.setattr(desktop, "folders", lambda: Folders(tmp_path))
+    store = routines.RoutineStore(tmp_path / "routines.json")
+    agent = Agent(Provider(), Registry(routines.routine_tools(store, TR)), lambda _: False, TR,
+                  rules=routines.routine_rules(TR))  # fmt: skip
+    assembly._listening_modes(agent, Recognizer(), TR, tmp_path, announce=lambda _: None)
+    for said in ("her pazartesi 10'da toplantıyı kaydet", "her pazartesi 10'da tercüman modunu aç"):
+        assert next(call.name for route in agent.rules if (call := route(said))) == "addRoutine"
+    assert [call.name for route in agent.rules if (call := route("toplantıyı kaydet"))] == ["startMeetingRecording"]

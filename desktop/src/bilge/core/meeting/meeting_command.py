@@ -8,8 +8,14 @@ from bilge.core.language import AssistantLanguage
 from bilge.core.text import folded
 
 _RECORDING_STEMS = ("kayd", "kayit", "record")
-_START_STEMS = ("basla", "baslat")
-_START_WORDS = frozenset({"ac", "al", "start", "begin"})
+# Starting is the whole command, said in these words only: a date, "takvime", "hatırlat" or "sil" around
+# "kaydet" ("yarınki toplantıyı takvime kaydet", "toplantı kaydını sil") means something else.
+_START_MEETING = frozenset({"toplanti", "toplantiyi", "toplantinin", "meeting"})
+_START_RECORDING = frozenset({"kaydet", "kaydetmeye", "kaydetmek", "kaydetsene", "kaydi", "kaydini", "kayda",
+                              "kayit", "kaydina", "record", "recording"})  # fmt: skip
+_START_VERBS = frozenset({"basla", "baslat", "baslar", "baslatir", "baslatsana", "al", "start", "begin"})
+_START_FILLER = frozenset({"bilge", "lutfen", "misin", "bu", "su", "simdi", "hemen", "the", "this", "please", "now",
+                           "can", "could", "you"})  # fmt: skip
 # Whole words only: "toplantıyı bitirelim" said in the meeting must not end the recording.
 _STOP_WORDS = frozenset(
     {"bitir", "durdur", "kapat", "sonlandir", "birak", "kes", "bitti", "stop", "end", "finish", "off", "done"}
@@ -39,13 +45,11 @@ def _recording(words: list[str]) -> bool:
 
 
 def is_start(command: str) -> bool:
-    words = folded(command).split()
-    # "Toplantı kaydını yazıya dök" asks for a recording already made.
-    if not _recording(words) or _STOP_WORDS & set(words) or asks_file_transcription(command):
+    """ "toplantıyı kaydetmeye başla", "toplantıyı kaydet", "kaydı başlat", "start recording the meeting"."""
+    words = set(folded(command).split())
+    if not words <= _START_MEETING | _START_RECORDING | _START_VERBS | _START_FILLER:
         return False
-    meeting = any(word.startswith(("toplanti", "meeting")) for word in words)
-    starts = any(word.startswith(_START_STEMS) for word in words) or bool(_START_WORDS & set(words))
-    return meeting or starts
+    return bool(words & _START_RECORDING) and bool(words & (_START_MEETING | _START_VERBS))
 
 
 def is_stop(said: str, addressed: bool = False) -> bool:

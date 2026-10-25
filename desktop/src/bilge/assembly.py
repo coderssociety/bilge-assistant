@@ -505,7 +505,10 @@ def _listening_modes(agent: Agent, recognizer, language: AssistantLanguage, root
                               language)  # fmt: skip
     for tool in [*meetings.tools(), interpreter.tool()]:
         agent.registry.add(tool)
-    agent.rules = [*meetings.rules(), interpreter.rule(), *agent.rules]
+    # build_agent puts the routine rules first; a routine may carry a meeting command ("her pazartesi 10'da
+    # toplantıyı kaydet"), so they stay ahead of the meeting rules.
+    routine_rules = len(routines.routine_rules(language))
+    agent.rules = [*agent.rules[:routine_rules], *meetings.rules(), interpreter.rule(), *agent.rules[routine_rules:]]
     return interpreter, recorder
 
 
