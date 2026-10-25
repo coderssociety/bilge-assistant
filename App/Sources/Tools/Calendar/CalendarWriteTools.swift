@@ -32,7 +32,7 @@ enum ScheduledMoment {
     static func refine(dayOffset: Int?, hour: Int?, minute: Int?, command: String) -> (dayOffset: Int?, hour: Int?, minute: Int?) {
         let english = AppLanguage.current == .english
         let day = english ? EnglishTimeParser.dayOffset(in: command, now: .now) : RelativeDayParser.dayOffset(in: command, now: .now)
-        if let clock = english ? EnglishTimeParser.parse(command) : TimerPhraseParser.parse(command), let parsedHour = clock.hour {
+        if let clock = english ? EnglishTimeParser.parse(command) : TimerPhraseParser.parse(command, appointment: true), let parsedHour = clock.hour {
             return (day, parsedHour, clock.minute)
         }
         let folded = TurkishText.folded(command)

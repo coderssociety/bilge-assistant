@@ -56,14 +56,14 @@ struct TurkishTimeOfDayTests {
     }
 
     @Test("resolves quarter past and to, with or without a part of day", arguments: [
-        ("sekize çeyrek kala uyandır", "07:45 uyandır"),
-        ("dokuzu çeyrek geçe", "09:15"),
+        ("sekize çeyrek kala uyandır", "7:45 uyandır"),
+        ("dokuzu çeyrek geçe", "9:15"),
         ("akşam dokuzu on geçe", "21:10"),
-        ("altıya beş kala", "05:55"),
+        ("altıya beş kala", "5:55"),
         ("on ikiye yirmi kala", "11:40"),
         ("onu beş geçe", "10:05"),
         ("bire beş kala", "12:55"),
-        ("biri çeyrek geçe", "01:15"),
+        ("biri çeyrek geçe", "1:15"),
         ("akşam sekize çeyrek kala", "19:45"),
         ("gece on ikiyi on geçe", "00:10"),
     ])

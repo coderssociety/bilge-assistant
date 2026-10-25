@@ -36,8 +36,13 @@ public enum TurkishTimeOfDay {
             var hour = total / 60
             // "Bire beş kala" is five to one, not five to midnight.
             if hour == 0, (1...12).contains(saidHour) { hour = 12 }
-            if let part = group(1).map(TurkishText.lowercased), let hour24 = hour24(hour, partOfDay: part) { hour = hour24 }
-            result.replaceSubrange(range, with: String(format: "%02d:%02d", hour, total % 60))
+            // Without a part of the day the hour stays unpadded ("7:45"), marking it as said on a 12-hour clock.
+            var format = "%d:%02d"
+            if let part = group(1).map(TurkishText.lowercased), let hour24 = hour24(hour, partOfDay: part) {
+                hour = hour24
+                format = "%02d:%02d"
+            }
+            result.replaceSubrange(range, with: String(format: format, hour, total % 60))
         }
         return result
     }

@@ -22,13 +22,16 @@ public enum TimerPhraseParser {
     private static let quarters = try! NSRegularExpression(
         pattern: #"(?<!\p{L})(?:(\d+)\s+)?çeyrek(?!\p{L})(\s+saat)?"#, options: .caseInsensitive)
 
-    public static func parse(_ text: String) -> Result? {
+    /// For appointments an unpadded 1-6 o'clock ("3:15", from "üçü çeyrek geçe") is in the afternoon,
+    /// as in `EnglishTimeParser`; alarms take the hour as said.
+    public static func parse(_ text: String, appointment: Bool = false) -> Result? {
         let source = text as NSString
         let range = NSRange(location: 0, length: source.length)
         if let match = clock.firstMatch(in: text, range: range),
            let hour = Int(source.substring(with: match.range(at: 1))),
            let minute = Int(source.substring(with: match.range(at: 2))) {
-            return Result(hour: hour, minute: minute, durationSeconds: nil)
+            let saidOnTwelveHourClock = match.range(at: 1).length == 1 && (1...6).contains(hour)
+            return Result(hour: appointment && saidOnTwelveHourClock ? hour + 12 : hour, minute: minute, durationSeconds: nil)
         }
         var total = 0.0
         for unit in units {

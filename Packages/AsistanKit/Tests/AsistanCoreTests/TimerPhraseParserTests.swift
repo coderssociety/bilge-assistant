@@ -30,6 +30,14 @@ struct TimerPhraseParserTests {
         #expect(TimerPhraseParser.parse(TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(text))) == expected)
     }
 
+    @Test("an appointment at a 12-hour 1-6 o'clock is in the afternoon; padded and alarm times stay")
+    func appointment() {
+        #expect(TimerPhraseParser.parse("3:15 toplantı", appointment: true)?.hour == 15)
+        #expect(TimerPhraseParser.parse("3:15 toplantı")?.hour == 3)
+        #expect(TimerPhraseParser.parse("03:15 toplantı", appointment: true)?.hour == 3)
+        #expect(TimerPhraseParser.parse("9:15 toplantı", appointment: true)?.hour == 9)
+    }
+
     @Test("returns nil when nothing precise is said")
     func nothing() {
         #expect(TimerPhraseParser.parse("çay için zamanlayıcı kur") == nil)
