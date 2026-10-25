@@ -31,10 +31,13 @@ public enum RadioRequest {
         "sitesi", "sitesini", "sayfasi", "sayfasini", "uygulamasi", "uygulamasini", "uygulama", "web", "haberleri", "frekansi",
     ]
     private static let nowPlayingWords: Set<String> = ["caliyor", "acik", "bu", "dinliyorum", "dinliyoruz", "calan", "yayinda"]
+    /// "30 dakika sonra radyoyu kapat" is for later; there is no sleep timer, so it is left to the other tools.
+    private static let delayWords: Set<String> = ["sonra", "kadar", "later", "after"]
+    private static let delayStems = ["dakika", "saniye", "saat", "minute", "second", "hour"]
 
     public static func parse(_ text: String, language: AssistantLanguage = .turkish, stream: StreamState = .idle) -> RadioCommand? {
         let tokens = SpokenToken.split(text)
-        guard !tokens.isEmpty else { return nil }
+        guard !tokens.isEmpty, !tokens.contains(where: { isDelayWord($0.folded) }) else { return nil }
         return language == .english ? english(tokens, stream: stream) : turkish(tokens, stream: stream)
     }
 
@@ -116,6 +119,10 @@ public enum RadioRequest {
         let normalized = names.map(normalizedRadioWord).joined(separator: " ")
         if let entry = PopularRadioStations.entry(named: normalized) { return .play(station: entry.name) }
         return .play(station: normalized)
+    }
+
+    private static func isDelayWord(_ folded: String) -> Bool {
+        delayWords.contains(folded) || delayStems.contains(where: folded.hasPrefix)
     }
 
     /// "radyo", "radyoyu", "radyonun", "radio", "fm", "fm'i" and the like.

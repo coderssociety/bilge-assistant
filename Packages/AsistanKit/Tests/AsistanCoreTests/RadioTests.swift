@@ -87,6 +87,16 @@ struct RadioTests {
         #expect(RadioRequest.parse("sesi kıs", stream: .playing) == nil)
     }
 
+    @Test("a command for later is not carried out now", arguments: [
+        "30 dakika sonra radyoyu kapat", "radyoyu yarım saat sonra kapat", "radyoyu 1 saat sonra kapat",
+        "10 dakikaya kadar radyoyu kapat", "turn off the radio in 30 minutes", "stop the radio after an hour",
+    ])
+    func delayed(command: String) {
+        let language: AssistantLanguage = command.hasPrefix("turn") || command.hasPrefix("stop") ? .english : .turkish
+        #expect(RadioRequest.parse(command, language: language) == nil)
+        #expect(RadioRequest.parse(command, language: language, stream: .playing) == nil)
+    }
+
     @Test("English radio commands", arguments: [
         ("play the radio", RadioCommand.play(station: nil)), ("turn on the radio", .play(station: nil)),
         ("play Power FM", .play(station: "Power FM")), ("put on Virgin Radio", .play(station: "Virgin Radio")),
