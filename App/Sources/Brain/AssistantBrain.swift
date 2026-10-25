@@ -18,7 +18,8 @@ final class AssistantBrain: CommandHandling {
     /// The memory revision `conversation` was created with; a new fact means new instructions.
     private var conversationMemoryRevision = 0
     private var previousTurn: CommandRouter.PreviousTurn? {
-        didSet { context.lastReply = previousTurn?.result }
+        // "Bunu kopyala" and "bunu hatırla" take what was said, never a failed tool's raw result.
+        didSet { context.lastReply = previousTurn?.result.flatMap { ToolReply.isFailure($0) ? nil : $0 } }
     }
     private let context: ConversationContext
     private let memory: MemoryStore
