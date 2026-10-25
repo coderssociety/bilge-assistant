@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import quote, urljoin, urlsplit
 
 from bilge.core.language import AssistantLanguage
 from bilge.core.web import network_address
@@ -39,6 +39,8 @@ BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
 )
 _CHUNK = 64 * 1024
+# Characters a path or query keeps as written; "%" among them, so an address already encoded isn't encoded twice.
+_URL_SAFE = "/?:@!$&'()*+,;=%~"
 _IPV4_COMPATIBLE = ipaddress.ip_network("::/96")
 
 
@@ -165,7 +167,7 @@ def _follow(url: str, language: AssistantLanguage, max_bytes: int, user_agent: s
         response, location = _get_once(current, language, max_bytes, deadline, user_agent)
         if location is None:
             return response
-        current = urljoin(current, location)
+        current = _join(current, location)
     raise WebFetchError(Reason.REDIRECTS)
 
 
@@ -174,7 +176,7 @@ def _get_once(
 ) -> tuple[Response, str | None]:
     connection, reply = _open(url, language, user_agent)
     try:
-        location = reply.getheader("Location")
+        location = _location(reply)
         if reply.status in _REDIRECTS and location:
             return Response(url, reply.status, "", b""), location
         body = _read_limited(reply, max_bytes, deadline)
@@ -236,10 +238,10 @@ def open_stream(url: str, language: AssistantLanguage = AssistantLanguage.TURKIS
     current = url
     for _ in range(MAX_REDIRECTS + 1):
         connection, reply = _open(current, language, STREAM_USER_AGENT, extra_headers=headers, any_port=True)
-        location = reply.getheader("Location")
+        location = _location(reply)
         if reply.status in _REDIRECTS and location:
             connection.close()
-            current = urljoin(current, location)
+            current = _join(current, location)
             continue
         if reply.status not in (200, 206):
             connection.close()
@@ -256,6 +258,39 @@ def _whole_length(reply: http.client.HTTPResponse, start: int) -> int | None:
     return int(length) + (start if reply.status == 206 else 0) if length.isdigit() else None
 
 
+def _location(reply: http.client.HTTPResponse) -> str | None:
+    """http.client reads headers as Latin-1; servers send a Turkish address in UTF-8."""
+    location = reply.getheader("Location")
+    if location is None:
+        return None
+    try:
+        return location.encode("latin-1").decode("utf-8")
+    except UnicodeError:
+        return location
+
+
+def _join(current: str, location: str) -> str:
+    try:
+        return urljoin(current, location)
+    except ValueError as error:
+        raise WebFetchError(Reason.UNEXPECTED) from error
+
+
+def _target(url: str) -> tuple[str, str, int | None, str]:
+    """The scheme, host, port and request path of an address as they go on the wire: a name written in Turkish
+    letters (işbank.com.tr) in its IDNA form, the path and query percent-encoded."""
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+        host = (parts.hostname or "").encode("idna").decode("ascii")
+    except ValueError as error:
+        raise WebFetchError(Reason.UNSUPPORTED) from error
+    path = quote(parts.path or "/", safe=_URL_SAFE)
+    if parts.query:
+        path += "?" + quote(parts.query, safe=_URL_SAFE)
+    return parts.scheme.lower(), host, port, path
+
+
 def _open(
     url: str,
     language: AssistantLanguage,
@@ -266,20 +301,14 @@ def _open(
     any_port: bool = False,
 ) -> tuple[http.client.HTTPConnection, http.client.HTTPResponse]:
     """Sends the request to a checked address and returns the open connection with its answer's headers read."""
-    parts = urlsplit(url)
-    scheme = parts.scheme.lower()
-    if scheme not in _DEFAULT_PORTS or not parts.hostname:
+    scheme, host, port, path = _target(url)
+    if scheme not in _DEFAULT_PORTS or not host:
         raise WebFetchError(Reason.UNSUPPORTED)
-    try:
-        port = parts.port or _DEFAULT_PORTS[scheme]
-    except ValueError as error:
-        raise WebFetchError(Reason.UNSUPPORTED) from error
+    port = port or _DEFAULT_PORTS[scheme]
     if port not in ALLOWED_PORTS and not any_port:
         raise WebFetchError(Reason.UNSUPPORTED)
-    host = parts.hostname
     if network_address.is_local_name(host):
         raise LocalAddressError()
-    path = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
     headers = {
         "Host": host if port == _DEFAULT_PORTS[scheme] else f"{host}:{port}",
         "User-Agent": user_agent,
