@@ -61,14 +61,35 @@ enum WebFetch {
         return String(data: data, encoding: .utf8) ?? String(decoding: data, as: UTF8.self)
     }
 
-    private static func fetch(_ url: URL) async throws -> Data {
+    /// The first `maxBytes` of something that may be larger, like a podcast feed with thousands of episodes
+    /// whose newest are at the top. The data may end mid-document.
+    static func prefix(from url: URL, maxBytes: Int) async throws -> Data {
+        try await fetch(url, maxBytes: min(maxBytes, Self.maxBytes), truncating: true)
+    }
+
+    /// A JSON POST for an API that answers nothing else (YouTube's player). Redirects are not followed.
+    static func post(json body: Data, to url: URL) async throws -> Data {
+        try validate(url)
+        let response = try await exchange {
+            try await PublicHTTPClient.post(url, headers: headers + [("Content-Type", "application/json")], body: body,
+                                            maxBodyBytes: maxBytes, timeout: timeout)
+        }
+        guard (200..<300).contains(response.status) else { throw WebFetchError.badStatus(response.status) }
+        return response.body
+    }
+
+    private static func fetch(_ url: URL, maxBytes: Int = Self.maxBytes, truncating: Bool = false) async throws -> Data {
         var current = url
         let deadline = ContinuousClock.now + totalTimeout
         for _ in 0...maxRedirects {
             try validate(current)
             let remaining = deadline - ContinuousClock.now
             guard remaining > .zero else { throw WebFetchError.timedOut }
-            let response = try await get(current, timeout: min(timeout, remaining))
+            let target = current
+            let response = try await exchange {
+                try await PublicHTTPClient.get(target, headers: headers, maxBodyBytes: maxBytes, truncating: truncating,
+                                               timeout: min(timeout, remaining))
+            }
             if let next = response.redirectTarget(from: current) {
                 current = next
                 continue
@@ -80,9 +101,9 @@ enum WebFetch {
         throw WebFetchError.tooManyRedirects
     }
 
-    private static func get(_ url: URL, timeout: Duration) async throws -> HTTPResponse {
+    private static func exchange(_ request: () async throws -> HTTPResponse) async throws -> HTTPResponse {
         do {
-            return try await PublicHTTPClient.get(url, headers: headers, maxBodyBytes: maxBytes, timeout: timeout)
+            return try await request()
         } catch let error as WebFetchError {
             throw error
         } catch let error as HTTPResponseError {
@@ -102,10 +123,6 @@ enum WebFetch {
             throw WebFetchError.unsupportedAddress
         }
         if let port = url.port, !allowedPorts.contains(port) { throw WebFetchError.unsupportedAddress }
-        let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
-        let isIPLiteral = bare.contains(":") || Int(bare.split(separator: ".").last ?? "") != nil
-        if isIPLiteral ? !NetworkAddress.isPublic(bare) : NetworkAddress.isLocalName(bare) {
-            throw WebFetchError.localAddress
-        }
+        guard NetworkAddress.isPublicHost(host) else { throw WebFetchError.localAddress }
     }
 }

@@ -21,6 +21,12 @@ struct SecurityTests {
         #expect(NetworkAddress.isLocalName(host) == isLocal)
     }
 
+    @Test("hosts in URLs", arguments: [("46.20.3.250", true), ("192.168.1.10", false), ("[::1]", false), ("router.local", false),
+                                       ("listen.powerapp.com.tr", true), ("localhost", false), ("", false)])
+    func hosts(host: String, isPublic: Bool) {
+        #expect(NetworkAddress.isPublicHost(host) == isPublic)
+    }
+
     @Test("typed text cannot press Return, Tab or Escape")
     func typed() {
         #expect(TypedText.sanitized("merhaba\rdünya\tnasılsın\u{1B}\u{2028}son\u{85}x\n") == "merhaba dünya nasılsın son x")

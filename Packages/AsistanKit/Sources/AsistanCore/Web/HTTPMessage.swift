@@ -1,10 +1,19 @@
 import Foundation
 
-/// A minimal HTTP/1.1 GET over a connection the caller opened, so the caller can check which address
+/// A minimal HTTP/1.1 request over a connection the caller opened, so the caller can check which address
 /// it actually reached before anything is sent. It asks for an uncompressed body and a closed
 /// connection, which keeps the response simple: read until the server closes, then parse.
 public enum HTTPRequest {
     public static func get(_ url: URL, headers: [(String, String)]) -> Data {
+        message("GET", url, headers: headers)
+    }
+
+    /// For APIs that only answer a POST (YouTube's player endpoint); `headers` should name the body's type.
+    public static func post(_ url: URL, headers: [(String, String)], body: Data) -> Data {
+        message("POST", url, headers: headers + [("Content-Length", String(body.count))]) + body
+    }
+
+    private static func message(_ method: String, _ url: URL, headers: [(String, String)]) -> Data {
         var target = url.path(percentEncoded: true)
         if target.isEmpty { target = "/" }
         if let query = url.query(percentEncoded: true) { target += "?\(query)" }
@@ -15,7 +24,7 @@ public enum HTTPRequest {
         let lines = fields
             .filter { name, value in !(name + value).contains(where: \.isNewline) }
             .map { "\($0): \($1)" }
-        return Data((["GET \(target) HTTP/1.1"] + lines).joined(separator: "\r\n").utf8 + Data("\r\n\r\n".utf8))
+        return Data((["\(method) \(target) HTTP/1.1"] + lines).joined(separator: "\r\n").utf8 + Data("\r\n\r\n".utf8))
     }
 }
 
@@ -57,8 +66,10 @@ public struct HTTPResponse: Sendable {
         return false
     }
 
-    /// Parses a complete response: everything the server sent before closing the connection.
-    public static func parse(_ data: Data) throws -> HTTPResponse {
+    /// Parses a complete response: everything the server sent before closing the connection. With
+    /// `truncated`, `data` is only the start of the response, read up to a size limit on purpose (the newest
+    /// items at the top of a large feed), and the body is what arrived of it.
+    public static func parse(_ data: Data, truncated: Bool = false) throws -> HTTPResponse {
         guard let split = data.firstRange(of: separator) else { throw HTTPResponseError.malformed }
         let head = String(decoding: data[data.startIndex..<split.lowerBound], as: UTF8.self)
         let lines = head.components(separatedBy: "\r\n")
@@ -77,10 +88,10 @@ public struct HTTPResponse: Sendable {
         let rest = Data(data[split.upperBound...])
         let body: Data
         if response.header("Transfer-Encoding")?.lowercased().contains("chunked") == true {
-            body = try dechunked(rest)
+            body = try dechunked(rest, truncated: truncated)
         } else if let length = response.header("Content-Length").flatMap(Int.init), length >= 0 {
             // A body cut short would otherwise pass as the whole page.
-            guard rest.count >= length else { throw HTTPResponseError.malformed }
+            guard rest.count >= length || truncated else { throw HTTPResponseError.malformed }
             body = rest.prefix(length)
         } else {
             body = rest
@@ -88,19 +99,25 @@ public struct HTTPResponse: Sendable {
         return HTTPResponse(status: status, headers: headers, body: body)
     }
 
-    private static func dechunked(_ data: Data) throws -> Data {
+    private static func dechunked(_ data: Data, truncated: Bool) throws -> Data {
         let lineEnd = Data("\r\n".utf8)
         var body = Data()
         var index = data.startIndex
         while true {
-            guard let end = data[index...].firstRange(of: lineEnd) else { throw HTTPResponseError.malformed }
+            guard let end = data[index...].firstRange(of: lineEnd) else {
+                if truncated { return body }
+                throw HTTPResponseError.malformed
+            }
             let sizeText = String(decoding: data[index..<end.lowerBound], as: UTF8.self)
                 .split(separator: ";").first.map { $0.trimmingCharacters(in: .whitespaces) } ?? ""
             guard let size = Int(sizeText, radix: 16), size >= 0 else { throw HTTPResponseError.malformed }
             if size == 0 { return body }
             let start = end.upperBound
             // Compared without adding to `size`: a hostile "7FFFFFFFFFFFFFFF" would overflow.
-            guard size <= data.distance(from: start, to: data.endIndex) - lineEnd.count else { throw HTTPResponseError.malformed }
+            guard size <= data.distance(from: start, to: data.endIndex) - lineEnd.count else {
+                if truncated { return body + data[start...].prefix(size) }
+                throw HTTPResponseError.malformed
+            }
             let stop = data.index(start, offsetBy: size)
             body.append(data[start..<stop])
             index = data.index(stop, offsetBy: lineEnd.count)

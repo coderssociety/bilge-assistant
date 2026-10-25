@@ -12,7 +12,21 @@ enum PublicHTTPClient {
     private static let receiveChunk = 64 * 1024
     private static let headerAllowance = 64 * 1024
 
-    static func get(_ url: URL, headers: [(String, String)], maxBodyBytes: Int, timeout: Duration) async throws -> HTTPResponse {
+    /// With `truncating`, a body longer than `maxBodyBytes` is cut there instead of refused.
+    static func get(_ url: URL, headers: [(String, String)], maxBodyBytes: Int, truncating: Bool = false,
+                    timeout: Duration) async throws -> HTTPResponse {
+        try await exchange(HTTPRequest.get(url, headers: headers), with: url, maxBodyBytes: maxBodyBytes, truncating: truncating,
+                           timeout: timeout)
+    }
+
+    static func post(_ url: URL, headers: [(String, String)], body: Data, maxBodyBytes: Int,
+                     timeout: Duration) async throws -> HTTPResponse {
+        try await exchange(HTTPRequest.post(url, headers: headers, body: body), with: url, maxBodyBytes: maxBodyBytes,
+                           truncating: false, timeout: timeout)
+    }
+
+    private static func exchange(_ request: Data, with url: URL, maxBodyBytes: Int, truncating: Bool,
+                                 timeout: Duration) async throws -> HTTPResponse {
         let isSecure = url.scheme?.lowercased() == "https"
         guard let host = url.host(), let number = UInt16(exactly: url.port ?? (isSecure ? 443 : 80)),
               let port = NWEndpoint.Port(rawValue: number) else {
@@ -29,8 +43,10 @@ enum PublicHTTPClient {
                 try await withTaskCancellationHandler {
                     try await ready(connection)
                     try requirePublicPeer(connection)
-                    try await send(HTTPRequest.get(url, headers: headers), on: connection)
-                    return try HTTPResponse.parse(try await receiveAll(connection, limit: maxBodyBytes + headerAllowance))
+                    try await send(request, on: connection)
+                    let (data, truncated) = try await receiveAll(connection, limit: maxBodyBytes + headerAllowance,
+                                                                 truncating: truncating)
+                    return try HTTPResponse.parse(data, truncated: truncated)
                 } onCancel: {
                     connection.cancel()
                 }
@@ -87,13 +103,16 @@ enum PublicHTTPClient {
 
     /// Until the server closes the connection (the request asked it to), or until the response is
     /// complete for a server that keeps it open anyway.
-    private static func receiveAll(_ connection: NWConnection, limit: Int) async throws -> Data {
+    private static func receiveAll(_ connection: NWConnection, limit: Int, truncating: Bool) async throws -> (Data, Bool) {
         var data = Data()
         while true {
             let (chunk, isComplete) = try await receive(connection)
             if let chunk { data.append(chunk) }
-            if data.count > limit { throw WebFetchError.tooLarge }
-            if isComplete || HTTPResponse.isComplete(data) { return data }
+            if data.count > limit {
+                guard truncating else { throw WebFetchError.tooLarge }
+                return (data.prefix(limit), true)
+            }
+            if isComplete || HTTPResponse.isComplete(data) { return (data, false) }
         }
     }
 
