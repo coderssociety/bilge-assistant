@@ -1074,6 +1074,46 @@
         }
       }
     },
+    "'%@' etkinliğini ne zamana taşıyacağımı anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch when to move '%@' to."
+          }
+        }
+      }
+    },
+    "'%@' etkinliğini taşıyayım mı? Şu an %@, yeni zamanı %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I move '%@'? It is now %@; the new time would be %@."
+          }
+        }
+      }
+    },
+    "'%@' etkinliğini, %@, takviminden sileyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I delete '%@', %@, from your calendar?"
+          }
+        }
+      }
+    },
+    "'%@' etkinliğinin %@ olan tekrarını ve sonraki tüm tekrarlarını sileyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I delete the occurrence of '%@' %@ and every one after it?"
+          }
+        }
+      }
+    },
     "'%@' geçen bir not bulamadım.": {
       "localizations": {
         "en": {
@@ -1210,12 +1250,42 @@
         }
       }
     },
+    "'%@' takviminden silindi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleted '%@' from your calendar."
+          }
+        }
+      }
+    },
     "'%@' tamamlandı olarak işaretlendi.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Marked '%@' as completed."
+          }
+        }
+      }
+    },
+    "'%@' taşındı: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved '%@' to %@."
+          }
+        }
+      }
+    },
+    "'%@' tekrarlanan bir etkinlik; yalnızca bu tekrarını, %@, sileyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'%@' repeats; shall I delete only this occurrence, %@?"
           }
         }
       }
@@ -1832,6 +1902,16 @@
         }
       }
     },
+    "Birden fazla etkinlik uyuyor: %@. Hangisi olduğunu günüyle ya da saatiyle söyler misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More than one event fits: %@. Which one is it? Tell me its day or time."
+          }
+        }
+      }
+    },
     "Birinin numarasını ya da e-postasını bulmak ve onayınla mesaj göndermek için.": {
       "localizations": {
         "en": {
@@ -2078,6 +2158,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't have permission to control this app. You need to allow it in System Settings > Privacy & Security > Automation."
+          }
+        }
+      }
+    },
+    "Bu ve sonraki tüm tekrarlar taşınacak.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This and every later occurrence will move."
           }
         }
       }
@@ -2820,6 +2910,16 @@
         }
       }
     },
+    "Etkinlik bu arada değişmiş ya da silinmiş, bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The event has changed or been deleted in the meantime; I couldn't find it."
+          }
+        }
+      }
+    },
     "Etkinliğin günü ya da saati anlaşılamadı.": {
       "localizations": {
         "en": {
@@ -3212,6 +3312,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "About"
+          }
+        }
+      }
+    },
+    "Hangi etkinliği iptal edeceğimi ya da taşıyacağımı anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch which event to cancel or move."
           }
         }
       }
@@ -5374,6 +5484,16 @@
         }
       }
     },
+    "Takvimde değişikliği yalnızca onayla yaparım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I only change the calendar once you confirm."
+          }
+        }
+      }
+    },
     "Takvime": {
       "localizations": {
         "en": {
@@ -5390,6 +5510,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "To read your calendar and add events with your approval."
+          }
+        }
+      }
+    },
+    "Takviminde buna uyan bir etkinlik bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a matching event in your calendar."
           }
         }
       }
@@ -5840,6 +5970,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Respond only to my voice"
+          }
+        }
+      }
+    },
+    "Yalnızca bu tekrar taşınacak.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only this occurrence will move."
           }
         }
       }

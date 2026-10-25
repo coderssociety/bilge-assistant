@@ -54,6 +54,8 @@ public enum RouteGuard {
         if action == "callContact", words.contains(where: { word in searchSites.contains(where: word.hasPrefix) }) {
             return "searchWeb"
         }
+        // "Yarınki toplantıyı iptal et" was taken for reading the calendar or adding to it.
+        if let calendarAction = CalendarChange.reviewedAction(action, command: command, language: .turkish) { return calendarAction }
         // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.
         if isDictation(words), action != "createNote" { return "typeText" }
         // "geri al" (undo) outside a spreadsheet was once routed to quitApp.

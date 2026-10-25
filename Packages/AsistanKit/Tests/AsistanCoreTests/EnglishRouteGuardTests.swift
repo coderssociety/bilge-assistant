@@ -29,6 +29,8 @@ struct EnglishRouteGuardTests {
         ("List my notes", "openApp", "readNotes"),
         ("Call mom", "conversation", "callContact"),
         ("FaceTime Ahmet", "openApp", "callContact"),
+        ("Cancel tomorrow's meeting", "readCalendar", "changeCalendarEvent"),
+        ("Move the dentist appointment to Friday", "addCalendarEvent", "changeCalendarEvent"),
     ])
     func corrects(command: String, action: String, expected: String) {
         #expect(EnglishRouteGuard.review(action: action, command: command) == expected)

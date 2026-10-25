@@ -152,6 +152,19 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: modelAction, command: command) == expected)
     }
 
+    @Test("cancelling or moving an event is changeCalendarEvent", arguments: [
+        ("yarınki toplantıyı iptal et", "readCalendar", "changeCalendarEvent"),
+        ("diş hekimi randevusunu cumaya al", "addCalendarEvent", "changeCalendarEvent"),
+        ("saat 3'teki toplantıyı 4'e ertele", "setTimer", "changeCalendarEvent"),
+        ("dişçiyi cumaya al", "addCalendarEvent", "changeCalendarEvent"),
+        ("dişçiyi cumaya al", "conversation", "conversation"),
+        ("alarmı iptal et", "manageTimers", "manageTimers"),
+        ("süt almayı listeme ekle", "addReminder", "addReminder"),
+    ])
+    func calendarChanges(command: String, modelAction: String, expected: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == expected)
+    }
+
     @Test("undo is never taken for quitting an app")
     func undoIsNotQuit() {
         #expect(RouteGuard.review(action: "quitApp", command: "geri al") == "conversation")

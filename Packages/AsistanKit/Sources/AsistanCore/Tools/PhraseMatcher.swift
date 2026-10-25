@@ -19,6 +19,11 @@ public enum PhraseMatcher {
         return best.title
     }
 
+    /// Whether `title` is close enough to what was said, for keeping every match rather than the best one.
+    public static func matches(_ query: String, title: String) -> Bool {
+        score(words(query), words(title)) >= minimumScore
+    }
+
     private static func words(_ text: String) -> [String] {
         TurkishText.folded(text).split(separator: " ").map(String.init).filter { !stopWords.contains($0) }
     }

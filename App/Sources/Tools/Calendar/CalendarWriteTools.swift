@@ -15,14 +15,15 @@ enum ScheduledMoment {
     }
 
     static func describe(_ date: Date, now: Date = .now) -> String {
+        let time = date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(AppLanguage.locale))
+        return String(localized: "\(describeDay(date)) saat \(time)")
+    }
+
+    static func describeDay(_ date: Date) -> String {
         let calendar = Calendar.current
-        let locale = AppLanguage.locale
-        let time = date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(locale))
-        let day: String
-        if calendar.isDateInToday(date) { day = String(localized: "bugün") }
-        else if calendar.isDateInTomorrow(date) { day = String(localized: "yarın") }
-        else { day = date.formatted(.dateTime.day().month(.wide).weekday(.wide).locale(locale)) }
-        return String(localized: "\(day) saat \(time)")
+        if calendar.isDateInToday(date) { return String(localized: "bugün") }
+        if calendar.isDateInTomorrow(date) { return String(localized: "yarın") }
+        return date.formatted(.dateTime.day().month(.wide).weekday(.wide).locale(AppLanguage.locale))
     }
 
     static func refine(dayOffset: Int?, hour: Int?, minute: Int?, command: String) -> (dayOffset: Int?, hour: Int?, minute: Int?) {
