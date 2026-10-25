@@ -79,6 +79,13 @@ public enum ReadingRequest {
                       isVerb: isVerb, isFiller: { isVerb($0) || verbFillers.contains($0) })
     }
 
+    /// "Panodakini özetle", "seçili metni çevir", "what does it mean": more than reading the text out.
+    public static func asksBeyondReading(_ command: String, language: AssistantLanguage = .turkish) -> Bool {
+        let words = TurkishText.folded(command).split(separator: " ").map(String.init)
+        if language == .english { return words.contains(where: englishTextVerbs.contains) }
+        return words.contains { word in textVerbs.contains(where: word.hasPrefix) }
+    }
+
     /// A text noun on its own, a pointer with something to do with the text, or only such a verb.
     private static func refers(_ words: [String], isNoun: (String) -> Bool, isPointer: (String) -> Bool,
                                isVerb: (String) -> Bool, isFiller: (String) -> Bool) -> Bool {

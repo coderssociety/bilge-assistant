@@ -135,4 +135,14 @@ struct ContinuedReadingTests {
     func englishDoesNotRefer(command: String) {
         #expect(!ReadingRequest.refersToReading(command, language: .english))
     }
+
+    @Test("asking for more than the text read out", arguments: [
+        ("panodakini özetle", AssistantLanguage.turkish, true), ("panodaki metni İngilizceye çevir", .turkish, true),
+        ("kopyaladığım yazı ne demek", .turkish, true), ("panoda ne var", .turkish, false),
+        ("panodakini oku", .turkish, false), ("summarize my clipboard", .english, true),
+        ("what did I copy", .english, false),
+    ])
+    func beyondReading(command: String, language: AssistantLanguage, expected: Bool) {
+        #expect(ReadingRequest.asksBeyondReading(command, language: language) == expected)
+    }
 }

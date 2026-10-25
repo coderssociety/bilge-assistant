@@ -90,22 +90,43 @@ struct BatteryTool: AssistantTool {
     }
 }
 
+/// "Panoda ne var" reads the copied text out; "panodakini özetle/çevir" hands it to the tool-less session,
+/// like the selection, since it may come from anywhere.
 struct ClipboardReadTool: AssistantTool {
     let name = "readClipboard"
-    let description = "Panodaki (kopyalanan) metni okur."
-    private static let maxCharacters = 1500
+    let description = "Panodaki (kopyalanan) metni okur; özetler, çevirir ya da açıklar."
+    private static let spokenCharacters = 1500
+    private static let materialCharacters = 6000
 
     @Generable
-    struct Arguments {}
+    struct Arguments {
+        @Guide(description: "Panodaki metinle ne yapılacağı, örn. 'oku', 'özetle', 'İngilizceye çevir'")
+        var request: String?
+    }
 
-    func emptyArguments() -> Arguments? { Arguments() }
+    func arguments(fromCommand command: String) -> Arguments? {
+        Arguments(request: command)
+    }
+
+    func makeCall(_ arguments: Arguments) async -> PreparedToolCall {
+        PreparedToolCall(toolName: name, argumentsDescription: String(describing: arguments), risk: risk,
+                         confirmationQuestion: nil, answersWithLanguageModel: Self.answersWithLanguageModel(arguments),
+                         execute: { try await call(arguments: arguments) })
+    }
 
     func call(arguments: Arguments) async throws -> String {
         let text = await MainActor.run { NSPasteboard.general.string(forType: .string) }
+        let viaModel = Self.answersWithLanguageModel(arguments)
         guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return String(localized: "Panoda metin yok.")
+            let empty = String(localized: "Panoda metin yok.")
+            return viaModel ? ToolReply.failure(empty) : empty
         }
-        let clipped = text.count > Self.maxCharacters ? String(text.prefix(Self.maxCharacters)) + "…" : text
+        if viaModel { return String(text.prefix(Self.materialCharacters)) }
+        let clipped = text.count > Self.spokenCharacters ? String(text.prefix(Self.spokenCharacters)) + "…" : text
         return String(localized: "Panodaki metin: \(clipped)")
+    }
+
+    private static func answersWithLanguageModel(_ arguments: Arguments) -> Bool {
+        ReadingRequest.asksBeyondReading(arguments.request ?? "", language: AppLanguage.current)
     }
 }
