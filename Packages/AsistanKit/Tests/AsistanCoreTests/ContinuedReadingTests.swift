@@ -90,6 +90,7 @@ struct ContinuedReadingTests {
     @Test("continuation requests", arguments: [
         "devamını oku", "Devam et", "devam", "sonrası", "sonrasını okur musun", "gerisini oku", "kalanını oku",
         "okumaya devam et", "kaldığın yerden devam et", "diğerlerini söyle", "başka var mı", "sonraki kısmı oku",
+        "devamını özetle", "sonrasını özetler misin",
     ])
     func continuation(command: String) {
         #expect(ReadingRequest.isContinuation(command))
@@ -97,6 +98,7 @@ struct ContinuedReadingTests {
 
     @Test("other commands are not continuations", arguments: [
         "müziğe devam et", "sonraki şarkı", "başka bir kaynak", "Ahmet'e sonra ara diye yaz", "saat kaç", "oku",
+        "özetle", "sonraki videoyu özetle",
     ])
     func notContinuation(command: String) {
         #expect(!ReadingRequest.isContinuation(command))
@@ -104,13 +106,14 @@ struct ContinuedReadingTests {
 
     @Test("English continuation requests", arguments: [
         "read more", "continue", "go on", "keep reading", "what's next", "read the rest", "next part", "is there more",
+        "summarize the rest", "sum up the next part",
     ])
     func englishContinuation(command: String) {
         #expect(ReadingRequest.isContinuation(command, language: .english))
     }
 
     @Test("other English commands are not continuations", arguments: [
-        "next song", "turn on the lights", "tell me more about the second one", "read my notes",
+        "next song", "turn on the lights", "tell me more about the second one", "read my notes", "summarize this video",
     ])
     func englishNotContinuation(command: String) {
         #expect(!ReadingRequest.isContinuation(command, language: .english))
