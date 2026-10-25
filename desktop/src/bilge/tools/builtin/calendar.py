@@ -13,6 +13,7 @@ from bilge.core.language import AssistantLanguage
 from bilge.core.text import folded
 from bilge.core.tools import appointment_time, calendar_span, english_time_parser, phrase_matcher, relative_day_parser
 from bilge.tools.base import Risk, Tool, ToolError
+from bilge.tools.builtin.calendar_edit import edit_tools
 from bilge.tools.desktop.common import choice, int_argument, integer, obj, string_argument, text
 
 log = logging.getLogger(__name__)
@@ -136,6 +137,10 @@ class Moments:
 
     def describe(self, moment: datetime) -> str:
         return self.texts["at"].format(day=self._day(moment), time=f"{moment:%H:%M}")
+
+    def day_text(self, moment: datetime) -> str:
+        """ "yarın", "23 Ekim Cuma", "Friday 23 October"."""
+        return self._day(moment)
 
     def day_label(self, day_offset: int) -> str:
         """ "23 Ekim Cuma" / "On Friday 23 October", to begin a sentence about that day."""
@@ -367,6 +372,7 @@ def calendar_tools(
             refine=complete_refine,
             parameters=obj(["title"], title=text(texts["complete_title"])),
         ),
+        *edit_tools(connected, guarded, moments, language),
     ]
 
 

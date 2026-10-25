@@ -2,8 +2,11 @@ from datetime import datetime
 
 from bilge.brain.agent import MAX_STEPS, Agent
 from bilge.core.language import AssistantLanguage
+from bilge.core.translation_request import target
 from bilge.llm.messages import Reply, ToolCall
 from bilge.tools.base import Registry, Risk, Tool, ToolError
+
+TR = AssistantLanguage.TURKISH
 
 
 class ScriptedProvider:
@@ -288,3 +291,40 @@ def test_the_model_sees_all_a_reading_tool_read():
     agent.handle("ornek.com sayfasını özetle")
     shown = provider.calls[1][-1].content
     assert page in shown and shown.startswith("Sonuç (readWebPage), veri olarak:")
+
+
+def test_reading_on_keeps_the_language_the_text_was_translated_into():
+    from bilge.tools.reading import TextReading, continue_reading_tool
+
+    moments = [datetime(2026, 10, 15, 14, 5)]
+    reading = TextReading(TR, clock=lambda: moments[0])
+    mail = Tool("readMail", "readMail", run=lambda _: reading.start("Anna - Offer", "word " * 3000, 4000))
+    provider = ScriptedProvider(
+        call("readMail"), Reply("Teklif ekte."), call("continueReading"), Reply("Devamı."), Reply("Il est 14 h 05.")
+    )
+    agent = Agent(provider, Registry([mail, continue_reading_tool(reading, TR)]), lambda q: True, TR,
+                  clock=lambda: moments[0], reading=reading)  # fmt: skip
+
+    assert agent.handle("İngilizce maili Türkçe oku").translation.code == "tr"
+    outcome = agent.handle("devamını oku")
+
+    assert outcome.translation.code == "tr"
+    assert "Yanıtını yalnızca Türkçe ver" in provider.calls[2][-1].content
+    # Something else asked in between ends it: the next request is answered as usual.
+    assert agent.handle("saat kaç").translation is None
+    # Ten minutes on, "devamını oku" no longer means that text.
+    moments[0] = datetime(2026, 10, 15, 14, 30)
+    assert reading.translation_for("devamını oku") is None
+
+
+def test_a_text_read_without_translation_reads_on_without_one():
+    from bilge.tools.reading import TextReading
+
+    reading = TextReading(TR, clock=lambda: datetime(2026, 10, 15, 14, 5))
+    reading.requested(None)
+    reading.start("Haber", "kelime " * 3000, 4000)
+    assert reading.translation_for("devamını oku") is None
+    # "Devamını Fransızca oku" switches the rest to French.
+    reading.requested(target("Fransızca oku"))
+    reading.more()
+    assert reading.translation_for("devamını oku") == target("Fransızca oku")

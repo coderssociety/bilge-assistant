@@ -17,7 +17,9 @@ from bilge.tools.base import Risk
 
 # Could send the text somewhere (a URL with data in it, another app) or keep it: an injected "fact" in memory
 # would sit in every future conversation's instructions.
-REFUSED_AFTER_UNTRUSTED = frozenset({"readWebPage", "openWebsite", "searchWeb", "typeText", "remember", "sendEmail"})
+REFUSED_AFTER_UNTRUSTED = frozenset(
+    {"readWebPage", "openWebsite", "searchWeb", "typeText", "remember", "sendEmail", "replyToEmail"}
+)
 FREE_AFTER_UNTRUSTED = frozenset(
     {
         "currentDateTime", "calculate", "convertUnits", "worldClock", "batteryStatus", "systemInfo", "weather",

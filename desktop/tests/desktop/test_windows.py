@@ -21,7 +21,7 @@ from bilge.desktop.windows.apps import Process, StartApp, WindowsApps, belongs_t
 from bilge.desktop.windows.input import WindowsClipboard, WindowsKeyboard
 from bilge.desktop.windows.sound import WindowsMedia, player_name
 from bilge.desktop.windows.system import WindowsScreenshots, WindowsSession, WindowsSettings
-from bilge.tools.base import ToolError
+from bilge.tools.base import Risk, ToolError
 from bilge.tools.desktop.mail import mail_tools
 
 from .fakes import FakeRunner
@@ -378,10 +378,12 @@ class Outlook:
                             Body="Fatura ödendi.", UnRead=False, ReceivedTime=datetime(2026, 10, 13, 8, 15)),
         ])  # fmt: skip
         self.sent = []
+        self.items = {}
 
     def GetNamespace(self, _):  # noqa: N802
         folders = {office.CALENDAR: self.calendar, office.TASKS: self.tasks, office.INBOX: self.inbox}
-        return SimpleNamespace(GetDefaultFolder=lambda kind: SimpleNamespace(Items=folders[kind]))
+        return SimpleNamespace(GetDefaultFolder=lambda kind: SimpleNamespace(Items=folders[kind]),
+                               GetItemFromID=lambda entry: self.items[entry])  # fmt: skip
 
     def CreateItem(self, kind):  # noqa: N802
         outlook = self
@@ -410,6 +412,61 @@ def test_outlook_calendar_and_tasks(no_com):
     # Outlook marks "no due date" as the year 4501.
     assert source.open_reminders() == [calendars.Reminder("Süt al", None)]
     assert source.complete_reminder("Süt al") and not source.complete_reminder("Yok")
+
+
+class Appointment(SimpleNamespace):
+    def __init__(self, log, **fields):
+        super().__init__(**fields)
+        self.log = log
+
+    def Delete(self):  # noqa: N802
+        self.log.append(("deleted", self.Subject, self.Start))
+
+    def Save(self):  # noqa: N802
+        self.log.append(("saved", self.Subject, self.Start, self.End))
+
+    def GetRecurrencePattern(self):  # noqa: N802
+        appointment = self
+
+        class Pattern:
+            StartTime = EndTime = None
+
+            def GetOccurrence(self, start):  # noqa: N802
+                return Appointment(appointment.log, Subject=appointment.Subject, Start=start,
+                                   End=start + timedelta(minutes=15))  # fmt: skip
+
+            def __setattr__(self, name, value):
+                appointment.log.append(("pattern", name, value))
+
+        return Pattern()
+
+
+def test_outlook_events_are_deleted_and_moved_by_entry_and_occurrence(no_com):
+    app, log = Outlook(), []
+    single = Appointment(log, Subject="Diş hekimi", Start=datetime(2026, 10, 16, 10, 0), End=datetime(2026, 10, 16, 11, 0),
+                         AllDayEvent=False, IsRecurring=False, EntryID="A1")  # fmt: skip
+    series = Appointment(log, Subject="Standup", Start=datetime(2026, 10, 16, 9, 0), End=datetime(2026, 10, 16, 9, 15),
+                         AllDayEvent=False, IsRecurring=True, EntryID="S1")  # fmt: skip
+    app.calendar = Items([single, series])
+    app.items = {"A1": single, "S1": series}
+    source = office.OutlookCalendar(office.Outlook(application=lambda: app, date_text=lambda d: f"{d:%d.%m.%Y %H:%M}"))
+    start = datetime(2026, 10, 16).astimezone()
+    standup, dentist = source.events(start, start + timedelta(days=1))
+    assert (standup.recurring, dentist.recurring, dentist.end - dentist.start) == (True, False, timedelta(hours=1))
+
+    source.move_event(dentist, datetime(2026, 10, 19, 15, 0).astimezone())
+    source.delete_event(standup)
+    source.move_event(standup, datetime(2026, 10, 16, 9, 30).astimezone(), every=True)
+    source.delete_event(standup, every=True)
+
+    assert log == [
+        ("saved", "Diş hekimi", datetime(2026, 10, 19, 15, 0), datetime(2026, 10, 19, 16, 0)),
+        ("deleted", "Standup", datetime(2026, 10, 16, 9, 0)),
+        ("pattern", "StartTime", datetime(2026, 10, 16, 9, 30)),
+        ("pattern", "EndTime", datetime(2026, 10, 16, 9, 45)),
+        ("saved", "Standup", datetime(2026, 10, 16, 9, 0), datetime(2026, 10, 16, 9, 15)),
+        ("deleted", "Standup", datetime(2026, 10, 16, 9, 0)),
+    ]
 
 
 def test_outlook_not_open_is_a_calendar_error(no_com):
@@ -465,6 +522,85 @@ def test_a_sender_cannot_change_the_outlook_filter(no_com):
     read.run({"sender": "x' OR \"urn:schemas:httpmail:subject\" LIKE '%"})
     # Only the four quotes around the two LIKE patterns are left.
     assert app.inbox.queries[-1].count("'") == 4
+
+
+class Reply:
+    def __init__(self, outlook, message, html=False):
+        self.outlook = outlook
+        self.Subject = f"RE: {message.Subject}"
+        address = message.SenderEmailAddress
+        self.Recipients = SimpleNamespace(Item=lambda index: SimpleNamespace(Name=message.SenderName, Address=address))
+        self.BodyFormat = 2 if html else 1
+        self.Body = f"> {message.Body}"
+        self.HTMLBody = f'<html><body class="x"><p>{message.Body}</p></body></html>'
+
+    def Send(self):  # noqa: N802
+        self.outlook.sent.append((self.Recipients.Item(1).Address, self.Subject,
+                                  self.HTMLBody if self.BodyFormat == 2 else self.Body))  # fmt: skip
+
+
+def replying_outlook():
+    app = Outlook()
+    for number, message in enumerate(app.inbox):
+        message.EntryID = f"M{number}"
+        message.Reply = lambda message=message: Reply(app, message, html=message.Subject == "Rapor")
+        app.items[message.EntryID] = message
+    return app, {t.name: t for t in mail_tools(office.Outlook(application=lambda: app), TR)}
+
+
+def test_a_reply_answers_the_mail_just_read_with_only_the_dictated_words(no_com):
+    app, tools = replying_outlook()
+    reply = tools["replyToEmail"]
+    assert reply.risk is Risk.CONFIRM
+    nothing = reply.refine({"body": "tamam"}, "buna yanıt ver: tamam")
+    assert reply.question(nothing) is None
+    with pytest.raises(ToolError, match="Önce bir e-posta okumam"):
+        reply.run(nothing)
+
+    tools["readMail"].run(tools["readMail"].refine({}, "Ahmet'in mailini oku"))
+    # The model's text came from the mail; only the user's words are sent.
+    arguments = reply.refine({"body": "Yarın 10'da görüşelim, onaylıyorum"}, "buna yanıt ver: yarın uygunum")
+    assert reply.question(arguments) == (
+        "Ahmet (ahmet@example.org) adresine 'RE: Toplantı' konulu yanıtı göndereyim mi? Metin: yarın uygunum"
+    )
+    assert reply.run(arguments) == "Yanıtı Ahmet adresine gönderdim."
+    assert app.sent == [("ahmet@example.org", "RE: Toplantı", "yarın uygunum\r\n\r\n> Yarın 10'da görüşelim.")]
+
+    invented = reply.refine({"body": "Toplantı onaylandı"}, "buna cevap ver")
+    assert reply.question(invented) is None
+    with pytest.raises(ToolError, match="ne yazmamı istediğini"):
+        reply.run(invented)
+
+
+def test_a_reply_picks_one_of_several_mails_read_by_sender_or_asks(no_com):
+    app, tools = replying_outlook()
+    for message in app.inbox:
+        message.UnRead = True
+    tools["readMail"].run({"content": True})
+    reply = tools["replyToEmail"]
+    unclear = reply.refine({}, "buna yanıt ver: olur")
+    assert reply.question(unclear) is None
+    with pytest.raises(ToolError, match="Ahmet: Toplantı; Ayşe Kaya: Rapor; Ahmet: Fatura"):
+        reply.run(unclear)
+    to_ayse = reply.refine({}, "Ayşe'nin mailine teşekkür ederim diye cevap yaz")
+    assert to_ayse == {"body": "teşekkür ederim", "sender": "Ayşe"}
+    assert reply.question(to_ayse).startswith("Ayşe Kaya (ayse@example.org) adresine 'RE: Rapor'")
+    reply.run(to_ayse)
+    third = {"body": "ödendi", "position": 3}
+    assert "'RE: Fatura'" in reply.question(third)
+    assert app.sent[0] == (
+        "ayse@example.org", "RE: Rapor", '<html><body class="x"><p>teşekkür ederim</p><p>Rapor ekte.</p></body></html>'
+    )  # fmt: skip
+
+
+def test_a_reply_to_someone_not_just_read_goes_to_their_newest_mail(no_com):
+    app, tools = replying_outlook()
+    reply = tools["replyToEmail"]
+    arguments = reply.refine({}, "Ahmet'in mailine geliyorum diye yanıt ver")
+    assert reply.question(arguments).startswith("Ahmet (ahmet@example.org) adresine 'RE: Toplantı'")
+    with pytest.raises(ToolError, match="'Zeynep' kişisinden"):
+        reply.question({"body": "x", "sender": "Zeynep"})
+        reply.run({"body": "x", "sender": "Zeynep"})
 
 
 def test_office_start_menu_ids_name_their_program():

@@ -3,6 +3,8 @@ import time
 
 import numpy as np
 
+from bilge.brain.agent import Outcome
+from bilge.core import translation_request
 from bilge.core.language import AssistantLanguage
 from bilge.voice.assistant import Options, Status, VoiceAssistant
 
@@ -47,6 +49,8 @@ class SilentSpeech:
 
 
 class EchoAgent:
+    """Answers every command; a translation asked for is in the outcome, as the real agent puts it."""
+
     last_reply = None
     work_session = None
 
@@ -60,7 +64,7 @@ class EchoAgent:
         self.commands.append(command)
         if self.question:
             self.confirmed = self.holder["a"].confirm(self.question)
-        return type("Outcome", (), {"text": f"Tamam: {command}"})()
+        return Outcome(f"Tamam: {command}", translation=translation_request.target(command))
 
     def handle_work_input(self, text):
         return self.handle(text)
@@ -102,6 +106,20 @@ def test_a_reply_asked_for_in_another_language_is_spoken_in_it():
     assistant._handle_utterance(SPEECH)
     assert wait(lambda: speech.said == ["Tamam: maili Fransızca oku"])
     assert speech.languages == ["fr"]
+    assistant.stop()
+
+
+def test_reading_on_is_spoken_in_the_language_the_agent_kept_for_it():
+    class Continuing(EchoAgent):
+        def handle(self, command):
+            self.commands.append(command)
+            return Outcome("Devamı burada.", translation=translation_request.target("Türkçe oku"))
+
+    assistant, speech, agent = make(ScriptedRecognizer("Bilge, devamını oku"), agent=Continuing())
+    assistant.start()
+    assistant._handle_utterance(SPEECH)
+    assert wait(lambda: speech.said == ["Devamı burada."])
+    assert speech.languages == ["tr"]
     assistant.stop()
 
 

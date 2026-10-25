@@ -2,6 +2,7 @@
 
 import copy
 import logging
+import sys
 
 from keyring.errors import KeyringError
 from PySide6.QtCore import Signal
@@ -10,6 +11,7 @@ from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QTabWidget, QVB
 from bilge import config
 from bilge.app.settings.calendar import CalendarPage
 from bilge.app.settings.general import GeneralPage
+from bilge.app.settings.mail import MailPage
 from bilge.app.settings.model import ModelChooser
 from bilge.app.settings.recognition import RecognitionChooser
 from bilge.app.settings.records import AboutPage, HistoryPage, MemoryPage
@@ -34,6 +36,9 @@ class SettingsWindow(QDialog):
             "general": GeneralPage(), "model": ModelChooser(), "voice": VoicePage(),
             "recognition": RecognitionChooser(), "calendar": CalendarPage(),
         }  # fmt: skip
+        # On Windows mail comes from Outlook.
+        if sys.platform != "win32":
+            self.pages["mail"] = MailPage()
         tabs = QTabWidget()
         for name, page in self.pages.items():
             page.load(settings)

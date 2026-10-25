@@ -86,6 +86,14 @@ class CalendarSettings:
 
 
 @dataclass
+class MailSettings:
+    # An IMAP account read over TLS where Outlook isn't there to ask: "imap.example.org" or "imap.example.org:993".
+    # The (app) password is in the key store.
+    server: str = ""
+    username: str = ""
+
+
+@dataclass
 class Settings:
     language: str = AssistantLanguage.TURKISH.value
     model: ModelSettings = field(default_factory=ModelSettings)
@@ -93,6 +101,7 @@ class Settings:
     weather_city: str = "İstanbul"
     voice: VoiceSettings = field(default_factory=VoiceSettings)
     calendar: CalendarSettings = field(default_factory=CalendarSettings)
+    mail: MailSettings = field(default_factory=MailSettings)
     # The small window in the screen corner showing what was heard and the reply.
     show_hud: bool = True
     # Set once the first-run setup has been finished.
@@ -127,7 +136,9 @@ def load_settings(path: Path | None = None) -> Settings:
     voice = data.get("voice") if isinstance(data.get("voice"), dict) else {}
     defaults = VoiceSettings()
     calendar = data.get("calendar") if isinstance(data.get("calendar"), dict) else {}
+    mail = data.get("mail") if isinstance(data.get("mail"), dict) else {}
     return Settings(
+        mail=MailSettings(server=str(mail.get("server", "")), username=str(mail.get("username", ""))),
         calendar=CalendarSettings(
             kind=str(calendar.get("kind", "")),
             url=str(calendar.get("url", "")),

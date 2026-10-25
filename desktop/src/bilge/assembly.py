@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from bilge import calendars, config, desktop
+from bilge import calendars, config, desktop, mailboxes
 from bilge.brain.action_log import ActionLog
 from bilge.brain.agent import Agent, Confirmer
 from bilge.brain.routing import Mode, Rule, rule
@@ -24,6 +24,7 @@ from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
+from bilge.tools.builtin.mail import read_mail_tool
 from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.builtin.units import convert_units
 from bilge.tools.builtin.world_clock import world_clock_tool
@@ -39,6 +40,7 @@ CALDAV_SECRET = "caldav"
 ICS_SECRET = "calendar-ics"
 # One for the whole run: the watcher a restart builds must not announce an earthquake the previous one already did.
 _ANNOUNCED_EARTHQUAKES = earthquake_alert.Announced()
+IMAP_SECRET = "imap"
 
 
 def models_dir() -> Path:
@@ -58,6 +60,13 @@ def calendar_source(settings: config.CalendarSettings) -> calendars.CalendarSour
         url = config.api_key(ICS_SECRET)
         return calendars.ICSSource(url) if url else None
     return None
+
+
+def mailbox(settings: config.MailSettings) -> mailboxes.Mailbox | None:
+    """The IMAP account; on Windows mail comes from Outlook instead."""
+    if not settings.server:
+        return None
+    return mailboxes.IMAPMailbox(settings.server, settings.username, config.api_key(IMAP_SECRET) or "")
 
 
 def build_agent(
@@ -111,6 +120,8 @@ def build_agent(
         briefing_tool(briefing),
         *calendar_tools(calendar, language, alert=_reminder_alert(alarms) if alarms is not None else None),
     ])  # fmt: skip
+    if sys.platform != "win32":
+        registry.add(read_mail_tool(lambda: mailbox(settings.mail), language, reading=text_reading))
     rules: list[Rule] = [
         rule("dailyBriefing", briefing.claims),
         rule("news", internet.news_source_rule_claims(language, news_reading)),
@@ -134,7 +145,8 @@ def build_agent(
         rules = [*desktop_rules, *rules]
         modes = desktop_modes
     agent = Agent(chat, registry, confirm=confirm, language=language, memory=memory.prompt_lines,
-                  action_log=ActionLog(config.data_dir() / "actions.jsonl"), rules=rules, modes=modes)  # fmt: skip
+                  action_log=ActionLog(config.data_dir() / "actions.jsonl"), rules=rules, modes=modes,
+                  reading=text_reading)  # fmt: skip
     built.append(agent)
     for tool in memory_tools(memory, language, lambda: agent.last_reply):
         registry.add(tool)
@@ -214,7 +226,7 @@ def _desktop_tools(
         *web.web_tools(found.opener, language),
         *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
-        *_office_tools(language),
+        *_office_tools(language, text_reading),
     ]
     rules = [
         rule("startDictation", lambda command: dictation_command.is_start(command, language)),
@@ -237,13 +249,13 @@ def _spreadsheet_apps(calc):
     return SpreadsheetApps({"excel": ExcelSheets(), "calc": calc})
 
 
-def _office_tools(language: AssistantLanguage) -> list[Tool]:
+def _office_tools(language: AssistantLanguage, text_reading: TextReading) -> list[Tool]:
     if sys.platform != "win32":
         return []
     from bilge.desktop.windows.office import Outlook
     from bilge.tools.desktop.mail import mail_tools
 
-    return mail_tools(Outlook(), language)
+    return mail_tools(Outlook(), language, text_reading)
 
 
 def voice_models(settings: config.Settings) -> tuple[ModelSpec, ...]:

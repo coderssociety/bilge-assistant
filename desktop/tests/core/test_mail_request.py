@@ -2,7 +2,7 @@ import pytest
 
 from bilge.brain.agent import resolve
 from bilge.core.language import AssistantLanguage
-from bilge.core.mail_request import asks_for_content, position, sender
+from bilge.core.mail_request import asks_for_content, position, reply_text, sender
 
 
 @pytest.mark.parametrize(
@@ -58,3 +58,25 @@ def test_reads_whose_mail_is_asked_for(command: str, name: str | None) -> None:
 )
 def test_reads_which_message_is_asked_for(command: str, expected: int | None) -> None:
     assert position(resolve(command, AssistantLanguage.TURKISH)) == expected
+
+
+@pytest.mark.parametrize(
+    ("command", "words"),
+    [
+        ("buna yanıt ver: yarın uygunum", "yarın uygunum"),
+        ("buna yanıt ver yarın uygunum", "yarın uygunum"),
+        ("Ahmet'in mailine teşekkür ederim diye cevap yaz", "teşekkür ederim"),
+        ("Ahmet'e toplantıya geleceğim diye yanıt ver", "toplantıya geleceğim"),
+        ("yarın saat onda geleceğim diye cevap yaz", "yarın saat 10'da geleceğim"),
+        ("cevap olarak tamam yaz lütfen", "tamam"),
+        ("reply to it: I'm available tomorrow", "I'm available tomorrow"),
+        ("reply to that email saying thanks, see you then", "thanks, see you then"),
+        ("reply to Anna's email with thank you please", "thank you"),
+        ("answer “sounds good”", "sounds good"),
+        ("buna cevap ver", None),
+        ("yanıtla", None),
+        ("maili oku: yarın", None),
+    ],
+)
+def test_a_reply_is_only_the_words_the_user_dictated(command: str, words: str | None) -> None:
+    assert reply_text(resolve(command, AssistantLanguage.TURKISH)) == words

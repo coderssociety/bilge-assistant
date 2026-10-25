@@ -1,10 +1,11 @@
 """Microsoft Excel and Outlook, driven over COM while they are open. They are never started by Bilge."""
 
+import re
 from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta
 from typing import Any
 
-from bilge import calendars
+from bilge import calendars, mailboxes
 from bilge.core.spreadsheet.cell_reference import CellReference, SpreadsheetNumber, SpreadsheetValue
 from bilge.desktop.calc import MAX_CELLS, CalcError, Location
 from bilge.desktop.windows import com
@@ -16,6 +17,8 @@ MAIL_ITEM, APPOINTMENT_ITEM, TASK_ITEM = 0, 1, 3
 # Outlook writes "no date" as 1 January 4501.
 _NO_DATE_YEAR = 4000
 _SMTP_ADDRESS = "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
+# A name in an Outlook filter keeps only these, so it can't change the filter itself.
+_FILTER_UNSAFE = re.compile(r"[^\w .@-]")
 
 
 class OfficeError(Exception):
@@ -223,6 +226,11 @@ class Outlook:
         return self._date_text(moment)
 
 
+def _naive(moment: datetime) -> datetime:
+    """Outlook takes local wall-clock times."""
+    return moment.astimezone().replace(tzinfo=None)
+
+
 def smtp_address(recipient) -> str | None:
     """An Exchange recipient's Address is an internal name ("/o=ExchangeLabs/…"); what the user must hear is the
     e-mail address."""
@@ -239,6 +247,56 @@ def smtp_address(recipient) -> str | None:
         if "@" in found:
             return found
     return None
+
+
+def sender_filter(name: str) -> str:
+    """Outlook's DASL filter for mail whose sender's name or address contains `name`."""
+    like = "LIKE '%" + _FILTER_UNSAFE.sub("", name).strip().replace("'", "''") + "%'"
+    return '@SQL="urn:schemas:httpmail:fromname" ' + like + ' OR "urn:schemas:httpmail:fromemail" ' + like
+
+
+def _mail_message(item, with_body: bool) -> mailboxes.MailMessage:
+    received = getattr(item, "ReceivedTime", None)
+    # Reports and receipts in the inbox may have no sender.
+    return mailboxes.MailMessage(
+        str(getattr(item, "SenderName", "") or "?"), str(getattr(item, "SenderEmailAddress", "") or ""),
+        str(getattr(item, "Subject", "") or ""), received if isinstance(received, datetime) else None,
+        (getattr(item, "Body", "") or "").strip() if with_body else "", str(getattr(item, "EntryID", "") or ""),
+    )  # fmt: skip
+
+
+class OutlookMailbox:
+    """The inbox of the Outlook that is open."""
+
+    def __init__(self, outlook: Outlook):
+        self.outlook = outlook
+
+    def _guarded(self, action):
+        try:
+            return self.outlook.call(action)
+        except OfficeError as error:
+            reason = "outlook_failed" if error.reason == "failed" else error.reason
+            raise mailboxes.MailError(reason, str(error)) from error
+
+    def unread(self, listed: int, with_bodies: int) -> tuple[int, list[mailboxes.MailMessage]]:
+        def read(app):
+            items = self.outlook.folder(app, INBOX).Items.Restrict("[UnRead] = True")
+            items.Sort("[ReceivedTime]", True)
+            newest = [m for _, m in zip(range(listed), each(items), strict=False)]
+            return int(items.Count), [_mail_message(m, n < with_bodies) for n, m in enumerate(newest)]
+
+        return self._guarded(read)
+
+    def message(self, sender: str, position: int) -> tuple[int, mailboxes.MailMessage | None]:
+        def pick(app):
+            items = self.outlook.folder(app, INBOX).Items
+            if sender:
+                items = items.Restrict(sender_filter(sender))
+            items.Sort("[ReceivedTime]", True)
+            chosen = next((m for n, m in zip(range(position), each(items), strict=False) if n == position - 1), None)
+            return int(items.Count), _mail_message(chosen, True) if chosen is not None else None
+
+        return self._guarded(pick)
 
 
 class OutlookCalendar:
@@ -273,10 +331,42 @@ class OutlookCalendar:
                 # Checked here as well: the filter's date format depends on Windows' regional settings.
                 if begins >= end or finishes <= start:
                     continue
-                found.append(calendars.CalendarEvent(str(item.Subject or ""), begins, bool(item.AllDayEvent)))
+                found.append(calendars.CalendarEvent(str(item.Subject or ""), begins, bool(item.AllDayEvent),
+                                                     finishes, bool(getattr(item, "IsRecurring", False)),
+                                                     (str(getattr(item, "EntryID", "") or ""),)))  # fmt: skip
             return sorted(found, key=lambda e: (e.start, not e.all_day, e.title))
 
         return self._guarded(read)
+
+    def _appointment(self, app, event: calendars.CalendarEvent, every: bool):
+        """The series for `every`, otherwise the one occurrence or the single appointment."""
+        entry = event.reference[0] if event.reference else ""
+        if not entry:
+            raise calendars.CalendarError("The event is no longer in Outlook")
+        item = app.GetNamespace("MAPI").GetItemFromID(entry)
+        if not event.recurring or every:
+            return item
+        return item.GetRecurrencePattern().GetOccurrence(_naive(event.start))
+
+    def delete_event(self, event: calendars.CalendarEvent, every: bool = False) -> None:
+        self._guarded(lambda app: self._appointment(app, event, every).Delete())
+
+    def move_event(self, event: calendars.CalendarEvent, start: datetime, every: bool = False) -> None:
+        length = (event.end - event.start) if event.end is not None else timedelta(hours=1)
+
+        def move(app) -> None:
+            item = self._appointment(app, event, every)
+            if event.recurring and every:
+                # A series keeps its days in its pattern; only the time of day changes here.
+                pattern = item.GetRecurrencePattern()
+                pattern.StartTime = _naive(start)
+                pattern.EndTime = _naive(start + length)
+            else:
+                item.Start = _naive(start)
+                item.End = _naive(start + length)
+            item.Save()
+
+        self._guarded(move)
 
     def add_event(self, title: str, start: datetime, end: datetime) -> None:
         def add(app):
