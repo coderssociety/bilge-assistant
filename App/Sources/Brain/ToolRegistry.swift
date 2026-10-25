@@ -77,6 +77,10 @@ struct ToolRegistry {
             BriefingTool(),
             UnitConversionTool(),
             WorldClockTool(),
+            PrayerTimesTool(),
+            GoldPriceTool(),
+            FuelPriceTool(),
+            WikipediaTool(),
         ]
     }
 }

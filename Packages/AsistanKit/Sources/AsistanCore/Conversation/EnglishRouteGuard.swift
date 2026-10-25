@@ -71,7 +71,10 @@ public enum EnglishRouteGuard {
             return words.contains(where: playbackWords.contains) ? "controlMusic" : action
         case "conversation":
             let isArithmetic = words.contains { $0.contains(where: \.isNumber) } && words.contains(where: mathWords.contains)
-            return isArithmetic ? "calculate" : action
+            if isArithmetic { return "calculate" }
+            return EncyclopediaQuestion.subject(in: command, language: .english) != nil ? "wikipedia" : action
+        case "exchangeRate":
+            return words.contains { $0 == "gold" || $0 == "ounce" } ? "goldPrice" : action
         default:
             return action
         }

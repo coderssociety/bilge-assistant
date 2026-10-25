@@ -8,8 +8,6 @@ public enum CurrencyRequest {
         public let from: String?
         public let to: String?
         public let amount: Double?
-        /// Gold is not a currency the rates source knows.
-        public let asksAboutGold: Bool
     }
 
     private static let symbols: [Character: String] = ["€": "euro", "$": "dolar", "£": "sterlin", "₺": "lira"]
@@ -32,8 +30,7 @@ public enum CurrencyRequest {
         let codes = currencies(in: words)
         let asksForLira = containsPhrase(words, "kac", "para")
         let to = codes.count > 1 ? codes[1] : (asksForLira && codes.first != "TRY" ? "TRY" : nil)
-        let gold = words.contains { $0.hasPrefix("altin") || $0 == "gold" }
-        return Parsed(from: codes.first, to: to, amount: number(in: command), asksAboutGold: gold)
+        return Parsed(from: codes.first, to: to, amount: number(in: command))
     }
 
     private static func currencies(in words: [String]) -> [String] {

@@ -23,6 +23,8 @@ final class CommandRouter {
     /// Chosen by `MemoryIntent` only. Offering them to the model risked "…hatırlat" (remind) reminders being
     /// stored as memories, since "hatırla" (remember) and "hatırlat" differ by one letter.
     private static let ruleRoutedActions: [MemoryIntent: String] = [.remember: "remember", .forget: "forget", .list: "listMemories"]
+    /// Chosen only by `RouteGuard` from a conversation turn; offered to the model, they would draw small talk in.
+    private static let guardRoutedActions: Set<String> = ["wikipedia"]
     private static let actionProperty = "action"
 
     private let model: SystemLanguageModel
@@ -42,8 +44,8 @@ final class CommandRouter {
         self.tools = Dictionary(tools.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
         fastPath = FastPath(tools: self.tools)
         ruleRouted = tools.compactMap { $0 as? any RuleRoutedTool }
-        let memoryActions = Set(Self.ruleRoutedActions.values)
-        let modelRouted = tools.filter { !memoryActions.contains($0.name) && !($0 is any RuleRoutedTool) }
+        let notModelRouted = Set(Self.ruleRoutedActions.values).union(Self.guardRoutedActions)
+        let modelRouted = tools.filter { !notModelRouted.contains($0.name) && !($0 is any RuleRoutedTool) }
         let actions = modelRouted.map(\.name) + [Self.conversationAction]
         let actionSchema = DynamicGenerationSchema(name: "Action", anyOf: actions)
         let decision = DynamicGenerationSchema(name: "Decision", properties: [

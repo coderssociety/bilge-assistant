@@ -1216,22 +1216,32 @@
         }
       }
     },
-    "altın": {
+    "Akaryakıt fiyatlarını yalnızca Türkiye'deki iller için söyleyebiliyorum.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "gold"
+            "value": "I can only give fuel prices for provinces in Turkey."
           }
         }
       }
     },
-    "Altın fiyatlarını henüz söyleyemiyorum.": {
+    "Akaryakıt fiyatlarını şu an alamadım; kaynaklara ulaşılamadı.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "I can't tell gold prices yet."
+            "value": "I can't get fuel prices right now; the sources couldn't be reached."
+          }
+        }
+      }
+    },
+    "Altın fiyatlarını şu an alamadım; kaynaklara ulaşılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't get gold prices right now; the sources couldn't be reached."
           }
         }
       }
@@ -3286,6 +3296,16 @@
         }
       }
     },
+    "Hangi vakti sorduğunu anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which prayer time you're asking about."
+          }
+        }
+      }
+    },
     "Hangi şehrin saatini sorduğunu anlayamadım.": {
       "localizations": {
         "en": {
@@ -4446,6 +4466,26 @@
         }
       }
     },
+    "Namaz vakitleri alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get the prayer times. %@"
+          }
+        }
+      }
+    },
+    "Ne hakkında bilgi istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell what you want to know about."
+          }
+        }
+      }
+    },
     "Ne yazacağımı anlayamadım.": {
       "localizations": {
         "en": {
@@ -4502,6 +4542,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Norwegian krone"
+          }
+        }
+      }
+    },
+    "O gün için namaz vakitlerini bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find the prayer times for that day."
           }
         }
       }
@@ -5980,6 +6030,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Vikipedi'de %@ hakkında bir sayfa bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a Wikipedia page about %@."
+          }
+        }
+      }
+    },
+    "Vikipedi'ye ulaşamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't reach Wikipedia. %@"
           }
         }
       }
