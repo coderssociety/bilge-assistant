@@ -192,6 +192,7 @@ def _desktop_tools(
     from bilge.desktop.process import Runner
     from bilge.tools.desktop import (
         apps,
+        browser,
         clipboard,
         files,
         hardware,
@@ -224,6 +225,7 @@ def _desktop_tools(
         typing.start_dictation_tool(dictation, language),
         *files.file_tools(found.folders, found.opener, language, text_reading),
         *web.web_tools(found.opener, language),
+        browser.browser_tool(found.keyboard, language),
         *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
         *_office_tools(language, text_reading),
@@ -231,6 +233,7 @@ def _desktop_tools(
     rules = [
         rule("startDictation", lambda command: dictation_command.is_start(command, language)),
         rule("spreadsheet", sheet.claims, lambda command: {"command": command}),
+        rule("browserControl", lambda command: browser.claims(command, language), lambda command: {"command": command}),
     ]
     modes = [
         Mode(lambda: dictation.active, dictation.window, lambda _: True, dictation.end, takes=dictation.handle,
