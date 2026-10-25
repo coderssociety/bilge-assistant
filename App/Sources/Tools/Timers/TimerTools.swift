@@ -131,8 +131,7 @@ struct ManageTimersTool: AssistantTool {
     private static func describe(_ timers: [TimerService.ScheduledTimer]) -> String {
         let now = Date.now
         return timers.map { timer in
-            let left = Duration.seconds(TimerSchedule.spokenRemaining(until: timer.fireDate, now: now))
-                .formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide).locale(AppLanguage.locale))
+            let left = Duration.seconds(TimerSchedule.spokenRemaining(until: timer.fireDate, now: now)).spoken
             let time = clock(timer.fireDate)
             return timer.label.map { String(localized: "\($0), saat \(time), \(left) kaldı") }
                 ?? String(localized: "saat \(time), \(left) kaldı")

@@ -5454,6 +5454,26 @@
         }
       }
     },
+    "Yaklaşık %@ daha yeter.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %@ of battery left."
+          }
+        }
+      }
+    },
+    "Yaklaşık %@ içinde dolar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full in about %@."
+          }
+        }
+      }
+    },
     "Yalnızca benim sesime yanıt ver": {
       "localizations": {
         "en": {
