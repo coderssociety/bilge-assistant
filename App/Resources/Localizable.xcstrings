@@ -2198,6 +2198,16 @@
         }
       }
     },
+    "Duraklatılmış şarkı: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused: %@."
+          }
+        }
+      }
+    },
     "Durdur": {
       "localizations": {
         "en": {
@@ -3872,6 +3882,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Engine"
+          }
+        }
+      }
+    },
+    "Müzik": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music"
           }
         }
       }

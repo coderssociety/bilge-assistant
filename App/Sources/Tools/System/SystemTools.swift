@@ -1,4 +1,5 @@
 import AppKit
+import AsistanCore
 import FoundationModels
 
 struct VolumeTool: AssistantTool {
@@ -72,26 +73,30 @@ struct MediaTool: AssistantTool {
     }
 
     func call(arguments: Arguments) async throws -> String {
-        let running = await MainActor.run { Self.runningPlayer() }
-        // Telling a closed Music to pause opens it first, and the command then times out.
-        guard let player = running ?? (arguments.action == .play ? "Music" : nil) else {
-            return String(localized: "Şu an çalan bir şey yok.")
-        }
-        let command: String
-        switch arguments.action {
-        case .play: command = "play"
-        case .pause: command = "pause"
-        case .toggle: command = "playpause"
-        case .next: command = "next track"
-        case .previous: command = "previous track"
-        case .nowPlaying:
-            command = "if player state is playing then return (name of current track) & \" - \" & (artist of current track)\nreturn \"\""
-        }
         do {
-            let output = try await AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(player))\n\(command)\nend tell")
+            // Telling a closed Music to pause opens it first, and the command then times out.
+            guard let app = try await MusicPlayers.controlTarget() ?? (arguments.action == .play ? .music : nil) else {
+                return String(localized: "Şu an çalan bir şey yok.")
+            }
+            let player = MusicPlayers.displayName(app)
+            let command: String
             switch arguments.action {
+            case .play: command = "play"
+            case .pause: command = "pause"
+            case .toggle: command = "playpause"
+            case .next: command = "next track"
+            case .previous: command = "previous track"
             case .nowPlaying:
-                return output.isEmpty ? String(localized: "Şu an çalan bir şey yok.") : String(localized: "Çalan: \(output).")
+                command = """
+                if player state is stopped then return ""
+                set stateName to "paused"
+                if player state is playing then set stateName to "playing"
+                return stateName & linefeed & (name of current track) & " - " & (artist of current track)
+                """
+            }
+            let output = try await AppleScriptRunner.run("tell application \(AppleScriptRunner.quoted(app.rawValue))\n\(command)\nend tell")
+            switch arguments.action {
+            case .nowPlaying: return Self.nowPlayingReply(output)
             case .play: return String(localized: "\(player) çalıyor.")
             case .pause: return String(localized: "\(player) duraklatıldı.")
             case .toggle: return String(localized: "\(player) oynat/duraklat yapıldı.")
@@ -103,11 +108,12 @@ struct MediaTool: AssistantTool {
         }
     }
 
-    @MainActor
-    private static func runningPlayer() -> String? {
-        let running = Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier))
-        if running.contains("com.spotify.client") { return "Spotify" }
-        return running.contains("com.apple.Music") ? "Music" : nil
+    private static func nowPlayingReply(_ output: String) -> String {
+        let lines = output.split(separator: "\n", maxSplits: 1).map(String.init)
+        guard lines.count == 2 else { return String(localized: "Şu an çalan bir şey yok.") }
+        return lines[0] == "playing"
+            ? String(localized: "Çalan: \(lines[1]).")
+            : String(localized: "Duraklatılmış şarkı: \(lines[1]).")
     }
 }
 
