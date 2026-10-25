@@ -8,6 +8,7 @@ import FoundationModels
 final class AssistantBrain: CommandHandling {
     static let maximumResponseTokens = 250
     private static let continueReadingAction = "continueReading"
+    private static let followUpMaterialLimit = 6000
     private static var moreToRead: String { " " + String(localized: "Devamı var; istersen “devam et” de.") }
 
     private let model = SystemLanguageModel.default
@@ -238,6 +239,13 @@ final class AssistantBrain: CommandHandling {
             }
             if context.reading?.hasMore == true { continuation.yield(Self.moreToRead) }
         case .conversation:
+            // "İkinci maddeyi açıkla" after a reading: the conversation never saw what the tool read.
+            if let reading = context.reading, reading.isCurrent(at: .now), ReadingRequest.refersToReading(command, language: language) {
+                let material = String(reading.lastPart.prefix(Self.followUpMaterialLimit))
+                let reply = try await answer(command, from: material, translation: translation, into: continuation)
+                previousTurn = .init(command: command, action: CommandRouter.conversationAction, result: reply)
+                return
+            }
             let request = translation.map { command + BrainInstructions.replyLanguage($0, language: language) } ?? command
             let reply = try await streamConversation(request, into: continuation)
             previousTurn = .init(command: command, action: CommandRouter.conversationAction, result: reply)

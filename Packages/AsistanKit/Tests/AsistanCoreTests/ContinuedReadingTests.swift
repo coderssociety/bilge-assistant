@@ -104,4 +104,35 @@ struct ContinuedReadingTests {
     func englishNotContinuation(command: String) {
         #expect(!ReadingRequest.isContinuation(command, language: .english))
     }
+
+    @Test("follow-ups about the text just read", arguments: [
+        "ikinci maddeyi açıkla", "bunu kısalt", "bu ne demek", "özetle", "daha kısa anlat", "bunun anlamı ne",
+        "ikincisini açıkla", "son paragrafta ne diyor", "yazıyı İngilizceye çevir", "ilk etkinlik saat kaçta",
+    ])
+    func refers(command: String) {
+        #expect(ReadingRequest.refersToReading(command))
+    }
+
+    @Test("questions of their own are not about the text", arguments: [
+        "bu akşam ne yapsam", "aşk ne demek", "bana bir fıkra anlat", "Ay'a ilk kim gitti", "yazın nereye gidelim",
+        "nasılsın",
+    ])
+    func doesNotRefer(command: String) {
+        #expect(!ReadingRequest.refersToReading(command))
+    }
+
+    @Test("English follow-ups about the text just read", arguments: [
+        "explain the second point", "shorten it", "what does that mean", "summarize", "make it shorter",
+        "translate this into French",
+    ])
+    func englishRefers(command: String) {
+        #expect(ReadingRequest.refersToReading(command, language: .english))
+    }
+
+    @Test("English questions of their own are not about the text", arguments: [
+        "what does love mean", "is it going to rain", "tell me a joke", "who was the first man on the moon",
+    ])
+    func englishDoesNotRefer(command: String) {
+        #expect(!ReadingRequest.refersToReading(command, language: .english))
+    }
 }
