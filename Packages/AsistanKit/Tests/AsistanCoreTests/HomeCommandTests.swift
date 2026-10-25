@@ -42,6 +42,26 @@ struct HomeCommandTests {
         #expect(!HomeCommand.guardsTheHouse("is the front door locked", language: .english))
     }
 
+    @Test("a polite request with a question mark still guards the house", arguments: [
+        ("kapının kilidini açar mısın?", AssistantLanguage.turkish), ("garaj kapısını açar mısın?", .turkish),
+        ("kapıyı kilitler misin?", .turkish), ("alarmı kapatabilir misin?", .turkish), ("kapıyı açar mı?", .turkish),
+        ("kapıyı aç ne olur", .turkish), ("kapıyı açsana", .turkish), ("kapıyı açayım mı?", .turkish),
+        ("can you unlock the front door?", .english), ("could you open the garage?", .english),
+        ("open the front door", .english), ("please open the gate?", .english),
+    ])
+    func politeRequestGuards(said: String, language: AssistantLanguage) {
+        #expect(HomeCommand.guardsTheHouse(said, language: language))
+    }
+
+    @Test("asking about a lock, the garage or the alarm needs no yes", arguments: [
+        ("kapı kilitli mi?", AssistantLanguage.turkish), ("garaj kapısı açık mı", .turkish), ("alarm kurulu mu?", .turkish),
+        ("ön kapı kilitli midir", .turkish), ("alarm ne durumda", .turkish), ("garajda alarm var mı", .turkish),
+        ("is the front door locked?", .english), ("is the garage door open", .english), ("what's the alarm status", .english),
+    ])
+    func statusQuestion(said: String, language: AssistantLanguage) {
+        #expect(!HomeCommand.guardsTheHouse(said, language: language))
+    }
+
     @Test("the address is a plain http(s) address")
     func address() {
         #expect(HomeAssistantAPI.baseAddress("http://homeassistant.local:8123/")?.absoluteString == "http://homeassistant.local:8123")
