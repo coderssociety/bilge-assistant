@@ -5504,6 +5504,16 @@
         }
       }
     },
+    "Uygulama açıkken iki dakikada bir AFAD'a bakar; hava durumu şehrine 150 km içindeki 4 ve üzeri depremleri bir kez söyler ve bildirim gösterir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "While the app is open, it checks AFAD every two minutes and announces each earthquake of magnitude 4 or more within 150 km of the weather city once, with a notification."
+          }
+        }
+      }
+    },
     "Uygulama açılınca dinlemeye başla": {
       "localizations": {
         "en": {
@@ -5680,6 +5690,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Full in about %@."
+          }
+        }
+      }
+    },
+    "Yakınımdaki depremleri söyle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell me about earthquakes near me"
           }
         }
       }

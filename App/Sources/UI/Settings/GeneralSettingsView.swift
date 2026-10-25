@@ -75,6 +75,9 @@ struct GeneralSettingsView: View {
                 Toggle("Günün ilk “günaydın”ında günün özetini söyle", isOn: $settings.morningBriefingEnabled)
                 Text("Yalnızca dinleme açıkken ve Takvim/Anımsatıcılar izni verilmişse çalışır.")
                     .font(.caption).foregroundStyle(.secondary)
+                Toggle("Yakınımdaki depremleri söyle", isOn: $settings.nearbyEarthquakeAlertsEnabled)
+                Text("Uygulama açıkken iki dakikada bir AFAD'a bakar; hava durumu şehrine 150 km içindeki 4 ve üzeri depremleri bir kez söyler ve bildirim gösterir.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section("Güncellemeler") {
