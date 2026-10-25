@@ -60,14 +60,20 @@ struct BrowserMediaTests {
         #expect(BrowserMedia.sounding(apps, processes: ["com.google.chromecast"]).isEmpty)
     }
 
-    @Test("only media apps outside Bilge, Music and Spotify count as something else sounding")
+    @Test("only browsers and media apps outside Music and Spotify count as something else sounding")
     func othersSounding() {
-        let excluded = ["com.vrnsoft.Asistan", "com.apple.Music", "com.spotify.client"]
-        #expect(BrowserMedia.othersSounding(["com.google.Chrome.helper"], excluding: excluded))
-        #expect(BrowserMedia.othersSounding(["com.apple.WebKit.GPU"], excluding: excluded))
-        #expect(BrowserMedia.othersSounding(["com.apple.podcasts"], excluding: excluded))
-        #expect(!BrowserMedia.othersSounding(["com.spotify.client.helper", "com.apple.Music", "com.vrnsoft.Asistan"], excluding: excluded))
-        #expect(!BrowserMedia.othersSounding(["", "com.apple.speech.synthesisd", "com.apple.systemsoundserverd"], excluding: excluded))
-        #expect(!BrowserMedia.othersSounding([], excluding: excluded))
+        #expect(BrowserMedia.othersSounding(["com.google.Chrome.helper"]))
+        #expect(BrowserMedia.othersSounding(["com.apple.WebKit.GPU"]))
+        #expect(BrowserMedia.othersSounding(["com.apple.podcasts"]))
+        #expect(BrowserMedia.othersSounding(["org.mozilla.firefox", "us.zoom.xos"]))
+        #expect(!BrowserMedia.othersSounding(["com.spotify.client.helper", "com.apple.Music", "com.vrnsoft.Asistan"]))
+        #expect(!BrowserMedia.othersSounding(["", "com.apple.speech.synthesisd", "com.apple.systemsoundserverd"]))
+        #expect(!BrowserMedia.othersSounding([]))
+    }
+
+    @Test("calls and games do not count, so a pause does not press the key and resume Spotify")
+    func callsAndGamesAreNotMedia() {
+        #expect(!BrowserMedia.othersSounding(["us.zoom.xos", "com.microsoft.teams2", "com.hnc.Discord.helper", "com.valvesoftware.steam"]))
+        #expect(!BrowserMedia.othersSounding(["com.google.chromecast"]))
     }
 }

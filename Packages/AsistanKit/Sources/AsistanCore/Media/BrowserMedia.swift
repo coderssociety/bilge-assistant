@@ -25,9 +25,13 @@ public enum BrowserMedia {
     /// Safari's pages play through WebKit's shared processes, which carry WebKit's identifier rather than Safari's.
     private static let webKitProcesses: Set<String> = ["com.apple.webkit.gpu", "com.apple.webkit.webcontent"]
     private static let safari = "com.apple.Safari"
-    /// Apple's processes that play media; its other ones (speech, system sounds) also open outputs now and then.
-    private static let appleMediaProcesses = webKitProcesses.union([
-        "com.apple.safari", "com.apple.podcasts", "com.apple.tv", "com.apple.quicktimeplayerx",
+    /// Browsers and media apps, whose sound the play/pause key controls. A call or a game also makes sound, but the key
+    /// would pass it by and resume a paused Spotify.
+    private static let mediaProcesses = webKitProcesses.union([
+        "com.apple.safari", "com.google.chrome", "com.microsoft.edgemac", "com.brave.browser", "company.thebrowser.browser",
+        "org.mozilla.firefox", "com.operasoftware.opera", "com.vivaldi.vivaldi",
+        "com.apple.podcasts", "com.apple.tv", "com.apple.quicktimeplayerx", "org.videolan.vlc", "com.colliderli.iina",
+        "com.deezer.deezer-desktop", "com.tidal.desktop", "com.amazon.music", "au.com.shiftyjelly.pocketcasts",
     ])
 
     /// The service whose player the address is: a YouTube video, or a YouTube Music, Deezer, Apple Music or Spotify page
@@ -77,14 +81,11 @@ public enum BrowserMedia {
         })
     }
 
-    /// Whether something other than the `excluded` apps (Bilge, Music, Spotify) is making sound. A wrong yes would let a
-    /// pause press the play/pause key and start whatever is paused, so processes without an identifier and Apple's
-    /// non-media processes do not count.
-    public static func othersSounding(_ processes: [String], excluding excluded: [String]) -> Bool {
-        let excluded = excluded.map { $0.lowercased() }
-        return processes.map { $0.lowercased() }.contains { id in
-            guard !id.isEmpty, !excluded.contains(where: { id == $0 || id.hasPrefix($0 + ".") }) else { return false }
-            return !id.hasPrefix("com.apple.") || appleMediaProcesses.contains { id == $0 || id.hasPrefix($0 + ".") }
+    /// Whether a browser or a media app other than Music and Spotify is making sound. A wrong yes would let a pause press
+    /// the play/pause key and start whatever is paused, so only known media processes count.
+    public static func othersSounding(_ processes: [String]) -> Bool {
+        processes.map { $0.lowercased() }.contains { id in
+            mediaProcesses.contains { id == $0 || id.hasPrefix($0 + ".") }
         }
     }
 }

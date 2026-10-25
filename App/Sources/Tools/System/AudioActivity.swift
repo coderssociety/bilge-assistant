@@ -18,10 +18,9 @@ enum AudioActivity {
         return objects.filter(isRunningOutput).map { bundleIdentifier(of: $0) ?? "" }
     }
 
-    /// Whether an app other than Bilge, Music and Spotify is making sound.
+    /// Whether a browser or a media app other than Music and Spotify is making sound.
     static func othersSounding() -> Bool {
-        let excluded = [Bundle.main.bundleIdentifier ?? ""] + MusicApp.allCases.map(MusicPlayers.bundleIdentifier)
-        return BrowserMedia.othersSounding(soundingProcesses(), excluding: excluded.filter { !$0.isEmpty })
+        BrowserMedia.othersSounding(soundingProcesses())
     }
 
     private static func isRunningOutput(_ process: AudioObjectID) -> Bool {
