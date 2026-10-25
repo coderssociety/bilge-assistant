@@ -17,8 +17,22 @@ struct TimerPhraseParserTests {
         #expect(TimerPhraseParser.parse(text) == expected)
     }
 
+    @Test("reads spoken clock times and fractions of an hour", arguments: [
+        ("sekize çeyrek kala uyandır", TimerPhraseParser.Result(hour: 7, minute: 45, durationSeconds: nil)),
+        ("dokuzu çeyrek geçe uyandır", TimerPhraseParser.Result(hour: 9, minute: 15, durationSeconds: nil)),
+        ("üç çeyrek sonra uyar", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 2700)),
+        ("üç çeyrek saat sonra", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 2700)),
+        ("bir buçuk saat sonra", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 5400)),
+        ("bir buçuk dakikalık zamanlayıcı", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 90)),
+        ("yarım saat sonra", TimerPhraseParser.Result(hour: nil, minute: nil, durationSeconds: 1800)),
+    ])
+    func parsesSpoken(text: String, expected: TimerPhraseParser.Result) {
+        #expect(TimerPhraseParser.parse(TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(text))) == expected)
+    }
+
     @Test("returns nil when nothing precise is said")
     func nothing() {
         #expect(TimerPhraseParser.parse("çay için zamanlayıcı kur") == nil)
+        #expect(TimerPhraseParser.parse("çeyrek final maçını hatırlat") == nil)
     }
 }

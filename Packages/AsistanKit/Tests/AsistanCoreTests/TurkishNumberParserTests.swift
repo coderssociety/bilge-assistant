@@ -55,8 +55,25 @@ struct TurkishTimeOfDayTests {
         #expect(TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(input)) == expected)
     }
 
+    @Test("resolves quarter past and to, with or without a part of day", arguments: [
+        ("sekize çeyrek kala uyandır", "07:45 uyandır"),
+        ("dokuzu çeyrek geçe", "09:15"),
+        ("akşam dokuzu on geçe", "21:10"),
+        ("altıya beş kala", "05:55"),
+        ("on ikiye yirmi kala", "11:40"),
+        ("onu beş geçe", "10:05"),
+        ("bire beş kala", "12:55"),
+        ("biri çeyrek geçe", "01:15"),
+        ("akşam sekize çeyrek kala", "19:45"),
+        ("gece on ikiyi on geçe", "00:10"),
+    ])
+    func resolvesPastAndTo(input: String, expected: String) {
+        #expect(TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(input)) == expected)
+    }
+
     @Test("leaves text without a part of day unchanged")
     func untouched() {
         #expect(TurkishTimeOfDay.resolve("10 dakika sonra") == "10 dakika sonra")
+        #expect(TurkishTimeOfDay.resolve("onu 5 dakika sonra ara") == "onu 5 dakika sonra ara")
     }
 }

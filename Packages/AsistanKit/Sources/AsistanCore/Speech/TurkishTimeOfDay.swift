@@ -1,13 +1,48 @@
 import Foundation
 
 /// Resolves "akşam 8'de" / "öğleden sonra 3 buçukta" (after digitizing) to 24-hour "20:00'de" / "15:30'da",
-/// so the model never has to do the AM/PM arithmetic it gets wrong.
+/// and "8'e çeyrek kala" / "akşam 9'u 10 geçe" to "07:45" / "21:10", so the model never has to do the
+/// clock arithmetic it gets wrong.
 public enum TurkishTimeOfDay {
+    private static let partsOfDay = "sabah|öğleden sonra|öğlen|öğleyin|akşam|gece"
     private static let pattern = try! NSRegularExpression(
-        pattern: #"(?<!\p{L})(sabah|öğleden sonra|öğlen|öğleyin|akşam|gece)\s+(\d{1,2})(?:'(\p{L}+))?(?:\s+buçuk(\p{L}*))?(?!\p{L})"#,
+        pattern: #"(?<!\p{L})("# + partsOfDay + #")\s+(\d{1,2})(?:'(\p{L}+))?(?:\s+buçuk(\p{L}*))?(?!\p{L})"#,
         options: [.caseInsensitive])
+    /// The digitizer leaves "biri"/"bire" (1) and "onu"/"ona" (10) as words.
+    private static let pastOrTo = try! NSRegularExpression(
+        pattern: #"(?<!\p{L})(?:("# + partsOfDay + #")\s+)?(?:(\d{1,2})'\p{L}+|(bir)[ie]|(on)[ua])\s+(çeyrek|\d{1,2})\s+(geçe|kala)(?!\p{L})"#,
+        options: [.caseInsensitive])
+    private static let quarter = 15
 
     public static func resolve(_ text: String) -> String {
+        resolvePartsOfDay(resolvePastOrTo(text))
+    }
+
+    private static func resolvePastOrTo(_ text: String) -> String {
+        let source = text as NSString
+        var result = text
+        for match in pastOrTo.matches(in: text, range: NSRange(location: 0, length: source.length)).reversed() {
+            func group(_ index: Int) -> String? {
+                let range = match.range(at: index)
+                return range.location == NSNotFound ? nil : source.substring(with: range)
+            }
+            let saidHour = group(2).flatMap(Int.init) ?? (group(3) != nil ? 1 : 10)
+            let minutes = group(5).map(TurkishText.lowercased) == "çeyrek" ? quarter : group(5).flatMap(Int.init) ?? 0
+            guard (0...24).contains(saidHour), (1...59).contains(minutes),
+                  let direction = group(6).map(TurkishText.lowercased),
+                  let range = Range(match.range, in: result)
+            else { continue }
+            let total = (saidHour * 60 + (direction == "kala" ? -minutes : minutes) + 1440) % 1440
+            var hour = total / 60
+            // "Bire beş kala" is five to one, not five to midnight.
+            if hour == 0, (1...12).contains(saidHour) { hour = 12 }
+            if let part = group(1).map(TurkishText.lowercased), let hour24 = hour24(hour, partOfDay: part) { hour = hour24 }
+            result.replaceSubrange(range, with: String(format: "%02d:%02d", hour, total % 60))
+        }
+        return result
+    }
+
+    private static func resolvePartsOfDay(_ text: String) -> String {
         let source = text as NSString
         var result = text
         for match in pattern.matches(in: text, range: NSRange(location: 0, length: source.length)).reversed() {
