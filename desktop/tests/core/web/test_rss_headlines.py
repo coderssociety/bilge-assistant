@@ -50,3 +50,14 @@ def test_titles_still_read_and_a_broken_date_is_none():
     feed = b"<rss><channel><item><title>A</title><pubDate>sometime</pubDate></item></channel></rss>"
     assert rss_headlines.parse(feed, 5) == ["A"]
     assert rss_headlines.items(feed, 5)[0].published is None
+
+
+def test_an_unreadable_link_drops_only_that_link():
+    feed = (
+        b"<rss><channel><item><title>A</title><link>http://[bad</link>"
+        b'<enclosure url="http://[bad" type="audio/mpeg"/></item>'
+        b"<item><title>B</title><link>https://news.example/b</link></item></channel></rss>"
+    )
+    first, second = rss_headlines.items(feed, 5)
+    assert first == rss_headlines.Item("A", None)
+    assert second.link == "https://news.example/b"
