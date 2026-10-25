@@ -1,0 +1,31 @@
+{
+ "code": 200,
+ "status": "OK",
+ "data": {
+  "timings": {
+   "Fajr": "05:39",
+   "Sunrise": "07:02",
+   "Dhuhr": "12:38",
+   "Asr": "15:35",
+   "Sunset": "18:02",
+   "Maghrib": "18:02",
+   "Isha": "19:21",
+   "Imsak": "05:29",
+   "Midnight": "00:32",
+   "Firstthird": "22:20",
+   "Lastthird": "02:45"
+  },
+  "date": {
+   "readable": "25 Oct 2026",
+   "gregorian": {
+    "date": "25-10-2026"
+   }
+  },
+  "meta": {
+   "timezone": "Europe/Istanbul",
+   "method": {
+    "id": 13
+   }
+  }
+ }
+}

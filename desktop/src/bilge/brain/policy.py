@@ -20,7 +20,8 @@ from bilge.tools.base import Risk
 REFUSED_AFTER_UNTRUSTED = frozenset({"readWebPage", "openWebsite", "searchWeb", "typeText", "remember", "sendEmail"})
 FREE_AFTER_UNTRUSTED = frozenset(
     {
-        "currentDateTime", "calculate", "batteryStatus", "systemInfo", "weather", "exchangeRate", "news",
+        "currentDateTime", "calculate", "batteryStatus", "systemInfo", "weather", "exchangeRate", "prayerTimes",
+        "news",
         "readDocument", "readNotes", "readScreen", "readSelection", "readClipboard", "readCalendar",
         "readReminders", "findContact", "readMail", "listShortcuts", "listRunningApps", "listMemories",
         # Opens only an address that came with a headline read out, so nothing can be carried off in it.
