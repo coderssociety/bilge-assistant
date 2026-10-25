@@ -5174,6 +5174,16 @@
         }
       }
     },
+    "Süper Lig bilgisi alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get Süper Lig data. %@"
+          }
+        }
+      }
+    },
     "Sürdür": {
       "localizations": {
         "en": {
