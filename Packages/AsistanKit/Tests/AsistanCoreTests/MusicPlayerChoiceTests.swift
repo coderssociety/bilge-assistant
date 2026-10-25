@@ -20,13 +20,35 @@ struct MusicPlayerChoiceTests {
         #expect(MusicPlayerChoice.forControl([]) == nil)
     }
 
-    @Test("play controls go to the playing app, else to the media keys")
-    func transport() {
-        #expect(MusicPlayerChoice.forTransport([(.spotify, .paused), (.music, .playing)], resuming: false) == .music)
-        #expect(MusicPlayerChoice.forTransport([(.music, .paused)], resuming: false) == nil)
-        #expect(MusicPlayerChoice.forTransport([(.music, .paused)], resuming: true) == .music)
-        #expect(MusicPlayerChoice.forTransport([(.spotify, .stopped)], resuming: true) == nil)
-        #expect(MusicPlayerChoice.forTransport([], resuming: true) == nil)
+    @Test("play, pause and play/pause go to the app that is playing")
+    func transportToPlayingApp() {
+        for action in [MusicPlayerChoice.Transport.play, .pause, .toggle] {
+            #expect(MusicPlayerChoice.transportTarget(action, players: [(.spotify, .paused), (.music, .playing)],
+                                                      othersSounding: true, mediaTab: true) == .app(.music))
+        }
+    }
+
+    @Test("a pause presses the play/pause key only while another app is sounding, so it never starts playback")
+    func pauseNeverStarts() {
+        #expect(MusicPlayerChoice.transportTarget(.pause, players: [(.music, .paused)], othersSounding: true, mediaTab: false) == .mediaKey)
+        #expect(MusicPlayerChoice.transportTarget(.pause, players: [(.music, .paused)], othersSounding: false, mediaTab: true) == .nothing)
+        #expect(MusicPlayerChoice.transportTarget(.pause, players: [], othersSounding: false, mediaTab: false) == .nothing)
+    }
+
+    @Test("resuming: something already sounding is left alone, a browser's music tab comes before a paused track")
+    func resume() {
+        #expect(MusicPlayerChoice.transportTarget(.play, players: [(.music, .paused)], othersSounding: true, mediaTab: true) == .alreadyPlaying)
+        #expect(MusicPlayerChoice.transportTarget(.play, players: [(.music, .paused)], othersSounding: false, mediaTab: true) == .mediaKey)
+        #expect(MusicPlayerChoice.transportTarget(.play, players: [(.spotify, .stopped), (.music, .paused)],
+                                                  othersSounding: false, mediaTab: false) == .app(.music))
+        #expect(MusicPlayerChoice.transportTarget(.play, players: [(.spotify, .stopped)], othersSounding: false, mediaTab: false) == .nothing)
+    }
+
+    @Test("play/pause pauses what sounds elsewhere, else resumes like play")
+    func toggle() {
+        #expect(MusicPlayerChoice.transportTarget(.toggle, players: [(.music, .paused)], othersSounding: true, mediaTab: false) == .mediaKey)
+        #expect(MusicPlayerChoice.transportTarget(.toggle, players: [(.music, .paused)], othersSounding: false, mediaTab: false) == .app(.music))
+        #expect(MusicPlayerChoice.transportTarget(.toggle, players: [], othersSounding: false, mediaTab: false) == .nothing)
     }
 
     @Test("searches where music is playing, then in Spotify when it is open or Music is not")
