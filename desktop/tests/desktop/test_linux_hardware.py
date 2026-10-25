@@ -117,17 +117,58 @@ def test_xfce_and_dunst_have_their_own_switch():
     assert runner.commands[-1] == ["dunstctl", "set-paused", "true"]
 
 
+class KdeNotifications(FakeBus):
+    """KDE's notification server: holds notifications back while an inhibition is held, and lets every one go when
+    the connection that asked for it closes."""
+
+    def __init__(self):
+        super().__init__()
+        self.held: set[int] = set()
+        self.others = False
+        self.next_cookie = 7
+
+    def call(self, name, path, interface, method, signature=None, *args):
+        self.calls.append((name, interface, method, args))
+        if method == "Inhibit":
+            self.held.add(self.next_cookie)
+            self.next_cookie += 1
+            return (self.next_cookie - 1,)
+        if self.held.isdisjoint(args):
+            raise DesktopError("D-Bus error: unknown cookie")
+        self.held.difference_update(args)
+        return ()
+
+    def get(self, name, path, interface, prop):
+        return bool(self.held) or self.others
+
+    def drop_connection(self):
+        self.held.clear()
+
+
 def test_kde_do_not_disturb_inhibits_and_hands_the_inhibition_back():
-    bus = FakeBus({(NOTIFICATIONS, "Inhibited"): False}, {(NOTIFICATIONS, "Inhibit"): (7,)})
+    bus = KdeNotifications()
     dnd = LinuxDoNotDisturb(FakeRunner(), KDE, bus)
     dnd.set_enabled(True)
     dnd.set_enabled(True)
     dnd.set_enabled(False)
     assert [call[2:] for call in bus.calls] == [("Inhibit", ("bilge", "", {})), ("UnInhibit", (7,))]
-    bus.properties[(NOTIFICATIONS, "Inhibited")] = True
+    bus.others = True
     with pytest.raises(NotPossibleHere) as error:
         dnd.set_enabled(False)
     assert error.value.desktop == "kde"
+
+
+def test_kde_do_not_disturb_inhibits_again_after_the_bus_connection_dropped():
+    bus = KdeNotifications()
+    dnd = LinuxDoNotDisturb(FakeRunner(), KDE, bus)
+    dnd.set_enabled(True)
+    bus.drop_connection()
+    dnd.set_enabled(True)
+    assert dnd.enabled() is True and bus.held == {8}
+    bus.drop_connection()
+    dnd.set_enabled(False)
+    assert dnd.enabled() is False
+    assert [call[2] for call in bus.calls] == ["Inhibit", "Inhibit"]
 
 
 def test_do_not_disturb_elsewhere_is_not_possible_or_names_the_program():

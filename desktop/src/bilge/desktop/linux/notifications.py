@@ -60,15 +60,19 @@ class LinuxDoNotDisturb:
 
     def _set_kde(self, on: bool) -> None:
         name, path, interface = _NOTIFICATIONS
+        inhibited = bool(self._bus.get(name, path, interface, "Inhibited"))
+        if not inhibited:
+            # The bus connection dropped (a timed-out call closes it) or the server restarted: KDE let ours go.
+            self._cookie = None
         if on:
             if self._cookie is None:
                 self._cookie = int(self._bus.call(name, path, interface, "Inhibit", "ssa{sv}", "bilge", "", {})[0])
             return
         if self._cookie is not None:
-            self._bus.call(name, path, interface, "UnInhibit", "u", self._cookie)
-            self._cookie = None
+            cookie, self._cookie = self._cookie, None
+            self._bus.call(name, path, interface, "UnInhibit", "u", cookie)
             return
-        if self._bus.get(name, path, interface, "Inhibited"):
+        if inhibited:
             # Turned on from the panel or by another app, which only they can undo.
             raise NotPossibleHere("Notifications are held back by someone else", "kde")
 
