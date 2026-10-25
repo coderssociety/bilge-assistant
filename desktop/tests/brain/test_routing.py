@@ -9,6 +9,7 @@ from bilge.core.language import AssistantLanguage
 from bilge.llm.messages import Reply
 from bilge.tools.base import Registry, Risk, Tool
 from bilge.tools.builtin import internet, prayer, prices
+from bilge.tools.desktop import sound
 
 from .test_agent import ScriptedProvider, recorder
 
@@ -155,3 +156,13 @@ def test_information_rules_claim_only_their_own_questions(command, expected):
         "fuelPrice": prices.asks_for_fuel_prices(TR),
     }
     assert {name for name, claims in rules.items() if claims(command)} == expected
+
+
+def test_a_song_on_a_named_service_is_played_but_the_service_alone_is_opened():
+    play, played = recorder("playMusic")
+    open_app, opened = recorder("openApp")
+    agent, _ = agent_with([play, open_app], rules=[rule("playMusic", sound.music_claims, sound.music_rule_arguments)])
+    agent.handle("YouTube'da Tarkan aç")
+    agent.handle("YouTube'u aç")
+    assert played == [{"query": "Tarkan", "service": "youtube"}]
+    assert opened == [{"appName": "YouTube'u"}]

@@ -1,11 +1,17 @@
-"""Volume and the music player."""
+"""Volume, the music player, and playing a named song on a music service."""
 
+import logging
+from collections.abc import Callable
 from enum import StrEnum
 from typing import Any
 
 from bilge.core.language import AssistantLanguage
+from bilge.core.media import music_request, music_search, track_name
+from bilge.core.media.music_request import MusicService
+from bilge.core.media.music_search import Track
 from bilge.desktop.base import Media, MediaCommand, MusicLauncher, Volume
 from bilge.desktop.process import DesktopError
+from bilge.tools import music_lookup
 from bilge.tools.base import Tool, ToolError
 from bilge.tools.desktop.common import (
     choice,
@@ -19,6 +25,9 @@ from bilge.tools.desktop.common import (
 )
 from bilge.tools.player import PlaybackError, Player
 from bilge.tools.player import failure as playback_failure
+from bilge.tools.web_fetch import WebFetchError
+
+log = logging.getLogger(__name__)
 
 VOLUME_STEP = 10
 
@@ -54,10 +63,14 @@ _TEXTS = {
         "no_player_installed": "Yüklü bir müzik çalar bulamadım. Spotify, Rhythmbox ya da VLC gibi bir çalar kurup açtıktan sonra tekrar söyle.",
         "started_playing": "{player} açıldı ve çalıyor.",
         "started_idle": "{player} açıldı ama çalmayı başlatamadım; çalardan bir şarkı seçebilirsin.",
-        "search": "Belirli bir sanatçıyı, şarkıyı ya da albümü bulup çalar ('Tarkan çal'): Spotify yüklüyse onda, değilse tarayıcıda YouTube Music'te arar.",
+        "search": "Belirli bir sanatçıyı, şarkıyı ya da albümü bulup çalar ('Tarkan çal', 'YouTube'da Kuzu Kuzu aç'): söylenen serviste, söylenmediyse ayarlardaki serviste ilk eşleşen şarkıyı açar.",
         "query": "Sanatçı, şarkı ya da albüm adı, söylendiği gibi",
+        "service": "Sadece servis söylendiyse: spotify, youtube, youtube_music, deezer ya da apple_music",
         "no_query": "Ne çalmamı istediğini anlayamadım.",
-        "searched": "{place} içinde '{query}' aramasını açtım; listeden bir şarkı seçebilirsin.",
+        "opened": "{place} '{song}' açıldı.",
+        "searched": "{place} '{query}' aramasını açtım; listeden bir şarkı seçebilirsin.",
+        "not_found": "{place} '{query}' için bir şarkı bulamadım; arama sayfasını açtım.",
+        "unreachable": "{place} şarkıyı arayamadım; '{query}' arama sayfasını açtım.",
         "nothing_playing": "Şu an çalan bir şey yok.",
         "now_playing": "Çalan: {song}.",
         MusicAction.PLAY: "{player} çalıyor.",
@@ -87,10 +100,14 @@ _TEXTS = {
         "no_player_installed": "I couldn't find a music player. Install one such as Spotify, Rhythmbox or VLC, open it, and ask again.",
         "started_playing": "{player} is open and playing.",
         "started_idle": "{player} is open, but I couldn't start playback; pick a song there.",
-        "search": "Finds and plays a named artist, song or album ('play Tarkan'): in Spotify when it's installed, otherwise on YouTube Music in the browser.",
+        "search": "Finds and plays a named artist, song or album ('play Tarkan', 'play Kuzu Kuzu on YouTube'): opens the first matching song on the service named, or else on the one chosen in the settings.",
         "query": "The artist, song or album, as said",
+        "service": "Only when a service was named: spotify, youtube, youtube_music, deezer or apple_music",
         "no_query": "I didn't get what to play.",
+        "opened": "Opened '{song}' on {place}.",
         "searched": "I opened a search for '{query}' in {place}; pick a song from the list.",
+        "not_found": "I couldn't find a song for '{query}' on {place}, so I opened its search page.",
+        "unreachable": "I couldn't search {place}, so I opened its search page for '{query}'.",
         "nothing_playing": "Nothing is playing right now.",
         "now_playing": "Playing: {song}.",
         MusicAction.PLAY: "{player} is playing.",
@@ -208,7 +225,8 @@ def music_tool(
                     return texts["no_player"]
                 if not playing.playing or not playing.title:
                     return texts["nothing_playing"]
-                song = f"{playing.title} - {playing.artist}" if playing.artist else playing.title
+                title, artist = track_name.cleaned(playing.title, playing.artist)
+                song = f"{title} - {artist}" if artist else title
                 return texts["now_playing"].format(song=song)
             if media.now_playing() is None:
                 return start() if action in (MusicAction.PLAY, MusicAction.TOGGLE) else texts["no_player"]
@@ -222,17 +240,63 @@ def music_tool(
                 untrusted_output=lambda arguments: arguments.get("action") == MusicAction.NOW_PLAYING)  # fmt: skip
 
 
-def music_search_tool(launcher: MusicLauncher, language: AssistantLanguage) -> Tool:
+def music_claims(command: str) -> bool:
+    return music_request.parse(command) is not None
+
+
+def music_rule_arguments(command: str) -> dict[str, Any]:
+    request = music_request.parse(command)
+    return {"query": request.query, "service": request.service.value} if request else {}
+
+
+def music_search_tool(
+    launcher: MusicLauncher,
+    language: AssistantLanguage,
+    default_service: Callable[[], str] = lambda: music_request.AUTO,
+    find: Callable[[MusicService, str, AssistantLanguage], list[Track]] = music_lookup.find,
+) -> Tool:
+    """`default_service`: the setting used when the command names no service."""
     texts = _TEXTS[language]
+    places = music_request.LOCATIVES if language is AssistantLanguage.TURKISH else music_request.NAMES
+    region = music_lookup.country(language)
+
+    def play(service: MusicService, query: str) -> str:
+        place = places[service]
+        if service is MusicService.SPOTIFY:
+            # Spotify has no keyless search to pick a song with.
+            in_app = launcher.has_app(service)
+            launcher.open(
+                music_search.spotify_search(query) if in_app else music_search.search_page(service, query, region)
+            )
+            return texts["searched"].format(place=place, query=query)
+        try:
+            found = find(service, query, language)
+        except WebFetchError as error:
+            log.info("Could not search %s: %s", service.value, error)
+            launcher.open(music_search.search_page(service, query, region))
+            return texts["unreachable"].format(place=place, query=query)
+        if not found:
+            launcher.open(music_search.search_page(service, query, region))
+            return texts["not_found"].format(place=place, query=query)
+        track = found[0]
+        in_app = service is MusicService.DEEZER and launcher.has_app(service)
+        launcher.open(music_search.deezer_app_url(track) if in_app else track.url)
+        return texts["opened"].format(place=place, song=track.spoken)
 
     def run(arguments: dict[str, Any]) -> str:
         query = string_argument(arguments, "query")
         if not query:
             raise ToolError(texts["no_query"])
         try:
-            place = launcher.play_search(query)
+            service = music_request.chosen_service(
+                string_argument(arguments, "service") or None,
+                default_service(),
+                lambda: launcher.has_app(MusicService.SPOTIFY),
+            )
+            return play(service, query)
         except DesktopError as error:
             raise failure(error, language) from error
-        return texts["searched"].format(place=place, query=query)
 
-    return Tool("playMusic", texts["search"], run=run, parameters=obj(["query"], query=text(texts["query"])))
+    parameters = obj(["query"], query=text(texts["query"]), service=choice(MusicService, texts["service"]))
+    # The song's title is written by whoever uploaded it.
+    return Tool("playMusic", texts["search"], run=run, parameters=parameters, untrusted_output=True)

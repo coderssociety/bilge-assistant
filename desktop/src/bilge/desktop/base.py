@@ -5,6 +5,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
 
+from bilge.core.media.music_request import MusicService
+
 
 @dataclass(frozen=True)
 class AppEntry:
@@ -128,8 +130,12 @@ class MusicLauncher(Protocol):
         """Starts the user's music player and asks it to play; None when no player is installed."""
         ...
 
-    def play_search(self, query: str) -> str:
-        """Opens a search for `query` in Spotify when it is installed, otherwise a web music search; returns where."""
+    def has_app(self, service: MusicService) -> bool:
+        """Whether the service's own app is installed (Spotify, Deezer); the others play in the browser."""
+        ...
+
+    def open(self, address: str) -> None:
+        """Opens a song's address: a web page in the browser, an app's own scheme in the app."""
         ...
 
 

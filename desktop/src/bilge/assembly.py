@@ -200,7 +200,8 @@ def build_agent(
     if found is not None and alarms is not None:
         last_reply = lambda: built[0].last_reply if built else None  # noqa: E731
         tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply, text_reading,
-                                                             people, settings.commands, player)  # fmt: skip
+                                                             people, settings.commands, player,
+                                                             lambda: settings.music_service)  # fmt: skip
         for tool in tools:
             registry.add(tool)
         rules = [*desktop_rules, *rules]
@@ -279,6 +280,7 @@ def _desktop_tools(
     people: ContactLookup,
     custom_commands: list[config.CustomCommand],
     player: Player,
+    music_service: Callable[[], str],
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
@@ -315,7 +317,7 @@ def _desktop_tools(
         *apps.app_tools(apps.AppCatalog(found.apps), language),
         sound.volume_tool(found.volume, language),
         sound.music_tool(found.media, language, found.music, player),
-        sound.music_search_tool(found.music, language),
+        sound.music_search_tool(found.music, language, music_service),
         playback.playback_tool(found.media, language, player),
         *hardware.hardware_tools(
             found.brightness, found.do_not_disturb, found.bluetooth, found.power, found.settings, language
@@ -342,6 +344,8 @@ def _desktop_tools(
     rules = [
         rule("startDictation", lambda command: dictation_command.is_start(command, language)),
         rule("spreadsheet", sheet.claims, lambda command: {"command": command}),
+        # "YouTube'da Tarkan aç": before "aç" is taken for opening an app.
+        rule("playMusic", sound.music_claims, sound.music_rule_arguments),
         *notes.note_rules(language),
         *commands.command_rules(own_commands, language),
         rule("browserControl", lambda command: browser.claims(command, language), lambda command: {"command": command}),

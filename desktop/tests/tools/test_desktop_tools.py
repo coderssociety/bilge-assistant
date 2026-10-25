@@ -137,16 +137,19 @@ def test_music_control_and_now_playing():
     assert sound.music_tool(FakeMedia(None), TR).run({"action": "play"}) == "Açık bir müzik çalar bulamadım."
 
 
+def test_a_browser_tab_playing_is_named_without_the_site_and_video_labels():
+    tab = NowPlaying("Firefox", True, "(2) TARKAN - Kuzu Kuzu (Official Video) - YouTube", "TarkanVEVO")
+    assert sound.music_tool(FakeMedia(tab), TR).run({"action": "nowPlaying"}) == "Çalan: TARKAN - Kuzu Kuzu."
+    deezer = NowPlaying("Chrome", True, "Kuzu Kuzu - Deezer", "Tarkan")
+    assert sound.music_tool(FakeMedia(deezer), EN).run({"action": "nowPlaying"}) == "Playing: Kuzu Kuzu - Tarkan."
+
+
 class FakeLauncher:
     def __init__(self, started):
-        self.started, self.searched = started, []
+        self.started = started
 
     def start_player(self):
         return self.started
-
-    def play_search(self, query):
-        self.searched.append(query)
-        return "Spotify"
 
 
 def test_play_with_no_open_player_starts_one():
@@ -157,15 +160,6 @@ def test_play_with_no_open_player_starts_one():
     tool = sound.music_tool(FakeMedia(None), TR, FakeLauncher(None))
     assert tool.run({"action": "play"}).startswith("Yüklü bir müzik çalar bulamadım.")
     assert tool.run({"action": "next"}) == "Açık bir müzik çalar bulamadım."
-
-
-def test_named_music_is_searched_for():
-    launcher = FakeLauncher(None)
-    tool = sound.music_search_tool(launcher, TR)
-    assert tool.run({"query": "Tarkan"}) == "Spotify içinde 'Tarkan' aramasını açtım; listeden bir şarkı seçebilirsin."
-    assert launcher.searched == ["Tarkan"]
-    with pytest.raises(ToolError):
-        tool.run({"query": " "})
 
 
 def test_battery_states():
