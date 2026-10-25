@@ -1,11 +1,11 @@
-"""Starting music when no player is open, and playing what the user names ("Tarkan çal"). The platforms only say
-which players are installed; starting one and waiting for it to take commands is the same everywhere."""
+"""Starting music when no player is open, and opening what plays a named song ("Tarkan çal"). The platforms only
+say which players are installed; starting one and waiting for it to take commands is the same everywhere."""
 
 import logging
 import time
 from collections.abc import Callable
-from urllib.parse import quote, quote_plus
 
+from bilge.core.media.music_request import MusicService
 from bilge.desktop.base import AppEntry, Apps, Media, MediaCommand, Opener, PlayerStart
 from bilge.desktop.process import DesktopError
 
@@ -14,13 +14,14 @@ log = logging.getLogger(__name__)
 # A player needs a few seconds after launch before it answers media commands.
 PLAYER_WAIT_SECONDS = 10.0
 _POLL_SECONDS = 0.5
-WEB_MUSIC = "YouTube Music"
-_WEB_SEARCH = "https://music.youtube.com/search?q={}"
-_SPOTIFY_SEARCH = "spotify:search:{}"
 
 
 def is_spotify(app: AppEntry) -> bool:
     return "spotify" in app.id.lower() or app.display_name.lower() == "spotify"
+
+
+def is_deezer(app: AppEntry) -> bool:
+    return "deezer" in app.id.lower() or "deezer" in app.display_name.lower()
 
 
 class MusicLauncher:
@@ -56,13 +57,15 @@ class MusicLauncher:
             return PlayerStart(player.display_name, playing=False)
         return PlayerStart(player.display_name, playing=True)
 
-    def play_search(self, query: str) -> str:
-        spotify = next((app for app in self._players() if is_spotify(app)), None)
-        if spotify is not None:
-            self._opener.open(_SPOTIFY_SEARCH.format(quote(query, safe="")))
-            return spotify.display_name
-        self._opener.open(_WEB_SEARCH.format(quote_plus(query)))
-        return WEB_MUSIC
+    def has_app(self, service: MusicService) -> bool:
+        if service is MusicService.SPOTIFY:
+            return any(is_spotify(app) for app in self._players())
+        if service is MusicService.DEEZER:
+            return any(is_deezer(app) for app in self._apps.installed())
+        return False
+
+    def open(self, address: str) -> None:
+        self._opener.open(address)
 
     def _wait_for_player(self) -> bool:
         waited = 0.0

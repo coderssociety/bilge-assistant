@@ -11,6 +11,7 @@ import keyring
 from keyring.errors import KeyringError, PasswordDeleteError
 
 from bilge.core.language import AssistantLanguage
+from bilge.core.media.music_request import AUTO, DEFAULT_CHOICES
 
 APP_NAME = "Bilge"
 KEYRING_SERVICE = "bilge"
@@ -127,6 +128,9 @@ class Settings:
     check_updates: bool = True
     # While Bilge runs, say so when a strong earthquake happens near the weather city.
     earthquake_alerts: bool = True
+    # Where a named song plays when the command names no service: "auto" (the Spotify app when installed, otherwise
+    # YouTube Music), "spotify", "youtube", "youtube_music", "deezer" or "apple_music".
+    music_service: str = AUTO
     commands: list[CustomCommand] = field(default_factory=list)
 
     @property
@@ -187,6 +191,7 @@ def load_settings(path: Path | None = None) -> Settings:
         setup_done=bool(data.get("setup_done", False)),
         check_updates=bool(data.get("check_updates", True)),
         earthquake_alerts=bool(data.get("earthquake_alerts", True)),
+        music_service=service if (service := data.get("music_service")) in DEFAULT_CHOICES else AUTO,
         commands=_commands(data.get("commands")),
         model=ModelSettings(
             provider=str(model.get("provider", "lmstudio")),

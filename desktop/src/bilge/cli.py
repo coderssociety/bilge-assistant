@@ -11,6 +11,7 @@ from keyring.errors import KeyringError
 
 from bilge import assembly, calendars, config
 from bilge.core.language import AssistantLanguage
+from bilge.core.media.music_request import DEFAULT_CHOICES
 from bilge.llm.providers import PRESETS, ProviderError, make_provider
 from bilge.models.downloader import DownloadError
 
@@ -189,6 +190,15 @@ def use(args: argparse.Namespace) -> int:
     return 0
 
 
+def music(args: argparse.Namespace) -> int:
+    settings = config.load_settings()
+    if args.service:
+        settings.music_service = args.service
+        config.save_settings(settings)
+    print(settings.music_service)
+    return 0
+
+
 def key(args: argparse.Namespace) -> int:
     if args.provider not in PRESETS:
         print(f"Unknown provider. Choose one of: {', '.join(PRESETS)}", file=sys.stderr)
@@ -321,6 +331,10 @@ def parser() -> argparse.ArgumentParser:
     calendar_command.add_argument("--user")
     calendar_command.add_argument("--name", help="the calendar new events go to")
     calendar_command.set_defaults(run=calendar)
+
+    music_command = commands.add_parser("music", help="show or choose where named songs play")
+    music_command.add_argument("service", nargs="?", choices=DEFAULT_CHOICES)
+    music_command.set_defaults(run=music)
 
     key_command = commands.add_parser("key", help="store or delete a provider's API key")
     key_command.add_argument("provider")

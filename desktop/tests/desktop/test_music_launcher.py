@@ -1,3 +1,4 @@
+from bilge.core.media.music_request import MusicService
 from bilge.desktop.base import AppEntry, MediaCommand, NowPlaying
 from bilge.desktop.linux.media import installed_players as linux_players
 from bilge.desktop.music import MusicLauncher
@@ -89,13 +90,15 @@ def test_no_player_installed():
     assert launcher([])[0].start_player() is None
 
 
-def test_search_goes_to_spotify_or_else_the_web():
+def test_which_services_have_their_own_app_installed():
+    deezer = AppEntry("deezer.desktop", "Deezer", ())
     music, _, opener, _ = launcher([SPOTIFY, RHYTHMBOX])
-    assert music.play_search("Tarkan Şımarık") == "Spotify"
-    assert opener.opened == ["spotify:search:Tarkan%20%C5%9E%C4%B1mar%C4%B1k"]
-    music, _, opener, _ = launcher([RHYTHMBOX])
-    assert music.play_search("Sezen Aksu") == "YouTube Music"
-    assert opener.opened == ["https://music.youtube.com/search?q=Sezen+Aksu"]
+    assert music.has_app(MusicService.SPOTIFY) and not music.has_app(MusicService.DEEZER)
+    music, _, opener, _ = launcher([RHYTHMBOX, deezer])
+    assert not music.has_app(MusicService.SPOTIFY) and music.has_app(MusicService.DEEZER)
+    assert not music.has_app(MusicService.YOUTUBE)
+    music.open("deezer://www.deezer.com/track/16412320")
+    assert opener.opened == ["deezer://www.deezer.com/track/16412320"]
 
 
 def test_linux_prefers_spotify_then_the_app_for_music_files_then_other_mpris_players():
