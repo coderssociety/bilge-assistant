@@ -16,15 +16,19 @@ public struct ContinuedReading: Equatable, Sendable {
     public let parts: [String]
     /// The parts are material a language model answers from, rather than spoken as they are.
     public let answersWithLanguageModel: Bool
+    /// The language the reading was asked in ("İngilizce maili Türkçe oku"), so "devamını oku" keeps it.
+    public let translation: SpeechLanguage?
     public private(set) var partsRead = 1
     public private(set) var readAt: Date
 
     /// Nil for a text with nothing to read; without a layout the text is a single part.
-    public init?(_ text: String, layout: Layout?, answersWithLanguageModel: Bool, at date: Date) {
+    public init?(_ text: String, layout: Layout?, answersWithLanguageModel: Bool, translation: SpeechLanguage? = nil,
+                 at date: Date) {
         let parts = layout.map { Self.parts(of: text, layout: $0) } ?? [text]
         guard !parts.isEmpty, !parts[0].isEmpty else { return nil }
         self.parts = parts
         self.answersWithLanguageModel = answersWithLanguageModel
+        self.translation = translation
         readAt = date
     }
 
