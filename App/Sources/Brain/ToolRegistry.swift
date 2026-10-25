@@ -76,6 +76,7 @@ struct ToolRegistry {
             PrayerTimesTool(),
             GoldPriceTool(),
             FuelPriceTool(),
+            WikipediaTool(),
         ]
     }
 }

@@ -88,6 +88,9 @@ public enum RouteGuard {
         case "exchangeRate":
             // Gold is priced by its own tool; the rates source knows only currencies.
             return words.contains { $0.hasPrefix("altin") || $0 == "ons" } ? "goldPrice" : action
+        case "conversation":
+            // Clear encyclopedic questions ("fotosentez nedir") are answered from Wikipedia rather than from memory.
+            return EncyclopediaQuestion.subject(in: command, language: .turkish) != nil ? "wikipedia" : action
         default:
             return action
         }

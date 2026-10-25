@@ -36,7 +36,8 @@ enum WebFetch {
     private static let maxBytes = 3_000_000
     private static let maxRedirects = 5
     private static let allowedPorts: Set<Int> = [80, 443]
-    private static let headers = [("User-Agent", "Mozilla/5.0 (Macintosh) Bilge/0.1"), ("Accept-Language", AppLanguage.current == .english ? "en,tr;q=0.8" : "tr,en;q=0.8")]
+    /// Wikimedia throttles agents that give no contact address (HTTP 429 on its search API).
+    private static let headers = [("User-Agent", "Mozilla/5.0 (Macintosh) Bilge/0.1 (+https://github.com/coderssociety/bilge-assistant)"), ("Accept-Language", AppLanguage.current == .english ? "en,tr;q=0.8" : "tr,en;q=0.8")]
 
     private static let transientStatuses: Set<Int> = [502, 503, 504]
     private static let retryDelay: Duration = .milliseconds(400)

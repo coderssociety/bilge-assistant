@@ -135,6 +135,21 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "quitApp", command: "Safari'yi kapat") == "quitApp")
     }
 
+    @Test("clear encyclopedic questions are looked up on Wikipedia", arguments: [
+        ("Mustafa Kemal Atatürk kimdir", "conversation", "wikipedia"),
+        ("fotosentez nedir", "conversation", "wikipedia"),
+        ("Everest hakkında bilgi ver", "conversation", "wikipedia"),
+        ("nasılsın", "conversation", "conversation"),
+        ("Everest'in yüksekliği ne kadar", "conversation", "conversation"),
+        ("Osmanlı Devleti'nin kurucusu kimdir", "conversation", "conversation"),
+        ("bu hata nedir", "readScreen", "readScreen"),
+        ("pil durumu nedir", "batteryStatus", "batteryStatus"),
+        ("saat kaç", "currentDateTime", "currentDateTime"),
+    ])
+    func wikipedia(command: String, routed: String, expected: String) {
+        #expect(RouteGuard.review(action: routed, command: command) == expected)
+    }
+
     @Test("gold goes to its own prices, currencies stay with the rates", arguments: [
         ("100 gram altın kaç lira", "exchangeRate", "goldPrice"),
         ("ons kaç dolar", "exchangeRate", "goldPrice"),

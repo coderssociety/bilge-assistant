@@ -60,4 +60,16 @@ struct EnglishRouteGuardTests {
     func gold(command: String, routed: String, expected: String) {
         #expect(EnglishRouteGuard.review(action: routed, command: command) == expected)
     }
+
+    @Test("encyclopedic questions go to Wikipedia, small talk does not", arguments: [
+        ("who was Ada Lovelace", "conversation", "wikipedia"),
+        ("what is photosynthesis", "conversation", "wikipedia"),
+        ("how are you", "conversation", "conversation"),
+        ("who are you", "conversation", "conversation"),
+        ("what is the capital of France", "conversation", "conversation"),
+        ("what does the screen say", "readScreen", "readScreen"),
+    ])
+    func wikipedia(command: String, routed: String, expected: String) {
+        #expect(EnglishRouteGuard.review(action: routed, command: command) == expected)
+    }
 }

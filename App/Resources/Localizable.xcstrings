@@ -4186,6 +4186,16 @@
         }
       }
     },
+    "Ne hakkında bilgi istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell what you want to know about."
+          }
+        }
+      }
+    },
     "Ne yazacağımı anlayamadım.": {
       "localizations": {
         "en": {
@@ -5600,6 +5610,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Vikipedi'de %@ hakkında bir sayfa bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a Wikipedia page about %@."
+          }
+        }
+      }
+    },
+    "Vikipedi'ye ulaşamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't reach Wikipedia. %@"
           }
         }
       }
