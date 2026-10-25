@@ -2,7 +2,7 @@
 /// on purpose: anything with extra content (a label, a second action, an unknown word) returns nil
 /// and goes to the model, so the fast path can only be faster, never wronger.
 public enum QuickIntent: Sendable, Equatable {
-    public enum Volume: Sendable, Equatable { case set(Int), up, down, mute, unmute }
+    public enum Volume: Sendable, Equatable { case set(Int), up, down, change(Int), mute, unmute }
     public enum Media: Sendable, Equatable { case play, pause, next, previous, nowPlaying }
     public enum System: Sendable, Equatable { case lockScreen, sleep, darkModeOn, darkModeOff }
     public enum CalendarRange: Sendable, Equatable { case today, tomorrow, thisWeek }
@@ -106,6 +106,11 @@ public enum QuickIntentParser {
         let upVerbs: Set<String> = ["artir", "arttir", "yukselt"]
         let downVerbs: Set<String> = ["kis", "azalt", "dusur", "alcalt"]
         let rest = Array(w.dropFirst())
+        if let verb = rest.last, upVerbs.contains(verb) || downVerbs.contains(verb),
+           let amount = rest.dropLast().compactMap({ Int($0) }).first,
+           rest.dropLast().allSatisfy({ ["yuzde", "puan"].contains($0) || Int($0) != nil }) {
+            return .volume(.change(upVerbs.contains(verb) ? min(amount, 100) : -min(amount, 100)))
+        }
         if let verb = rest.last, setVerbs.contains(verb), let level = rest.dropLast().compactMap(leadingNumber).first,
            rest.dropLast().allSatisfy({ $0 == "yuzde" || leadingNumber($0) != nil }) {
             return .volume(.set(min(level, 100)))

@@ -6,6 +6,7 @@ struct VolumeTool: AssistantTool {
     let name = "setVolume"
     let description = "Mac'in ses seviyesini ayarlar, artırır, azaltır, sessize alır ya da sesi açar."
     private static let step = 10
+    private static let unmutedMarker = "unmuted "
 
     @Generable
     enum Action {
@@ -17,10 +18,18 @@ struct VolumeTool: AssistantTool {
         var action: Action
         @Guide(description: "Sadece 'set' için hedef seviye", .range(0...100))
         var level: Int?
+        @Guide(description: "Sadece 'increase'/'decrease' için ne kadar: 'yüzde 20 artır' → 20. Söylenmediyse boş bırak.", .range(1...100))
+        var amount: Int?
+    }
+
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        guard AppLanguage.current == .turkish, let change = VolumeChange.parse(command) else { return arguments }
+        return Arguments(action: change > 0 ? .increase : .decrease, level: nil, amount: abs(change))
     }
 
     func call(arguments: Arguments) async throws -> String {
         let currentLevel = "(output volume of (get volume settings))"
+        let amount = arguments.amount ?? Self.step
         do {
             switch arguments.action {
             case .set:
@@ -29,15 +38,23 @@ struct VolumeTool: AssistantTool {
                 }
                 return try await apply("\(level)")
             case .increase:
-                return try await apply("\(currentLevel) + \(Self.step)")
+                return try await apply("\(currentLevel) + \(amount)")
             case .decrease:
-                return try await apply("\(currentLevel) - \(Self.step)")
+                return try await apply("\(currentLevel) - \(amount)")
             case .mute:
                 _ = try await AppleScriptRunner.run("set volume with output muted")
                 return String(localized: "Ses kapatıldı.")
             case .unmute:
-                let level = try await AppleScriptRunner.run("set volume without output muted\nreturn \(currentLevel)")
-                return String(localized: "Ses açıldı, seviye yüzde \(level).")
+                // "Sesi aç" with the sound already on means louder; unmuting alone left it as quiet as it was.
+                let output = try await AppleScriptRunner.run("""
+                if output muted of (get volume settings) is true then
+                set volume without output muted
+                return "\(Self.unmutedMarker)" & \(currentLevel)
+                end if
+                \(Self.setClamped("\(currentLevel) + \(Self.step)"))
+                """)
+                guard output.hasPrefix(Self.unmutedMarker) else { return String(localized: "Ses seviyesi yüzde \(output).") }
+                return String(localized: "Ses açıldı, seviye yüzde \(String(output.dropFirst(Self.unmutedMarker.count))).")
             }
         } catch {
             return ToolReply.failure(error)
@@ -46,15 +63,19 @@ struct VolumeTool: AssistantTool {
 
     /// Reads, clamps and sets in one script, since every script starts an osascript process.
     private func apply(_ levelExpression: String) async throws -> String {
-        let level = try await AppleScriptRunner.run("""
+        let level = try await AppleScriptRunner.run(Self.setClamped(levelExpression))
+        return String(localized: "Ses seviyesi yüzde \(level).")
+    }
+
+    private static func setClamped(_ levelExpression: String) -> String {
+        """
         set target to \(levelExpression)
         if target > 100 then set target to 100
         if target < 0 then set target to 0
         set volume without output muted
         set volume output volume target
         return target
-        """)
-        return String(localized: "Ses seviyesi yüzde \(level).")
+        """
     }
 }
 

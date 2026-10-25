@@ -63,11 +63,12 @@ struct FastPath {
 
     private static func arguments(for volume: QuickIntent.Volume) -> VolumeTool.Arguments {
         switch volume {
-        case let .set(level): .init(action: .set, level: level)
-        case .up: .init(action: .increase, level: nil)
-        case .down: .init(action: .decrease, level: nil)
-        case .mute: .init(action: .mute, level: nil)
-        case .unmute: .init(action: .unmute, level: nil)
+        case let .set(level): .init(action: .set, level: level, amount: nil)
+        case .up: .init(action: .increase, level: nil, amount: nil)
+        case .down: .init(action: .decrease, level: nil, amount: nil)
+        case let .change(amount): .init(action: amount > 0 ? .increase : .decrease, level: nil, amount: abs(amount))
+        case .mute: .init(action: .mute, level: nil, amount: nil)
+        case .unmute: .init(action: .unmute, level: nil, amount: nil)
         }
     }
 
