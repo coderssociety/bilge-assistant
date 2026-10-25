@@ -50,6 +50,7 @@ struct TurkishTimeOfDayTests {
         ("gece ikide", "02:00'de"),
         ("öğlen on ikide", "12:00'de"),
         ("yarın sabah dokuz buçukta", "yarın 09:30'da"),
+        ("akşam saat sekizde yemek", "20:00'de yemek"),
     ])
     func resolves(input: String, expected: String) {
         #expect(TurkishTimeOfDay.resolve(TurkishNumberParser.digitize(input)) == expected)

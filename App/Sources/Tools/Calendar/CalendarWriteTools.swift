@@ -25,20 +25,10 @@ enum ScheduledMoment {
         return String(localized: "\(day) saat \(time)")
     }
 
-    private static let partOfDayWords = ["sabah", "ogle", "aksam", "gece"]
-
-    /// Day and clock time stated in the text override the model's values. A model hour is kept only
-    /// when the text names a part of day ("yarın akşam"); otherwise it was invented, so it is dropped.
     static func refine(dayOffset: Int?, hour: Int?, minute: Int?, command: String) -> (dayOffset: Int?, hour: Int?, minute: Int?) {
-        let english = AppLanguage.current == .english
-        let day = english ? EnglishTimeParser.dayOffset(in: command, now: .now) : RelativeDayParser.dayOffset(in: command, now: .now)
-        if let clock = english ? EnglishTimeParser.parse(command) : TimerPhraseParser.parse(command), let parsedHour = clock.hour {
-            return (day, parsedHour, clock.minute)
-        }
-        let folded = TurkishText.folded(command)
-        let partsOfDay = english ? Array(EnglishTimeParser.partOfDayWords) : partOfDayWords
-        let mentionsPartOfDay = partsOfDay.contains { folded.contains($0) }
-        return mentionsPartOfDay ? (day, hour, minute) : (day, nil, nil)
+        let moment = AppointmentTime.refine(.init(dayOffset: dayOffset, hour: hour, minute: minute), command: command,
+                                            language: AppLanguage.current, now: .now)
+        return (moment.dayOffset, moment.hour, moment.minute)
     }
 }
 

@@ -1,10 +1,10 @@
 import Foundation
 
-/// Resolves "akşam 8'de" / "öğleden sonra 3 buçukta" (after digitizing) to 24-hour "20:00'de" / "15:30'da",
+/// Resolves "akşam 8'de" / "akşam saat 8'de" / "öğleden sonra 3 buçukta" (after digitizing) to 24-hour "20:00'de" / "15:30'da",
 /// so the model never has to do the AM/PM arithmetic it gets wrong.
 public enum TurkishTimeOfDay {
     private static let pattern = try! NSRegularExpression(
-        pattern: #"(?<!\p{L})(sabah|öğleden sonra|öğlen|öğleyin|akşam|gece)\s+(\d{1,2})(?:'(\p{L}+))?(?:\s+buçuk(\p{L}*))?(?!\p{L})"#,
+        pattern: #"(?<!\p{L})(sabah|öğleden sonra|öğlen|öğleyin|akşam|gece)\s+(?:saat\s+)?(\d{1,2})(?:'(\p{L}+))?(?:\s+buçuk(\p{L}*))?(?!\p{L})"#,
         options: [.caseInsensitive])
 
     public static func resolve(_ text: String) -> String {
