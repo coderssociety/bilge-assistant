@@ -3106,6 +3106,16 @@
         }
       }
     },
+    "Hangi vakti sorduğunu anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which prayer time you're asking about."
+          }
+        }
+      }
+    },
     "Hangisini iptal edeyim? ": {
       "localizations": {
         "en": {
@@ -4156,6 +4166,16 @@
         }
       }
     },
+    "Namaz vakitleri alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get the prayer times. %@"
+          }
+        }
+      }
+    },
     "Ne yazacağımı anlayamadım.": {
       "localizations": {
         "en": {
@@ -4212,6 +4232,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Norwegian krone"
+          }
+        }
+      }
+    },
+    "O gün için namaz vakitlerini bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find the prayer times for that day."
           }
         }
       }

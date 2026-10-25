@@ -23,6 +23,9 @@ struct WeatherTool: AssistantTool {
     /// Weather questions without a city use the city set in Settings.
     static let defaultCityKey = "weatherCity"
     static let fallbackCity = "İstanbul"
+    static var defaultCity: String {
+        UserDefaults.standard.string(forKey: defaultCityKey)?.nilIfEmpty ?? fallbackCity
+    }
     var reading = WeatherReading()
 
     @Generable
@@ -105,9 +108,7 @@ struct WeatherTool: AssistantTool {
 
     func call(arguments: Arguments) async throws -> String {
         let saidCity = arguments.city?.trimmingCharacters(in: .whitespaces).nilIfEmpty
-        let city = saidCity
-            ?? UserDefaults.standard.string(forKey: Self.defaultCityKey)?.nilIfEmpty
-            ?? Self.fallbackCity
+        let city = saidCity ?? Self.defaultCity
         do {
             var geocoding = URLComponents(string: "https://geocoding-api.open-meteo.com/v1/search")!
             geocoding.queryItems = [.init(name: "name", value: city), .init(name: "count", value: "1"), .init(name: "language", value: AppLanguage.current.code)]
