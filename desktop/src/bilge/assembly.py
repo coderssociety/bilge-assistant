@@ -13,6 +13,8 @@ from bilge.brain.action_log import ActionLog
 from bilge.brain.agent import Agent, Confirmer
 from bilge.brain.routing import Mode, Rule, rule
 from bilge.core.alerts import earthquake_alert
+from bilge.core.context import context_intent
+from bilge.core.context.screen_context import ContextItem
 from bilge.core.dictation import dictation_command
 from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import Desktop
@@ -212,13 +214,16 @@ def _desktop_tools(
     from bilge.tools.command_approvals import CommandApprovals
     from bilge.tools.desktop import (
         apps,
+        browser,
         clipboard,
         commands,
+        context,
         files,
         hardware,
         messages,
         notes,
         playback,
+        screen,
         sound,
         spreadsheet,
         system,
@@ -230,6 +235,7 @@ def _desktop_tools(
     from bilge.tools.notes_folder import NotesFolder, notes_folder
 
     dictation = typing.DictationSession(found.keyboard, language)
+    pointed = context.ContextReader(found.clipboard, found.file_selection)
     sheet = spreadsheet.SpreadsheetSession(language)
     own_commands = commands.CommandTools(custom_commands, CommandApprovals(config.data_dir() / "command-approvals.json"),
                                          Runner(), language)  # fmt: skip
@@ -250,9 +256,14 @@ def _desktop_tools(
         typing.start_dictation_tool(dictation, language),
         *files.file_tools(found.folders, found.opener, language, text_reading),
         *web.web_tools(found.opener, language),
+        browser.browser_tool(found.keyboard, language),
+        screen.read_screen_tool(found.screen_text, language, text_reading),
+        context.context_tool(pointed, found.screen_text, found.opener, language, text_reading),
         *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
-        *_office_tools(language, text_reading, people),
+        *_office_tools(
+            language, text_reading, people, lambda body: pointed.item(context_intent.wanted_kind(body, language))
+        ),
         *notes.note_tools(NotesFolder(notes_folder(found.folders.documents(), language)), language, text_reading),
         *commands.command_tools(own_commands),
         messages.send_message_tool(_text_messages(), people, language),
@@ -262,6 +273,9 @@ def _desktop_tools(
         rule("spreadsheet", sheet.claims, lambda command: {"command": command}),
         *notes.note_rules(language),
         *commands.command_rules(own_commands, language),
+        rule("browserControl", lambda command: browser.claims(command, language), lambda command: {"command": command}),
+        # "Bunu Ahmet'e gönder": the text is read only when the e-mail is prepared, never by the model.
+        context.send_pointed_rule(language),
     ]
     modes = [
         Mode(lambda: dictation.active, dictation.window, lambda _: True, dictation.end, takes=dictation.handle,
@@ -290,13 +304,18 @@ def _spreadsheet_apps(calc):
     return SpreadsheetApps({"excel": ExcelSheets(), "calc": calc})
 
 
-def _office_tools(language: AssistantLanguage, text_reading: TextReading, people: ContactLookup) -> list[Tool]:
+def _office_tools(
+    language: AssistantLanguage,
+    text_reading: TextReading,
+    people: ContactLookup,
+    pointed: Callable[[str], ContextItem | None],
+) -> list[Tool]:
     if sys.platform != "win32":
         return []
     from bilge.desktop.windows.office import Outlook
     from bilge.tools.desktop.mail import mail_tools
 
-    return mail_tools(Outlook(), language, text_reading, people)
+    return mail_tools(Outlook(), language, text_reading, people, pointed)
 
 
 def voice_models(settings: config.Settings) -> tuple[ModelSpec, ...]:

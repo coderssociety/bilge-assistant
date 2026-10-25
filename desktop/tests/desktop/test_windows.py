@@ -132,6 +132,19 @@ def test_selection_is_copied_and_the_clipboard_put_back():
     assert clipboard.selection() == ""
 
 
+def test_shortcuts_are_pressed_as_virtual_keys():
+    from bilge.desktop.process import DesktopError
+
+    api = Api()
+    keyboard = WindowsKeyboard(api, process_name=lambda pid: "chrome")
+    keyboard.press("ctrl", "shift", "t")
+    keyboard.press("alt", "left")
+    keyboard.press("ctrl", "3")
+    assert api.pressed == [(0x11, 0x10, 0x54), (0x12, 0x25), (0x11, 0x33)]
+    with pytest.raises(DesktopError):
+        keyboard.press("ctrl", "ğ")
+
+
 def test_selection_is_never_copied_from_a_console():
     from bilge.desktop.process import DesktopError
 
@@ -387,6 +400,7 @@ class Outlook:
             SimpleNamespace(Class=69, FullName="Ekip listesi"),
         ])  # fmt: skip
         self.sent = []
+        self.attached = []
         self.items = {}
 
     def GetNamespace(self, _):  # noqa: N802
@@ -402,6 +416,7 @@ class Outlook:
             def __init__(self):
                 self.Recipients = SimpleNamespace(Add=lambda to: SimpleNamespace(
                     Resolve=lambda: to == "Ahmet", Name="Ahmet Yılmaz", Address="ahmet@example.org"))  # fmt: skip
+                self.Attachments = SimpleNamespace(Add=outlook.attached.append)
 
             def Send(self):  # noqa: N802
                 outlook.sent.append((self.To, self.Subject, self.Body))

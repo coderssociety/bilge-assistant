@@ -32,7 +32,9 @@ dependencies = [
     "winrt-windows-devices-radios>=3.0 ; sys_platform == 'win32'",
     "winrt-windows-foundation>=3.0 ; sys_platform == 'win32'",
     "winrt-windows-foundation-collections>=3.0 ; sys_platform == 'win32'",
+    "winrt-windows-graphics-imaging>=3.0 ; sys_platform == 'win32'",
     "winrt-windows-media-control>=3.0 ; sys_platform == 'win32'",
+    "winrt-windows-media-ocr>=3.0 ; sys_platform == 'win32'",
     "winrt-windows-ui-notifications>=3.0 ; sys_platform == 'win32'",
 ]
 

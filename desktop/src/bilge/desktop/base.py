@@ -143,12 +143,22 @@ class Clipboard(Protocol):
         ...
 
 
+# What `Keyboard.press` takes besides a single letter or digit.
+MODIFIER_KEYS = ("ctrl", "shift", "alt")
+NAMED_KEYS = ("tab", "left", "right", "page_up", "page_down", "home", "end", "return", "escape", "f5")
+
+
 class Keyboard(Protocol):
     def front_window(self) -> FrontWindow | None:
         """None when the platform doesn't say which app is in front."""
         ...
 
     def type(self, text: str) -> None: ...
+
+    def press(self, *keys: str) -> None:
+        """A shortcut into the app in front: the keys held down in order ("ctrl", "shift", "tab"), then released.
+        Each is one of MODIFIER_KEYS, NAMED_KEYS, a letter or a digit; DesktopError for anything else."""
+        ...
 
     def new_line(self) -> None:
         """Shift+Enter: a line break even where Enter would send a message."""
@@ -223,6 +233,20 @@ class Screenshots(Protocol):
     def copy_image(self, image: Path) -> None: ...
 
 
+class ScreenText(Protocol):
+    def read(self, area: ScreenshotArea) -> str:
+        """The text shown in the front window or on the whole screen, recognized in a screenshot that is not kept.
+        Empty when the user cancelled the capture; MissingProgram or NotPossibleHere when nothing here can
+        recognize text."""
+        ...
+
+
+class FileSelection(Protocol):
+    def selected(self) -> tuple[Path, ...]:
+        """The files the user picked in the file manager; empty when there are none or it won't say."""
+        ...
+
+
 class SettingsPanes(Protocol):
     def open(self, pane: str) -> bool:
         """`pane` is one of the names in `bilge.core.conversation.quick_intent_parser.SettingsPane`; False when this
@@ -291,6 +315,8 @@ class Desktop:
     session: Session
     network: Network
     screenshots: Screenshots
+    screen_text: ScreenText
+    file_selection: FileSelection
     settings: SettingsPanes
     opener: Opener
     notifier: Notifier

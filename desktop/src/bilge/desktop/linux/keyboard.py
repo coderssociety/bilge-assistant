@@ -23,6 +23,20 @@ _LEFT_SHIFT, _LEFT_CTRL, _ENTER, _BACKSPACE, _V = 42, 29, 28, 14, 47
 _PASTE = ((_LEFT_CTRL, "ctrl"), (_V, "v"))
 _NEW_LINE = ((_LEFT_SHIFT, "shift"), (_ENTER, "enter"))
 _PASTE_SETTLE_SECONDS = 0.3
+# `Keyboard.press` names → (X key name for xdotool and wtype, input event code for ydotool 1.x, key name for 0.1.8).
+_KEYS = {
+    "ctrl": ("ctrl", _LEFT_CTRL, "ctrl"), "shift": ("shift", _LEFT_SHIFT, "shift"), "alt": ("alt", 56, "alt"),
+    "tab": ("Tab", 15, "tab"), "left": ("Left", 105, "left"), "right": ("Right", 106, "right"),
+    "page_up": ("Page_Up", 104, "pageup"), "page_down": ("Page_Down", 109, "pagedown"), "home": ("Home", 102, "home"),
+    "end": ("End", 107, "end"), "return": ("Return", _ENTER, "enter"), "escape": ("Escape", 1, "esc"),
+    "f5": ("F5", 63, "f5"),
+}  # fmt: skip
+# Event codes follow the keys' places on a US keyboard.
+_CHARACTER_CODES = {
+    **dict(zip("1234567890", range(2, 12), strict=True)), **dict(zip("qwertyuiop", range(16, 26), strict=True)),
+    **dict(zip("asdfghjkl", range(30, 39), strict=True)), **dict(zip("zxcvbnm", range(44, 51), strict=True)),
+}  # fmt: skip
+_WTYPE_MODIFIERS = frozenset({"ctrl", "shift", "alt"})
 # WM_CLASS(STRING) = "gnome-terminal-server", "Gnome-terminal": the first is the instance, closest to the program.
 _WM_CLASS = re.compile(r'WM_CLASS\(\w+\) = "([^"]*)"')
 
@@ -180,6 +194,22 @@ class LinuxKeyboard:
                 ["ydotool", "key", "-d", str(_KEY_DELAY_MS), *[f"{_BACKSPACE}:1", f"{_BACKSPACE}:0"] * count]
             )
 
+    def press(self, *keys: str) -> None:
+        named = tuple(_key(key) for key in keys)
+        if named:
+            self._with_typist(lambda typist: self._press_with(typist, named))
+
+    def _press_with(self, typist: str, keys: tuple[tuple[str, int, str], ...]) -> None:
+        if typist == "xdotool":
+            self._runner.check(["xdotool", "key", "--clearmodifiers", "+".join(name for name, _, _ in keys)])
+        elif typist == "wtype":
+            held = [name for name, _, _ in keys[:-1] if name in _WTYPE_MODIFIERS]
+            down = [arg for name in held for arg in ("-M", name)]
+            up = [arg for name in reversed(held) for arg in ("-m", name)]
+            self._runner.check(["wtype", *down, "-k", keys[-1][0], *up])
+        else:
+            self._ydotool_shortcut(tuple((code, legacy) for _, code, legacy in keys))
+
     def _ydotool_shortcut(self, keys: tuple[tuple[int, str], ...]) -> None:
         """Presses the keys in order and releases them in reverse, as a shortcut."""
         if self._is_legacy_ydotool():
@@ -187,6 +217,15 @@ class LinuxKeyboard:
             return
         events = [f"{code}:1" for code, _ in keys] + [f"{code}:0" for code, _ in reversed(keys)]
         self._runner.check(["ydotool", "key", *events])
+
+
+def _key(key: str) -> tuple[str, int, str]:
+    if key in _KEYS:
+        return _KEYS[key]
+    lower = key.lower()
+    if lower in _CHARACTER_CODES:
+        return lower, _CHARACTER_CODES[lower], lower
+    raise DesktopError(f"Unknown key: {key}")
 
 
 def _has_foreign_capital(text: str) -> bool:
