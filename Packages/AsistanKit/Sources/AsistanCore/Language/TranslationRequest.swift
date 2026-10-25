@@ -52,6 +52,18 @@ public enum TranslationRequest {
     private static let shortReadingWords: Set<String> = ["de", "da"]
     private static let englishCues: Set<String> = ["in", "into", "to"]
 
+    public static func language(code: String) -> SpeechLanguage? {
+        languages.first { $0.language.code == code }?.language
+    }
+
+    /// The language a single folded word names: "almanca", "turkceden", "german"; endings only in Turkish.
+    static func language(inWord word: String, endings: Set<String>, english: Bool) -> SpeechLanguage? {
+        if english { return languages.first { $0.english == word }?.language }
+        return languages.first { entry in
+            word.hasPrefix(entry.turkish) && endings.contains(String(word.dropFirst(entry.turkish.count)))
+        }?.language
+    }
+
     public static func target(in command: String) -> SpeechLanguage? {
         let words = TurkishText.folded(command).split { !$0.isLetter }.map(String.init)
         var found: SpeechLanguage?

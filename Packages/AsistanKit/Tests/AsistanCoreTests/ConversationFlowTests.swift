@@ -164,6 +164,23 @@ struct ConversationFlowTests {
         #expect(flow.heard("bir şeyler", at: start.addingTimeInterval(41)) == .none)
         #expect(flow.tick(at: start.addingTimeInterval(41)) == .returnToIdle(timedOut: false))
     }
+
+    @Test("a session that takes everything gets wake-phrase speech and cancel words as input")
+    func sessionTakingEverything() {
+        var flow = makeFlow()
+        flow.responseStarted()
+        let session = ConversationFlow.WorkSession(window: 120, takesEverything: true, languages: ["tr", "en"]) { _ in true }
+        flow.responseFinished(at: start, allowFollowUp: false, session: session)
+        #expect(flow.activeWorkSession?.languages == ["tr", "en"])
+        #expect(flow.heard("never mind", at: start.addingTimeInterval(3)) == .runWorkInput("never mind"))
+        flow.responseStarted()
+        flow.responseFinished(at: start, allowFollowUp: false, session: session)
+        #expect(flow.heard("Asistan, saat kaç", at: start.addingTimeInterval(3)) == .runWorkInput("saat kaç"))
+        flow.responseStarted()
+        flow.responseFinished(at: start, allowFollowUp: false, session: session)
+        #expect(flow.heard("Asistan, iptal", at: start.addingTimeInterval(3)) == .returnToIdle(timedOut: false))
+        #expect(flow.activeWorkSession == nil)
+    }
 }
 
 @Suite("ConversationFlow listening shortcut")

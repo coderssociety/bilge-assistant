@@ -39,10 +39,19 @@ public struct ConversationFlow: Sendable {
     /// room is not acted on.
     public struct WorkSession: Sendable {
         public let window: TimeInterval
+        /// Even with the wake phrase, everything said is input to the session (interpreting): the phrase is dropped,
+        /// and only the wake phrase with a cancel phrase still ends it.
+        public let takesEverything: Bool
+        /// Language codes the input may be spoken in, recognized with language detection; empty for the
+        /// assistant's own language.
+        public let languages: [String]
         public let accepts: @Sendable (String) -> Bool
 
-        public init(window: TimeInterval, accepts: @escaping @Sendable (String) -> Bool) {
+        public init(window: TimeInterval, takesEverything: Bool = false, languages: [String] = [],
+                    accepts: @escaping @Sendable (String) -> Bool) {
             self.window = window
+            self.takesEverything = takesEverything
+            self.languages = languages
             self.accepts = accepts
         }
     }
@@ -58,6 +67,12 @@ public struct ConversationFlow: Sendable {
         self.matcher = matcher
         self.commandTimeout = commandTimeout
         self.followUpWindow = followUpWindow
+    }
+
+    /// The work session whose input the next utterance would be.
+    public var activeWorkSession: WorkSession? {
+        guard case .followUp = phase else { return nil }
+        return session
     }
 
     public var isAwaitingSpeech: Bool {
@@ -84,6 +99,12 @@ public struct ConversationFlow: Sendable {
             let command = wakeMatch?.command ?? transcript.trimmingCharacters(in: .whitespacesAndNewlines)
             let key = TurkishText.folded(command)
             guard !key.isEmpty else { return .none }
+            if case .followUp = phase, let session, session.takesEverything,
+               wakeMatch == nil || !Self.cancels(key, inWork: false) {
+                guard session.accepts(command) else { return .none }
+                phase = .processing
+                return .runWorkInput(command)
+            }
             if case .followUp = phase, let session, wakeMatch == nil, !Self.cancels(key, inWork: true) {
                 guard session.accepts(command) else { return .none }
                 phase = .processing
