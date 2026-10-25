@@ -6,6 +6,7 @@ struct EnglishDictationTests {
     @Test("whole-utterance controls", arguments: [
         ("New line", DictationCommand?.some(.newLine)), ("New paragraph", .newParagraph), ("Scratch that", .deleteLast),
         ("Delete the last sentence", .deleteLast), ("Stop dictation", .finish), ("I'm done", .finish),
+        ("Stop dictation, please.", .finish), ("Stop typing", .finish),
         ("Delete that file from my desktop", nil), ("A new line of products", nil),
     ])
     func commands(text: String, expected: DictationCommand?) {
