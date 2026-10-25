@@ -3,7 +3,8 @@ import AsistanCore
 import FoundationModels
 
 /// "Günün özeti", and the first "günaydın" of the day: weather, today's remaining events, reminders
-/// due, unread mail. Parts are gathered at once and any that is slow or unavailable is left out.
+/// due, unread mail. Parts are gathered at once and any that is slow or unavailable is left out, except the
+/// calendar, which is said to be unreadable rather than empty.
 struct BriefingTool: RuleRoutedTool {
     static let enabledKey = "morningBriefingEnabled"
     private static let lastBriefingKey = "lastMorningBriefing"
@@ -42,7 +43,7 @@ struct BriefingTool: RuleRoutedTool {
         }
         async let reminders = Self.bounded { try await CalendarAccess.shared.dueReminderTitles(until: endOfDay) }
         async let mail = Self.bounded { try await Self.unreadMail() }
-        let briefing = DailyBriefing(now: now, weather: await weather ?? nil, events: await events ?? [],
+        let briefing = DailyBriefing(now: now, weather: await weather ?? nil, events: await events,
                                      reminders: await reminders ?? [], unreadMail: await mail ?? nil)
         return briefing.text(language: AppLanguage.current)
     }

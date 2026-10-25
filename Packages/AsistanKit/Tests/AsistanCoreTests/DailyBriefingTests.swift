@@ -56,6 +56,13 @@ struct DailyBriefingTests {
             + "3 anımsatıcın var: A, B ve 1 tane daha.")
     }
 
+    @Test("an unreadable calendar is not a free day")
+    func unreadableCalendar() {
+        let briefing = DailyBriefing(now: date(9), weather: nil, events: nil, reminders: [], unreadMail: nil)
+        #expect(briefing.text(calendar: calendar) == "Günaydın. Bugün 14 Ekim Çarşamba. Takvimini okuyamadım.")
+        #expect(briefing.text(calendar: calendar, language: .english).hasSuffix("I couldn't read your calendar."))
+    }
+
     @Test("the locative ending follows the time as spoken", arguments: [
         (10, 0, "10:00'da"), (11, 0, "11:00'de"), (13, 0, "13:00'te"), (16, 0, "16:00'da"), (15, 30, "15:30'da"),
         (15, 40, "15:40'ta"), (9, 20, "09:20'de"), (0, 0, "00:00'da"), (14, 45, "14:45'te"), (8, 50, "08:50'de"),

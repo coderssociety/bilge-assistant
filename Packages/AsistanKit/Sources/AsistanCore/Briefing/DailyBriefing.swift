@@ -45,14 +45,15 @@ public struct DailyBriefing: Sendable {
 
     public let now: Date
     public let weather: String?
-    /// Today's timed events still ahead, in order.
-    public let events: [Event]
+    /// Today's timed events still ahead, in order; nil when the calendar could not be read, which must not
+    /// sound like a free day.
+    public let events: [Event]?
     /// Reminders due today or overdue.
     public let reminders: [String]
     /// Nil when it could not be checked.
     public let unreadMail: Int?
 
-    public init(now: Date, weather: String?, events: [Event], reminders: [String], unreadMail: Int?) {
+    public init(now: Date, weather: String?, events: [Event]?, reminders: [String], unreadMail: Int?) {
         self.now = now
         self.weather = weather
         self.events = events
@@ -83,6 +84,7 @@ public struct DailyBriefing: Sendable {
     }
 
     private func eventsSentence(calendar: Calendar) -> String {
+        guard let events else { return "Takvimini okuyamadım." }
         guard !events.isEmpty else { return "Bugün başka etkinliğin yok." }
         let listed = events.prefix(Self.listedEvents).map { event in
             let time = TurkishGrammar.timeLocative(hour: calendar.component(.hour, from: event.start),
@@ -109,14 +111,16 @@ public struct DailyBriefing: Sendable {
         }
         var sentences = [greeting, "Today is \(now.formatted(format))."]
         if let weather { sentences.append(weather) }
-        if events.isEmpty {
+        if let events, events.isEmpty {
             sentences.append("You have nothing else on your calendar today.")
-        } else {
+        } else if let events {
             let time = Date.FormatStyle(date: .omitted, time: .shortened, locale: AssistantLanguage.english.locale,
                                         calendar: calendar, timeZone: calendar.timeZone)
             let listed = events.prefix(Self.listedEvents).map { "\($0.title) at \($0.start.formatted(time))" }
             let noun = events.count == 1 ? "event" : "events"
             sentences.append("You have \(events.count) \(noun) today: \(Self.englishList(listed, total: events.count)).")
+        } else {
+            sentences.append("I couldn't read your calendar.")
         }
         if reminders.count == 1 {
             sentences.append("Today's reminder: \(reminders[0]).")
