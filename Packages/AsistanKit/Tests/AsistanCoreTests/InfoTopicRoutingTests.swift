@@ -10,6 +10,7 @@ struct InfoTopicRoutingTests {
         ("Galatasaray maçı kaç kaç", "football"), ("Fenerbahçe ne zaman oynuyor", "football"),
         ("bu hafta Süper Lig maçları", "football"), ("puan durumu", "football"), ("dün maç sonuçları", "football"),
         ("GS kazandı mı", "football"), ("Konyaspor maçı ne zaman", "football"),
+        ("borsa nasıl", "stocks"), ("BIST 100 kaç", "stocks"), ("THY hissesi ne kadar", "stocks"), ("Aselsan bugün", "stocks"),
     ])
     func routes(command: String, expected: String) {
         #expect(RouteGuard.infoTopic(command) == expected)
@@ -28,6 +29,7 @@ struct InfoTopicRoutingTests {
     @Test("English requests", arguments: [
         ("any earthquakes today", "earthquakes"), ("was there an earthquake near me", "earthquakes"),
         ("what's the Galatasaray score", "football"), ("Super Lig table", "football"),
+        ("how is the BIST 100 doing", "stocks"), ("Aselsan share price", "stocks"),
     ])
     func english(command: String, expected: String) {
         #expect(RouteGuard.infoTopic(command, language: .english) == expected)

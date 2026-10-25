@@ -43,11 +43,12 @@ public enum RouteGuard {
         return "conversation"
     }
 
-    /// Earthquakes and Süper Lig football are told apart by their words, so these tools stay out of the router
-    /// model's prompt: the action for one of them, or nil for everything else.
+    /// Earthquakes, Süper Lig football and Borsa İstanbul prices are told apart by their words, so these tools stay
+    /// out of the router model's prompt: the action for one of them, or nil for everything else.
     public static func infoTopic(_ command: String, language: AssistantLanguage = .turkish) -> String? {
         if EarthquakeRequest.isRequest(command, language: language) { return "earthquakes" }
         if FootballRequest.isRequest(command, language: language) { return "football" }
+        if StockRequest.isRequest(command, language: language) { return "stocks" }
         return nil
     }
 

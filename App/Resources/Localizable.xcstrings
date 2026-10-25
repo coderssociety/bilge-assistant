@@ -102,6 +102,16 @@
         }
       }
     },
+    "%@ için fiyat alınamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get the price for %@."
+          }
+        }
+      }
+    },
     "%@ son %@ başlıkları. ": {
       "localizations": {
         "en": {
@@ -1702,6 +1712,16 @@
         }
       }
     },
+    "Borsa verisi alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get stock market data. %@"
+          }
+        }
+      }
+    },
     "Bu ay": {
       "localizations": {
         "en": {
@@ -1908,6 +1928,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "This window has %lld tabs."
+          }
+        }
+      }
+    },
+    "Bu sembol için veri yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no data for this symbol."
           }
         }
       }

@@ -75,6 +75,7 @@ struct ToolRegistry {
             BriefingTool(),
             EarthquakeTool(),
             FootballTool(),
+            StockTool(),
         ]
     }
 }
