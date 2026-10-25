@@ -182,6 +182,56 @@
         }
       }
     },
+    "%@ podcastinin bölümlerini okuyamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't read the episodes of %@."
+          }
+        }
+      }
+    },
+    "%@ podcastinin son bölümü %@ yayınlandı: %@. O zamandan beri yeni bölüm yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The latest episode of %1$@ came out %2$@: %3$@. There hasn't been a new one since."
+          }
+        }
+      }
+    },
+    "%@ podcastinin son bölümü çalıyor: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing the latest episode of %1$@: %2$@."
+          }
+        }
+      }
+    },
+    "%@ podcastinin son bölümü: %@. Ne zaman yayınlandığı belli değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The latest episode of %1$@ is %2$@. Its release date isn't given."
+          }
+        }
+      }
+    },
+    "%@ podcastinin son bölümünü başlatamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't start the latest episode of %@."
+          }
+        }
+      }
+    },
     "%@ son %@ başlıkları. ": {
       "localizations": {
         "en": {
@@ -952,6 +1002,16 @@
         }
       }
     },
+    "%lld gün önce": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days ago"
+          }
+        }
+      }
+    },
     "%lld kestirmen var: %@": {
       "localizations": {
         "en": {
@@ -1024,6 +1084,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't find a note called '%@'."
+          }
+        }
+      }
+    },
+    "'%@' adında bir podcast bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a podcast called '%@'."
           }
         }
       }
@@ -2968,6 +3038,16 @@
         }
       }
     },
+    "dün": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "yesterday"
+          }
+        }
+      }
+    },
     "Düğmeye bastıktan sonra cümleyi normal sesinle oku.": {
       "localizations": {
         "en": {
@@ -3256,6 +3336,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't figure out the event's day or time."
+          }
+        }
+      }
+    },
+    "Evet, %@ podcastinin %@ yayınlanan yeni bir bölümü var: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yes, %1$@ has a new episode out %2$@: %3$@."
           }
         }
       }
@@ -3732,6 +3822,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't tell which currency to convert."
+          }
+        }
+      }
+    },
+    "Hangi podcast'i istediğini anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which podcast you mean."
           }
         }
       }
@@ -5528,6 +5628,16 @@
           "stringUnit": {
             "state": "new",
             "value": "Pil yüzde %1$lld, %2$@."
+          }
+        }
+      }
+    },
+    "Podcast bilgisine ulaşamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't get the podcast information. %@"
           }
         }
       }
