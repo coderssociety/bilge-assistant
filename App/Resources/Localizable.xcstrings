@@ -22,6 +22,16 @@
         }
       }
     },
+    " Bunlardan başka %lld etkinlik daha var.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " There are %lld more."
+          }
+        }
+      }
+    },
     " bölü ": {
       "localizations": {
         "en": {
@@ -78,6 +88,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "When you say \"Bilge, remember that my partner's name is Ayşe,\" it shows up here."
+          }
+        }
+      }
+    },
+    "%@ günü": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On %@"
           }
         }
       }
@@ -1602,6 +1622,16 @@
         }
       }
     },
+    "Bu ay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This month"
+          }
+        }
+      }
+    },
     "Bu Mac'in belleği bu model için yetmez.": {
       "localizations": {
         "en": {
@@ -2786,6 +2816,16 @@
         }
       }
     },
+    "Haftaya": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next week"
+          }
+        }
+      }
+    },
     "Hafıza": {
       "localizations": {
         "en": {
@@ -2862,6 +2902,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "About"
+          }
+        }
+      }
+    },
+    "Hangi günlere bakacağımı anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which days to look at."
           }
         }
       }
