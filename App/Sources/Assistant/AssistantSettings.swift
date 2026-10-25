@@ -24,6 +24,7 @@ final class AssistantSettings {
         static let proactiveAlertsEnabled = "proactiveAlertsEnabled"
         static let eventAlertLeadMinutes = "eventAlertLeadMinutes"
         static let morningBriefingEnabled = BriefingTool.enabledKey
+        static let nearbyEarthquakeAlertsEnabled = "nearbyEarthquakeAlertsEnabled"
         static let speakerCheckEnabled = "speakerCheckEnabled"
         static let wakeWordEnabled = "wakeWordEnabled"
         static let listeningShortcut = "listeningShortcut"
@@ -67,6 +68,10 @@ final class AssistantSettings {
     var eventAlertLeadMinutes: Int { didSet { defaults.set(eventAlertLeadMinutes, forKey: Key.eventAlertLeadMinutes) } }
     /// The first "günaydın" (good morning) of the day is answered with the day's summary.
     var morningBriefingEnabled: Bool { didSet { defaults.set(morningBriefingEnabled, forKey: Key.morningBriefingEnabled) } }
+    /// Speak strong earthquakes near the weather city while the app runs.
+    var nearbyEarthquakeAlertsEnabled: Bool {
+        didSet { defaults.set(nearbyEarthquakeAlertsEnabled, forKey: Key.nearbyEarthquakeAlertsEnabled) }
+    }
     /// Only the enrolled voice can give commands and answer confirmations.
     var speakerCheckEnabled: Bool { didSet { defaults.set(speakerCheckEnabled, forKey: Key.speakerCheckEnabled) } }
     /// Off: only the listening shortcut starts a request, and nothing is transcribed until it is pressed.
@@ -102,6 +107,7 @@ final class AssistantSettings {
         proactiveAlertsEnabled = defaults.object(forKey: Key.proactiveAlertsEnabled) as? Bool ?? true
         eventAlertLeadMinutes = defaults.object(forKey: Key.eventAlertLeadMinutes) as? Int ?? 10
         morningBriefingEnabled = defaults.object(forKey: Key.morningBriefingEnabled) as? Bool ?? true
+        nearbyEarthquakeAlertsEnabled = defaults.object(forKey: Key.nearbyEarthquakeAlertsEnabled) as? Bool ?? true
         speakerCheckEnabled = defaults.bool(forKey: Key.speakerCheckEnabled)
         wakeWordEnabled = defaults.object(forKey: Key.wakeWordEnabled) as? Bool ?? true
         listeningShortcut = defaults.data(forKey: Key.listeningShortcut)

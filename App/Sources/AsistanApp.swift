@@ -72,6 +72,7 @@ final class AppEnvironment {
     let updates: UpdateChecker
     private let hud: HUDPresenter
     private let alerts: ProactiveAlerts
+    private let earthquakeAlerts: EarthquakeAlertMonitor
     private let isBenchmark = CommandLine.arguments.contains(where: { $0.hasPrefix("--bench") })
 
     var needsOnboarding: Bool { !isBenchmark && !settings.onboardingCompleted }
@@ -110,11 +111,13 @@ final class AppEnvironment {
         hud = HUDPresenter(assistant: assistant, settings: settings)
         alerts = ProactiveAlerts(settings: settings, isListening: { [weak assistant] in assistant?.isRunning ?? false },
                                  announce: { await announcer.target?.announce($0) })
+        earthquakeAlerts = EarthquakeAlertMonitor(settings: settings, announce: { await announcer.target?.announce($0) })
         guard !isBenchmark else { return }
         shortcut.apply(settings.listeningShortcut)
         updates.start()
         hud.start()
         alerts.start()
+        earthquakeAlerts.start()
         speakerGate.prepare()
         brain.setLocalModelKeepAlive(settings.localModelKeepAlive)
         brain.useLocalModel(settings.localModel)

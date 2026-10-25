@@ -85,6 +85,9 @@ struct ToolRegistry {
             GoldPriceTool(),
             FuelPriceTool(),
             WikipediaTool(),
+            EarthquakeTool(),
+            FootballTool(),
+            StockTool(),
         ]
     }
 }

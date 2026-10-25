@@ -142,6 +142,16 @@
         }
       }
     },
+    "%@ için fiyat alınamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get the price for %@."
+          }
+        }
+      }
+    },
     "%@ için kayıtlı bir telefon numarası yok.": {
       "localizations": {
         "en": {
@@ -2082,6 +2092,16 @@
         }
       }
     },
+    "Borsa verisi alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get stock market data. %@"
+          }
+        }
+      }
+    },
     "Bu ay": {
       "localizations": {
         "en": {
@@ -2312,6 +2332,16 @@
         }
       }
     },
+    "Bu sembol için veri yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no data for this symbol."
+          }
+        }
+      }
+    },
     "Bu tarayıcıda sekmelere adıyla geçemiyorum.": {
       "localizations": {
         "en": {
@@ -2498,6 +2528,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Storage"
+          }
+        }
+      }
+    },
+    "Deprem bilgisi alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get earthquake data. %@"
           }
         }
       }
@@ -3312,6 +3352,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Appearance"
+          }
+        }
+      }
+    },
+    "Güncel bilgiye ulaşamadım; %@ alınan bilgiye göre: ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't get fresh data; as of %@: "
           }
         }
       }
@@ -5924,6 +5974,16 @@
         }
       }
     },
+    "Süper Lig bilgisi alınamadı. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't get Süper Lig data. %@"
+          }
+        }
+      }
+    },
     "Sürdür": {
       "localizations": {
         "en": {
@@ -6304,6 +6364,16 @@
         }
       }
     },
+    "Uygulama açıkken iki dakikada bir AFAD'a bakar; hava durumu şehrine 150 km içindeki 4 ve üzeri depremleri bir kez söyler ve bildirim gösterir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "While the app is open, it checks AFAD every two minutes and announces each earthquake of magnitude 4 or more within 150 km of the weather city once, with a notification."
+          }
+        }
+      }
+    },
     "Uygulama açılınca dinlemeye başla": {
       "localizations": {
         "en": {
@@ -6500,6 +6570,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Full in about %@."
+          }
+        }
+      }
+    },
+    "Yakınımdaki depremleri söyle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell me about earthquakes near me"
           }
         }
       }
