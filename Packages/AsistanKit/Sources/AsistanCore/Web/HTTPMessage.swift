@@ -1,21 +1,31 @@
 import Foundation
 
-/// A minimal HTTP/1.1 GET over a connection the caller opened, so the caller can check which address
+/// A minimal HTTP/1.1 request over a connection the caller opened, so the caller can check which address
 /// it actually reached before anything is sent. It asks for an uncompressed body and a closed
 /// connection, which keeps the response simple: read until the server closes, then parse.
 public enum HTTPRequest {
     public static func get(_ url: URL, headers: [(String, String)]) -> Data {
+        message("GET", url, headers: headers, body: nil)
+    }
+
+    public static func post(_ url: URL, headers: [(String, String)], body: Data) -> Data {
+        message("POST", url, headers: headers, body: body)
+    }
+
+    private static func message(_ method: String, _ url: URL, headers: [(String, String)], body: Data?) -> Data {
         var target = url.path(percentEncoded: true)
         if target.isEmpty { target = "/" }
         if let query = url.query(percentEncoded: true) { target += "?\(query)" }
         var host = url.host(percentEncoded: true) ?? ""
         if host.contains(":") { host = "[\(host)]" }
         if let port = url.port { host += ":\(port)" }
-        let fields = [("Host", host)] + headers + [("Accept-Encoding", "identity"), ("Connection", "close")]
+        let length = body.map { [("Content-Length", String($0.count))] } ?? []
+        let fields = [("Host", host)] + headers + length + [("Accept-Encoding", "identity"), ("Connection", "close")]
         let lines = fields
             .filter { name, value in !(name + value).contains(where: \.isNewline) }
             .map { "\($0): \($1)" }
-        return Data((["GET \(target) HTTP/1.1"] + lines).joined(separator: "\r\n").utf8 + Data("\r\n\r\n".utf8))
+        return Data((["\(method) \(target) HTTP/1.1"] + lines).joined(separator: "\r\n").utf8 + Data("\r\n\r\n".utf8))
+            + (body ?? Data())
     }
 }
 
