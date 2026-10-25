@@ -9,7 +9,10 @@ enum ShortcutsCatalog {
 
     static func names() async throws -> [String] {
         let output = try await ProcessRunner.run(executable, ["list"])
-        guard output.status == 0 else { throw ShortcutsError.listFailed(output.standardError) }
+        guard output.status == 0 else {
+            Log.tools.error("shortcuts list failed (\(output.status)): \(output.standardError)")
+            throw ShortcutsError.listFailed
+        }
         return output.standardOutput.split(separator: "\n").map(String.init).filter { !$0.isEmpty }
     }
 
@@ -22,8 +25,8 @@ enum ShortcutsCatalog {
     static func run(_ name: String) async throws -> String {
         let output = try await ProcessRunner.run(executable, ["run", name], timeout: .seconds(60))
         guard output.status == 0 else {
-            return ToolReply.failure(
-                output.standardError.isEmpty ? String(localized: "'\(name)' kestirmesi çalışmadı.") : output.standardError)
+            Log.tools.error("shortcuts run failed (\(output.status)): \(output.standardError)")
+            return ToolReply.failure(String(localized: "'\(name)' kestirmesi çalışmadı."))
         }
         return output.standardOutput.isEmpty
             ? String(localized: "'\(name)' kestirmesi çalıştı.")
@@ -31,9 +34,9 @@ enum ShortcutsCatalog {
     }
 
     enum ShortcutsError: LocalizedError {
-        case listFailed(String)
+        case listFailed
         var errorDescription: String? {
-            if case let .listFailed(detail) = self { String(localized: "Kestirmeler okunamadı. \(detail)") } else { nil }
+            String(localized: "Kestirmeler okunamadı.")
         }
     }
 }

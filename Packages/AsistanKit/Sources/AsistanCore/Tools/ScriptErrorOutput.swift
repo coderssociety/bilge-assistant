@@ -5,6 +5,11 @@ public struct ScriptErrorOutput: Equatable, Sendable {
         case syntax, execution
     }
 
+    /// What a failure means to the user; osascript's own message is English and technical.
+    public enum Reason: Equatable, Sendable {
+        case notAuthorized, timedOut, appNotRunning, notFound, notPermitted, other
+    }
+
     public let kind: Kind
     public let code: Int
     public let message: String
@@ -13,6 +18,17 @@ public struct ScriptErrorOutput: Equatable, Sendable {
         self.kind = kind
         self.code = code
         self.message = message
+    }
+
+    public static func reason(for code: Int) -> Reason {
+        switch code {
+        case -1743: .notAuthorized
+        case -1712: .timedOut
+        case -600, -609: .appNotRunning
+        case -1728, -1719: .notFound
+        case -10004: .notPermitted
+        default: .other
+        }
     }
 
     public static func parse(_ standardError: String) -> ScriptErrorOutput? {

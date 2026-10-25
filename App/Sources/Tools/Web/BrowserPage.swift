@@ -28,18 +28,32 @@ enum BrowserPage {
         bundleIdentifier.map { scriptable[$0] != nil } ?? false
     }
 
-    /// The frontmost browser's page; with `frontmostOnly` false, also a browser in the background.
+    /// The frontmost browser's page; with `frontmostOnly` false, also a browser in the background. A browser
+    /// without a window (Safari left running) is skipped for the next one; a missing Automation permission is
+    /// reported only when no browser had a page.
     static func current(frontmostOnly: Bool) async throws -> (url: URL, title: String?)? {
         let candidates = await MainActor.run {
             let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
             let running = frontmostOnly ? [] : NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)
-            return ([front].compactMap { $0 } + running).filter { scriptable[$0] != nil }
+            var seen = Set<String>()
+            return ([front].compactMap { $0 } + running).filter { scriptable[$0] != nil && seen.insert($0).inserted }
         }
-        guard let identifier = candidates.first, let browser = scriptable[identifier],
-              let url = URL(string: try await AppleScriptRunner.run(script(browser, "URL"))), url.scheme != nil
-        else { return nil }
-        let title = (try? await AppleScriptRunner.run(script(browser, browser.isSafari ? "name" : "title")))?.nilIfEmpty
-        return (url, title)
+        var permissionError: AppleScriptError?
+        for identifier in candidates {
+            guard let browser = scriptable[identifier] else { continue }
+            do {
+                guard let url = URL(string: try await AppleScriptRunner.run(script(browser, "URL"))), url.scheme != nil else { continue }
+                let title = (try? await AppleScriptRunner.run(script(browser, browser.isSafari ? "name" : "title")))?.nilIfEmpty
+                return (url, title)
+            } catch let error as AppleScriptError {
+                if case let .executionFailed(code) = error, ScriptErrorOutput.reason(for: code) == .notAuthorized {
+                    permissionError = permissionError ?? error
+                }
+                Log.tools.info("No page in \(browser.name, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        if let permissionError { throw permissionError }
+        return nil
     }
 
     /// The page fetched again and reduced to its text. It is untrusted: answer from it in a tool-less session.

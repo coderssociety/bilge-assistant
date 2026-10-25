@@ -2344,6 +2344,16 @@
         }
       }
     },
+    "Ekran görüntüsü almak için Ekran Kaydı izni gerekiyor. Sistem Ayarları > Gizlilik ve Güvenlik > Ekran ve Sistem Sesi Kaydı'ndan Bilge'ye izin ver.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To take a screenshot, I need Screen Recording permission. Allow Bilge in System Settings > Privacy & Security > Screen & System Audio Recording."
+          }
+        }
+      }
+    },
     "Ekran Kaydı": {
       "localizations": {
         "en": {
@@ -3146,6 +3156,16 @@
         }
       }
     },
+    "İstenen şey uygulamada bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app couldn't find what was asked for."
+          }
+        }
+      }
+    },
     "Kadın %@": {
       "localizations": {
         "en": {
@@ -3256,12 +3276,12 @@
         }
       }
     },
-    "Kestirmeler okunamadı. %@": {
+    "Kestirmeler okunamadı.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't read your shortcuts. %@"
+            "value": "Couldn't read your shortcuts."
           }
         }
       }
@@ -5114,6 +5134,26 @@
         }
       }
     },
+    "Uygulama bu işleme izin vermedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app didn't allow this."
+          }
+        }
+      }
+    },
+    "Uygulama bu komutu yerine getiremedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app couldn't carry out this command."
+          }
+        }
+      }
+    },
     "Uygulama her açıldığında dinlemeye başla": {
       "localizations": {
         "en": {
@@ -5130,6 +5170,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The app didn't respond in time."
+          }
+        }
+      }
+    },
+    "Uygulama çalışmıyor ya da yanıt veremeden kapandı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app isn't running, or it quit before it could answer."
           }
         }
       }
@@ -5164,12 +5214,12 @@
         }
       }
     },
-    "Wi-Fi değiştirilemedi. %@": {
+    "Wi-Fi değiştirilemedi.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't change Wi-Fi. %@"
+            "value": "Couldn't change Wi-Fi."
           }
         }
       }
