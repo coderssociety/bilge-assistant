@@ -54,6 +54,9 @@ class HomePage(QWidget):
         address = self.address.text().strip()
         if address and home_command.base_address(address) is None:
             return t("home.bad_address")
+        # Only a token the server accepted is stored; one typed and never tested would be silently dropped.
+        if self.token.text().strip() and self._verified is None:
+            return t("home.untested")
         return None
 
     def _test(self) -> None:

@@ -180,6 +180,8 @@ _TEXTS = {
         "list_one": "Bir rutin var: {items}.",
         "list": "{count} rutin var: {items}.",
         "item": "{schedule} “{command}”",
+        "confirm_delete": "{item} rutinini sileyim mi?",
+        "confirm_delete_all": "{count} rutinin hepsini sileyim mi: {items}?",
         "deleted_one": "Rutin silindi: {item}.",
         "deleted_all": "{count} rutin silindi.",
         "not_found": "Öyle bir rutin bulamadım. Kurulu olanlar: {items}.",
@@ -204,6 +206,8 @@ _TEXTS = {
         "list_one": "There is one routine: {items}.",
         "list": "There are {count} routines: {items}.",
         "item": "{schedule}, “{command}”",
+        "confirm_delete": "Shall I delete the routine {item}?",
+        "confirm_delete_all": "Shall I delete all {count} routines: {items}?",
         "deleted_one": "Deleted the routine: {item}.",
         "deleted_all": "Deleted {count} routines.",
         "not_found": "I couldn't find that routine. These are set: {items}.",
@@ -286,6 +290,25 @@ def routine_tools(store: RoutineStore, language: AssistantLanguage) -> list[Tool
         store.remove({picked[0].id})
         return texts["deleted_one"].format(item=describe(picked[0], language))
 
+    def deletion(arguments: dict[str, Any]) -> str | None:
+        # A deleted routine is gone for good, and a stray word can pick one; the routine is read back first.
+        action = string_argument(arguments, "action")
+        if action not in ("delete", "deleteAll"):
+            return None
+        try:
+            routines = store.load()
+        except RoutineStoreError:
+            return None
+        if action == "deleteAll":
+            question = texts["confirm_delete_all"].format(count=len(routines), items=listed(routines))
+            return question if routines else None
+        picked = routine_choice.chosen(routines, string_argument(arguments, "name"), int_argument(arguments, "index"))
+        if len(picked) != 1:
+            # Nothing or several fit: running it says so without deleting anything.
+            return None
+        question = texts["confirm_delete"].format(item=describe(picked[0], language))
+        return question[0].upper() + question[1:]
+
     def manage(arguments: dict[str, Any]) -> str:
         action = string_argument(arguments, "action")
         try:
@@ -314,7 +337,8 @@ def routine_tools(store: RoutineStore, language: AssistantLanguage) -> list[Tool
     return [
         Tool("addRoutine", texts["add"], run=add, parameters=add_parameters, risk=Risk.CONFIRM,
              confirmation=confirmation, refine=refine),
-        Tool("manageRoutines", texts["manage"], run=manage, parameters=manage_parameters),
+        Tool("manageRoutines", texts["manage"], run=manage, parameters=manage_parameters, risk=Risk.CONFIRM,
+             confirmation=deletion),
     ]  # fmt: skip
 
 

@@ -200,7 +200,8 @@ def note_tools(notes: NotesFolder, language: AssistantLanguage, reading: TextRea
             run=tools.read,
             parameters=obj(query=text(texts["query"]), list={"type": "boolean", "description": texts["list"]}),
             refine=tools.read_refine,
-            untrusted_output=lambda arguments: bool(arguments.get("continue")),
+            # A note may hold text from a web page, an e-mail or a dropped file, as may the reading it continues.
+            untrusted_output=True,
         ),
     ]
 

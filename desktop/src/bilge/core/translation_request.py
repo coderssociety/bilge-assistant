@@ -52,8 +52,15 @@ _LANGUAGES = [
 _TARGET_ENDINGS = frozenset({"ye", "ya", "e", "a", "si", "sini", "sine", "siyle", "yle", "la", "le"})
 # The word after a bare language name that makes it the one to read in: "Türkçe oku", "Fransızca olarak".
 _READING_WORDS = ("olarak", "oku", "cevir", "anlat", "soyle", "seslendir", "konus", "yaz", "ozetle", "aktar", "dil")
-# "Fransızca de": too short to match as a beginning.
-_SHORT_READING_WORDS = frozenset({"de", "da"})
+# "Fransızca de": too short to match as a beginning. "da" only joins ("Almanca da biliyor musun"), and asks for the
+# language only before a reading word ("Almanca da söyle").
+_SHORT_READING_WORDS = frozenset({"de"})
+_ALSO = frozenset({"da", "de"})
+# "İngilizce yazılmış mail", "Almanca konuşan biri": the language the text is in, not one to read it in.
+_PARTICIPLE_ENDINGS = ("an", "en", "mis", "mus", "digi", "dugu")
+# "Lehçe" is also "dialect" ("Karadeniz lehçesini anlat"): Polish only when something is to be turned into it.
+_AMBIGUOUS = frozenset({"lehce"})
+_TRANSLATING = ("cevir", "tercume")
 _ENGLISH_CUES = frozenset({"in", "into", "to"})
 # "ingilizceden", "almancaya", "türkçesini".
 _LONGEST_ENDING = 5
@@ -66,26 +73,46 @@ def by_code(code: str) -> SpeechLanguage | None:
 def mentioned(command: str) -> list[SpeechLanguage]:
     """Every language named, in the order said and once each, whatever case ending it has ("Türkçeden Almancaya")."""
     found: list[SpeechLanguage] = []
-    for word in text.folded(command).split():
+    words = text.folded(command).split()
+    for index, word in enumerate(words):
         for turkish, english, language in _LANGUAGES:
-            named = word == english or (word.startswith(turkish) and len(word) - len(turkish) <= _LONGEST_ENDING)
+            named = word == english or _turkish_ending(words, index, turkish) is not None
             if named and language not in found:
                 found.append(language)
     return found
+
+
+def _turkish_ending(words: list[str], index: int, turkish: str) -> str | None:
+    """The case ending when words[index] is the Turkish name `turkish` ("almancaya" → "ya"), else None."""
+    word = words[index]
+    if not word.startswith(turkish) or len(word) - len(turkish) > _LONGEST_ENDING:
+        return None
+    ending = word[len(turkish) :]
+    if turkish in _AMBIGUOUS:
+        following = words[index + 1] if index + 1 < len(words) else ""
+        return ending if ending in ("ye", "ya") and following.startswith(_TRANSLATING) else None
+    return ending
+
+
+def _asks_to_read(following: str, after: str) -> bool:
+    if following in _ALSO:
+        return not after or _asks_to_read(after, "")
+    if following in _SHORT_READING_WORDS:
+        return True
+    return following.startswith(_READING_WORDS) and not following.endswith(_PARTICIPLE_ENDINGS)
 
 
 def target(command: str) -> SpeechLanguage | None:
     words = [word for word in text.folded(command).split() if word.isalpha()]
     found = None
     for index, word in enumerate(words):
-        following = words[index + 1] if index + 1 < len(words) else ""
+        following, after = (words[index + 1 : index + 3] + ["", ""])[:2]
         previous = words[index - 1] if index else ""
         for turkish, english, language in _LANGUAGES:
             if word == english and previous in _ENGLISH_CUES:
                 found = language
-            elif word.startswith(turkish):
-                ending = word[len(turkish) :]
-                reading = following in _SHORT_READING_WORDS or following.startswith(_READING_WORDS)
-                if ending in _TARGET_ENDINGS or (not ending and reading):
-                    found = language
+                continue
+            ending = _turkish_ending(words, index, turkish)
+            if ending in _TARGET_ENDINGS or (ending == "" and _asks_to_read(following, after)):
+                found = language
     return found

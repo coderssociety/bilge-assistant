@@ -55,6 +55,18 @@ def test_alarms_keep_the_hour_as_said():
 
 
 @pytest.mark.parametrize(
+    ("text", "appointment_hour", "alarm_hour"),
+    [("at 12 at night", 0, 0), ("at 2 at night", 2, 2), ("at 9 at night", 21, 21), ("at 6 in the morning", 6, 6),
+     ("at 9 in the evening", 21, 21), ("at 3", 15, 3)],
+)  # fmt: skip
+def test_a_part_of_the_day_decides_a_bare_hour(text, appointment_hour, alarm_hour):
+    appointment = english_time_parser.parse(text)
+    alarm = english_time_parser.parse(text, appointment=False)
+    assert appointment is not None and appointment.hour == appointment_hour
+    assert alarm is not None and alarm.hour == alarm_hour
+
+
+@pytest.mark.parametrize(
     ("text", "seconds"),
     [
         ("Set a timer for 10 minutes", 600),

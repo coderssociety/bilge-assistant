@@ -1,6 +1,6 @@
 """Smart-home commands for Home Assistant: whether a command names a home device or room ("salonun ışığını aç",
 "klimayı 22 dereceye ayarla", "kapı kilitli mi"), whether it acts on something that guards the house (a lock, the
-garage door, the alarm) and so needs a yes first, and what Home Assistant's conversation API sends back."""
+garage door, the alarm, a door) and so needs a yes first, and what Home Assistant's conversation API sends back."""
 
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
@@ -25,8 +25,20 @@ _ENGLISH_PHRASES = (("living", "room"), ("air", "conditioning"), ("air", "condit
 # "ekranın ışığını kıs", "bilgisayarı kilitle", "keyboard light": this computer, not the house.
 _COMPUTER = ("ekran", "bilgisayar", "klavye", "mac", "telefon", "oturum", "screen", "computer", "keyboard",
              "display", "laptop", "phone")  # fmt: skip
-_TURKISH_GUARDS = ("kilit", "kilid", "garaj", "alarm")
-_ENGLISH_GUARDS = ("lock", "unlock", "garage", "alarm")
+_TURKISH_GUARDS = ("kilit", "kilid", "garaj", "alarm", "kapi")
+_ENGLISH_GUARDS = ("lock", "unlock", "garage", "alarm", "door")
+# Doing something to a guard, said any way ("açar mısın?", "can you unlock…?"): asked as a question it still acts.
+_TURKISH_ACTION_WORDS = frozenset({"ac", "acin", "acsin", "kur", "kapa", "iptal", "devre", "devreye", "sustur"})
+_TURKISH_ACTION_STEMS = ("acar", "acabil", "aciver", "acsana", "acmak", "acman", "acal", "kapat", "kilitle",
+                         "kurar", "kurabil", "kursana", "kurman", "etkinlestir", "kaldir", "susturur")  # fmt: skip
+# "kilitlendi mi", "kapatılmış mı": asking what happened, not asking for it.
+_TURKISH_PASSIVE = ("kilitlen", "kapatil")
+_ENGLISH_ACTIONS = frozenset({"open", "close", "shut", "lock", "unlock", "arm", "disarm", "disable", "enable",
+                              "activate", "deactivate", "raise", "lift", "lower", "turn", "switch", "silence",
+                              "set"})  # fmt: skip
+# "is the garage door open": a state after "is", unless something is asked of Bilge ("is it possible to open…").
+_ENGLISH_STATES = frozenset({"open", "shut", "lock"})
+_ENGLISH_STATE_QUESTION = frozenset({"is", "are", "was", "were"})
 _TURKISH_QUESTION = frozenset({"mi", "mı", "mu", "mü", "misin", "mıdır", "midir", "mudur", "müdür", "ne", "kaç",
                                "nedir", "hangi"})  # fmt: skip
 _ENGLISH_QUESTION = ("is", "are", "what", "which", "how", "did", "does", "do")
@@ -42,10 +54,26 @@ def names_home_device(command: str, language: AssistantLanguage) -> bool:
 
 
 def guards_the_house(command: str, language: AssistantLanguage) -> bool:
-    """Changes a lock, the garage door or the alarm; asking whether the door is locked changes nothing."""
+    """Changes a lock, a door, the garage or the alarm, however politely it is asked; only asking how they are
+    ("kapı kilitli mi", "is the front door locked") changes nothing."""
     words = folded(command).split()
     guards = _ENGLISH_GUARDS if language is AssistantLanguage.ENGLISH else _TURKISH_GUARDS
-    return any(word.startswith(guards) for word in words) and not is_question(command, language)
+    if not any(word.startswith(guards) for word in words):
+        return False
+    return _names_an_action(words, language) or not is_question(command, language)
+
+
+def _names_an_action(words: list[str], language: AssistantLanguage) -> bool:
+    if language is AssistantLanguage.ENGLISH:
+        actions = _ENGLISH_ACTIONS
+        if words[0] in _ENGLISH_STATE_QUESTION and not {"to", "you"} & set(words):
+            actions = actions - _ENGLISH_STATES
+        return any(word in actions for word in words)
+    return any(
+        word in _TURKISH_ACTION_WORDS
+        or (word.startswith(_TURKISH_ACTION_STEMS) and not word.startswith(_TURKISH_PASSIVE))
+        for word in words
+    )
 
 
 def is_question(command: str, language: AssistantLanguage) -> bool:

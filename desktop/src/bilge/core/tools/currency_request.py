@@ -19,6 +19,8 @@ _SYMBOLS = {"€": "EUR", "$": "USD", "£": "GBP", "₺": "TRY"}
 _QUALIFIERS = ("kanada", "canadian", "avustralya", "australian", "isvicre", "swiss", "isvec", "swedish", "norvec",
                "norwegian", "danimarka", "danish")  # fmt: skip
 _NAME_TAILS = ("dolar", "dollar", "kron", "frang", "franc")
+# "dolar ve euro kaç lira": both are asked about, against the lira.
+_JOINING = frozenset({"ve", "veya", "ya", "da", "de", "and", "or"})
 _TOKEN = re.compile(r"\d+(?:[.,]\d+)*|[€$£₺]|[^\W\d_]+")
 _TURKISH_GOLD_CONTEXT = ("gram", "ceyrek", "yarim", "tam", "ons", "cumhuriyet", "fiyat", "kac", "kur", "lira", "tl")
 _ENGLISH_GOLD_CONTEXT = ("price", "ounce", "gram", "much", "worth", "rate", "cost")
@@ -28,18 +30,41 @@ _UNDER = ("altinda", "altindan", "altindaki", "altina")
 
 def currencies(command: str) -> list[str]:
     """ISO codes in the order said; "kaç para" asks for lira."""
-    found: list[str] = []
+    found = [code for code, _ in _named(_tokens(command))]
+    if "TRY" not in found and re.search(r"\bkac para\b", text.folded(command)):
+        found.append("TRY")
+    return found
+
+
+def conversion(command: str) -> tuple[list[str], str | None]:
+    """The currencies asked about and the one to give them in: "50 dolar kaç sterlin" → ([USD], GBP), "dolar ve euro
+    kaç lira" → ([USD, EUR], TRY), "dolar ve euro" → ([USD, EUR], None)."""
+    tokens = _tokens(command)
+    named = _named(tokens)
+    if "TRY" not in (code for code, _ in named) and re.search(r"\bkac para\b", text.folded(command)):
+        named.append(("TRY", len(tokens)))
+    if len(named) < 2:
+        return [code for code, _ in named], None
+    (_, before), (last, at) = named[-2], named[-1]
+    between = tokens[before + 1 : at]
+    if between and all(token in _JOINING for token in between):
+        return [code for code, _ in named], None
+    return [code for code, _ in named[:-1]], last
+
+
+def _named(tokens: list[str]) -> list[tuple[str, int]]:
+    """Each currency said with the index of its (last) token; "Kanada doları" is one, a repeated name counts once."""
+    found: list[tuple[str, int]] = []
     qualified = False
-    for token in _tokens(command):
+    for index, token in enumerate(tokens):
         if qualified and token.startswith(_NAME_TAILS):
             qualified = False
+            found[-1] = (found[-1][0], index)
             continue
         qualified = token.startswith(_QUALIFIERS)
         code = _code(token)
-        if code is not None and (not found or found[-1] != code):
-            found.append(code)
-    if "TRY" not in found and re.search(r"\bkac para\b", text.folded(command)):
-        found.append("TRY")
+        if code is not None and (not found or found[-1][0] != code):
+            found.append((code, index))
     return found
 
 
@@ -51,9 +76,9 @@ def amount(command: str, english: bool) -> float | None:
         if _code(token) is None:
             continue
         if index > 0 and tokens[index - 1][0].isdigit():
-            return _number(tokens[index - 1], english)
+            return number(tokens[index - 1], english)
         if token in _SYMBOLS and index + 1 < len(tokens) and tokens[index + 1][0].isdigit():
-            return _number(tokens[index + 1], english)
+            return number(tokens[index + 1], english)
         return None
     return None
 
@@ -81,7 +106,8 @@ def _code(token: str) -> str | None:
     return next((code for stem, code in _STEMS if token.startswith(stem)), None)
 
 
-def _number(token: str, english: bool) -> float | None:
+def number(token: str, english: bool) -> float | None:
+    """ "1.000.000", "2.500,50" (Turkish) or "1,250.5" (English); None for anything else."""
     thousands, decimal = (",", ".") if english else (".", ",")
     whole, _, fraction = token.partition(decimal)
     groups = whole.split(thousands)

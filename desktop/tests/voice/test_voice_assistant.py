@@ -568,6 +568,15 @@ def test_a_routine_runs_unattended_and_its_reply_is_announced():
     assistant.stop()
 
 
+def test_a_routine_asking_for_another_language_is_spoken_in_its_voice():
+    assistant, speech, _ = make(ScriptedRecognizer(), agent=RoutineAgent())
+    assistant.start()
+    assistant.run_unattended("haberleri İngilizce oku")
+    assert wait(lambda: speech.said == ["Tamam: haberleri İngilizce oku"])
+    assert speech.languages == ["en"]
+    assistant.stop()
+
+
 def test_a_routine_waits_while_the_user_is_talking_to_bilge():
     agent = RoutineAgent()
     assistant, speech, _ = make(ScriptedRecognizer("Bilge"), agent=agent)

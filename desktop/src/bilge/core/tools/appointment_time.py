@@ -15,6 +15,10 @@ _SAID_HOUR = re.compile(
     r"|(?<![\d:'])(\d{1,2})'[dt][ae](?![^\W\d_])",
     re.IGNORECASE,
 )
+# "akşamları 8'de", "geceleri 11'de": a routine's plural day parts shift the hour as the singular ones do.
+_MORNING = frozenset({"sabah", "sabahlari", "sabahleyin", "sabahki"})
+_EVENING = frozenset({"aksam", "aksamlari", "aksamleyin", "aksamki"})
+_NIGHT = frozenset({"gece", "geceleri", "geceleyin", "geceki"})
 _FROM_NOW = re.compile(r"(?:saat|dakika|saniye)[^\W\d_]*\s+sonra", re.IGNORECASE)
 
 
@@ -45,11 +49,11 @@ def seconds_from_now(text: str) -> int | None:
 
 
 def _afternoon(hour: int, folded_text: str) -> int:
-    words = folded_text.split()
-    if "sabah" in words or hour >= 12:
+    words = set(folded_text.split())
+    if words & _MORNING or hour >= 12:
         return hour
-    if "aksam" in words or ("ogleden" in words and "sonra" in words):
+    if words & _EVENING or ("ogleden" in words and "sonra" in words):
         return hour + 12
-    if "gece" in words:
+    if words & _NIGHT:
         return hour + 12 if hour > _LAST_AFTERNOON_HOUR else hour
     return hour + 12 if 1 <= hour <= _LAST_AFTERNOON_HOUR else hour

@@ -229,15 +229,16 @@ def exchange_rate(language: AssistantLanguage) -> Tool:
         """Currencies and the amount said in the command win over the model's ("100 Euro kaç para" is 100)."""
         if currency_request.asks_for_gold(command, english):
             return {"gold": True}
-        named = currency_request.currencies(command)
+        sources, said_target = currency_request.conversion(command)
         said = currency_request.amount(command, english)
         refined = {**arguments, **({"amount": said} if said is not None else {})}
-        if named:
-            refined["from"] = named[0]
+        if sources:
+            # "Dolar ve euro kaç lira" asks for two rates: each call keeps the one the model picked.
+            refined["from"] = arguments.get("from") if arguments.get("from") in sources else sources[0]
             # An unsaid target means lira to a Turkish speaker.
-            refined["to"] = named[1] if len(named) > 1 else (None if english else "TRY")
+            refined["to"] = said_target or (None if english else "TRY")
         # In English an unsaid target is the dollar, or the euro for dollars.
-        if not english or refined.get("to") not in (None, "TRY") or len(named) > 1:
+        if not english or refined.get("to") not in (None, "TRY") or said_target is not None:
             return refined
         words = text.folded(command).split()
         if any(w in words for w in ("lira", "try", "tl", "turkish")):
@@ -254,7 +255,7 @@ def exchange_rate(language: AssistantLanguage) -> Tool:
                 if english
                 else "Hangi para birimini çevireceğimi anlayamadım."
             )
-        amount = _amount(arguments.get("amount"))
+        amount = _amount(arguments.get("amount"), english)
         if amount is None:
             raise ToolError("I didn't get the amount." if english else "Miktarı anlayamadım.")
         try:
@@ -312,15 +313,21 @@ def _whole_number(value: Any) -> int | None:
     return int(number) if math.isfinite(number) and number == int(number) else None
 
 
-def _amount(value: Any) -> float | None:
+def _amount(value: Any, english: bool) -> float | None:
     if value is None or value == "":
         return 1.0
     if isinstance(value, bool):
         return None
-    try:
-        number = float(str(value).replace(",", ".")) if isinstance(value, str) else float(value)
-    except (TypeError, ValueError):
-        return None
+    if isinstance(value, str):
+        # The model may pass the amount as written: "1.000.000" or "2.500,50".
+        number = currency_request.number(value.strip(), english)
+        if number is None:
+            return None
+    else:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return None
     return number if math.isfinite(number) and number >= 0 else None
 
 

@@ -37,7 +37,7 @@ _TURKISH_DAYS = (("pazartesi", 0), ("sali", 1), ("carsamba", 2), ("persembe", 3)
                  ("pazar", 6))  # fmt: skip
 _TURKISH_SCHEDULE = frozenset(
     {"her", "gun", "gunu", "gunleri", "gunler", "sabah", "sabahlari", "aksam", "aksamlari", "gece", "geceleri",
-     "ogle", "oglen", "ogleyin", "ogleden", "sonra", "hafta", "ici", "sonu", "sonlari", "ve", "saat"}
+     "ogle", "oglen", "ogleyin", "ogleden", "sonra", "hafta", "ici", "icleri", "sonu", "sonlari", "ve", "saat"}
 )  # fmt: skip
 _TURKISH_TIME = re.compile(
     r"(?<![^\W_])(?:saat\s+)?(?:\d{1,2}:\d{2}(?:'[^\W\d_]+)?|\d{1,2}(?:'[dt][ae]|\s+buçuk[^\W\d_]*))(?![^\W_])"
@@ -58,8 +58,15 @@ _ENGLISH_TIME = re.compile(
     + rf"|\bat\s+(?:\d{{1,2}}|{_ENGLISH_HOURS})\b(?:\s+o'?clock)?" + _PART_OF_DAY,
     re.IGNORECASE,
 )  # fmt: skip
-_TURKISH_REMOVE = ("sil", "kaldir", "iptal", "kapat")
-_ENGLISH_REMOVE = frozenset({"delete", "remove", "cancel", "clear", "stop"})
+# "kapat" and "stop" end what runs now ("sabah rutinini durdur", "stop the music"); they never delete a routine.
+_TURKISH_REMOVE = ("sil", "kaldir", "iptal")
+_ENGLISH_REMOVE = frozenset({"delete", "remove", "cancel", "clear"})
+# "rutini", "rutinlerimi", "routines": the routine itself; "rutin kontrol" uses the word as an adjective.
+_TURKISH_ROUTINE = re.compile(r"rutin(?:ler)?(?:im(?:iz)?|in(?:iz)?)?(?:i|in|e|de|den)?")
+_ENGLISH_ROUTINE = re.compile(r"routines?")
+_ROUTINE_FILLER = frozenset({"lutfen", "hemen", "artik", "simdi", "please"})
+# "bu hafta sonu", "next weekend": once, not a routine.
+_ONE_OFF = frozenset({"bu", "gelecek", "onumuzdeki", "this", "next"})
 _ALL = frozenset({"butun", "tum", "hepsini", "hepsi", "all", "every"})
 _NAME_FILLER = frozenset({"bu", "su", "o", "benim", "the", "my", "a", "that", "this"})
 _LIST_WORDS = {
@@ -81,29 +88,44 @@ def parse(text: str, language: AssistantLanguage) -> RoutineRequest | None:
 
 def asks_for_list(text: str, language: AssistantLanguage) -> bool:
     words = folded(text).split()
-    if not any(_is_routine_word(word) for word in words) or removal(text, language) is not None:
+    if _routine_at(words, language) is None or removal(text, language) is not None:
         return False
     return len(words) == 1 or any(word in _LIST_WORDS[language] for word in words)
 
 
 def removal(text: str, language: AssistantLanguage) -> Removal | None:
+    """Only a removal verb taking the routine as its object: "akşam rutinini sil", "delete the evening routine"."""
     words = folded(text).split()
-    at = next((i for i, word in enumerate(words) if _is_routine_word(word)), None)
+    at = _routine_at(words, language)
     if at is None:
         return None
     if language is AssistantLanguage.ENGLISH:
-        verb = next((i for i, word in enumerate(words) if word in _ENGLISH_REMOVE), None)
+        verb = next((i for i, word in enumerate(words[:at]) if word in _ENGLISH_REMOVE), None)
         if verb is None:
             return None
-        named = words[verb + 1 : at] if verb < at else words[:at]
+        named = words[verb + 1 : at]
     else:
-        if not any(word.startswith(_TURKISH_REMOVE) for word in words[at + 1 :]):
+        following = [word for word in words[at + 1 :] if word not in _ROUTINE_FILLER]
+        if not following or not following[0].startswith(_TURKISH_REMOVE):
             return None
         named = words[:at]
     if any(word in _ALL for word in named) or (language is AssistantLanguage.TURKISH and words[at].startswith(
             ("rutinleri", "rutinlerin")) and not named):  # fmt: skip
         return Removal("", every=True)
     return Removal(" ".join(word for word in named if word not in _NAME_FILLER))
+
+
+def _routine_at(words: list[str], language: AssistantLanguage) -> int | None:
+    """Where the routine itself is named; a bare "rutin" before another word describes that word ("yarın rutin
+    kontrolüm var mı")."""
+    if language is AssistantLanguage.ENGLISH:
+        return next((i for i, word in enumerate(words) if _ENGLISH_ROUTINE.fullmatch(word)), None)
+    for i, word in enumerate(words):
+        if not _TURKISH_ROUTINE.fullmatch(word):
+            continue
+        if word != "rutin" or i + 1 == len(words) or words[i + 1] in _LIST_WORDS[language]:
+            return i
+    return None
 
 
 def _mentions_routine(text: str) -> bool:
@@ -122,6 +144,8 @@ def _parse_turkish(text: str) -> RoutineRequest | None:
     before = resolved[: match.start()].split()
     taken = _schedule_tail(before, lambda word: folded(word) in _TURKISH_SCHEDULE or _turkish_day(word) is not None)
     schedule = [folded(word) for word in before[len(before) - taken :]]
+    if taken < len(before) and folded(before[-taken - 1]) in _ONE_OFF:
+        return None
     days = _turkish_days(schedule)
     clock = appointment_time.clock(" ".join([*before[len(before) - taken :], match.group(0)]))
     if days is None or clock is None:
@@ -139,11 +163,13 @@ def _turkish_days(schedule: list[str]) -> frozenset[int] | None:
     repeating = "her" in schedule or any(word.endswith(("leri", "lari")) for word in schedule)
     if named:
         return named if repeating else None
-    if "hafta" in schedule and "ici" in schedule:
+    if not repeating:
+        return None
+    if "hafta" in schedule and ("ici" in schedule or "icleri" in schedule):
         return WEEKDAYS
     if "hafta" in schedule and ("sonu" in schedule or "sonlari" in schedule):
         return WEEKEND
-    return EVERY_DAY if repeating else None
+    return EVERY_DAY
 
 
 def _parse_english(text: str) -> RoutineRequest | None:
@@ -158,8 +184,10 @@ def _parse_english(text: str) -> RoutineRequest | None:
         following = _schedule_tail(after, lambda word: _english_word(word) in _ENGLISH_SCHEDULE,
                                    from_start=True)  # fmt: skip
     schedule_words = [*before[len(before) - taken :], *after[:following]]
+    if taken < len(before) and _english_word(before[-taken - 1]) in _ONE_OFF:
+        return None
     days = _english_days([_english_word(word) for word in schedule_words])
-    parsed = english_time_parser.parse(" ".join([*schedule_words, match.group(0)]), appointment=False)
+    parsed = english_time_parser.parse(" ".join([*schedule_words, match.group(0)]))
     if days is None or parsed is None or parsed.hour is None:
         return None
     return _request(days, (parsed.hour, parsed.minute or 0), [*before[: len(before) - taken], *after[following:]],
@@ -178,11 +206,13 @@ def _english_days(schedule: list[str]) -> frozenset[int] | None:
     )
     if named:
         return named if repeating else None
+    if not repeating and not {"weekdays", "weekends"} & set(schedule):
+        return None
     if {"weekday", "weekdays"} & set(schedule):
         return WEEKDAYS
     if {"weekend", "weekends"} & set(schedule):
         return WEEKEND
-    return EVERY_DAY if repeating else None
+    return EVERY_DAY
 
 
 def _schedule_tail(words: list[str], is_schedule: Callable[[str], bool], from_start: bool = False) -> int:

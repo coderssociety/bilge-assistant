@@ -85,14 +85,17 @@ class CommandTools:
         return self.texts["listed"].format(count=len(self.commands), names=", ".join(c.name for c in self.commands))
 
     def question(self, arguments: dict[str, Any]) -> str | None:
-        """Only the first run asks; None also when there is no such command, which running then says."""
+        """Only the first run asks, or a name that merely resembles a command ("sunucu" for "sunucuyu kapat"), which
+        names the one meant; None also when there is no such command, which running then says."""
         self._asked.clear()
-        found = self.find(string_argument(arguments, "name"))
+        spoken = string_argument(arguments, "name")
+        found = self.find(spoken)
         if found is None:
             return None
         key = custom_command.fingerprint(found.name, found.argv)
         if self.approvals.approved(key):
-            return None
+            names = [command.name for command in self.commands]
+            return None if custom_command.names_exactly(spoken, found.name, names) else self.spoken_action(arguments)
         self._asked.add(key)
         line = custom_command.join_command_line(found.argv, self.windows)
         if len(line) > SPOKEN_LINE_CHARACTERS:

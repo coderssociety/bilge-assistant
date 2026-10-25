@@ -13,7 +13,8 @@ from bilge.core.meeting.meeting_command import (
 @pytest.mark.parametrize(
     "command",
     ["toplantıyı kaydetmeye başla", "toplantıyı kaydet", "toplantı kaydını başlat", "kaydı başlat",
-     "start recording the meeting", "record the meeting", "start recording"],
+     "start recording the meeting", "record the meeting", "start recording", "record this meeting",
+     "Bilge, toplantıyı kaydetmeye başlar mısın?"],
 )  # fmt: skip
 def test_starts_recording_a_meeting(command):
     assert is_start(command)
@@ -22,7 +23,10 @@ def test_starts_recording_a_meeting(command):
 @pytest.mark.parametrize(
     "command",
     ["kaydı bitir", "ekran kaydını başlat", "son indirdiğim ses kaydını yazıya dök", "stop recording", "saat kaç",
-     "start screen recording", "haftalık toplantı kaydını yazıya dök", "transcribe the meeting recording"],
+     "start screen recording", "haftalık toplantı kaydını yazıya dök", "transcribe the meeting recording",
+     "yarınki toplantıyı takvime kaydet", "toplantı kaydını sil", "remind me to record the meeting tomorrow",
+     "her pazartesi 10'da toplantıyı kaydet", "toplantıyı kaydet ve özetle", "dosyayı kaydet", "kaydet",
+     "delete the meeting recording", "toplantıyı saat 3'te kaydet"],
 )  # fmt: skip
 def test_other_requests_do_not_start_a_recording(command):
     assert not is_start(command)

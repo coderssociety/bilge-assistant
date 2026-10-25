@@ -67,6 +67,13 @@ class CalendarPage(QWidget):
     def apply(self, settings: config.Settings) -> None:
         settings.calendar = self._chosen()
 
+    def problem(self) -> str | None:
+        # Only a secret the calendar answered to is stored; one typed and never tested would be silently dropped.
+        typed = self.kind.currentData() in ("caldav", "ics") and self.secret.text().strip()
+        if typed and self._verified is None:
+            return t("calendar.untested")
+        return None
+
     def save_secrets(self) -> None:
         if self._verified is not None:
             config.store_api_key(*self._verified)

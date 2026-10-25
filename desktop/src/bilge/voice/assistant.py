@@ -655,7 +655,8 @@ class VoiceAssistant:
                 self._thinking = False
             if not self._stopped_by_user and self._barge_command is None:
                 self.speech.play(tone(self.speech.device.sample_rate, (880, 1320)))
-                self._say(outcome.text)
+                target = outcome.translation
+                self._say(outcome.text, target.code if target else None)
             self._settle_barge_in()
         except Exception as error:
             log.exception("A routine failed")

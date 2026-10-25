@@ -137,6 +137,20 @@ def test_rules_list_and_run_only_commands_in_the_list(approvals):
     assert run("müzik komutunu çalıştır") is None
 
 
+def test_an_approved_command_runs_unasked_only_when_named_exactly(approvals):
+    shutdown = CustomCommand("sunucuyu kapat", ["ssh", "sunucu", "sudo poweroff"])
+    cleanup = CustomCommand("yedekleri sil", ["rm", "-rf", "/mnt/yedek/eski"])
+    tools, _, run, runner = build(approvals, runner=FakeRunner(installed={"ssh", "rm"}), commands=(shutdown, cleanup))
+    for command in (shutdown, cleanup):
+        run.question({"name": command.name})
+        run.run({"name": command.name})
+    _, route = command_rules(tools, TR)
+    for said, meant in (("sunucu komutunu çalıştır", "sunucuyu kapat"), ("sil komutunu çalıştır", "yedekleri sil")):
+        assert run.question(route(said).arguments) == f"'{meant}' komutunu çalıştırayım mı?"
+    assert run.question({"name": "Sunucuyu kapat komutunu"}) is None
+    assert len(runner.commands) == 2
+
+
 def test_a_broken_approvals_file_only_means_asking_again(approvals):
     approvals.path.write_text("{bozuk", encoding="utf-8")
     assert not approvals.approved("x")
