@@ -164,3 +164,37 @@ def test_json_is_read_only_from_a_good_answer(monkeypatch, status, body, reason)
     assert raised.value.reason is reason
     monkeypatch.setattr(web_fetch, "get", lambda url, language: web_fetch.Response(url, 200, "", b'{"ok": 1}'))
     assert web_fetch.get_json("https://example.com/data.json") == {"ok": 1}
+
+
+@pytest.mark.parametrize("url", ["http://127.0.0.1/", "http://192.168.1.1:8000/stream", "http://localhost:1020/"])
+def test_streams_never_reach_local_addresses_on_any_port(url):
+    with pytest.raises(web_fetch.LocalAddressError):
+        web_fetch.open_stream(url)
+
+
+def test_posts_never_reach_local_addresses():
+    with pytest.raises(web_fetch.LocalAddressError):
+        web_fetch.post_json("http://127.0.0.1/", {"a": 1})
+
+
+def test_streams_may_use_other_ports_but_posts_may_not(monkeypatch):
+    monkeypatch.setattr(web_fetch.socket, "getaddrinfo", lambda *a, **k: [(2, 1, 6, "", ("10.0.0.5", 8000))])
+    # The port passes; the private address behind the name still doesn't.
+    with pytest.raises(web_fetch.LocalAddressError):
+        web_fetch.open_stream("http://radio.example:8000/stream")
+    with pytest.raises(web_fetch.WebFetchError, match="unsupported"):
+        web_fetch.post_json("https://api.example:8443/", {})
+
+
+class FakeReply:
+    def __init__(self, status, headers):
+        self.status, self._headers = status, headers
+
+    def getheader(self, name, default=None):
+        return self._headers.get(name, default)
+
+
+def test_the_whole_length_is_read_from_a_range_or_a_plain_answer():
+    assert web_fetch._whole_length(FakeReply(206, {"Content-Range": "bytes 100-999/1000"}), 100) == 1000
+    assert web_fetch._whole_length(FakeReply(200, {"Content-Length": "45558925"}), 0) == 45558925
+    assert web_fetch._whole_length(FakeReply(200, {}), 0) is None
