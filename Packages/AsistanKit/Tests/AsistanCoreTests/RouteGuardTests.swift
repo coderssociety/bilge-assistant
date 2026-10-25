@@ -142,6 +142,16 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: "addReminder", command: "süt almayı listeme ekle") == "addReminder")
     }
 
+    @Test("a person and 'ara' is a call, a place to search in keeps it a search", arguments: [
+        ("annemi ara", "searchWeb", "callContact"), ("Ahmet'i FaceTime'la ara", "findContact", "callContact"),
+        ("Ayşe'yi sesli ara", "conversation", "callContact"), ("anneme telefon et", "sendMessage", "callContact"),
+        ("Atatürk'ü internette ara", "searchWeb", "searchWeb"), ("Atatürk'ü internette ara", "callContact", "searchWeb"),
+        ("Google'da en yakın eczaneyi ara", "callContact", "searchWeb"), ("kediyi ara", "searchWeb", "searchWeb"),
+    ])
+    func calls(command: String, modelAction: String, expected: String) {
+        #expect(RouteGuard.review(action: modelAction, command: command) == expected)
+    }
+
     @Test("undo is never taken for quitting an app")
     func undoIsNotQuit() {
         #expect(RouteGuard.review(action: "quitApp", command: "geri al") == "conversation")

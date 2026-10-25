@@ -43,6 +43,7 @@ struct ToolRegistry {
             RunShortcutTool(),
             ReadScreenTool(),
             FindContactTool(),
+            CallContactTool(),
             CompleteReminderTool(),
             ReadNotesTool(),
             AppendNoteTool(),

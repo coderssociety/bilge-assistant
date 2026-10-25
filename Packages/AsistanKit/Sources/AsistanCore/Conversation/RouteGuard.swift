@@ -49,6 +49,11 @@ public enum RouteGuard {
         // "Alışveriş notuma süt ekle" is not a reminder, and "…notuma süt yaz" is not dictation.
         if NoteRequest.addition(in: command) != nil { return "appendToNote" }
         if NoteRequest.asksForList(command) { return "readNotes" }
+        // "Annemi ara" is a phone call, not a web search; "Atatürk'ü internette ara" stays a search.
+        if CallRequest.parse(command) != nil { return "callContact" }
+        if action == "callContact", words.contains(where: { word in searchSites.contains(where: word.hasPrefix) }) {
+            return "searchWeb"
+        }
         // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.
         if isDictation(words), action != "createNote" { return "typeText" }
         // "geri al" (undo) outside a spreadsheet was once routed to quitApp.

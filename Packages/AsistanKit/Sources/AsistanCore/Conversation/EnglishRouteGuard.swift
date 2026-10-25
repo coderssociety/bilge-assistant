@@ -30,6 +30,7 @@ public enum EnglishRouteGuard {
         let words = TurkishText.folded(command).split(separator: " ").map(String.init)
         if NoteRequest.addition(in: command, language: .english) != nil { return "appendToNote" }
         if NoteRequest.asksForList(command, language: .english) { return "readNotes" }
+        if CallRequest.parse(command, language: .english) != nil { return "callContact" }
         // "Type see you tomorrow" was read as a timer because of "tomorrow".
         if isDictation(words), action != "createNote" { return "typeText" }
         // Only answers about the selection; copying or sending it keeps its own action.

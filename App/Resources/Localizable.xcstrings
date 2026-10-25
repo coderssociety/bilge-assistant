@@ -82,6 +82,16 @@
         }
       }
     },
+    "%@ aranıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calling %@."
+          }
+        }
+      }
+    },
     "%@ ağına bağlı": {
       "localizations": {
         "en": {
@@ -98,6 +108,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "On %@"
+          }
+        }
+      }
+    },
+    "%@ için FaceTime'da aranabilecek bir numara ya da e-posta yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has no number or e-mail address to call on FaceTime."
+          }
+        }
+      }
+    },
+    "%@ için kayıtlı bir telefon numarası yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has no phone number saved."
           }
         }
       }
@@ -658,6 +688,26 @@
         }
       }
     },
+    "%@, %@ adresini FaceTime görüntülü aramayla arayayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I call %@ at %@ with FaceTime video?"
+          }
+        }
+      }
+    },
+    "%@, %@ adresini FaceTime sesli aramayla arayayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I call %@ at %@ with FaceTime Audio?"
+          }
+        }
+      }
+    },
     "%@, %@ için iMessage ile %@ dosyasını gönderiyorum. Göndermem için evet ya da gönder de.": {
       "localizations": {
         "en": {
@@ -694,6 +744,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm sending %1$@ (%2$@) this by iMessage: %3$@. Say yes or send to send it."
+          }
+        }
+      }
+    },
+    "%@, %@ numarasını iPhone üzerinden arayayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I call %@ at %@ through your iPhone?"
           }
         }
       }
@@ -1352,6 +1412,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't build the search address."
+          }
+        }
+      }
+    },
+    "Arama başlatılamadı. FaceTime'ın ve iPhone'dan arama ayarının açık olduğunu kontrol et.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't start the call. Check that FaceTime and calls from iPhone are turned on."
+          }
+        }
+      }
+    },
+    "Aramayı yalnızca onayla başlatırım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I only start a call once you confirm."
           }
         }
       }
