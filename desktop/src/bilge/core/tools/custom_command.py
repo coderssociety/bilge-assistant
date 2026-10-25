@@ -54,8 +54,18 @@ def asks_for_list(command: str, language: AssistantLanguage = AssistantLanguage.
 
 def best_match(spoken: str, names: list[str]) -> str | None:
     """The configured name meant, even when "komutunu" or "command" is said along with it."""
+    return phrase_matcher.best_match(_name_words(spoken), names)
+
+
+def names_exactly(spoken: str, name: str, names: list[str]) -> bool:
+    """Whether `spoken` is `name` itself and no other configured name: "sunucu" only resembles "sunucuyu kapat"."""
+    said = folded(_name_words(spoken))
+    return folded(name) == said and sum(folded(other) == said for other in names) == 1
+
+
+def _name_words(spoken: str) -> str:
     words = [word for word in spoken.split() if not folded(word).startswith(_COMMAND_WORDS)]
-    return phrase_matcher.best_match(" ".join(words) or spoken, names)
+    return " ".join(words) or spoken
 
 
 def split_command_line(line: str, windows: bool) -> list[str]:
