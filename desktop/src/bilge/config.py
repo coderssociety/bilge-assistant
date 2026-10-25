@@ -99,6 +99,8 @@ class Settings:
     setup_done: bool = False
     # Once a day, whether a newer Bilge has been published on GitHub.
     check_updates: bool = True
+    # While Bilge runs, say so when a strong earthquake happens near the weather city.
+    earthquake_alerts: bool = True
 
     @property
     def assistant_language(self) -> AssistantLanguage:
@@ -153,6 +155,7 @@ def load_settings(path: Path | None = None) -> Settings:
         show_hud=bool(data.get("show_hud", True)),
         setup_done=bool(data.get("setup_done", False)),
         check_updates=bool(data.get("check_updates", True)),
+        earthquake_alerts=bool(data.get("earthquake_alerts", True)),
         model=ModelSettings(
             provider=str(model.get("provider", "lmstudio")),
             model=str(model.get("model", "")),

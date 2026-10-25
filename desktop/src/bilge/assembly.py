@@ -12,13 +12,14 @@ from bilge import calendars, config, desktop
 from bilge.brain.action_log import ActionLog
 from bilge.brain.agent import Agent, Confirmer
 from bilge.brain.routing import Mode, Rule, rule
+from bilge.core.alerts import earthquake_alert
 from bilge.core.dictation import dictation_command
 from bilge.core.language import AssistantLanguage
 from bilge.desktop.base import Desktop
 from bilge.llm.providers import ProviderError, make_provider
 from bilge.models.downloader import Downloader, ModelSpec
 from bilge.tools.base import Registry, Tool
-from bilge.tools.builtin import internet, prayer, prices, wikipedia
+from bilge.tools.builtin import earthquakes, football, internet, prayer, prices, stocks, wikipedia
 from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
@@ -29,10 +30,13 @@ from bilge.tools.reading import TextReading, continue_reading_tool
 
 if TYPE_CHECKING:
     from bilge.tools.desktop.timers import TimerService
+    from bilge.voice.assistant import Service
 
 log = logging.getLogger(__name__)
 CALDAV_SECRET = "caldav"
 ICS_SECRET = "calendar-ics"
+# One for the whole run: the watcher a restart builds must not announce an earthquake the previous one already did.
+_ANNOUNCED_EARTHQUAKES = earthquake_alert.Announced()
 
 
 def models_dir() -> Path:
@@ -60,8 +64,10 @@ def build_agent(
     provider: str | None = None,
     model: str | None = None,
     announce: Callable[[str], None] | None = None,
+    services: list["Service"] | None = None,
 ) -> Agent:
-    """`announce` says something unprompted (a timer going off)."""
+    """`announce` says something unprompted (a timer going off). Work that runs while Bilge listens (the earthquake
+    watcher) is added to `services` for the voice assistant to start and stop."""
     language = settings.assistant_language
     preset = provider or settings.model.provider
     chosen = model or settings.model.model
@@ -78,7 +84,11 @@ def build_agent(
     news_reading = internet.NewsReading()
     text_reading = TextReading(language)
     found = desktop.current(language)
-    alarms = _timer_service(found, language, announce) if found is not None else None
+    alert = _alert(found, announce)
+    alarms = _timer_service(language, alert) if found is not None else None
+    if services is not None and settings.earthquake_alerts:
+        services.append(earthquakes.EarthquakeWatcher(language, lambda: settings.weather_city, alert,
+                                                      _ANNOUNCED_EARTHQUAKES))  # fmt: skip
     registry = Registry([
         current_date_time(language),
         calculator(language),
@@ -89,6 +99,9 @@ def build_agent(
         prayer.prayer_times_tool(language, lambda: settings.weather_city),
         wikipedia.wikipedia(language),
         internet.news(language, news_reading),
+        earthquakes.earthquakes(language, lambda: settings.weather_city),
+        football.football(language),
+        stocks.stocks(language),
         internet.read_web_page(language, text_reading),
         continue_reading_tool(text_reading, language),
         briefing_tool(briefing),
@@ -100,6 +113,9 @@ def build_agent(
         rule("goldPrice", internet.asks_for_gold(language)),
         rule("prayerTimes", prayer.asks_for_prayer_times(language)),
         rule("fuelPrice", prices.asks_for_fuel_prices(language)),
+        rule("earthquakes", earthquakes.asks_about_earthquakes),
+        rule("football", football.asks_about_football),
+        rule("stocks", stocks.asks_about_stocks),
     ]
     modes: list[Mode] = []
     opener = found.opener.open if found is not None else None
@@ -121,18 +137,23 @@ def build_agent(
     return agent
 
 
-def _timer_service(
-    found: Desktop, language: AssistantLanguage, announce: Callable[[str], None] | None
-) -> "TimerService":
-    from bilge.tools.desktop import timers
+def _alert(found: Desktop | None, announce: Callable[[str], None] | None) -> Callable[[str], None]:
+    """Says it after any reply in progress and shows it as a desktop notification."""
 
     def alert(message: str) -> None:
-        try:
-            found.notifier.notify("Bilge", message)
-        except Exception:  # noqa: BLE001 - a missing notification must not silence the spoken one
-            log.info("Could not show a notification", exc_info=True)
+        if found is not None:
+            try:
+                found.notifier.notify("Bilge", message)
+            except Exception:  # noqa: BLE001 - a missing notification must not silence the spoken one
+                log.info("Could not show a notification", exc_info=True)
         if announce is not None:
             announce(message)
+
+    return alert
+
+
+def _timer_service(language: AssistantLanguage, alert: Callable[[str], None]) -> "TimerService":
+    from bilge.tools.desktop import timers
 
     service = timers.TimerService(alert, language, store=config.data_dir() / "timers.json")
     service.restore()
@@ -252,12 +273,14 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
     voice = settings.voice
     root = models_dir()
     holder: dict = {}
+    services: list = []
     agent = build_agent(
         settings,
         confirm=lambda question: holder["assistant"].confirm(question),
         provider=provider,
         model=model,
         announce=lambda text: holder["assistant"].announce(text),
+        services=services,
     )
     # The wake word is Turkish in both languages.
     wake = GuardedRecognizer(
@@ -283,7 +306,8 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
         raise
     options = Options(wake_phrase=voice.wake_phrase, follow_up=voice.follow_up, barge_in=voice.barge_in,
                       wake_word=voice.wake_word or not voice.hotkey)  # fmt: skip
-    assistant = VoiceAssistant(recognizer, speech, agent, language, options, gate, on_event, wake_recognizer=wake)
+    assistant = VoiceAssistant(recognizer, speech, agent, language, options, gate, on_event, wake_recognizer=wake,
+                               services=services)  # fmt: skip
     holder["assistant"] = assistant
     front_end = FrontEnd(device, assistant.on_chunk, EchoCanceller() if voice.barge_in else None)
     return assistant, front_end

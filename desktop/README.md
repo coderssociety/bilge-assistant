@@ -149,6 +149,9 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 | System | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` or Plasma, `nmcli`, the desktop's screenshot tool | built in |
 | Clipboard | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” | `wl-clipboard`, `xclip` or `xsel` | built in |
 | News | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı, TRT Haber, BBC Türkçe (BBC News, The Guardian, NPR in English); “aç” also opens the story in the browser | the same |
+| Earthquakes | “son depremler”, “İzmir'de deprem var mı”, “en son deprem nerede”; said unasked when a magnitude 4+ earthquake happens within 150 km of the weather city | AFAD, or Kandilli Observatory when AFAD can't be reached | the same |
+| Football | “Galatasaray maçı kaç kaç”, “Fenerbahçe ne zaman oynuyor”, “puan durumu”, “dün maç sonuçları” | the Süper Lig from ESPN | the same |
+| Stocks | “borsa nasıl”, “BIST 100 kaç”, “THY hissesi”, “Aselsan bugün” | Borsa İstanbul from Yahoo Finance; figures only, never advice | the same |
 | Translation | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | the voice speaks 31 languages | the same |
 | Other | timers and alarms, opening sites and searches, the daily briefing | | |
 

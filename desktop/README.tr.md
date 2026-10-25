@@ -149,6 +149,9 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | Sistem | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` ya da Plasma, `nmcli`, masaüstünün ekran görüntüsü aracı | yerleşik |
 | Pano | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” | `wl-clipboard`, `xclip` ya da `xsel` | yerleşik |
 | Haberler | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı, TRT Haber, BBC Türkçe (İngilizcede BBC News, The Guardian, NPR); “aç” haberi tarayıcıda da açar | aynı |
+| Depremler | “son depremler”, “İzmir'de deprem var mı”, “en son deprem nerede”; hava durumu şehrinin 150 km yakınında 4 ve üzeri bir deprem olunca sorulmadan söyler | AFAD, ulaşılamazsa Kandilli Rasathanesi | aynı |
+| Futbol | “Galatasaray maçı kaç kaç”, “Fenerbahçe ne zaman oynuyor”, “puan durumu”, “dün maç sonuçları” | ESPN'den Süper Lig | aynı |
+| Borsa | “borsa nasıl”, “BIST 100 kaç”, “THY hissesi”, “Aselsan bugün” | Yahoo Finance'ten Borsa İstanbul; yalnızca rakamlar, asla tavsiye değil | aynı |
 | Çeviri | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | ses 31 dilde konuşur | aynı |
 | Diğer | zamanlayıcılar ve alarmlar, site ve arama açma, günlük özet | | |
 

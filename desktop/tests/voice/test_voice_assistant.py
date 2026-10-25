@@ -316,3 +316,24 @@ def test_stopping_closes_a_recognizer_that_holds_a_helper_program():
     assistant.start()
     assistant.stop()
     assert Closing.closed == 1
+
+
+class Service:
+    def __init__(self):
+        self.events = []
+
+    def start(self):
+        self.events.append("start")
+
+    def stop(self):
+        self.events.append("stop")
+
+
+def test_services_run_while_listening():
+    service = Service()
+    assistant = VoiceAssistant(ScriptedRecognizer(), SilentSpeech(), EchoAgent(), AssistantLanguage.TURKISH,
+                               wake_recognizer=ScriptedRecognizer(), services=[service])  # fmt: skip
+    assistant.start()
+    assert service.events == ["start"]
+    assistant.stop()
+    assert service.events == ["start", "stop"]

@@ -29,6 +29,11 @@ TRANSIENT_STATUSES = frozenset({502, 503, 504})
 RETRY_DELAY_SECONDS = 0.4
 ALLOWED_PORTS = frozenset({80, 443})
 _DEFAULT_PORTS = {"http": 80, "https": 443}
+USER_AGENT = "Mozilla/5.0 (compatible; Bilge/0.1)"
+# For the few services that turn away anything that doesn't look like a browser.
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+)
 _CHUNK = 64 * 1024
 _IPV4_COMPATIBLE = ipaddress.ip_network("::/96")
 
@@ -124,12 +129,17 @@ class Response:
             return self.body.decode("utf-8", errors="replace")
 
 
-def get(url: str, language: AssistantLanguage = AssistantLanguage.TURKISH, max_bytes: int = MAX_BYTES) -> Response:
-    response = _follow(url, language, max_bytes)
+def get(
+    url: str,
+    language: AssistantLanguage = AssistantLanguage.TURKISH,
+    max_bytes: int = MAX_BYTES,
+    user_agent: str = USER_AGENT,
+) -> Response:
+    response = _follow(url, language, max_bytes, user_agent)
     if response.status in TRANSIENT_STATUSES:
         # One retry for a gateway hiccup: Open-Meteo answered 503 once and fine right after.
         time.sleep(RETRY_DELAY_SECONDS)
-        response = _follow(url, language, max_bytes)
+        response = _follow(url, language, max_bytes, user_agent)
     return response
 
 
@@ -144,18 +154,20 @@ def get_json(url: str, language: AssistantLanguage = AssistantLanguage.TURKISH) 
         raise WebFetchError(Reason.UNEXPECTED) from error
 
 
-def _follow(url: str, language: AssistantLanguage, max_bytes: int) -> Response:
+def _follow(url: str, language: AssistantLanguage, max_bytes: int, user_agent: str) -> Response:
     deadline = time.monotonic() + TOTAL_SECONDS
     current = url
     for _ in range(MAX_REDIRECTS + 1):
-        response, location = _get_once(current, language, max_bytes, deadline)
+        response, location = _get_once(current, language, max_bytes, deadline, user_agent)
         if location is None:
             return response
         current = urljoin(current, location)
     raise WebFetchError(Reason.REDIRECTS)
 
 
-def _get_once(url: str, language: AssistantLanguage, max_bytes: int, deadline: float) -> tuple[Response, str | None]:
+def _get_once(
+    url: str, language: AssistantLanguage, max_bytes: int, deadline: float, user_agent: str
+) -> tuple[Response, str | None]:
     parts = urlsplit(url)
     scheme = parts.scheme.lower()
     if scheme not in _DEFAULT_PORTS or not parts.hostname:
@@ -172,7 +184,7 @@ def _get_once(url: str, language: AssistantLanguage, max_bytes: int, deadline: f
     path = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
     headers = {
         "Host": host if port == _DEFAULT_PORTS[scheme] else f"{host}:{port}",
-        "User-Agent": "Mozilla/5.0 (compatible; Bilge/0.1)",
+        "User-Agent": user_agent,
         "Accept-Language": "en,tr;q=0.8" if language is AssistantLanguage.ENGLISH else "tr,en;q=0.8",
         "Accept-Encoding": "identity",
     }

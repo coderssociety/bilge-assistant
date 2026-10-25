@@ -1,5 +1,5 @@
 """Language, how Bilge is called and how the conversation flows, the corner window, starting with the computer,
-updates, and the weather city."""
+updates, the weather city, and earthquake alerts."""
 
 import contextlib
 import html
@@ -50,6 +50,7 @@ class GeneralPage(QWidget):
         self.check_now.clicked.connect(self._check_now)
         self.update_state = QLabel(wordWrap=True, openExternalLinks=True)
         self.city = QLineEdit()
+        self.earthquakes = QCheckBox(t("general.earthquakes"))
         form = QFormLayout(self)
         form.addRow(t("general.language"), self.language)
         form.addRow("", QLabel(t("general.language_note")))
@@ -68,6 +69,8 @@ class GeneralPage(QWidget):
         updates_row.addWidget(self.update_state, 1)
         form.addRow("", updates_row)
         form.addRow(t("general.city"), self.city)
+        form.addRow("", self.earthquakes)
+        form.addRow("", QLabel(t("general.earthquakes_note"), wordWrap=True))
 
     def load(self, settings: config.Settings) -> None:
         self.language.setCurrentIndex(max(0, self.language.findData(settings.language)))
@@ -79,6 +82,7 @@ class GeneralPage(QWidget):
         self.autostart.setChecked(autostart.is_enabled())
         self.updates.setChecked(settings.check_updates)
         self.city.setText(settings.weather_city)
+        self.earthquakes.setChecked(settings.earthquake_alerts)
 
     def _hotkey_text(self) -> str:
         return self.hotkey.keySequence().toString(QKeySequence.SequenceFormat.PortableText)
@@ -107,6 +111,7 @@ class GeneralPage(QWidget):
         settings.show_hud = self.hud.isChecked()
         settings.check_updates = self.updates.isChecked()
         settings.weather_city = self.city.text().strip() or settings.weather_city
+        settings.earthquake_alerts = self.earthquakes.isChecked()
 
     def save_secrets(self) -> None:
         pass

@@ -70,3 +70,10 @@ def test_an_older_settings_file_gets_the_new_defaults(tmp_path):
     loaded = config.load_settings(path)
     assert loaded.check_updates and loaded.voice.wake_word
     assert (loaded.voice.hotkey, loaded.voice.accelerator) == ("", "auto")
+    assert loaded.earthquake_alerts
+
+
+def test_earthquake_alerts_can_be_turned_off(tmp_path):
+    path = tmp_path / "settings.json"
+    config.save_settings(config.Settings(earthquake_alerts=False), path)
+    assert config.load_settings(path).earthquake_alerts is False
