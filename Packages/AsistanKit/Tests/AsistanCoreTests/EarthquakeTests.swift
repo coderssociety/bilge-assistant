@@ -82,12 +82,16 @@ struct EarthquakeTests {
     @Test("provinces named in requests", arguments: [
         ("İzmir'de deprem var mı", "İzmir"), ("Van'da deprem oldu mu", "Van"), ("Antep'te sarsıntı", "Gaziantep"),
         ("Kahramanmaraş depremi", "Kahramanmaraş"), ("earthquake in Izmir", "İzmir"), ("BALIKESIR", "Balıkesir"),
+        ("Muş'ta deprem", "Muş"), ("Muş'un depremlerini söyler misin", "Muş"), ("muş deprem", "Muş"),
     ])
     func provinces(text: String, expected: String) {
         #expect(TurkishProvinces.named(in: text)?.name == expected)
     }
 
-    @Test("no province in", arguments: ["son depremler", "deprem oldu mu", "bugün büyük deprem oldu mu", "en son deprem nerede"])
+    @Test("no province in", arguments: [
+        "son depremler", "deprem oldu mu", "bugün büyük deprem oldu mu", "en son deprem nerede",
+        "son depremler nerede biliyor musun", "deprem oldu mu söyler müsün",
+    ])
     func noProvince(text: String) {
         #expect(TurkishProvinces.named(in: text) == nil)
     }

@@ -33,6 +33,9 @@ public struct TurkishProvince: Equatable, Sendable {
         "", "da", "de", "ta", "te", "daki", "deki", "taki", "teki", "dan", "den", "tan", "ten",
         "in", "nin", "un", "nun", "a", "e", "ya", "ye",
     ]
+    /// Question particles that fold to Muş with the genitive ("biliyor musun"); only "Muş'un" written with ş
+    /// is the province.
+    static let questionParticles: Set<String> = ["musun", "müsün"]
 
     private static let byFoldedName: [String: TurkishProvince] = {
         var names = Dictionary(uniqueKeysWithValues: all.map { (TurkishText.folded($0.name), $0) })
@@ -42,7 +45,8 @@ public struct TurkishProvince: Equatable, Sendable {
 
     /// The first province named in `text`, with or without a case ending.
     public static func find(in text: String) -> TurkishProvince? {
-        for word in TurkishText.folded(text).split(separator: " ") {
+        let words = zip(TurkishText.normalized(text).split(separator: " "), TurkishText.folded(text).split(separator: " "))
+        for (spoken, word) in words where !questionParticles.contains(String(spoken)) {
             let word = String(word)
             for ending in endings where word.hasSuffix(ending) {
                 if let province = byFoldedName[String(word.dropLast(ending.count))] { return province }

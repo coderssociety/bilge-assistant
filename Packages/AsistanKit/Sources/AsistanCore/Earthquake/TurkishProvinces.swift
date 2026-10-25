@@ -86,7 +86,9 @@ public enum TurkishProvinces {
 
     /// The province named in a request; the longest matching name wins.
     public static func named(in text: String) -> Province? {
-        let words = TurkishText.folded(text).split(separator: " ").map(String.init)
+        let words = zip(TurkishText.normalized(text).split(separator: " "), TurkishText.folded(text).split(separator: " "))
+            .filter { !TurkishProvince.questionParticles.contains(String($0.0)) }
+            .map { String($0.1) }
         var best: (province: Province, length: Int)?
         for province in all {
             for key in province.keys where key.count > (best?.length ?? 0) {

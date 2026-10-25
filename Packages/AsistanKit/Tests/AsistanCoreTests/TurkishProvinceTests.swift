@@ -28,6 +28,17 @@ struct TurkishProvinceTests {
         #expect(TurkishProvince.find(in: "benzin ne kadar") == nil)
     }
 
+    @Test("the question particle is not Muş, the province with its endings is")
+    func questionParticle() {
+        #expect(TurkishProvince.find(in: "benzin fiyatını bulur musun") == nil)
+        #expect(TurkishProvince.find(in: "akşam ezanı ne zaman biliyor musun") == nil)
+        #expect(TurkishProvince.find(in: "motorin kaç lira söyler müsün") == nil)
+        #expect(TurkishProvince.find(in: "Muş için namaz vakitleri")?.plate == 49)
+        #expect(TurkishProvince.find(in: "Muş'ta benzin fiyatı")?.plate == 49)
+        #expect(TurkishProvince.find(in: "Muş'un benzin fiyatını bulur musun")?.plate == 49)
+        #expect(TurkishProvince.find(in: "muş akşam ezanı")?.plate == 49)
+    }
+
     @Test("places outside Turkey said in a request")
     func spokenPlace() {
         #expect(SpokenPlace.name(in: "Berlin'de akşam ezanı kaçta", language: .turkish) == "Berlin")
