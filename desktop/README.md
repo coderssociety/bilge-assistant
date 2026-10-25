@@ -156,6 +156,7 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 | Stocks | “borsa nasıl”, “BIST 100 kaç”, “THY hissesi”, “Aselsan bugün” | Borsa İstanbul from Yahoo Finance; figures only, never advice | the same |
 | Translation | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | the voice speaks 31 languages | the same |
 | Routines | “her gece 21'de hava durumunu söyle”, “hafta içi her gün 7'de haberleri oku”, “rutinlerim neler”, “akşam rutinini sil”; run while Bilge listens, never a step that needs a yes, and are listed and deleted under Settings → Routines | built in | built in |
+| Smart home | “salonun ışığını aç”, “klimayı 22 dereceye ayarla”, “kapı kilitli mi”, “ışıkları kapat”; locks, the garage and the alarm ask first | Home Assistant's conversation API (Settings → Smart home: its address and a long-lived access token) | the same |
 | Other | timers and alarms, opening sites and searches, the daily briefing | | |
 
 Moving files to the trash, closing apps, writing over a filled cell, adding to or changing the calendar, turning

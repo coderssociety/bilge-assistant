@@ -94,6 +94,13 @@ class MailSettings:
 
 
 @dataclass
+class HomeSettings:
+    # Home Assistant's address on the local network, e.g. "http://homeassistant.local:8123"; empty for none. The
+    # long-lived access token is in the key store.
+    address: str = ""
+
+
+@dataclass
 class Settings:
     language: str = AssistantLanguage.TURKISH.value
     model: ModelSettings = field(default_factory=ModelSettings)
@@ -102,6 +109,7 @@ class Settings:
     voice: VoiceSettings = field(default_factory=VoiceSettings)
     calendar: CalendarSettings = field(default_factory=CalendarSettings)
     mail: MailSettings = field(default_factory=MailSettings)
+    home: HomeSettings = field(default_factory=HomeSettings)
     # The small window in the screen corner showing what was heard and the reply.
     show_hud: bool = True
     # Set once the first-run setup has been finished.
@@ -137,8 +145,10 @@ def load_settings(path: Path | None = None) -> Settings:
     defaults = VoiceSettings()
     calendar = data.get("calendar") if isinstance(data.get("calendar"), dict) else {}
     mail = data.get("mail") if isinstance(data.get("mail"), dict) else {}
+    home = data.get("home") if isinstance(data.get("home"), dict) else {}
     return Settings(
         mail=MailSettings(server=str(mail.get("server", "")), username=str(mail.get("username", ""))),
+        home=HomeSettings(address=str(home.get("address", ""))),
         calendar=CalendarSettings(
             kind=str(calendar.get("kind", "")),
             url=str(calendar.get("url", "")),

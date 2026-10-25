@@ -24,6 +24,7 @@ from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
+from bilge.tools.builtin.home_assistant import HomeAssistant, smart_home_rule, smart_home_tool
 from bilge.tools.builtin.mail import read_mail_tool
 from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.builtin.units import convert_units
@@ -41,6 +42,7 @@ ICS_SECRET = "calendar-ics"
 # One for the whole run: the watcher a restart builds must not announce an earthquake the previous one already did.
 _ANNOUNCED_EARTHQUAKES = earthquake_alert.Announced()
 IMAP_SECRET = "imap"
+HOME_ASSISTANT_SECRET = "home-assistant"
 
 
 def models_dir() -> Path:
@@ -71,6 +73,14 @@ def mailbox(settings: config.MailSettings) -> mailboxes.Mailbox | None:
 
 def routine_store() -> routines.RoutineStore:
     return routines.RoutineStore(config.data_dir() / "routines.json")
+
+
+def home_assistant(settings: config.HomeSettings) -> HomeAssistant | None:
+    """None until both the address and the token are set."""
+    if not settings.address:
+        return None
+    token = config.api_key(HOME_ASSISTANT_SECRET)
+    return HomeAssistant(settings.address, token) if token else None
 
 
 def build_agent(
@@ -154,6 +164,10 @@ def build_agent(
             registry.add(tool)
         rules = [*desktop_rules, *rules]
         modes = desktop_modes
+    home = home_assistant(settings.home)
+    if home is not None:
+        registry.add(smart_home_tool(home, language))
+        rules = [smart_home_rule(language), *rules]
     # A routine carries a command other rules would claim ("her sabah 8'de günün özetini oku").
     rules = [*routines.routine_rules(language), *rules]
     agent = Agent(chat, registry, confirm=confirm, language=language, memory=memory.prompt_lines,

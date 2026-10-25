@@ -435,6 +435,43 @@ def test_garbage_is_collected_on_the_window_thread(qapp):
     assert gc.isenabled()
 
 
+def test_a_home_assistant_token_is_kept_only_after_the_server_accepted_it(qapp, isolated, tmp_path, monkeypatch):
+    from bilge.app.settings import SettingsWindow
+    from bilge.app.settings import home as home_page
+    from bilge.tools.builtin.home_assistant import HomeAssistantError, Reason
+
+    texts.use(AssistantLanguage.TURKISH)
+    tried = []
+
+    class Server:
+        def __init__(self, address, token):
+            tried.append((address, token))
+
+        def check(self):
+            if tried[-1][1] != "doğru":
+                raise HomeAssistantError(Reason.UNAUTHORIZED)
+
+    monkeypatch.setattr(home_page, "HomeAssistant", Server)
+    window = SettingsWindow(config.Settings(), tmp_path / "settings.json")
+    page = window.pages["home"]
+    page.address.setText("homeassistant.local")
+    window.save()
+    assert window.message.text().startswith("Home Assistant adresi http://")
+    page.address.setText("http://homeassistant.local:8123")
+    page.token.setText("yanlış")
+    page.test.click()
+    assert wait(lambda: "erişim anahtarını kabul etmedi" in page.message.text(), qapp)
+    page.token.setText("doğru")
+    page.test.click()
+    assert wait(lambda: page.message.text().startswith("Bağlandı"), qapp)
+    window.save()
+    assert config.load_settings(tmp_path / "settings.json").home == config.HomeSettings(
+        "http://homeassistant.local:8123"
+    )
+    assert isolated == {"home-assistant": "doğru"}
+    assert "doğru" not in (tmp_path / "settings.json").read_text(encoding="utf-8")
+
+
 def test_routines_page_lists_and_deletes_routines(qapp, isolated, tmp_path):
     from bilge.app.settings.routines import RoutinesPage
     from bilge.core.routines.routine_schedule import EVERY_DAY, WEEKDAYS, Routine
