@@ -143,7 +143,7 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 | Sound | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor” | `wpctl`, `pactl` or `amixer`; MPRIS players | Core Audio; the system media controls |
 | Files | “kira sözleşmesini bul”, “son indirdiğim PDF'i özetle”, “eski faturayı çöpe at” | the freedesktop trash | the Recycle Bin |
 | Typing | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` or `ydotool` (Wayland) | built in |
-| Calendar | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “süt almayı işaretle” | CalDAV or an iCal address | the same, or Outlook |
+| Calendar | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “süt almayı işaretle” | CalDAV or an iCal address | the same, or Outlook |
 | Spreadsheet | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel or LibreOffice Calc |
 | Mail | “okunmamış e-postalarım”, “içeriğini oku”, “Ahmet'e yarın geleceğimi yaz” | | Outlook |
 | System | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` or Plasma, `nmcli`, the desktop's screenshot tool | built in |
@@ -152,7 +152,7 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 | Translation | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | the voice speaks 31 languages | the same |
 | Other | timers and alarms, opening sites and searches, the daily briefing | | |
 
-Moving files to the trash, closing apps, writing over a filled cell, adding to the calendar or turning Wi-Fi off
+Moving files to the trash, closing apps, writing over a filled cell, adding to or changing the calendar or turning Wi-Fi off
 asks first, and so does anything that could carry text Bilge has read somewhere else. An e-mail is read out, with the
 address it goes to, before it is sent. Typing is refused in terminals,
 code editors, remote desktops, virtual machines and password managers. GNOME on Wayland doesn't tell other

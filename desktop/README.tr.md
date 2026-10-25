@@ -143,7 +143,7 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | Ses | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor” | `wpctl`, `pactl` ya da `amixer`; MPRIS çalarlar | Core Audio; sistemin medya denetimleri |
 | Dosyalar | “kira sözleşmesini bul”, “son indirdiğim PDF'i özetle”, “eski faturayı çöpe at” | freedesktop çöp kutusu | Geri Dönüşüm Kutusu |
 | Yazma | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` ya da `ydotool` (Wayland) | yerleşik |
-| Takvim | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “süt almayı işaretle” | CalDAV ya da bir iCal adresi | aynısı ya da Outlook |
+| Takvim | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “süt almayı işaretle” | CalDAV ya da bir iCal adresi | aynısı ya da Outlook |
 | Tablo | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel ya da LibreOffice Calc |
 | E-posta | “okunmamış e-postalarım”, “içeriğini oku”, “Ahmet'e yarın geleceğimi yaz” | | Outlook |
 | Sistem | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` ya da Plasma, `nmcli`, masaüstünün ekran görüntüsü aracı | yerleşik |
@@ -152,7 +152,7 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | Çeviri | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | ses 31 dilde konuşur | aynı |
 | Diğer | zamanlayıcılar ve alarmlar, site ve arama açma, günlük özet | | |
 
-Dosyaları çöpe atmak, uygulama kapatmak, dolu bir hücrenin üzerine yazmak, takvime eklemek ya da Wi-Fi'ı kapatmak
+Dosyaları çöpe atmak, uygulama kapatmak, dolu bir hücrenin üzerine yazmak, takvime eklemek, takvimi değiştirmek ya da Wi-Fi'ı kapatmak
 önce sorulur; Bilge'nin başka bir yerde okuduğu metni taşıyabilecek her şey de öyle. Bir e-posta, gideceği adresle
 birlikte gönderilmeden önce sesli okunur. Terminallerde, kod düzenleyicilerde, uzak masaüstlerinde, sanal
 makinelerde ve parola yöneticilerinde yazma reddedilir. Wayland'deki GNOME öndeki pencereyi başka programlara

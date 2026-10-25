@@ -40,7 +40,8 @@ _SUFFIXES = frozenset(
     [
         "sını", "sini", "sunu", "sünü", "nın", "nin", "nun", "nün", "ıncı", "inci", "uncu", "üncü", "ncı", "nci",
         "ncu", "ncü", "lık", "lik", "luk", "lük", "yla", "yle", "dan", "den", "tan", "ten", "dır", "dir", "dur",
-        "dür", "tır", "tir", "tur", "tür", "şar", "şer", "da", "de", "ta", "te", "ya", "ye", "yı", "yi", "yu", "yü",
+        "dür", "tır", "tir", "tur", "tür", "şar", "şer", "daki", "deki", "taki", "teki", "da", "de", "ta", "te", "ya",
+        "ye", "yı", "yi", "yu", "yü",
         "ın", "in", "un", "ün", "sı", "si", "su", "sü", "la", "le", "ar", "er", "a", "e", "ı", "i", "u", "ü",
     ]
 )  # fmt: skip

@@ -378,10 +378,12 @@ class Outlook:
                             Body="Fatura ödendi.", UnRead=False, ReceivedTime=datetime(2026, 10, 13, 8, 15)),
         ])  # fmt: skip
         self.sent = []
+        self.items = {}
 
     def GetNamespace(self, _):  # noqa: N802
         folders = {office.CALENDAR: self.calendar, office.TASKS: self.tasks, office.INBOX: self.inbox}
-        return SimpleNamespace(GetDefaultFolder=lambda kind: SimpleNamespace(Items=folders[kind]))
+        return SimpleNamespace(GetDefaultFolder=lambda kind: SimpleNamespace(Items=folders[kind]),
+                               GetItemFromID=lambda entry: self.items[entry])  # fmt: skip
 
     def CreateItem(self, kind):  # noqa: N802
         outlook = self
@@ -410,6 +412,61 @@ def test_outlook_calendar_and_tasks(no_com):
     # Outlook marks "no due date" as the year 4501.
     assert source.open_reminders() == [calendars.Reminder("Süt al", None)]
     assert source.complete_reminder("Süt al") and not source.complete_reminder("Yok")
+
+
+class Appointment(SimpleNamespace):
+    def __init__(self, log, **fields):
+        super().__init__(**fields)
+        self.log = log
+
+    def Delete(self):  # noqa: N802
+        self.log.append(("deleted", self.Subject, self.Start))
+
+    def Save(self):  # noqa: N802
+        self.log.append(("saved", self.Subject, self.Start, self.End))
+
+    def GetRecurrencePattern(self):  # noqa: N802
+        appointment = self
+
+        class Pattern:
+            StartTime = EndTime = None
+
+            def GetOccurrence(self, start):  # noqa: N802
+                return Appointment(appointment.log, Subject=appointment.Subject, Start=start,
+                                   End=start + timedelta(minutes=15))  # fmt: skip
+
+            def __setattr__(self, name, value):
+                appointment.log.append(("pattern", name, value))
+
+        return Pattern()
+
+
+def test_outlook_events_are_deleted_and_moved_by_entry_and_occurrence(no_com):
+    app, log = Outlook(), []
+    single = Appointment(log, Subject="Diş hekimi", Start=datetime(2026, 10, 16, 10, 0), End=datetime(2026, 10, 16, 11, 0),
+                         AllDayEvent=False, IsRecurring=False, EntryID="A1")  # fmt: skip
+    series = Appointment(log, Subject="Standup", Start=datetime(2026, 10, 16, 9, 0), End=datetime(2026, 10, 16, 9, 15),
+                         AllDayEvent=False, IsRecurring=True, EntryID="S1")  # fmt: skip
+    app.calendar = Items([single, series])
+    app.items = {"A1": single, "S1": series}
+    source = office.OutlookCalendar(office.Outlook(application=lambda: app, date_text=lambda d: f"{d:%d.%m.%Y %H:%M}"))
+    start = datetime(2026, 10, 16).astimezone()
+    standup, dentist = source.events(start, start + timedelta(days=1))
+    assert (standup.recurring, dentist.recurring, dentist.end - dentist.start) == (True, False, timedelta(hours=1))
+
+    source.move_event(dentist, datetime(2026, 10, 19, 15, 0).astimezone())
+    source.delete_event(standup)
+    source.move_event(standup, datetime(2026, 10, 16, 9, 30).astimezone(), every=True)
+    source.delete_event(standup, every=True)
+
+    assert log == [
+        ("saved", "Diş hekimi", datetime(2026, 10, 19, 15, 0), datetime(2026, 10, 19, 16, 0)),
+        ("deleted", "Standup", datetime(2026, 10, 16, 9, 0)),
+        ("pattern", "StartTime", datetime(2026, 10, 16, 9, 30)),
+        ("pattern", "EndTime", datetime(2026, 10, 16, 9, 45)),
+        ("saved", "Standup", datetime(2026, 10, 16, 9, 0), datetime(2026, 10, 16, 9, 15)),
+        ("deleted", "Standup", datetime(2026, 10, 16, 9, 0)),
+    ]
 
 
 def test_outlook_not_open_is_a_calendar_error(no_com):

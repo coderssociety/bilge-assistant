@@ -3,8 +3,8 @@ read-only iCal address (Google Calendar's "secret address in iCal format")."""
 
 import ipaddress
 import logging
-from dataclasses import dataclass
-from datetime import UTC, date, datetime, time
+from dataclasses import dataclass, field
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Protocol
 from urllib.parse import urlsplit
 
@@ -34,6 +34,11 @@ class CalendarEvent:
     # Local time, timezone-aware; midnight for all-day events.
     start: datetime
     all_day: bool
+    end: datetime | None = None
+    # One occurrence of a repeating event.
+    recurring: bool = False
+    # Where the source finds the event again to change it; its own business.
+    reference: tuple[str, ...] = field(default=(), compare=False)
 
 
 @dataclass(frozen=True)
@@ -48,6 +53,15 @@ class CalendarSource(Protocol):
     def events(self, start: datetime, end: datetime) -> list[CalendarEvent]: ...
 
     def add_event(self, title: str, start: datetime, end: datetime) -> None: ...
+
+    def delete_event(self, event: CalendarEvent, every: bool = False) -> None:
+        """Deletes the event; of a repeating one only this occurrence unless `every`."""
+        ...
+
+    def move_event(self, event: CalendarEvent, start: datetime, every: bool = False) -> None:
+        """Moves the event to begin at `start`, keeping its length; of a repeating one only this occurrence unless
+        `every`, which moves the whole series by as much."""
+        ...
 
     def open_reminders(self) -> list[Reminder]: ...
 
@@ -70,13 +84,23 @@ def _summary(component) -> str:
     return str(component.get("SUMMARY") or "").strip()
 
 
-def _event(component) -> CalendarEvent | None:
+def _event(component, url: str = "") -> CalendarEvent | None:
     """None for an event without a start, which some servers keep."""
     start = component.get("DTSTART")
     if start is None:
         return None
     begins, all_day = local(start.dt)
-    return CalendarEvent(_summary(component), begins, all_day)
+    ends = component.get("DTEND")
+    if ends is not None:
+        finishes = local(ends.dt)[0]
+    elif component.get("DURATION") is not None:
+        finishes = begins + component["DURATION"].dt
+    else:
+        finishes = begins + (timedelta(days=1) if all_day else timedelta())
+    occurrence = component.get("RECURRENCE-ID")
+    recurring = occurrence is not None or "RRULE" in component
+    reference = (url, local(occurrence.dt)[0].isoformat() if occurrence is not None else "")
+    return CalendarEvent(_summary(component), begins, all_day, finishes, recurring, reference)
 
 
 def _sorted(events: list[CalendarEvent]) -> list[CalendarEvent]:
@@ -138,7 +162,7 @@ class CalDAVSource:
                     log.info("Skipping a calendar that refused the search", exc_info=True)
                     continue
                 for result in results:
-                    event = _event(result.icalendar_component)
+                    event = _event(result.icalendar_component, str(result.url))
                     if event is not None:
                         found.append(event)
             return _sorted(found)
@@ -161,6 +185,48 @@ class CalDAVSource:
 
     def add_event(self, title: str, start: datetime, end: datetime) -> None:
         self._run(lambda client: self._target(client, "VEVENT").save_event(dtstart=start, dtend=end, summary=title))
+
+    def _resource(self, client, event: CalendarEvent):
+        url = event.reference[0] if event.reference else ""
+        for calendar in self._calendars(client) if url else []:
+            if url.startswith(str(calendar.url)):
+                resource = calendar.event_by_url(url)
+                resource.load()
+                return resource
+        raise CalendarError("The event is no longer on the server")
+
+    def delete_event(self, event: CalendarEvent, every: bool = False) -> None:
+        def delete(client) -> None:
+            resource = self._resource(client, event)
+            calendar = resource.icalendar_instance
+            master = _master(calendar)
+            if every or not _repeats(master):
+                resource.delete()
+                return
+            moment = _occurrence(event)
+            for override in _overrides(calendar, moment):
+                calendar.subcomponents.remove(override)
+            master.add("EXDATE", _like(master["DTSTART"].dt, moment))
+            resource.save(only_this_recurrence=False)
+
+        self._run(delete)
+
+    def move_event(self, event: CalendarEvent, start: datetime, every: bool = False) -> None:
+        def move(client) -> None:
+            resource = self._resource(client, event)
+            calendar = resource.icalendar_instance
+            master = _master(calendar)
+            if not _repeats(master):
+                _set_times(master, start, event)
+            elif every:
+                _shift_series(calendar, master, start.replace(tzinfo=None) - event.start.replace(tzinfo=None))
+            else:
+                moment = _occurrence(event)
+                override = next(iter(_overrides(calendar, moment)), None) or _new_override(calendar, master, moment)
+                _set_times(override, start, event)
+            resource.save(only_this_recurrence=False)
+
+        self._run(move)
 
     def _open_todos(self, client) -> list:
         from caldav.lib.error import DAVError
@@ -251,6 +317,12 @@ class ICSSource:
     def add_event(self, title: str, start: datetime, end: datetime) -> None:
         raise ReadOnly("An iCal address is read-only")
 
+    def delete_event(self, event: CalendarEvent, every: bool = False) -> None:
+        raise ReadOnly("An iCal address is read-only")
+
+    def move_event(self, event: CalendarEvent, start: datetime, every: bool = False) -> None:
+        raise ReadOnly("An iCal address is read-only")
+
     def open_reminders(self) -> list[Reminder]:
         return []
 
@@ -259,6 +331,83 @@ class ICSSource:
 
     def complete_reminder(self, title: str) -> bool:
         raise ReadOnly("An iCal address is read-only")
+
+
+_SERIES_ONLY = ("RRULE", "RDATE", "EXDATE", "RECURRENCE-ID", "DTSTART", "DTEND", "DURATION", "SEQUENCE")
+
+
+def _master(calendar):
+    events = [c for c in calendar.subcomponents if c.name == "VEVENT"]
+    if not events:
+        raise CalendarError("The calendar entry holds no event")
+    return next((e for e in events if "RECURRENCE-ID" not in e), events[0])
+
+
+def _repeats(master) -> bool:
+    return "RRULE" in master or "RDATE" in master
+
+
+def _occurrence(event: CalendarEvent) -> datetime:
+    """The start the repetition rule gives this occurrence, which a moved one no longer begins at."""
+    said = event.reference[1] if len(event.reference) > 1 else ""
+    return datetime.fromisoformat(said) if said else event.start
+
+
+def _overrides(calendar, moment: datetime) -> list:
+    return [c for c in calendar.subcomponents if c.name == "VEVENT" and "RECURRENCE-ID" in c
+            and local(c["RECURRENCE-ID"].dt)[0] == moment]  # fmt: skip
+
+
+def _like(template: date | datetime, moment: datetime) -> date | datetime:
+    """`moment` written as `template` is: a date, a floating local time, or a time in the template's own zone."""
+    if not isinstance(template, datetime):
+        return moment.date()
+    if template.tzinfo is None:
+        return moment.astimezone().replace(tzinfo=None)
+    return moment.astimezone(template.tzinfo)
+
+
+def _replace(component, name: str, value) -> None:
+    component.pop(name, None)
+    component.add(name, value)
+
+
+def _set_times(component, start: datetime, event: CalendarEvent) -> None:
+    length = (event.end - event.start) if event.end is not None else timedelta(hours=1)
+    template = component["DTSTART"].dt
+    _replace(component, "DTSTART", _like(template, start))
+    if "DTEND" in component:
+        _replace(component, "DTEND", _like(component["DTEND"].dt, start + length))
+
+
+def _new_override(calendar, master, moment: datetime):
+    import icalendar
+
+    override = icalendar.Event()
+    for name, value in master.items():
+        if name not in _SERIES_ONLY:
+            override[name] = value
+    template = master["DTSTART"].dt
+    override.add("RECURRENCE-ID", _like(template, moment))
+    override.add("DTSTART", _like(template, moment))
+    if "DTEND" in master:
+        override.add("DTEND", _like(master["DTEND"].dt, moment))
+    calendar.add_component(override)
+    return override
+
+
+def _shift_series(calendar, master, delta: timedelta) -> None:
+    """Every occurrence, and the dates that point at them (skipped ones, changed ones), by the same wall-clock time."""
+    for name in ("DTSTART", "DTEND"):
+        if name in master:
+            _replace(master, name, master[name].dt + delta)
+    skipped = master.pop("EXDATE", None)
+    for entry in skipped if isinstance(skipped, list) else [skipped] if skipped is not None else []:
+        for moment in entry.dts:
+            master.add("EXDATE", moment.dt + delta)
+    for component in calendar.subcomponents:
+        if component.name == "VEVENT" and "RECURRENCE-ID" in component:
+            _replace(component, "RECURRENCE-ID", component["RECURRENCE-ID"].dt + delta)
 
 
 def is_secure_address(url: str) -> bool:

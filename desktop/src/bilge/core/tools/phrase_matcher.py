@@ -24,6 +24,11 @@ def best_match(query: str, titles: list[str]) -> str | None:
     return best[0]
 
 
+def score(query: str, title: str) -> float:
+    """How well a spoken phrase fits one title, from 0 to 1; MINIMUM_SCORE and above counts as a match."""
+    return _score(_words(query), _words(title))
+
+
 def _words(text: str) -> list[str]:
     return [word for word in folded(text).split() if word not in _STOP_WORDS]
 

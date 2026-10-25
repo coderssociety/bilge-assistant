@@ -5,7 +5,7 @@ import pytest
 from bilge import calendars
 from bilge.brain.agent import resolve
 from bilge.core.language import AssistantLanguage
-from bilge.tools.base import ToolError
+from bilge.tools.base import Risk, ToolError
 from bilge.tools.builtin.calendar import calendar_tools
 
 TR, EN = AssistantLanguage.TURKISH, AssistantLanguage.ENGLISH
@@ -22,12 +22,19 @@ class FakeSource:
             calendars.CalendarEvent("Diş hekimi", base + timedelta(days=1, hours=10), False),
         ]
         self.added, self.reminders, self.completed = [], [calendars.Reminder("Süt al", None)], []
+        self.deleted, self.moved = [], []
 
     def events(self, start, end):
         return [e for e in self.events_list if start <= e.start < end]
 
     def add_event(self, title, start, end):
         self.added.append((title, start, end))
+
+    def delete_event(self, event, every=False):
+        self.deleted.append((event.title, event.start, every))
+
+    def move_event(self, event, start, every=False):
+        self.moved.append((event.title, event.start, start, every))
 
     def open_reminders(self):
         return self.reminders
@@ -214,3 +221,126 @@ def test_a_broken_alert_does_not_lose_the_reminder():
 
     reply = tools(source, alert=broken)["addReminder"].run({"title": "Çay", "dayOffset": 1, "hour": 9})
     assert reply.startswith("Ekledim") and source.added[0][0] == "Çay"
+
+
+def _at(days, hour, minute=0):
+    return NOW.astimezone().replace(hour=hour, minute=minute) + timedelta(days=days)
+
+
+def asked_and_run(tool, said, language=TR, model=None):
+    arguments = tool.refine(dict(model or {}), resolve(said, language))
+    return tool.question(arguments), arguments
+
+
+def test_an_event_is_deleted_after_a_question_naming_it():
+    source = FakeSource()
+    delete = tools(source)["deleteCalendarEvent"]
+    question, arguments = asked_and_run(
+        delete, "yarınki diş hekimi randevusunu iptal et", model={"title": "Diş hekimi"}
+    )
+    assert question == "Yarın saat 10:00'daki 'Diş hekimi' etkinliğini sileyim mi?"
+    assert delete.run(arguments) == "Sildim: yarın saat 10:00, Diş hekimi."
+    assert source.deleted == [("Diş hekimi", _at(1, 10), False)]
+    assert delete.risk is Risk.CONFIRM
+
+
+def test_an_event_is_moved_to_the_day_or_time_said():
+    source = FakeSource()
+    source.events_list.append(calendars.CalendarEvent("Ekip toplantısı", _at(0, 15), False, _at(0, 16)))
+    move = tools(source)["moveCalendarEvent"]
+    question, arguments = asked_and_run(move, "diş hekimi randevusunu pazartesiye al", model={"title": "diş hekimi"})
+    assert (
+        question
+        == "Yarın saat 10:00'daki 'Diş hekimi' etkinliğinin zamanını 19 Ekim Pazartesi saat 10:00 olarak değiştireyim mi?"
+    )
+    assert move.run(arguments) == "Taşıdım: Diş hekimi, artık 19 Ekim Pazartesi saat 10:00."
+    # Only a time said for the event: the generic "toplantı" finds the one meeting at three.
+    question, arguments = asked_and_run(move, "saat üçteki toplantıyı dörde ertele", model={"title": "toplantı"})
+    assert (
+        question
+        == "Bugün saat 15:00'teki 'Ekip toplantısı' etkinliğinin zamanını bugün saat 16:00 olarak değiştireyim mi?"
+    )
+    move.run(arguments)
+    _, arguments = asked_and_run(move, "ekip toplantısını bir saat öne al", model={"title": "ekip toplantısı"})
+    move.run(arguments)
+    assert [(title, new.hour) for title, _, new, _ in source.moved] == [
+        ("Diş hekimi", 10),
+        ("Ekip toplantısı", 16),
+        ("Ekip toplantısı", 14),
+    ]
+
+
+def test_several_matching_events_are_listed_and_nothing_changes():
+    source = FakeSource()
+    source.events_list.append(calendars.CalendarEvent("Diş hekimi kontrol", _at(1, 16), False))
+    source.events_list.append(calendars.CalendarEvent("Diş hekimi", _at(1, 17), False))
+    delete = tools(source)["deleteCalendarEvent"]
+    question, arguments = asked_and_run(delete, "yarınki diş hekimini sil", model={"title": "diş hekimi"})
+    assert question is None
+    with pytest.raises(
+        ToolError, match="Birden çok etkinlik buldum: yarın saat 10:00 Diş hekimi; yarın saat 17:00 Diş hekimi"
+    ):
+        delete.run(arguments)
+    # The answer "the five o'clock one" leaves the choice to the model.
+    answer = delete.refine({"title": "Diş hekimi", "dayOffset": 1, "hour": 17}, "saat beştekini")
+    assert delete.question(answer) == "Yarın saat 17:00'deki 'Diş hekimi' etkinliğini sileyim mi?"
+    delete.run(answer)
+    assert source.deleted == [("Diş hekimi", _at(1, 17), False)]
+
+
+def test_nothing_found_and_no_new_time_are_explained():
+    found = tools(FakeSource())
+    _, arguments = asked_and_run(found["deleteCalendarEvent"], "berber randevusunu sil", model={"title": "berber"})
+    with pytest.raises(ToolError, match="'berber' diye bir etkinlik bulamadım"):
+        found["deleteCalendarEvent"].run(arguments)
+    _, arguments = asked_and_run(found["moveCalendarEvent"], "diş hekimini ertele", model={"title": "diş hekimi"})
+    with pytest.raises(ToolError, match="ne zamana alacağımı"):
+        found["moveCalendarEvent"].run(arguments)
+
+
+def test_a_repeating_event_changes_one_occurrence_unless_all_are_asked_for():
+    source = FakeSource()
+    source.events_list = [calendars.CalendarEvent("Standup", _at(day, 9, 30), False, _at(day, 9, 45), True)
+                          for day in range(1, 4)]  # fmt: skip
+    found = tools(source)
+    question, arguments = asked_and_run(
+        found["deleteCalendarEvent"], "yarınki standup'ı sil", model={"title": "Standup"}
+    )
+    assert question == "Tekrarlanan 'Standup' etkinliğinin yalnızca yarın saat 09:30 olanını sileyim mi?"
+    found["deleteCalendarEvent"].run(arguments)
+    question, arguments = asked_and_run(found["moveCalendarEvent"], "standup'ların hepsini 10:00'a al",
+                                        model={"title": "Standup"})  # fmt: skip
+    assert question == "Tekrarlanan 'Standup' etkinliğinin tüm tekrarlarını saat 10:00 olarak değiştireyim mi?"
+    found["moveCalendarEvent"].run(arguments)
+    assert source.deleted == [("Standup", _at(1, 9, 30), False)]
+    assert source.moved == [("Standup", _at(1, 9, 30), _at(1, 10), True)]
+    _, arguments = asked_and_run(found["moveCalendarEvent"], "standup'ların hepsini pazartesiye al",
+                                 model={"title": "Standup"})  # fmt: skip
+    with pytest.raises(ToolError, match="başka bir güne taşıyamam"):
+        found["moveCalendarEvent"].run(arguments)
+
+
+def test_a_read_only_calendar_cannot_be_changed():
+    source = FakeSource()
+    source.writable = False
+    delete = tools(source)["deleteCalendarEvent"]
+    _, arguments = asked_and_run(delete, "yarınki diş hekimini sil", model={"title": "diş hekimi"})
+    with pytest.raises(ToolError, match="yalnızca okunabiliyor"):
+        delete.run(arguments)
+    assert source.deleted == []
+
+
+def test_english_changes_name_the_event_and_the_new_time():
+    source = FakeSource()
+    found = tools(source, EN)
+    question, arguments = asked_and_run(found["moveCalendarEvent"], "move the dentist appointment to Monday at 4", EN,
+                                        model={"title": "dentist appointment"})  # fmt: skip
+    assert question is None
+    source.events_list[1] = calendars.CalendarEvent("Dentist", _at(1, 10), False)
+    question, arguments = asked_and_run(found["moveCalendarEvent"], "move the dentist appointment to Monday at 4", EN,
+                                        model={"title": "dentist appointment"})  # fmt: skip
+    assert question == "Shall I move 'Dentist' from tomorrow at 10:00 to Monday 19 October at 16:00?"
+    assert found["moveCalendarEvent"].run(arguments) == "Moved: Dentist is now Monday 19 October at 16:00."
+    question, arguments = asked_and_run(found["deleteCalendarEvent"], "cancel tomorrow's dentist", EN,
+                                        model={"title": "dentist"})  # fmt: skip
+    assert question == "Shall I delete 'Dentist', tomorrow at 10:00?"

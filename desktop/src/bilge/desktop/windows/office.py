@@ -223,6 +223,11 @@ class Outlook:
         return self._date_text(moment)
 
 
+def _naive(moment: datetime) -> datetime:
+    """Outlook takes local wall-clock times."""
+    return moment.astimezone().replace(tzinfo=None)
+
+
 def smtp_address(recipient) -> str | None:
     """An Exchange recipient's Address is an internal name ("/o=ExchangeLabs/…"); what the user must hear is the
     e-mail address."""
@@ -273,10 +278,42 @@ class OutlookCalendar:
                 # Checked here as well: the filter's date format depends on Windows' regional settings.
                 if begins >= end or finishes <= start:
                     continue
-                found.append(calendars.CalendarEvent(str(item.Subject or ""), begins, bool(item.AllDayEvent)))
+                found.append(calendars.CalendarEvent(str(item.Subject or ""), begins, bool(item.AllDayEvent),
+                                                     finishes, bool(getattr(item, "IsRecurring", False)),
+                                                     (str(getattr(item, "EntryID", "") or ""),)))  # fmt: skip
             return sorted(found, key=lambda e: (e.start, not e.all_day, e.title))
 
         return self._guarded(read)
+
+    def _appointment(self, app, event: calendars.CalendarEvent, every: bool):
+        """The series for `every`, otherwise the one occurrence or the single appointment."""
+        entry = event.reference[0] if event.reference else ""
+        if not entry:
+            raise calendars.CalendarError("The event is no longer in Outlook")
+        item = app.GetNamespace("MAPI").GetItemFromID(entry)
+        if not event.recurring or every:
+            return item
+        return item.GetRecurrencePattern().GetOccurrence(_naive(event.start))
+
+    def delete_event(self, event: calendars.CalendarEvent, every: bool = False) -> None:
+        self._guarded(lambda app: self._appointment(app, event, every).Delete())
+
+    def move_event(self, event: calendars.CalendarEvent, start: datetime, every: bool = False) -> None:
+        length = (event.end - event.start) if event.end is not None else timedelta(hours=1)
+
+        def move(app) -> None:
+            item = self._appointment(app, event, every)
+            if event.recurring and every:
+                # A series keeps its days in its pattern; only the time of day changes here.
+                pattern = item.GetRecurrencePattern()
+                pattern.StartTime = _naive(start)
+                pattern.EndTime = _naive(start + length)
+            else:
+                item.Start = _naive(start)
+                item.End = _naive(start + length)
+            item.Save()
+
+        self._guarded(move)
 
     def add_event(self, title: str, start: datetime, end: datetime) -> None:
         def add(app):

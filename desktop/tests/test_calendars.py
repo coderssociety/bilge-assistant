@@ -78,6 +78,80 @@ def test_a_reminder_with_a_due_time_carries_an_alarm(caldav_url):
     source.complete_reminder("İlacı al")
 
 
+def _day_events(source, day, title):
+    return [e for e in source.events(day, day + timedelta(days=4)) if e.title == title]
+
+
+def test_an_event_is_moved_keeping_its_length_and_then_deleted(caldav_url):
+    source = calendars.CalDAVSource(caldav_url, "ayse", "x")
+    start = datetime.now().astimezone().replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=10)
+    source.add_event("Kuaför", start, start + timedelta(minutes=45))
+    [event] = _day_events(source, start - timedelta(hours=9), "Kuaför")
+    assert (event.end - event.start, event.recurring) == (timedelta(minutes=45), False)
+
+    later = start + timedelta(days=1, hours=5)
+    source.move_event(event, later)
+
+    [moved] = _day_events(source, start - timedelta(hours=9), "Kuaför")
+    assert (moved.start, moved.end) == (later, later + timedelta(minutes=45))
+    source.delete_event(moved)
+    assert _day_events(source, start - timedelta(hours=9), "Kuaför") == []
+
+
+def _standup(caldav_url, days_ahead, zone=None):
+    import caldav
+
+    start = (datetime.now(zone) if zone else datetime.now().astimezone()).replace(
+        hour=10, minute=0, second=0, microsecond=0
+    ) + timedelta(days=days_ahead)
+    with caldav.DAVClient(url=caldav_url, username="ayse", password="x", require_tls=False) as client:
+        calendar = next(c for c in client.principal().calendars() if c.get_display_name() == "İş")
+        calendar.save_event(dtstart=start, dtend=start + timedelta(minutes=15), summary="Standup",
+                            rrule={"FREQ": "DAILY", "COUNT": 3})  # fmt: skip
+    return start
+
+
+@pytest.mark.parametrize("zone", [None, "America/New_York"])
+def test_one_occurrence_of_a_repeating_event_is_moved_or_deleted_alone(caldav_url, zone):
+    from zoneinfo import ZoneInfo
+
+    source = calendars.CalDAVSource(caldav_url, "ayse", "x")
+    start = _standup(caldav_url, 20 if zone is None else 25, ZoneInfo(zone) if zone else None).astimezone()
+    first, second, third = _day_events(source, start - timedelta(hours=10), "Standup")
+    assert first.recurring and second.start == start + timedelta(days=1)
+
+    source.move_event(second, second.start + timedelta(hours=2))
+    source.delete_event(third)
+
+    starts = [e.start for e in _day_events(source, start - timedelta(hours=10), "Standup")]
+    assert starts == [start, start + timedelta(days=1, hours=2)]
+    # The moved one can be moved again and still knows which occurrence it is.
+    moved = _day_events(source, start - timedelta(hours=10), "Standup")[1]
+    source.move_event(moved, start + timedelta(days=1, hours=3))
+    assert [e.start for e in _day_events(source, start - timedelta(hours=10), "Standup")][1] == (
+        start + timedelta(days=1, hours=3)
+    )
+
+
+@pytest.mark.parametrize("zone", [None, "Europe/Istanbul", "America/New_York"])
+def test_every_occurrence_is_moved_or_deleted_together(caldav_url, zone):
+    from zoneinfo import ZoneInfo
+
+    source = calendars.CalDAVSource(caldav_url, "ayse", "x")
+    start = _standup(caldav_url, 30 + 5 * bool(zone) + len(zone or ""), ZoneInfo(zone) if zone else None)
+    start = start.astimezone()
+    events = _day_events(source, start - timedelta(hours=10), "Standup")
+    source.delete_event(events[2])
+
+    source.move_event(events[0], start + timedelta(minutes=30), every=True)
+
+    moved = _day_events(source, start - timedelta(hours=10), "Standup")
+    assert [e.start for e in moved] == [start + timedelta(minutes=30), start + timedelta(days=1, minutes=30)]
+    assert moved[0].end - moved[0].start == timedelta(minutes=15)
+    source.delete_event(moved[1], every=True)
+    assert _day_events(source, start - timedelta(hours=10), "Standup") == []
+
+
 def test_wrong_server_is_a_calendar_error():
     with pytest.raises(calendars.CalendarError):
         calendars.CalDAVSource("http://127.0.0.1:9/", "a", "b").events(datetime.now().astimezone(),
@@ -122,6 +196,8 @@ def test_ics_address_expands_repeating_events_and_is_read_only():
     assert ("Bayram", True) in titles
     with pytest.raises(calendars.ReadOnly):
         source.add_event("x", start, start)
+    with pytest.raises(calendars.ReadOnly):
+        source.delete_event(events[0])
 
 
 def test_ics_address_errors_are_calendar_errors():
