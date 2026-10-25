@@ -45,7 +45,7 @@ enum PublicHTTPClient {
         }
     }
 
-    private static func ready(_ connection: NWConnection) async throws {
+    static func ready(_ connection: NWConnection) async throws {
         let once = Once()
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             connection.stateUpdateHandler = { state in
@@ -77,7 +77,7 @@ enum PublicHTTPClient {
         }
     }
 
-    private static func send(_ data: Data, on connection: NWConnection) async throws {
+    static func send(_ data: Data, on connection: NWConnection) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             connection.send(content: data, completion: .contentProcessed { error in
                 if let error { continuation.resume(throwing: error) } else { continuation.resume() }
@@ -87,7 +87,7 @@ enum PublicHTTPClient {
 
     /// Until the server closes the connection (the request asked it to), or until the response is
     /// complete for a server that keeps it open anyway.
-    private static func receiveAll(_ connection: NWConnection, limit: Int) async throws -> Data {
+    static func receiveAll(_ connection: NWConnection, limit: Int) async throws -> Data {
         var data = Data()
         while true {
             let (chunk, isComplete) = try await receive(connection)

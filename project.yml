@@ -63,6 +63,7 @@ targets:
         NSRemindersFullAccessUsageDescription: Bilge, anımsatıcılarını okumak ve senin onayınla yenilerini eklemek için anımsatıcılara erişir.
         NSBluetoothAlwaysUsageDescription: Bilge, istediğinde Bluetooth'u açıp kapatmak ve açık olup olmadığını söylemek için Bluetooth'a erişir.
         NSContactsUsageDescription: Bilge, sorduğunda birinin telefonunu ya da e-postasını bulmak ve senin onayınla mesaj göndermek için kişilerine erişir.
+        NSLocalNetworkUsageDescription: Bilge, akıllı ev komutlarını yalnızca ayarlarda girdiğin Home Assistant adresine göndermek için yerel ağa erişir.
     entitlements:
       path: App/Resources/Asistan.entitlements
       properties:

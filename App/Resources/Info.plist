@@ -32,6 +32,8 @@
 	<string>Bilge, takvimindeki etkinlikleri okumak ve senin onayınla yenilerini eklemek için takvime erişir.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Bilge, sorduğunda birinin telefonunu ya da e-postasını bulmak ve senin onayınla mesaj göndermek için kişilerine erişir.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Bilge, akıllı ev komutlarını yalnızca ayarlarda girdiğin Home Assistant adresine göndermek için yerel ağa erişir.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Bilge, uyandırma kelimesini ve komutlarını duymak için mikrofonu kullanır. Ses kaydı saklanmaz ve Mac'inden dışarı çıkmaz.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
