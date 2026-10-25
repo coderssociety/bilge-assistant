@@ -1,12 +1,15 @@
-"""Windows brightness, Bluetooth, Do Not Disturb, and power, with PowerShell and WinRT replaced."""
+"""Windows brightness, Bluetooth, Do Not Disturb, power and playback control, with PowerShell and WinRT replaced."""
 
 import asyncio
+from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 
 import pytest
 
-from bilge.desktop.base import PowerAction
+from bilge.desktop.base import PowerAction, RepeatMode
 from bilge.desktop.process import Completed, DesktopError, NotPossibleHere
 from bilge.desktop.windows.hardware import WindowsBluetooth, WindowsBrightness, WindowsDoNotDisturb, WindowsPower
+from bilge.desktop.windows.sound import WindowsMedia
 
 from .fakes import FakeRunner
 
@@ -78,3 +81,70 @@ def test_power_uses_shutdown():
     for action in PowerAction:
         power.act(action)
     assert runner.commands == [["shutdown", "/r", "/t", "0"], ["shutdown", "/s", "/t", "0"], ["shutdown", "/l"]]
+
+
+class Session:
+    source_app_user_model_id = "Spotify.exe"
+
+    def __init__(self, position=timedelta(seconds=50), end=timedelta(minutes=3), status=5, **controls):
+        self.timeline = SimpleNamespace(position=position, start_time=timedelta(0), end_time=end,
+                                        last_updated_time=None)  # fmt: skip
+        self.status = status
+        abilities = {"is_playback_position_enabled": True, "is_shuffle_enabled": True, "is_repeat_enabled": True}
+        self.controls = SimpleNamespace(**{**abilities, **controls})
+        self.calls = []
+
+    def get_playback_info(self):
+        return SimpleNamespace(playback_status=self.status, controls=self.controls)
+
+    def get_timeline_properties(self):
+        return self.timeline
+
+    async def try_change_playback_position_async(self, ticks):
+        self.calls.append(("position", ticks))
+        return True
+
+    async def try_change_shuffle_active_async(self, on):
+        self.calls.append(("shuffle", on))
+        return True
+
+    async def try_change_auto_repeat_mode_async(self, mode):
+        self.calls.append(("repeat", mode))
+        return True
+
+
+def test_seeking_stays_within_the_track():
+    session = Session()
+    media = WindowsMedia(sessions=lambda: [session])
+    assert media.seek(30) == "Spotify"
+    assert media.seek(-90) == "Spotify"
+    assert media.seek(600) == "Spotify"
+    assert session.calls == [("position", 800_000_000), ("position", 0), ("position", 1_800_000_000)]
+
+
+def test_restart_shuffle_and_repeat():
+    session = Session()
+    media = WindowsMedia(sessions=lambda: [session])
+    media.restart_track()
+    media.set_shuffle(True)
+    media.set_repeat(RepeatMode.ALL)
+    assert session.calls == [("position", 0), ("shuffle", True), ("repeat", 2)]
+
+
+def test_a_player_without_the_control_cannot_do_it():
+    media = WindowsMedia(sessions=lambda: [Session(is_shuffle_enabled=False)])
+    with pytest.raises(NotPossibleHere):
+        media.set_shuffle(True)
+    with pytest.raises(DesktopError):
+        WindowsMedia(sessions=lambda: []).seek(10)
+
+
+def test_a_playing_position_counts_the_time_since_the_player_reported_it():
+    session = Session(status=4)
+    session.timeline.last_updated_time = datetime.now(UTC) - timedelta(seconds=20)
+    WindowsMedia(sessions=lambda: [session]).seek(10)
+    assert abs(session.calls[-1][1] - 800_000_000) < 10_000_000
+    # A timeline last reported an hour ago would land past the end; the reported position is used instead.
+    session.timeline.last_updated_time = datetime.now(UTC) - timedelta(hours=1)
+    WindowsMedia(sessions=lambda: [session]).seek(10)
+    assert session.calls[-1] == ("position", 600_000_000)

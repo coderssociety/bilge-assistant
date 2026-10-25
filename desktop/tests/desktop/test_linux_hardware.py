@@ -1,11 +1,12 @@
-"""Brightness, Do Not Disturb, Bluetooth and power on Linux, with programs and D-Bus replaced."""
+"""Brightness, Do Not Disturb, Bluetooth, power and playback control on Linux, with programs and D-Bus replaced."""
 
 import pytest
 
-from bilge.desktop.base import PowerAction
+from bilge.desktop.base import PowerAction, RepeatMode
 from bilge.desktop.linux import environment
 from bilge.desktop.linux.bluetooth import LinuxBluetooth
 from bilge.desktop.linux.display import LinuxBrightness
+from bilge.desktop.linux.media import MprisMedia, NoPlayer
 from bilge.desktop.linux.notifications import LinuxDoNotDisturb
 from bilge.desktop.linux.power import LinuxPower
 from bilge.desktop.process import Completed, DesktopError, MissingProgram, NotPossibleHere
@@ -210,3 +211,42 @@ def test_logging_out_elsewhere_ends_the_logind_session():
     assert runner.commands == [["loginctl", "terminate-session", "c2"]]
     with pytest.raises(MissingProgram):
         LinuxPower(FakeRunner(), environment.current({}), FakeBus(), session_id="").act(PowerAction.LOG_OUT)
+
+
+PLAYER = "org.mpris.MediaPlayer2.spotify"
+PLAYER_INTERFACE = "org.mpris.MediaPlayer2.Player"
+
+
+def playing(**properties):
+    defaults = {"PlaybackStatus": "Playing", "Identity": "Spotify", "CanSeek": True}
+    return FakeBus({(PLAYER, key): value for key, value in {**defaults, **properties}.items()})
+
+
+def test_seeking_moves_by_microseconds_and_respects_players_that_cannot():
+    bus = playing()
+    assert MprisMedia(bus).seek(-30) == "Spotify"
+    assert bus.calls[-1] == (PLAYER, PLAYER_INTERFACE, "Seek", (-30_000_000,))
+    with pytest.raises(NotPossibleHere):
+        MprisMedia(playing(CanSeek=False)).seek(10)
+    with pytest.raises(NoPlayer):
+        MprisMedia(FakeBus()).seek(10)
+
+
+def test_restarting_a_track_sets_its_position_or_seeks_back_to_the_start():
+    bus = playing(Metadata={"mpris:trackid": ("o", "/com/spotify/track/42")})
+    MprisMedia(bus).restart_track()
+    assert bus.calls[-1] == (PLAYER, PLAYER_INTERFACE, "SetPosition", ("/com/spotify/track/42", 0))
+    bus = playing(Position=95_000_000)
+    MprisMedia(bus).restart_track()
+    assert bus.calls[-1] == (PLAYER, PLAYER_INTERFACE, "Seek", (-95_000_000,))
+
+
+def test_shuffle_and_repeat_are_set_as_properties_where_the_player_has_them():
+    bus = playing(Shuffle=False, LoopStatus="None")
+    media = MprisMedia(bus)
+    media.set_shuffle(True)
+    media.set_repeat(RepeatMode.TRACK)
+    assert [call[3] for call in bus.calls] == [(PLAYER_INTERFACE, "Shuffle", ("b", True)),
+                                              (PLAYER_INTERFACE, "LoopStatus", ("s", "Track"))]  # fmt: skip
+    with pytest.raises(NotPossibleHere):
+        MprisMedia(playing()).set_repeat(RepeatMode.ALL)

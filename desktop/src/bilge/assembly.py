@@ -156,6 +156,7 @@ def _desktop_tools(
         clipboard,
         files,
         hardware,
+        playback,
         sound,
         spreadsheet,
         system,
@@ -173,6 +174,7 @@ def _desktop_tools(
         sound.volume_tool(found.volume, language),
         sound.music_tool(found.media, language, found.music),
         sound.music_search_tool(found.music, language),
+        playback.playback_tool(found.media, language),
         *hardware.hardware_tools(
             found.brightness, found.do_not_disturb, found.bluetooth, found.power, found.settings, language
         ),

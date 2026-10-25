@@ -1,9 +1,9 @@
 """Music and video players through MPRIS, the D-Bus interface Spotify, Rhythmbox, VLC, browsers and others share."""
 
-from bilge.desktop.base import AppEntry, Apps, MediaCommand, NowPlaying
+from bilge.desktop.base import AppEntry, Apps, MediaCommand, NowPlaying, RepeatMode
 from bilge.desktop.linux.dbus import Bus
 from bilge.desktop.music import is_spotify
-from bilge.desktop.process import DesktopError, Runner
+from bilge.desktop.process import DesktopError, NotPossibleHere, Runner
 
 _PREFIX = "org.mpris.MediaPlayer2."
 _PATH = "/org/mpris/MediaPlayer2"
@@ -18,6 +18,9 @@ _METHODS = {
 }
 # The player the user most likely means: the one playing, then one paused mid-track.
 _PREFERENCE = {"Playing": 0, "Paused": 1}
+_PROPERTIES = "org.freedesktop.DBus.Properties"
+_LOOP_STATUS = {RepeatMode.OFF: "None", RepeatMode.TRACK: "Track", RepeatMode.ALL: "Playlist"}
+_MICROSECONDS = 1_000_000
 
 
 class NoPlayer(DesktopError):
@@ -40,12 +43,50 @@ class MprisMedia:
         return NowPlaying(self._identity(name), status == "Playing", title, artist)
 
     def send(self, command: MediaCommand) -> str:
+        name = self._player()
+        self._bus.call(name, _PATH, _PLAYER, _METHODS[command])
+        return self._identity(name)
+
+    def seek(self, seconds: float) -> str:
+        name = self._player()
+        if self._optional(name, _PLAYER, "CanSeek") is False:
+            raise NotPossibleHere(f"{name} can't seek")
+        self._bus.call(name, _PATH, _PLAYER, "Seek", "x", round(seconds * _MICROSECONDS))
+        return self._identity(name)
+
+    def restart_track(self) -> str:
+        name = self._player()
+        if self._optional(name, _PLAYER, "CanSeek") is False:
+            raise NotPossibleHere(f"{name} can't seek")
+        metadata = self._optional(name, _PLAYER, "Metadata") or {}
+        track = _value(metadata.get("mpris:trackid"))
+        if track:
+            self._bus.call(name, _PATH, _PLAYER, "SetPosition", "ox", str(track), 0)
+        else:
+            # Without a track id, seeking back past the start lands on it.
+            position = int(self._optional(name, _PLAYER, "Position") or 0)
+            self._bus.call(name, _PATH, _PLAYER, "Seek", "x", -position)
+        return self._identity(name)
+
+    def set_shuffle(self, on: bool) -> str:
+        return self._set_optional("Shuffle", ("b", on))
+
+    def set_repeat(self, mode: RepeatMode) -> str:
+        return self._set_optional("LoopStatus", ("s", _LOOP_STATUS[mode]))
+
+    def _set_optional(self, prop: str, value: tuple[str, object]) -> str:
+        """Shuffle and LoopStatus are optional in MPRIS; a player without them can't do it."""
+        name = self._player()
+        if self._optional(name, _PLAYER, prop) is None:
+            raise NotPossibleHere(f"{name} has no {prop}")
+        self._bus.call(name, _PATH, _PROPERTIES, "Set", "ssv", _PLAYER, prop, value)
+        return self._identity(name)
+
+    def _player(self) -> str:
         player = self._choose()
         if player is None:
             raise NoPlayer("No MPRIS player is running")
-        name, _ = player
-        self._bus.call(name, _PATH, _PLAYER, _METHODS[command])
-        return self._identity(name)
+        return player[0]
 
     def _choose(self) -> tuple[str, str] | None:
         players = [name for name in self._bus.names() if name.startswith(_PREFIX)]

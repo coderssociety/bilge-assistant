@@ -1,10 +1,10 @@
 import pytest
 
 from bilge.core.language import AssistantLanguage
-from bilge.desktop.base import PowerAction
+from bilge.desktop.base import NowPlaying, PowerAction, RepeatMode
 from bilge.desktop.process import DesktopError, MissingProgram, NotPossibleHere
 from bilge.tools.base import ToolError
-from bilge.tools.desktop import hardware
+from bilge.tools.desktop import hardware, playback
 
 TR, EN = AssistantLanguage.TURKISH, AssistantLanguage.ENGLISH
 
@@ -146,3 +146,51 @@ def test_power_always_asks_and_names_the_action():
     assert fake.done == [PowerAction.SHUT_DOWN]
     with pytest.raises(ToolError, match="izin vermedi"):
         hardware.power_tool(FakePower(DesktopError("polkit")), TR).run({"action": "restart"})
+
+
+class FakeMedia:
+    def __init__(self, open_player=True, error=None):
+        self.open_player, self.error, self.done = open_player, error, []
+
+    def now_playing(self):
+        return NowPlaying("Spotify", True, "Gülümse") if self.open_player else None
+
+    def _act(self, *what):
+        if self.error:
+            raise self.error
+        self.done.append(what)
+        return "Spotify"
+
+    def seek(self, seconds):
+        return self._act("seek", seconds)
+
+    def restart_track(self):
+        return self._act("restart")
+
+    def set_shuffle(self, on):
+        return self._act("shuffle", on)
+
+    def set_repeat(self, mode):
+        return self._act("repeat", mode)
+
+
+def test_playback_controls_reach_the_player():
+    fake = FakeMedia()
+    tool = playback.playback_tool(fake, TR)
+    assert tool.run({"action": "seek", "seconds": 30}) == "Spotify 30 saniye ileri sarıldı."
+    assert tool.run({"action": "seek", "seconds": -90}) == "Spotify 1 dakika 30 saniye geri sarıldı."
+    assert tool.run({"action": "seek"}) == "Spotify 10 saniye ileri sarıldı."
+    assert tool.run({"action": "restartTrack"}) == "Parça baştan başladı."
+    assert tool.run({"action": "shuffleOff"}) == "Karışık çalma kapalı."
+    assert tool.run({"action": "repeatTrack"}) == "Bu parça tekrarlanacak."
+    assert fake.done[-3:] == [("restart",), ("shuffle", False), ("repeat", RepeatMode.TRACK)]
+    english = playback.playback_tool(FakeMedia(), EN)
+    assert english.run({"action": "seek", "seconds": 60}) == "Skipped 1 minute ahead in Spotify."
+
+
+def test_playback_without_a_player_or_support():
+    assert playback.playback_tool(FakeMedia(open_player=False), TR).run({"action": "seek"}) == (
+        "Açık bir müzik çalar bulamadım."
+    )
+    with pytest.raises(ToolError, match="desteklemiyor"):
+        playback.playback_tool(FakeMedia(error=NotPossibleHere("no shuffle")), TR).run({"action": "shuffleOn"})

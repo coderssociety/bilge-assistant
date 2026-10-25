@@ -55,6 +55,12 @@ class MediaCommand(StrEnum):
     PREVIOUS = "previous"
 
 
+class RepeatMode(StrEnum):
+    OFF = "off"
+    TRACK = "track"
+    ALL = "all"
+
+
 class PowerAction(StrEnum):
     RESTART = "restart"
     SHUT_DOWN = "shutDown"
@@ -103,6 +109,18 @@ class Media(Protocol):
     def send(self, command: MediaCommand) -> str:
         """Returns the player's name."""
         ...
+
+    def seek(self, seconds: float) -> str:
+        """Moves playback by `seconds`, back when negative; NotPossibleHere when the player can't seek."""
+        ...
+
+    def restart_track(self) -> str: ...
+
+    def set_shuffle(self, on: bool) -> str:
+        """NotPossibleHere when the player has no shuffle; likewise for repeat."""
+        ...
+
+    def set_repeat(self, mode: RepeatMode) -> str: ...
 
 
 class MusicLauncher(Protocol):
