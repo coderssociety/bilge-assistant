@@ -59,6 +59,10 @@ struct QuickIntentParserTests {
         ("Bütün alarmları kapat", .timers(.cancelAll)),
         ("zamanlayıcıları iptal et", .timers(.cancelAll)),
         ("kurulu zamanlayıcılar neler", .timers(.list)),
+        ("zamanlayıcıyı iptal et", .timers(.cancelOne)),
+        ("Alarmı kapat", .timers(.cancelOne)),
+        ("kaç dakika kaldı", .timers(.list)),
+        ("zamanlayıcıda ne kadar kaldı", .timers(.list)),
         ("Kopyaladığım metni okur musun", .clipboard),
         ("panodaki yazıyı oku", .clipboard),
     ])
@@ -72,6 +76,7 @@ struct QuickIntentParserTests {
         "İndirilenler klasöründeki faturayı aç",       // a file, not the folder
         "Masaüstündeki deneme dosyasını aç",
         "alarmları kapat ve müziği aç",
+        "çay zamanlayıcısını iptal et",              // names one timer
         "kopyaladığım metni Notlar'a yapıştır",
         "Rahatsız etme modunu aç",                    // Focus → Shortcuts
         "Sesi biraz aç ve müziği başlat",             // two actions

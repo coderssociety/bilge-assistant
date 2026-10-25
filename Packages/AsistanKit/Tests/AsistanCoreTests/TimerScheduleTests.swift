@@ -52,4 +52,11 @@ struct TimerScheduleTests {
         #expect(TimerSchedule.cleanLabel("") == nil)
         #expect(TimerSchedule.cleanLabel(String(repeating: "uzun ", count: 30))?.count ?? 0 <= 40)
     }
+
+    @Test("remaining time is spoken in whole seconds under a minute, else whole minutes rounded up", arguments: [
+        (0.0, 0), (42.3, 43), (59.5, 60), (60, 60), (299, 300), (3600, 3600), (-5, 0),
+    ])
+    func spokenRemaining(seconds: Double, expected: Int) {
+        #expect(TimerSchedule.spokenRemaining(until: now.addingTimeInterval(seconds), now: now) == expected)
+    }
 }

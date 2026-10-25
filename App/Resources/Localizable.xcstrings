@@ -546,6 +546,16 @@
         }
       }
     },
+    "%@ zamanlayıcısı iptal edildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canceled the %@ timer."
+          }
+        }
+      }
+    },
     "%@ zaten kapalı.": {
       "localizations": {
         "en": {
@@ -664,6 +674,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm sending %1$@ (%2$@) this by iMessage: %3$@. Say yes or send to send it."
+          }
+        }
+      }
+    },
+    "%@, saat %@, %@ kaldı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ at %2$@, %3$@ left"
           }
         }
       }
@@ -1812,6 +1832,16 @@
         }
       }
     },
+    "Bu zamanlayıcı az önce doldu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That timer just went off."
+          }
+        }
+      }
+    },
     "Bugün": {
       "localizations": {
         "en": {
@@ -1888,6 +1918,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "This needs Accessibility permission. Turn on Bilge in System Settings > Privacy & Security > Accessibility."
+          }
+        }
+      }
+    },
+    "Böyle bir zamanlayıcı bulamadım. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find that timer. "
           }
         }
       }
@@ -2892,6 +2932,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't tell which currency to convert."
+          }
+        }
+      }
+    },
+    "Hangisini iptal edeyim? ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which one should I cancel? "
           }
         }
       }
@@ -4178,6 +4228,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "You declined"
+          }
+        }
+      }
+    },
+    "Saat %@ zamanlayıcısı iptal edildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canceled the %@ timer."
+          }
+        }
+      }
+    },
+    "saat %@, %@ kaldı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "at %1$@, %2$@ left"
           }
         }
       }

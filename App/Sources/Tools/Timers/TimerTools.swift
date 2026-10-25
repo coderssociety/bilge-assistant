@@ -56,32 +56,90 @@ struct SetTimerTool: AssistantTool {
 
 struct ManageTimersTool: AssistantTool {
     let name = "manageTimers"
-    let description = "Bu uygulamada kurulu zamanlayıcı ve alarmları listeler, sayar ya da hepsini iptal eder."
+    let description = "Bu uygulamada kurulu zamanlayıcı ve alarmları kalan süreleriyle listeler, birini ya da hepsini iptal eder."
     let service: TimerService
 
     @Generable
     enum Action {
-        case list, cancelAll
+        case list, cancel, cancelAll
     }
 
     @Generable
     struct Arguments {
+        @Guide(description: "cancel tek bir zamanlayıcı için; cancelAll yalnızca 'hepsini/bütün' denince")
         var action: Action
+        @Guide(description: "cancel için zamanlayıcının adı, örn. 'çay zamanlayıcısını' → 'çay'. Söylenmediyse boş bırak.")
+        var label: String?
+        @Guide(description: "cancel için sırası: 'ikinci' → 2, 'son' → -1. Söylenmediyse boş bırak.")
+        var position: Int?
+    }
+
+    /// The model sometimes chose cancelAll for "çay zamanlayıcısını iptal et"; the words decide instead,
+    /// and a request that cancels nothing only lists.
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        guard arguments.action != .list else { return arguments }
+        var refined = arguments
+        switch TimerTarget.parse(command, language: AppLanguage.current) {
+        case nil:
+            refined.action = .list
+        case .all:
+            refined = Arguments(action: .cancelAll, label: nil, position: nil)
+        case let .label(label):
+            refined = Arguments(action: .cancel, label: label, position: nil)
+        case let .position(position):
+            refined = Arguments(action: .cancel, label: nil, position: position)
+        case .any:
+            refined.action = .cancel
+        }
+        return refined
     }
 
     func call(arguments: Arguments) async throws -> String {
+        let timers = await service.timers
         switch arguments.action {
         case .list:
-            let timers = await service.timers
             guard !timers.isEmpty else { return String(localized: "Kurulu zamanlayıcı yok.") }
-            let locale = AppLanguage.locale
-            let lines = timers.map { "\($0.fireDate.formatted(.dateTime.hour().minute().locale(locale)))\($0.label.map { " \($0)" } ?? "")" }
-            return String(localized: "Zamanlayıcılar: ") + lines.joined(separator: "; ")
+            return String(localized: "Zamanlayıcılar: ") + Self.describe(timers)
+        case .cancel:
+            let target: TimerTarget = if let label = TimerSchedule.cleanLabel(arguments.label) {
+                .label(label)
+            } else if let position = arguments.position, position != 0 {
+                .position(position)
+            } else {
+                .any
+            }
+            switch TimerTarget.select(target, labels: timers.map(\.label)) {
+            case let .timer(index):
+                let timer = timers[index]
+                guard await service.cancel(timer.id) else { return String(localized: "Bu zamanlayıcı az önce doldu.") }
+                return timer.label.map { String(localized: "\($0) zamanlayıcısı iptal edildi.") }
+                    ?? String(localized: "Saat \(Self.clock(timer.fireDate)) zamanlayıcısı iptal edildi.")
+            case .noMatch:
+                guard !timers.isEmpty else { return String(localized: "Kurulu zamanlayıcı yok.") }
+                return String(localized: "Böyle bir zamanlayıcı bulamadım. ") + Self.describe(timers)
+            case .ambiguous:
+                return String(localized: "Hangisini iptal edeyim? ") + Self.describe(timers)
+            }
         case .cancelAll:
             let count = await service.cancelAll()
             return count == 0
                 ? String(localized: "İptal edilecek zamanlayıcı yoktu.")
                 : String(localized: "\(count) zamanlayıcı iptal edildi.")
         }
+    }
+
+    private static func describe(_ timers: [TimerService.ScheduledTimer]) -> String {
+        let now = Date.now
+        return timers.map { timer in
+            let left = Duration.seconds(TimerSchedule.spokenRemaining(until: timer.fireDate, now: now))
+                .formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide).locale(AppLanguage.locale))
+            let time = clock(timer.fireDate)
+            return timer.label.map { String(localized: "\($0), saat \(time), \(left) kaldı") }
+                ?? String(localized: "saat \(time), \(left) kaldı")
+        }.joined(separator: "; ")
+    }
+
+    private static func clock(_ date: Date) -> String {
+        date.formatted(.dateTime.hour().minute().locale(AppLanguage.locale))
     }
 }

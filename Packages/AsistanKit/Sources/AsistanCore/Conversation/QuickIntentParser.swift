@@ -7,7 +7,7 @@ public enum QuickIntent: Sendable, Equatable {
     public enum System: Sendable, Equatable { case lockScreen, sleep, darkModeOn, darkModeOff }
     public enum CalendarRange: Sendable, Equatable { case today, tomorrow, thisWeek }
     public enum Folder: Sendable, Equatable { case desktop, downloads, documents }
-    public enum TimerAction: Sendable, Equatable { case list, cancelAll }
+    public enum TimerAction: Sendable, Equatable { case list, cancelOne, cancelAll }
 
     case dateTime
     case battery
@@ -207,8 +207,16 @@ public enum QuickIntentParser {
             if [["kapat"], ["sil"], ["iptal", "et"], ["iptal"]].contains(verb) { return .timers(.cancelAll) }
             if verb == ["listele"] || verb == ["oku"] { return .timers(.list) }
         }
+        let singular: Set<String> = ["zamanlayiciyi", "alarmi"]
+        if body.count >= 2, w == body, singular.contains(body[0]),
+           [["kapat"], ["sil"], ["iptal", "et"], ["durdur"]].contains(Array(body.dropFirst())) {
+            return .timers(.cancelOne)
+        }
         let listPhrases: [[String]] = [["kurulu", "zamanlayicilar", "neler"], ["kurulu", "alarmlar", "neler"],
-                                       ["hangi", "alarmlar", "kurulu"], ["hangi", "zamanlayicilar", "kurulu"]]
+                                       ["hangi", "alarmlar", "kurulu"], ["hangi", "zamanlayicilar", "kurulu"],
+                                       ["kac", "dakika", "kaldi"], ["kac", "saniye", "kaldi"],
+                                       ["zamanlayicida", "ne", "kadar", "kaldi"], ["zamanlayicida", "kac", "dakika", "kaldi"],
+                                       ["zamanlayicinin", "bitmesine", "ne", "kadar", "kaldi"], ["alarma", "ne", "kadar", "kaldi"]]
         return listPhrases.contains(w) ? .timers(.list) : nil
     }
 

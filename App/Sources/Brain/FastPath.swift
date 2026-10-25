@@ -36,7 +36,7 @@ struct FastPath {
         case let .openFolder(folder):
             return await make("files", FileTool.self) { .init(action: .openFolder, query: nil, folder: Self.folder(for: folder)) }
         case let .timers(action):
-            return await make("manageTimers", ManageTimersTool.self) { .init(action: action == .list ? .list : .cancelAll) }
+            return await make("manageTimers", ManageTimersTool.self) { Self.arguments(for: action) }
         case let .openApp(name):
             guard let tool = tools["openApp"] as? OpenAppTool, await tool.catalog.resolve(name) != nil else { return nil }
             return await tool.makeCall(.init(appName: name))
@@ -68,6 +68,14 @@ struct FastPath {
         case .down: .init(action: .decrease, level: nil)
         case .mute: .init(action: .mute, level: nil)
         case .unmute: .init(action: .unmute, level: nil)
+        }
+    }
+
+    private static func arguments(for timers: QuickIntent.TimerAction) -> ManageTimersTool.Arguments {
+        switch timers {
+        case .list: .init(action: .list, label: nil, position: nil)
+        case .cancelOne: .init(action: .cancel, label: nil, position: nil)
+        case .cancelAll: .init(action: .cancelAll, label: nil, position: nil)
         }
     }
 
