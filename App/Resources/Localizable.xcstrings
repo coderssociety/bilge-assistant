@@ -934,6 +934,16 @@
         }
       }
     },
+    "'%@' dosyasını okuyamıyorum; PDF, Word, metin ve CSV belgelerini okuyabilirim. PDF olarak dışa aktarırsan okurum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't read '%@'; I can read PDF, Word, text and CSV documents. If you export it as a PDF, I'll read it."
+          }
+        }
+      }
+    },
     "'%@' etkinliğini ekleyeyim mi?": {
       "localizations": {
         "en": {
@@ -3122,6 +3132,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Speed"
+          }
+        }
+      }
+    },
+    "İndirilenler'de bu türde bir dosya yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no file of that kind in Downloads."
           }
         }
       }

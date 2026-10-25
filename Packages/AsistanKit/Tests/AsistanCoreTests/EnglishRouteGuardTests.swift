@@ -22,6 +22,8 @@ struct EnglishRouteGuardTests {
         ("Jot down: buy a birthday gift for Ece", "readWebPage", "createNote"),
         ("Make a note that the plumber comes Tuesday", "addReminder", "createNote"),
         ("Close all Finder windows", "quitApp", "windowControl"),
+        ("Summarize the PDF I downloaded last", "files", "readDocument"),
+        ("What does my latest download say", "files", "readDocument"),
     ])
     func corrects(command: String, action: String, expected: String) {
         #expect(EnglishRouteGuard.review(action: action, command: command) == expected)
@@ -43,6 +45,7 @@ struct EnglishRouteGuardTests {
         ("Quit Preview", "quitApp"),
         ("Set a timer for 10 minutes", "setTimer"),
         ("Note the time", "conversation"),
+        ("Open the PDF I downloaded last", "files"),
     ])
     func keeps(command: String, action: String) {
         #expect(EnglishRouteGuard.review(action: action, command: command) == action)

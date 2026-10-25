@@ -14,6 +14,9 @@ public enum RouteGuard {
         "semsiye", "mont", "ceket", "dolu", "sis", "don",
     ]
 
+    private static let readWords: Set<String> = ["oku", "okur", "okusana", "okuyabilir", "okuyun", "yaziyor", "yaziyormus"]
+    private static let readStems = ["ozetle", "ozetin", "icerig", "anlatiyor", "bahsediyor"]
+
     private static let otherDayWords: Set<String> = [
         "yarin", "obur", "pazartesi", "sali", "carsamba", "persembe", "cuma", "cumartesi", "pazar", "haftaya", "hafta",
     ]
@@ -69,6 +72,10 @@ public enum RouteGuard {
             let searches = words.contains { searchVerbs.contains($0) && !openVerbs.contains($0) }
                 && words.contains { word in searchSites.contains(where: word.hasPrefix) }
             return searches ? "searchWeb" : action
+        case "files":
+            // "Son indirdiğim PDF'i özetle" opened the newest download instead of reading it.
+            let reads = words.contains { word in readWords.contains(word) || readStems.contains(where: word.hasPrefix) }
+            return reads ? "readDocument" : action
         case "readCalendar":
             let opensApp = words.contains { openVerbs.contains($0) }
                 && !words.contains { ["ne", "neler", "var", "mi", "kac"].contains($0) }

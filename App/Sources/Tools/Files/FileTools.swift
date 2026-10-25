@@ -1,4 +1,5 @@
 import AppKit
+import AsistanCore
 import FoundationModels
 
 /// File lookup is limited to the user's home folder; nothing here modifies files.
@@ -20,10 +21,20 @@ struct FileTool: AssistantTool {
     @Generable
     struct Arguments {
         var action: Action
-        @Guide(description: "'find' ve 'openFound' için dosya adında geçen kelimeler")
+        @Guide(description: "'find' ve 'openFound' için dosya adında geçen kelimeler; söylendiyse türü ('pdf', 'excel', 'resim', 'sunum') ve zamanı ('dün', 'geçen hafta') da yaz")
         var query: String?
         @Guide(description: "'openFolder' için klasör")
         var folder: Folder?
+    }
+
+    /// The kind and time said in the command are kept even when the extracted query left them out
+    /// ("son indirdiğim PDF'i aç" must not open the newest .stl).
+    func refine(_ arguments: Arguments, command: String) -> Arguments {
+        guard arguments.action != .openFolder else { return arguments }
+        var refined = arguments
+        let query = FileQuery.parse(arguments.query ?? "").addingFilters(of: FileQuery.parse(command))
+        refined.query = query.isEmpty ? nil : query.text
+        return refined
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -42,8 +53,11 @@ struct FileTool: AssistantTool {
                 }
                 return await open(file)
             case .openLatestDownload:
-                guard let latest = try Self.latestFile(in: Self.url(for: .downloads)) else {
-                    return String(localized: "İndirilenler klasörü boş.")
+                let extensions = FileQuery.parse(arguments.query ?? "").extensions
+                guard let latest = try Self.latestFile(in: Self.url(for: .downloads), extensions: extensions) else {
+                    return extensions.isEmpty
+                        ? String(localized: "İndirilenler klasörü boş.")
+                        : String(localized: "İndirilenler'de bu türde bir dosya yok.")
                 }
                 return await open(latest)
             case .openFolder:
@@ -89,9 +103,10 @@ struct FileTool: AssistantTool {
         }
     }
 
-    private static func latestFile(in directory: URL) throws -> URL? {
+    /// Any file when `extensions` is empty.
+    private static func latestFile(in directory: URL, extensions: Set<String>) throws -> URL? {
         let items = try FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: [.contentModificationDateKey], options: .skipsHiddenFiles)
-        return FileSearch.sortedByRecency(items).first
+        return FileSearch.sortedByRecency(items).first { extensions.isEmpty || extensions.contains($0.pathExtension.lowercased()) }
     }
 }

@@ -101,6 +101,15 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: action, command: command) == expected)
     }
 
+    @Test("reading a file is readDocument, opening it stays files", arguments: [
+        ("son indirdiğim PDF'i özetle", "readDocument"), ("indirdiğim belgede ne yazıyor", "readDocument"),
+        ("son indirilen dosyayı oku", "readDocument"), ("raporun içeriğini anlat", "readDocument"),
+        ("son indirdiğim PDF'i aç", "files"), ("Belgeler klasörünü göster", "files"),
+    ])
+    func readsFile(command: String, expected: String) {
+        #expect(RouteGuard.review(action: "files", command: command) == expected)
+    }
+
     @Test("undo is never taken for quitting an app")
     func undoIsNotQuit() {
         #expect(RouteGuard.review(action: "quitApp", command: "geri al") == "conversation")
