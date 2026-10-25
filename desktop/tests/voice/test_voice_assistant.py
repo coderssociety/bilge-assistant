@@ -355,3 +355,13 @@ def test_services_run_while_listening():
     assert service.events == ["start"]
     assistant.stop()
     assert service.events == ["start", "stop"]
+
+
+def test_interrupting_a_reply_leaves_the_services_running():
+    service = Service()
+    assistant = VoiceAssistant(ScriptedRecognizer(), SilentSpeech(), EchoAgent(), AssistantLanguage.TURKISH,
+                               wake_recognizer=ScriptedRecognizer(), services=[service])  # fmt: skip
+    assistant.start()
+    assistant.interrupt()
+    assert service.events == ["start"]
+    assistant.stop()

@@ -195,13 +195,8 @@ class VoiceAssistant:
         self._perform(action)
 
     def interrupt(self) -> None:
-        """Stops the reply in progress; Bilge keeps listening."""
+        """Stops the reply in progress; Bilge keeps listening, and so do the services."""
         self._resolve(Answer.REJECTED)
-        for service in self._services:
-            try:
-                service.stop()
-            except Exception:
-                log.exception("Could not stop %s", type(service).__name__)
         self.speech.stop()
 
     # MARK: - Audio (called on the audio thread for each 512-sample chunk)
