@@ -26,6 +26,8 @@ def test_distance_between_two_centres():
         ("was there an earthquake near Istanbul", "İstanbul"),
         ("deprem karşısında ne yapmalı", None),
         ("son depremler", None),
+        ("deprem oldu mu biliyor musun", None),
+        ("Muş'un çevresinde deprem var mı", "Muş"),
     ],
 )
 def test_a_province_said_in_a_command(command, province):

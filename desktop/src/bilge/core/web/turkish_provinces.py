@@ -32,6 +32,8 @@ _ENDINGS = frozenset({
     "", "da", "de", "ta", "te", "dan", "den", "tan", "ten", "in", "nin", "un", "nun", "a", "e", "ya", "ye", "na",
     "ne", "i", "yi", "u", "yu", "daki", "deki", "taki", "teki", "li", "lu", "s",
 })  # fmt: skip
+# "bulur musun" folds to "Muş'un"; spelled without "ş" it is the question particle.
+_QUESTION_PARTICLES = frozenset({"musun", "musunuz"})
 _BY_PLATE = {province.plate: province for province in PROVINCES}
 _FOLDED = sorted(
     [(text.folded(p.name), p.plate) for p in PROVINCES] + list(_ALIASES.items()), key=lambda pair: -len(pair[0])
@@ -44,11 +46,15 @@ def by_plate(plate: int) -> Province | None:
 
 def find(command: str) -> Province | None:
     """The first province named in the command."""
-    for word in text.folded(command).split():
+    for word in text.folded(without_question_particles(command)).split():
         found = _match(word)
         if found is not None:
             return found
     return None
+
+
+def without_question_particles(command: str) -> str:
+    return " ".join(word for word in text.normalized(command).split() if word not in _QUESTION_PARTICLES)
 
 
 def _match(word: str) -> Province | None:

@@ -5,7 +5,7 @@ import math
 from dataclasses import dataclass
 
 from bilge.core.text import folded
-from bilge.core.web import spoken_names
+from bilge.core.web import spoken_names, turkish_provinces
 
 EARTH_RADIUS_KM = 6371.0
 
@@ -60,7 +60,7 @@ def mentioned(command: str) -> Place | None:
     """A province said in a command: "İzmir'de deprem var mı" → İzmir."""
     names = [(place.name, place) for place in PROVINCES]
     names += list(_BY_ALIAS.items())
-    return spoken_names.find(command, names)
+    return spoken_names.find(turkish_provinces.without_question_particles(command), names)
 
 
 def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
