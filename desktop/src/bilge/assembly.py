@@ -24,6 +24,8 @@ from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
 from bilge.tools.builtin.memory import memory_tools
+from bilge.tools.builtin.units import convert_units
+from bilge.tools.builtin.world_clock import world_clock_tool
 from bilge.tools.memory_store import MemoryStore
 from bilge.tools.reading import TextReading, continue_reading_tool
 
@@ -82,6 +84,8 @@ def build_agent(
     registry = Registry([
         current_date_time(language),
         calculator(language),
+        convert_units(language),
+        world_clock_tool(language),
         weather,
         internet.exchange_rate(language),
         internet.news(language, news_reading),
