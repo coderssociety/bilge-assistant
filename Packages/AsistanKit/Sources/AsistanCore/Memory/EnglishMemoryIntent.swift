@@ -9,17 +9,27 @@ enum EnglishMemoryIntent {
         "please", "now", "can", "could", "would",
     ]
     private static let referenceWords: Set<String> = ["this", "that", "it"]
+    /// "How much memory is the Mac using" asks about the computer, not what was remembered.
+    private static let deviceWords: Set<String> = ["mac", "macs", "ram", "computer", "system", "usage", "used", "using", "free", "full"]
+    private static let timeWords: Set<String> = [
+        "today", "tonight", "tomorrow", "morning", "afternoon", "evening", "monday", "tuesday", "wednesday", "thursday",
+        "friday", "saturday", "sunday", "week", "oclock", "pm", "am",
+    ]
 
     static func parse(_ command: String) -> MemoryIntent? {
         let words = words(command)
         if words.contains(where: { $0.hasPrefix("remind") }) { return nil }
-        let mentionsMemory = words.contains { $0 == "memory" || $0 == "memories" }
+        let mentionsMemory = words.contains { $0 == "memory" || $0 == "memories" } && !words.contains(where: deviceWords.contains)
         let asks = words.contains(where: questionWords.contains)
         if (words.contains("remember") && asks) || containsSequence(words, ["know", "about", "me"])
             || (mentionsMemory && asks) {
             return .list
         }
-        if containsSequence(words, ["dont", "forget"]) || containsSequence(words, ["do", "not", "forget"]) { return .remember }
+        if containsSequence(words, ["dont", "forget"]) || containsSequence(words, ["do", "not", "forget"]) {
+            // "Don't forget the meeting tomorrow" is a reminder; "don't forget that…" a fact.
+            let isFact = containsSequence(words, ["forget", "that"])
+            return !isFact && words.contains(where: timeWords.contains) ? nil : .remember
+        }
         if words.contains("forget") || (mentionsMemory && words.contains(where: clearVerbs.contains)) { return .forget }
         if words.contains("remember") || containsSequence(words, ["keep", "in", "mind"]) { return .remember }
         return nil

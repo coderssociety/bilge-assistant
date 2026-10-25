@@ -40,7 +40,7 @@ public enum EnglishRouteGuard {
             return "windowControl"
         case "setTimer":
             // Timers live in the app and fire only today.
-            let reminds = words.contains { $0.hasPrefix("remind") }
+            let reminds = words.contains { $0.hasPrefix("remind") || $0 == "forget" }
             let otherDay = words.contains(where: otherDayWords.contains)
             let hasTime = words.contains { word in word.contains(where: \.isNumber) || timeWords.contains(where: word.hasPrefix) }
             return reminds && (otherDay || !hasTime) ? "addReminder" : action

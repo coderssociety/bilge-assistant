@@ -17,6 +17,10 @@ struct EnglishMemoryIntentTests {
         ("Remind me to call mom", nil),
         ("Remind me tomorrow that I have to remember the keys", nil),
         ("What's the weather", nil),
+        ("What's the Mac's memory usage", nil),
+        ("How much memory is the computer using", nil),
+        ("Don't forget the meeting tomorrow", nil),
+        ("Don't forget that the meeting is tomorrow", .remember),
     ])
     func parse(command: String, expected: MemoryIntent?) {
         #expect(MemoryIntent.parse(command, language: .english) == expected)

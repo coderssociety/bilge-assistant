@@ -92,6 +92,7 @@ struct RouteGuardTests {
         ("Yarın sabah süt almayı hatırlat", "setTimer", "addReminder"),
         ("Süt almayı unutma diye hatırlat", "setTimer", "addReminder"),
         ("Pazartesi faturayı ödememi hatırlat", "setTimer", "addReminder"),
+        ("yarın toplantıyı unutma", "setTimer", "addReminder"),
         ("20 dakika sonra çayı hatırlat", "setTimer", "setTimer"),
         ("20:00 ilacımı hatırlat", "setTimer", "setTimer"),
         ("10 dakikalık zamanlayıcı kur", "setTimer", "setTimer"),

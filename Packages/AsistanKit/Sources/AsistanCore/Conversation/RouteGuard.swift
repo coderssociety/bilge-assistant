@@ -49,7 +49,7 @@ public enum RouteGuard {
         switch action {
         case "setTimer":
             // Timers live in the app and fire only today; "yarın sabah süt almayı hatırlat" was set as one.
-            let reminds = words.contains { $0.hasPrefix("hatirlat") }
+            let reminds = words.contains { $0.hasPrefix("hatirlat") || $0 == "unutma" }
             let otherDay = words.contains { word in otherDayWords.contains(where: word.hasPrefix) }
             let hasTime = words.contains { word in word.contains(where: \.isNumber) || durationWords.contains(where: word.hasPrefix) }
             return reminds && (otherDay || !hasTime) ? "addReminder" : action

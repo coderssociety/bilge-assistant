@@ -7,6 +7,7 @@ struct EnglishRouteGuardTests {
         ("Type see you tomorrow", "setTimer", "typeText"),
         ("Remind me to pay rent on Monday", "setTimer", "addReminder"),
         ("Remind me to call mom", "setTimer", "addReminder"),
+        ("Don't forget the meeting tomorrow", "setTimer", "addReminder"),
         ("Turn on do not disturb", "systemAction", "runShortcut"),
         ("Make the screen brighter", "systemAction", "runShortcut"),
         ("What is the capital of Australia", "searchWeb", "conversation"),

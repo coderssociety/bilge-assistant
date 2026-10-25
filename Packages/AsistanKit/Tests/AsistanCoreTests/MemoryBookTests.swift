@@ -89,6 +89,7 @@ struct MemoryIntentTests {
     @Test("remember requests", arguments: [
         "Eşimin adının Ayşe olduğunu hatırla", "Bunu hatırla", "Kahvemi şekersiz içtiğimi unutma",
         "Doğum günümün 12 Mart olduğunu aklında tut", "şunu hatırlamanı istiyorum: kapı şifresi değişti",
+        "Toplantıların yarın sabah başladığını unutma", "Şunu unutma: yarın Ali'nin doğum günü",
     ])
     func remember(command: String) {
         #expect(MemoryIntent.parse(command) == .remember)
@@ -106,7 +107,9 @@ struct MemoryIntentTests {
 
     @Test("reminders and ordinary commands are not memory requests", arguments: [
         "Yarın sabah süt almayı hatırlat", "Süt almayı unutma diye hatırlat", "Beş dakika sonra hatırlatır mısın",
-        "Safari'yi aç", "Unutulmaz şarkılar çal", "Hatırlatıcılarımda ne var",
+        "Safari'yi aç", "Unutulmaz şarkılar çal", "Hatırlatıcılarımda ne var", "Mac'in hafızası ne kadar dolu",
+        "hafıza ne kadar dolu", "Mac'in hafızasını temizle", "yarın toplantıyı unutma", "akşam ilacımı içmeyi unutma",
+        "unutma, cuma günü Ali gelecek",
     ])
     func notMemory(command: String) {
         #expect(MemoryIntent.parse(command) == nil)
