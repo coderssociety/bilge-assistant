@@ -24,6 +24,9 @@ struct SettingsView: View {
             Tab("Hafıza", systemImage: "brain") {
                 MemoryView(memory: environment.memory)
             }
+            Tab("Rutinler", systemImage: "repeat") {
+                RoutinesView(store: environment.routines)
+            }
             Tab("Geçmiş", systemImage: "clock.arrow.circlepath") {
                 HistoryView()
             }

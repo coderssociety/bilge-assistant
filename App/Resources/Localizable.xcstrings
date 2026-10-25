@@ -82,6 +82,16 @@
         }
       }
     },
+    "\"Bilge, her gece 21'de hava durumunu söyle\" dediğinde rutin burada görünür.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines you set up by saying \"Bilge, every night at 9 tell me the weather\" appear here."
+          }
+        }
+      }
+    },
     "%@ aranıyor.": {
       "localizations": {
         "en": {
@@ -712,6 +722,16 @@
         }
       }
     },
+    "%@ “%@” rutinini kurayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I set up this routine: %1$@, “%2$@”?"
+          }
+        }
+      }
+    },
     "%@, %@ adresinden gelen \"%@\" konulu e-postaya şu yanıtı gönderiyorum: %@. Göndermem için evet ya da gönder de.": {
       "localizations": {
         "en": {
@@ -944,6 +964,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "You have %lld notes; the most recently edited: %@"
+          }
+        }
+      }
+    },
+    "%lld rutin silindi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleted %lld routines."
+          }
+        }
+      }
+    },
+    "%lld rutin var: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There are %1$lld routines: %2$@."
           }
         }
       }
@@ -1972,6 +2012,26 @@
         }
       }
     },
+    "Bir rutin var: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is one routine: %@."
+          }
+        }
+      }
+    },
+    "Bir rutinin komutu başka bir rutin olamaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A routine's command can't be another routine."
+          }
+        }
+      }
+    },
     "Bir saniye. ": {
       "localizations": {
         "en": {
@@ -1988,6 +2048,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "More than one event fits: %@. Which one is it? Tell me its day or time."
+          }
+        }
+      }
+    },
+    "Birden fazla rutin var: %@. Hangisini sileyim?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There are several routines: %@. Which one shall I delete?"
           }
         }
       }
@@ -2338,6 +2408,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "This window has %lld tabs."
+          }
+        }
+      }
+    },
+    "Bu rutindeki “%@” adımı senin onayını gerektiriyor; sen yokken yapmadım. Buradayken söylemen yeterli.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The “%@” step of this routine needs your yes, so I didn't do it while you were away. Just ask me when you're here."
+          }
+        }
+      }
+    },
+    "Bu rutini sil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this routine"
           }
         }
       }
@@ -3146,6 +3236,16 @@
           "stringUnit": {
             "state": "new",
             "value": "En az %1$lld harf ve en fazla %2$lld kelime olmalı."
+          }
+        }
+      }
+    },
+    "En çok %lld rutin kurulabilir; önce birini sil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At most %lld routines can be set up; delete one first."
           }
         }
       }
@@ -4526,6 +4626,36 @@
         }
       }
     },
+    "Kurulu %lld rutinin hepsini sileyim mi?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I delete all %lld routines?"
+          }
+        }
+      }
+    },
+    "Kurulu rutin yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No routines"
+          }
+        }
+      }
+    },
+    "Kurulu rutin yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There are no routines."
+          }
+        }
+      }
+    },
     "Kurulu zamanlayıcı yok.": {
       "localizations": {
         "en": {
@@ -5472,6 +5602,56 @@
         }
       }
     },
+    "Rutin silindi: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleted the routine: %@."
+          }
+        }
+      }
+    },
+    "Rutinin günlerini, saatini ya da ne yapacağını anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't get the days, the time or what the routine should do."
+          }
+        }
+      }
+    },
+    "Rutinler": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines"
+          }
+        }
+      }
+    },
+    "Rutinler yalnızca dinleme açıkken çalışır; onay gerektiren bir adımı sen yokken yapmazlar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routines run only while listening is on, and never take a step that needs your yes while you're away."
+          }
+        }
+      }
+    },
+    "Rutinleri kaydedemedim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't save the routines."
+          }
+        }
+      }
+    },
     "Saat %@ zamanlayıcısı iptal edildi.": {
       "localizations": {
         "en": {
@@ -6220,6 +6400,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK, I'll remember that. I forgot the oldest item to make room."
+          }
+        }
+      }
+    },
+    "Tamam, rutin kuruldu: %@ “%@”.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK, routine set: %1$@, “%2$@”."
           }
         }
       }
@@ -7397,6 +7587,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "In the next 7 days"
+          }
+        }
+      }
+    },
+    "Öyle bir rutin bulamadım. Kurulu olanlar: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find that routine. These are set: %@."
           }
         }
       }

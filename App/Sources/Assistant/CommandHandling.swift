@@ -5,6 +5,8 @@ import Foundation
 @MainActor
 protocol CommandHandling: AnyObject {
     func respond(to command: String) -> AsyncThrowingStream<String, any Error>
+    /// A routine's command, run with nobody there: nothing that needs a yes may happen.
+    func respondUnattended(to command: String) -> AsyncThrowingStream<String, any Error>
     /// Clears conversational context, e.g. when the user goes quiet and the exchange is over.
     func endConversation()
     /// The wake phrase was heard; a command is about to follow.
@@ -38,6 +40,10 @@ final class EchoCommandHandler: CommandHandling {
             continuation.yield(String(localized: "Şunu duydum: \(command)"))
             continuation.finish()
         }
+    }
+
+    func respondUnattended(to command: String) -> AsyncThrowingStream<String, any Error> {
+        respond(to: command)
     }
 
     func endConversation() {}

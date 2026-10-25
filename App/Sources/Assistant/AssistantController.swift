@@ -26,6 +26,8 @@ final class AssistantController {
     private static let tickInterval = Duration.milliseconds(250)
     private static let confirmationTimeout = Duration.seconds(8)
     private static let confirmationGrace = Duration.seconds(5)
+    /// A routine waits this long at most for a conversation or a meeting recording to end.
+    private static let routineLongestWait = Duration.seconds(15 * 60)
 
     private(set) var status: Status = .off
     private(set) var lastHeard: String?
@@ -191,6 +193,24 @@ final class AssistantController {
         // The shortcut stops an announcement; that must not cut the next reply's follow-up window.
         stoppedByUser = false
         status = isRunning ? restingStatus : .off
+    }
+
+    /// Runs a routine's command as if it had been said, once nobody is talking to the assistant, and speaks the
+    /// reply like an announcement. False when listening stopped or the assistant stayed busy too long.
+    func runRoutine(_ command: String) async -> Bool {
+        let deadline = ContinuousClock.now + Self.routineLongestWait
+        while isRunning, status != .listening {
+            guard ContinuousClock.now < deadline else { return false }
+            try? await Task.sleep(for: Self.tickInterval)
+        }
+        guard isRunning else { return false }
+        // Before the task starts, so speech heard in between cannot start a turn of its own.
+        isAudioSuspended = true
+        status = .thinking
+        let task = Task { await runRoutineTurn(command) }
+        turnTask = task
+        await task.value
+        return true
     }
 
     // MARK: - Listening loop
@@ -494,8 +514,9 @@ final class AssistantController {
         flow.responseStarted()
         speech.replyLanguageCode = replyLanguage
         defer { speech.replyLanguageCode = nil }
+        let source = isWorkInput ? handler.respond(toWorkInput: command, language: heard) : handler.respond(to: command)
         do {
-            try await speech.speak(streaming: replyFragments(for: command, isWorkInput: isWorkInput, heard: heard))
+            try await speech.speak(streaming: replyFragments(from: source))
         } catch is CancellationError {
             speech.stop()
         } catch {
@@ -518,10 +539,39 @@ final class AssistantController {
         }
     }
 
+    /// Not a conversation the user started: nothing of it carries into the next request, and only a request said
+    /// over it opens a follow-up.
+    private func runRoutineTurn(_ command: String) async {
+        segmenter.reset()
+        await bargeIn?.reset()
+        lastReply = ""
+        flow.responseStarted()
+        Earcon.wake.play()
+        do {
+            try await speech.speak(streaming: replyFragments(from: handler.respondUnattended(to: command)))
+        } catch is CancellationError {
+            speech.stop()
+        } catch {
+            Log.brain.error("Routine failed: \(error.localizedDescription, privacy: .public)")
+            Earcon.failed.play()
+        }
+        await settleBargeIn()
+        await vad?.reset()
+        segmenter.reset()
+        isAudioSuspended = false
+        stoppedByUser = false
+        flow.responseFinished(at: .now, allowFollowUp: pendingBargeCommand != nil)
+        handler.endConversation()
+        status = isRunning ? restingStatus : .off
+        if let command = pendingBargeCommand {
+            pendingBargeCommand = nil
+            perform(flow.heard(command, at: .now))
+        }
+    }
+
     /// Forwards the handler's reply while mirroring it into the UI.
-    private func replyFragments(for command: String, isWorkInput: Bool, heard: String?) -> AsyncThrowingStream<String, any Error> {
-        let source = isWorkInput ? handler.respond(toWorkInput: command, language: heard) : handler.respond(to: command)
-        return AsyncThrowingStream { continuation in
+    private func replyFragments(from source: AsyncThrowingStream<String, any Error>) -> AsyncThrowingStream<String, any Error> {
+        AsyncThrowingStream { continuation in
             let forwarding = Task { @MainActor in
                 do {
                     for try await fragment in source {

@@ -104,10 +104,20 @@ final class AssistantBrain: CommandHandling {
     }
 
     func respond(to command: String) -> AsyncThrowingStream<String, any Error> {
+        respond(to: command, unattended: false)
+    }
+
+    /// A routine's command, run with nobody there to answer: a step that would need a yes is not taken, and the
+    /// reply says the routine needs the user instead.
+    func respondUnattended(to command: String) -> AsyncThrowingStream<String, any Error> {
+        respond(to: command, unattended: true)
+    }
+
+    private func respond(to command: String, unattended: Bool) -> AsyncThrowingStream<String, any Error> {
         AsyncThrowingStream { continuation in
             let task = Task { @MainActor in
                 do {
-                    try await handle(command, continuation: continuation)
+                    try await handle(command, unattended: unattended, continuation: continuation)
                     continuation.finish()
                 } catch is CancellationError {
                     continuation.finish(throwing: CancellationError())
@@ -179,7 +189,16 @@ final class AssistantBrain: CommandHandling {
         localModel.conversationWillStart()
     }
 
-    private func handle(_ command: String, continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
+    private func handle(
+        _ command: String,
+        unattended: Bool,
+        continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws {
+        // Interpreting and recording listen to the room; a routine must not start them with nobody there.
+        if unattended, startsSession(command) {
+            continuation.yield(Self.needsUser(command))
+            return
+        }
         // Before the model check: ending a recording must work, and save the transcript, even without a model.
         if try await handleSessionCommand(command, continuation: continuation) { return }
         guard let router, unavailableReason == nil else {
@@ -194,11 +213,12 @@ final class AssistantBrain: CommandHandling {
         }
         // "Bunu Ahmet'e gönder" (send this to Ahmet): what was on screen when the command was heard, read only when it points.
         context.screen = ContextIntent.points(command, language: language) ? await ScreenContextReader.snapshot() : nil
-        if let parts = CompoundCommand.split(command, language: language) {
-            try await handleCompound(command, parts: parts, router: router, continuation: continuation)
+        // "Her gün 8'de haberleri oku ve hava durumunu söyle" is one routine; its parts are split when it runs.
+        if RoutineRequest.parse(command, language: language) == nil, let parts = CompoundCommand.split(command, language: language) {
+            try await handleCompound(command, parts: parts, router: router, unattended: unattended, continuation: continuation)
             return
         }
-        try await handleSingle(command, router: router, continuation: continuation)
+        try await handleSingle(command, router: router, unattended: unattended, continuation: continuation)
     }
 
     /// Parts that refer to an earlier result ("…bul ve ona mesaj at") are planned by the large model when
@@ -208,9 +228,10 @@ final class AssistantBrain: CommandHandling {
         _ command: String,
         parts: [String],
         router: CommandRouter,
+        unattended: Bool,
         continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws {
-        if localModel.isEnabled, CompoundCommand.hasDependentParts(parts, language: language) {
+        if !unattended, localModel.isEnabled, CompoundCommand.hasDependentParts(parts, language: language) {
             continuation.yield(String(localized: "Tamam, sırayla yapıyorum. "))
             do {
                 let outcome = try await multiStepAgent(for: command, continuation: continuation).run(command)
@@ -225,7 +246,7 @@ final class AssistantBrain: CommandHandling {
         }
         for part in parts {
             try Task.checkCancellation()
-            try await handleSingle(part, router: router, continuation: continuation)
+            try await handleSingle(part, router: router, unattended: unattended, continuation: continuation)
             continuation.yield(" ")
         }
     }
@@ -250,6 +271,7 @@ final class AssistantBrain: CommandHandling {
     private func handleSingle(
         _ command: String,
         router: CommandRouter,
+        unattended: Bool,
         continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws {
         if let reading = context.reading, reading.isCurrent(at: .now), ReadingRequest.isContinuation(command, language: language) {
@@ -262,7 +284,7 @@ final class AssistantBrain: CommandHandling {
         case let .tool(call):
             let viaModel = call.answersWithLanguageModel || translation != nil
             if !viaModel { localModel.turnNeededNoModel() }
-            let output = try await run(call, for: command, continuation: continuation)
+            let output = try await run(call, for: command, unattended: unattended, continuation: continuation)
             let result = keepReading(output, of: call, viaModel: viaModel, translation: translation)
             if viaModel, !ToolReply.isFailure(result) {
                 let answer = try await answer(command, from: result, translation: translation, into: continuation)
@@ -320,13 +342,20 @@ final class AssistantBrain: CommandHandling {
         if reading.hasMore { continuation.yield(Self.moreToRead) }
     }
 
-    /// Runs a prepared call, asking first when it is risky. Anything but a clear "yes" cancels.
+    /// Runs a prepared call, asking first when it is risky. Anything but a clear "yes" cancels; with nobody there to
+    /// ask (a routine), a risky call is not run at all.
     private func run(
         _ call: PreparedToolCall,
         for command: String,
+        unattended: Bool = false,
         continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws -> String {
         if call.risk == .needsConfirmation {
+            if unattended {
+                Log.tools.info("Routine step \(call.toolName, privacy: .public) needs the user; not run")
+                await ActionAuditLog.shared.record(command: command, call: call, decision: .unconfirmed, result: nil)
+                return Self.needsUser(command)
+            }
             guard let confirmer, let question = call.confirmationQuestion else {
                 await ActionAuditLog.shared.record(command: command, call: call, decision: .unconfirmed, result: nil)
                 return String(localized: "Bu işlem için onay gerekiyor ama şu an onay alamıyorum, bu yüzden yapmadım.")
@@ -458,6 +487,10 @@ final class AssistantBrain: CommandHandling {
     private static func rethrowIfCancelled(_ error: any Error) throws {
         if error is CancellationError || Task.isCancelled { throw CancellationError() }
         Log.brain.error("Local model unavailable, using Apple's: \(String(describing: error), privacy: .public)")
+    }
+
+    static func needsUser(_ command: String) -> String {
+        String(localized: "Bu rutindeki “\(command)” adımı senin onayını gerektiriyor; sen yokken yapmadım. Buradayken söylemen yeterli.")
     }
 
     static func spokenMessage(for error: any Error) -> String {

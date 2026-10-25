@@ -10,6 +10,7 @@ struct ToolRegistry {
     var context = ConversationContext()
     /// In memory only unless the app passes its stored one, so benchmarks never touch the user's facts.
     var memory = MemoryStore(fileURL: nil)
+    var routines = RoutineStore(fileURL: nil)
     var spreadsheet = SpreadsheetSession()
     var dictation = DictationSession()
     var news = NewsReading()
@@ -18,6 +19,9 @@ struct ToolRegistry {
 
     func makeTools() -> [any AssistantTool] {
         [
+            // Rule-routed tools claim commands in this order: a routine's command may name any other tool.
+            AddRoutineTool(store: routines, language: language),
+            ManageRoutinesTool(store: routines, language: language),
             OpenAppTool(catalog: catalog),
             QuitAppTool(catalog: catalog),
             RunningAppsTool(),

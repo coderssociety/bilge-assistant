@@ -64,6 +64,7 @@ final class AppEnvironment {
     let timers: TimerService
     let brain: AssistantBrain
     let memory: MemoryStore
+    let routines: RoutineStore
     let downloads: ModelDownloads
     let speakerGate: SpeakerGate
     let assistant: AssistantController
@@ -73,6 +74,7 @@ final class AppEnvironment {
     private let hud: HUDPresenter
     private let alerts: ProactiveAlerts
     private let earthquakeAlerts: EarthquakeAlertMonitor
+    private let routineScheduler: RoutineScheduler
     private let isBenchmark = CommandLine.arguments.contains(where: { $0.hasPrefix("--bench") })
 
     var needsOnboarding: Bool { !isBenchmark && !settings.onboardingCompleted }
@@ -83,7 +85,9 @@ final class AppEnvironment {
         let announcer = Announcer()
         let timers = TimerService { await announcer.target?.announce($0) }
         let memory = MemoryStore()
-        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory, language: settings.language)
+        let routines = RoutineStore()
+        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory, routines: routines,
+                                    language: settings.language)
         let whisper = WhisperProvider(language: settings.language)
         let meetings = MeetingRecorder()
         let brain = AssistantBrain(tools: registry.makeTools(), context: registry.context, memory: memory,
@@ -98,6 +102,7 @@ final class AppEnvironment {
         self.timers = timers
         self.brain = brain
         self.memory = memory
+        self.routines = routines
         let downloads = ModelDownloads()
         downloads.onDownloaded = { _ in brain.localModelDownloaded() }
         self.downloads = downloads
@@ -116,12 +121,19 @@ final class AppEnvironment {
         alerts = ProactiveAlerts(settings: settings, isListening: { [weak assistant] in assistant?.isRunning ?? false },
                                  announce: { await announcer.target?.announce($0) })
         earthquakeAlerts = EarthquakeAlertMonitor(settings: settings, announce: { await announcer.target?.announce($0) })
+        routineScheduler = RoutineScheduler(store: routines, isListening: { [weak assistant] in assistant?.isRunning ?? false },
+                                            run: { routine in
+            if await announcer.target?.runRoutine(routine.command) != true {
+                Log.brain.info("A routine was skipped: the assistant stayed busy or stopped listening")
+            }
+        })
         guard !isBenchmark else { return }
         shortcut.apply(settings.listeningShortcut)
         updates.start()
         hud.start()
         alerts.start()
         earthquakeAlerts.start()
+        routineScheduler.start()
         speakerGate.prepare()
         brain.setLocalModelKeepAlive(settings.localModelKeepAlive)
         brain.useLocalModel(settings.localModel)

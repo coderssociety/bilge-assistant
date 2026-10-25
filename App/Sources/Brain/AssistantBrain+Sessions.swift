@@ -34,6 +34,13 @@ extension AssistantBrain {
         return true
     }
 
+    /// Whether the command would start or stop interpreting or a meeting recording.
+    func startsSession(_ command: String) -> Bool {
+        (interpreter.isActive && InterpreterCommand.isStop(command))
+            || InterpreterCommand.start(in: command, language: language) != nil
+            || MeetingCommand.parse(command, language: language) != nil
+    }
+
     /// One utterance heard while interpreting: translated and spoken in the other language, or the stop phrase.
     func interpret(_ speech: String, heard: String?) -> AsyncThrowingStream<String, any Error> {
         AsyncThrowingStream { continuation in
