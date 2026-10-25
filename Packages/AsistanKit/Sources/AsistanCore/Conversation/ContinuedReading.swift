@@ -41,6 +41,12 @@ public struct ContinuedReading: Equatable, Sendable {
         now.timeIntervalSince(readAt) < Self.lifetime
     }
 
+    /// "Devam et", "next" go on with the reading only while there is more of it; once it is all read they mean
+    /// whatever they meant before it (resuming the radio, the next song).
+    public func continues(with command: String, language: AssistantLanguage, at now: Date) -> Bool {
+        hasMore && isCurrent(at: now) && ReadingRequest.isContinuation(command, language: language)
+    }
+
     /// The next part, now counted as read; nil when everything has been read.
     public mutating func next(at now: Date) -> String? {
         guard hasMore else { return nil }

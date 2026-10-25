@@ -5,7 +5,7 @@ import FoundationModels
 /// "Salonun ışığını aç", "klimayı 22 dereceye ayarla", "kapı kilitli mi": the command goes to Home Assistant as said,
 /// which matches it to the user's devices in its own language, and its answer is spoken. Taken by rule only once Home
 /// Assistant is set up and the command names a home device or room. Unlocking, the garage door and the alarm need an
-/// explicit yes first.
+/// explicit yes first, and so does opening a door; a routine never runs them.
 struct SmartHomeTool: RuleRoutedTool {
     let name = "smartHome"
     let description = "Akıllı ev cihazlarını Home Assistant üzerinden yönetir ve durumlarını sorar: ışık, klima, priz, perde, kapı kilidi, termostat, garaj."

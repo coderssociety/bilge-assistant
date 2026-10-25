@@ -99,7 +99,11 @@ struct ManageRoutinesTool: RuleRoutedTool {
         guard picked.count == 1 else {
             return reply(String(localized: "Birden fazla rutin var: \(listed(picked)). Hangisini sileyim?"))
         }
-        return PreparedToolCall(toolName: name, argumentsDescription: "one routine", risk: .safe, confirmationQuestion: nil,
+        // The name may be empty or matched loosely, so the routine is read back before it goes.
+        let schedule = RoutineSchedule.describe(days: routine.days, hour: routine.hour, minute: routine.minute, language: language)
+        let question = String(localized: "\(schedule) “\(routine.command)” rutinini sileyim mi?")
+        return PreparedToolCall(toolName: name, argumentsDescription: "one routine", risk: .needsConfirmation,
+                                confirmationQuestion: question.prefix(1).uppercased(with: language.locale) + question.dropFirst(),
                                 execute: { await remove([routine]) })
     }
 

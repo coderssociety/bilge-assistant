@@ -200,7 +200,9 @@ final class AssistantBrain: CommandHandling {
             return
         }
         // Before the model check: ending a recording must work, and save the transcript, even without a model.
-        if try await handleSessionCommand(command, continuation: continuation) { return }
+        // "Her gün 18'de kaydı bitir" sets up a routine rather than ending a recording now.
+        let isRoutine = RoutineRequest.parse(command, language: language) != nil
+        if !isRoutine, try await handleSessionCommand(command, continuation: continuation) { return }
         guard let router, unavailableReason == nil else {
             continuation.yield(unavailableReason ?? String(localized: "Dil modeli kullanılamıyor."))
             return
@@ -214,7 +216,7 @@ final class AssistantBrain: CommandHandling {
         // "Bunu Ahmet'e gönder" (send this to Ahmet): what was on screen when the command was heard, read only when it points.
         context.screen = ContextIntent.points(command, language: language) ? await ScreenContextReader.snapshot() : nil
         // "Her gün 8'de haberleri oku ve hava durumunu söyle" is one routine; its parts are split when it runs.
-        if RoutineRequest.parse(command, language: language) == nil, let parts = CompoundCommand.split(command, language: language) {
+        if !isRoutine, let parts = CompoundCommand.split(command, language: language) {
             try await handleCompound(command, parts: parts, router: router, unattended: unattended, continuation: continuation)
             return
         }
@@ -274,8 +276,10 @@ final class AssistantBrain: CommandHandling {
         unattended: Bool,
         continuation: AsyncThrowingStream<String, any Error>.Continuation
     ) async throws {
-        if let reading = context.reading, reading.isCurrent(at: .now), ReadingRequest.isContinuation(command, language: language) {
-            try await continueReading(command, into: continuation)
+        if var reading = context.reading, reading.continues(with: command, language: language, at: .now),
+           let part = reading.next(at: .now) {
+            context.reading = reading
+            try await continueReading(command, part: part, of: reading, into: continuation)
             return
         }
         // "İngilizce maili Türkçe oku": what a tool reads goes through the model, to be read in that language.
@@ -321,15 +325,12 @@ final class AssistantBrain: CommandHandling {
         return reading.firstPart
     }
 
-    private func continueReading(_ command: String, into continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
-        guard var reading = context.reading, let part = reading.next(at: .now) else {
-            localModel.turnNeededNoModel()
-            let reply = String(localized: "Okuyacak başka bir şey kalmadı, hepsini okudum.")
-            previousTurn = .init(command: command, action: Self.continueReadingAction, result: reply)
-            continuation.yield(reply)
-            return
-        }
-        context.reading = reading
+    private func continueReading(
+        _ command: String,
+        part: String,
+        of reading: ContinuedReading,
+        into continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws {
         let reply: String
         if reading.answersWithLanguageModel {
             reply = try await answer(command, from: part, translation: reading.translation, into: continuation)

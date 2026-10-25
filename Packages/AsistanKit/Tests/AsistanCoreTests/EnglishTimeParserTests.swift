@@ -30,6 +30,9 @@ struct EnglishTimeParserTests {
     func alarms() {
         #expect(EnglishTimeParser.parse("wake me up at 6", appointment: false)?.hour == 6)
         #expect(EnglishTimeParser.parse("remind me at 9 tonight", appointment: false)?.hour == 21)
+        #expect(EnglishTimeParser.parse("every night at 1", appointment: false)?.hour == 1)
+        #expect(EnglishTimeParser.parse("every night at 12", appointment: false)?.hour == 0)
+        #expect(EnglishTimeParser.parse("at 10 at night", appointment: false)?.hour == 22)
     }
 
     @Test("durations", arguments: [

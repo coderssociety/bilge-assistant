@@ -15,6 +15,13 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: routed, command: command) == expected)
     }
 
+    @Test("searching inside an app is not overridden into a phone call", arguments: [
+        ("Spotify'da Tarkan'ı ara", "playMusicOnService"), ("Mail'de Ahmet'i ara", "readMail"),
+    ])
+    func searchInApp(command: String, routed: String) {
+        #expect(RouteGuard.review(action: routed, command: command) == routed)
+    }
+
     @Test("closing a window is not quitting the app", arguments: [
         ("Safari penceresini kapat", "quitApp", "windowControl"),
         ("Safari'yi kapat", "quitApp", "quitApp"),

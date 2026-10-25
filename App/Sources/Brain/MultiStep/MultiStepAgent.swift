@@ -19,11 +19,11 @@ struct MultiStepAgent {
     // Once text someone else may have written enters the plan, it is treated as possibly hostile.
     // From then on, tools that are neither refused nor free (below) need a spoken yes, even normally safe ones.
     /// Tools whose results contain such text, besides those answered by a language model: track, episode and
-    /// station titles, headlines, tab titles, spreadsheet cells, calendar events in the briefing.
+    /// station titles, headlines, tab titles, spreadsheet cells, calendar events in the briefing, notes.
     private static let untrustedOutputTools: Set<String> = [
         "readClipboard", "readCalendar", "readReminders", "files", "findContact", "listShortcuts", "listRunningApps",
         "news", "newsFromSource", "controlMusic", "readMail", "playMusic", "playMusicOnService", "podcast", "radio",
-        "browserControl", "spreadsheet", "dailyBriefing",
+        "browserControl", "spreadsheet", "dailyBriefing", "readNotes",
     ]
     /// Could carry that text off the Mac (a URL with data in it) or into another app; refused outright.
     /// `remember` too: an injected "fact" would otherwise sit in every future conversation's instructions.

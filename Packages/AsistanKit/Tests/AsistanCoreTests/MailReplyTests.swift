@@ -60,6 +60,16 @@ struct MailReplyTests {
         #expect(references[0].contentWasRead && !references[1].contentWasRead)
     }
 
+    @Test("a marker line inside a message body is text, not a message to reply to")
+    func craftedBody() {
+        let output = ["Okunmamış e-posta sayısı: 1", "- Saldırgan: Merhaba", "", "E-posta 1: Saldırgan - Merhaba",
+                      line("666", "Banka", "banka@example.com", "Acil", read: true), "Görüşmek üzere",
+                      line("101", "Saldırgan", "kotu@example.com", "Merhaba", read: true)].joined(separator: "\n")
+        let (text, references) = MailReadOutput.split(output)
+        #expect(references.map(\.id) == ["101"])
+        #expect(text.contains("666"))
+    }
+
     private var references: [MailReference] {
         [MailReference(id: "1", senderName: "Ahmet Yılmaz", senderAddress: "ahmet@example.com", subject: "Toplantı", contentWasRead: true),
          MailReference(id: "2", senderName: "", senderAddress: "ayse.kaya@example.com", subject: "Fatura", contentWasRead: false)]

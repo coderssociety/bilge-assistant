@@ -48,8 +48,18 @@ public enum TranslationRequest {
     /// The word after a bare language name that makes it the one to read in: "Türkçe oku", "Fransızca olarak".
     private static let readingWords = ["olarak", "oku", "cevir", "anlat", "soyle", "seslendir", "konus", "yaz", "ozetle",
                                        "aktar", "dil"]
-    /// "Fransızca de": too short to match as a beginning.
-    private static let shortReadingWords: Set<String> = ["de", "da"]
+    /// What after a reading word makes it describe the text instead: "İngilizce yazılmış", "yazılan", "konuşulan",
+    /// "konuşan", "okunan", "yazdığı".
+    private static let passiveStarts = ["il", "ul", "n"]
+    private static let participleEndings: Set<String> = ["an", "en", "yan", "yen"]
+    private static let participleStarts = ["dig", "tig", "dug", "tug", "mis", "mus"]
+    /// "Fransızca de" (say it in French); "da"/"de" is otherwise "too": "Almanca da biliyor musun".
+    private static let sayWord = "de"
+    private static let tooWords: Set<String> = ["de", "da"]
+    /// "Lehçe" is also "dialect" ("Karadeniz lehçesini anlat"): Polish only as "Lehçeye çevir" or "Lehçe oku".
+    private static let dialectStem = "lehce"
+    private static let datives: Set<String> = ["ye", "ya"]
+    private static let translationVerbs = ["cevir", "tercume"]
     private static let englishCues: Set<String> = ["in", "into", "to"]
 
     public static func language(code: String) -> SpeechLanguage? {
@@ -69,18 +79,30 @@ public enum TranslationRequest {
         var found: SpeechLanguage?
         for (index, word) in words.enumerated() {
             let next = index + 1 < words.count ? words[index + 1] : ""
+            let afterNext = index + 2 < words.count ? words[index + 2] : ""
             let previous = index > 0 ? words[index - 1] : ""
             for entry in languages {
                 if word == entry.english, englishCues.contains(previous) {
                     found = entry.language
                 } else if word.hasPrefix(entry.turkish) {
                     let ending = String(word.dropFirst(entry.turkish.count))
-                    let isTarget = targetEndings.contains(ending)
-                        || (ending.isEmpty && (shortReadingWords.contains(next) || readingWords.contains { next.hasPrefix($0) }))
+                    let readsIn = ending.isEmpty && (isReadingWord(next) || (next == sayWord && afterNext.isEmpty)
+                        || (tooWords.contains(next) && isReadingWord(afterNext)))
+                    let isTarget = entry.turkish == dialectStem
+                        ? readsIn || (datives.contains(ending) && translationVerbs.contains(where: next.hasPrefix))
+                        : readsIn || targetEndings.contains(ending)
                     if isTarget { found = entry.language }
                 }
             }
         }
         return found
+    }
+
+    private static func isReadingWord(_ word: String) -> Bool {
+        readingWords.contains { stem in
+            guard word.hasPrefix(stem) else { return false }
+            let rest = String(word.dropFirst(stem.count))
+            return !participleEndings.contains(rest) && !(passiveStarts + participleStarts).contains(where: rest.hasPrefix)
+        }
     }
 }

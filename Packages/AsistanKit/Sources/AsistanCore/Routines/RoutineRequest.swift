@@ -51,6 +51,8 @@ public struct RoutineRequest: Equatable, Sendable {
             + #"|(?<![\d:'])(\d{1,2})'[dt][ae](?![\p{L}\p{N}])"#,
         options: [.caseInsensitive])
     private static let lastAfternoonHour = 6
+    /// "bu hafta sonu", "gelecek hafta her gün": one particular week, not a routine.
+    private static let turkishOneOff: Set<String> = ["bu", "gelecek", "onumuzdeki", "haftaya", "sonraki"]
 
     private static let englishDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
     private static let englishSchedule: Set<String> = Set(englishDays + englishDays.map { $0 + "s" }).union([
@@ -64,16 +66,29 @@ public struct RoutineRequest: Equatable, Sendable {
             + partOfDayPattern,
         options: [.caseInsensitive])
     private static var partOfDayPattern: String { #"(?:\s+in\s+the\s+(?:morning|afternoon|evening)|\s+at\s+night)?"# }
+    private static let englishOneOff: Set<String> = ["this", "next", "coming"]
     private static let repeatingEnglishParts: Set<String> = Set(englishDays + ["morning", "evening", "night", "afternoon"])
 
     private static let turkishRemoveVerbs = ["sil", "kaldir", "iptal", "kapat"]
     private static let englishRemoveVerbs: Set<String> = ["delete", "remove", "cancel", "clear", "stop"]
+    /// The routine as the object of a verb: "akşam rutinini sil", "rutinlerimi kaldır". A bare "rutin" describes
+    /// something else ("rutin kontrol randevumu iptal et").
+    private static let turkishRoutineObjects: Set<String> = [
+        "rutini", "rutinini", "rutinimi", "rutinleri", "rutinlerimi", "rutinlerini", "rutinlerin",
+    ]
+    /// What may stand around the verb after the routine: "iptal et", "siler misin", "lütfen sil", "rutinlerin hepsini sil".
+    private static let turkishRemoveFillers: Set<String> = [
+        "et", "eder", "edin", "edebilir", "lutfen", "misin", "musun", "misiniz", "musunuz", "mi", "mu", "da", "de",
+        "hemen", "artik", "hepsini",
+    ]
+    private static let englishRemoveFillers: Set<String> = ["please", "now", "for", "me"]
     private static let allWords: Set<String> = ["butun", "tum", "hepsini", "hepsi", "all", "every"]
     private static let nameFiller: Set<String> = ["bu", "su", "o", "benim", "the", "my", "a", "that", "this"]
     private static let turkishListWords: Set<String> = [
         "neler", "ne", "nedir", "hangi", "hangileri", "listele", "say", "oku", "var", "goster", "soyle",
     ]
     private static let englishListWords: Set<String> = ["what", "which", "list", "read", "tell", "show", "any", "have"]
+    private static let englishAfterList: Set<String> = ["do", "are", "is", "have", "i", "set", "please"]
 
     /// nil unless the text says a repeating schedule, a time and something to do. A request that talks about the
     /// routine itself ("… bir rutin oluştur") is left alone.
@@ -84,26 +99,43 @@ public struct RoutineRequest: Equatable, Sendable {
 
     public static func asksForList(_ text: String, language: AssistantLanguage) -> Bool {
         let words = folded(text)
-        guard words.contains(where: isRoutineWord), removal(text, language: language) == nil else { return false }
-        let listWords = language == .english ? englishListWords : turkishListWords
-        return words.count == 1 || words.contains(where: listWords.contains)
+        guard let at = words.firstIndex(where: isRoutineWord), removal(text, language: language) == nil else { return false }
+        let isListWord = { (word: String) in
+            language == .english ? englishListWords.contains(word) : turkishListWords.contains(where: word.hasPrefix)
+        }
+        // "Yarın rutin kontrolüm var mı", "my routine checkup": the word describes what follows it.
+        if let next = words.dropFirst(at + 1).first,
+           !(language == .english ? englishAfterList.contains(next) : isListWord(next)) {
+            return false
+        }
+        return words.count == 1 || words.contains(where: isListWord)
     }
 
     public static func removal(_ text: String, language: AssistantLanguage) -> Removal? {
         let words = folded(text)
-        guard let at = words.firstIndex(where: isRoutineWord) else { return nil }
+        guard let at = words.lastIndex(where: isRoutineWord) else { return nil }
         let named: ArraySlice<String>
         if language == .english {
-            guard let verb = words.firstIndex(where: englishRemoveVerbs.contains) else { return nil }
-            named = verb < at ? words[(verb + 1)..<at] : words[..<at]
+            // "Delete the evening routine": the verb governs the routine, which ends the request; not "cancel my
+            // routine checkup" or "my routine is done, stop the music".
+            guard let verb = words[..<at].lastIndex(where: englishRemoveVerbs.contains),
+                  words[(at + 1)...].allSatisfy(englishRemoveFillers.contains) else { return nil }
+            named = words[(verb + 1)..<at]
         } else {
-            guard words[(at + 1)...].contains(where: { word in turkishRemoveVerbs.contains(where: word.hasPrefix) }) else { return nil }
+            // The verb ends the request: "sabah rutini bitti, ışıkları kapat" deletes nothing.
+            let tail = words[(at + 1)...]
+            guard turkishRoutineObjects.contains(words[at]), tail.contains(where: isTurkishRemoveVerb),
+                  tail.allSatisfy({ isTurkishRemoveVerb($0) || turkishRemoveFillers.contains($0) }) else { return nil }
             named = words[..<at]
         }
         let everyRoutine = language == .turkish && named.isEmpty
             && (words[at].hasPrefix("rutinleri") || words[at].hasPrefix("rutinlerin"))
         if named.contains(where: allWords.contains) || everyRoutine { return Removal(name: "", every: true) }
         return Removal(name: named.filter { !nameFiller.contains($0) }.joined(separator: " "))
+    }
+
+    private static func isTurkishRemoveVerb(_ word: String) -> Bool {
+        turkishRemoveVerbs.contains(where: word.hasPrefix)
     }
 
     private static func mentionsRoutine(_ text: String) -> Bool {
@@ -128,7 +160,8 @@ public struct RoutineRequest: Equatable, Sendable {
         let before = words(resolved[..<timeRange.lowerBound])
         let taken = scheduleTail(before) { turkishSchedule.contains(TurkishText.folded($0)) || turkishDay($0) != nil }
         let scheduleWords = Array(before.suffix(taken))
-        guard let days = turkishDays(scheduleWords.map(TurkishText.folded)),
+        guard !turkishOneOff.contains(before.dropLast(taken).last.map(TurkishText.folded) ?? ""),
+              let days = turkishDays(scheduleWords.map(TurkishText.folded)),
               let (hour, minute) = turkishClock((scheduleWords + [time]).joined(separator: " "))
         else { return nil }
         return request(days: days, hour: hour, minute: minute,
@@ -149,9 +182,11 @@ public struct RoutineRequest: Equatable, Sendable {
         let named = Set(schedule.compactMap(turkishDay))
         let repeating = schedule.contains("her") || schedule.contains { $0.hasSuffix("leri") || $0.hasSuffix("lari") }
         if !named.isEmpty { return repeating ? named : nil }
+        // "Hafta sonu 10'da" is this one weekend; "hafta sonları" and "hafta içi her gün" repeat.
+        guard repeating else { return nil }
         if schedule.contains("hafta"), schedule.contains("ici") { return RoutineSchedule.weekdays }
         if schedule.contains("hafta"), schedule.contains("sonu") || schedule.contains("sonlari") { return RoutineSchedule.weekend }
-        return repeating ? RoutineSchedule.everyDay : nil
+        return RoutineSchedule.everyDay
     }
 
     /// (hour, minute) on a 24-hour clock. `TurkishTimeOfDay` writes "08:00" for "sabah 8"; a bare "7'de" or a
@@ -168,11 +203,17 @@ public struct RoutineRequest: Equatable, Sendable {
         return (afternoon(hour, folded: folded), half ? 30 : 0)
     }
 
+    /// "akşamları", "geceleri", "sabahları" count as much as "akşam"; "geçen" is not "gece".
     private static func afternoon(_ hour: Int, folded: String) -> Int {
         let words = Set(folded.split(separator: " ").map(String.init))
-        if words.contains("sabah") || hour >= 12 { return hour }
-        if words.contains("aksam") || (words.contains("ogleden") && words.contains("sonra")) { return hour + 12 }
-        if words.contains("gece") { return hour > lastAfternoonHour ? hour + 12 : hour }
+        let says = { (part: String) in words.contains { $0.hasPrefix(part) } }
+        if says("sabah") || hour > 12 { return hour }
+        if words.contains("gece") || says("gecele") {
+            if hour == 12 { return 0 }
+            return hour > lastAfternoonHour ? hour + 12 : hour
+        }
+        if hour == 12 { return hour }
+        if says("aksam") || (words.contains("ogleden") && words.contains("sonra")) { return hour + 12 }
         return (1...lastAfternoonHour).contains(hour) ? hour + 12 : hour
     }
 
@@ -190,7 +231,8 @@ public struct RoutineRequest: Equatable, Sendable {
             following = after.prefix(while: isSchedule).count
         }
         let scheduleWords = Array(before.suffix(taken)) + after.prefix(following)
-        guard let days = englishDays(scheduleWords.map(englishWord)),
+        guard !englishOneOff.contains(before.dropLast(taken).last.map(englishWord) ?? ""),
+              let days = englishDays(scheduleWords.map(englishWord)),
               let parsed = EnglishTimeParser.parse((scheduleWords + [time]).joined(separator: " "), appointment: false),
               let hour = parsed.hour
         else { return nil }
@@ -209,8 +251,9 @@ public struct RoutineRequest: Equatable, Sendable {
         let repeating = !Set(schedule).isDisjoint(with: ["every", "each", "daily"])
             || schedule.contains { $0.hasSuffix("s") && repeatingEnglishParts.contains(String($0.dropLast())) }
         if !named.isEmpty { return repeating ? named : nil }
-        if !Set(schedule).isDisjoint(with: ["weekday", "weekdays"]) { return RoutineSchedule.weekdays }
-        if !Set(schedule).isDisjoint(with: ["weekend", "weekends"]) { return RoutineSchedule.weekend }
+        // "Next weekend at 10" is one weekend; "on weekends" and "every weekend" repeat.
+        if schedule.contains("weekdays") || (repeating && schedule.contains("weekday")) { return RoutineSchedule.weekdays }
+        if schedule.contains("weekends") || (repeating && schedule.contains("weekend")) { return RoutineSchedule.weekend }
         return repeating ? RoutineSchedule.everyDay : nil
     }
 

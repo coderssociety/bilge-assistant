@@ -25,8 +25,10 @@ public struct CallRequest: Equatable, Sendable {
 
     private static let callVerbs: Set<String> = ["ara", "arar", "arasana", "arayabilir", "arayin", "arayiver"]
     private static let phoneVerbs: Set<String> = ["et", "eder", "etsene", "edebilir", "ac", "acar", "acsana", "acabilir"]
+    /// "Spotify'da Tarkan'ı ara", "Mail'de Ahmet'i ara": an app or service named is where to search, not whom to call.
     private static let searchWords = ["google", "youtube", "internet", "web", "vikipedi", "wikipedia", "harita", "tarayici",
-                                      "hakkinda", "bilgi", "haber"]
+                                      "hakkinda", "bilgi", "haber", "spotify", "deezer", "apple", "music", "muzik",
+                                      "podcast", "mail", "posta", "finder", "safari", "notlar", "takvim", "dosya"]
     /// Kinship words with "my", as people are saved in Contacts: "Annem", "Babam".
     private static let kinship: Set<String> = [
         "annem", "babam", "esim", "karim", "kocam", "kardesim", "ablam", "abim", "agabeyim", "teyzem", "halam", "dayim",

@@ -17,6 +17,7 @@ public enum EnglishTimeParser {
     private static let weekdays: [String: Int] = [
         "sunday": 1, "monday": 2, "tuesday": 3, "wednesday": 4, "thursday": 5, "friday": 6, "saturday": 7,
     ]
+    private static let earliestNightHour = 6
     public static let partOfDayWords: Set<String> = ["morning", "afternoon", "evening", "night", "tonight", "noon", "midnight"]
 
     public static func dayOffset(in text: String, now: Date, calendar: Calendar = .current) -> Int? {
@@ -68,7 +69,11 @@ public enum EnglishTimeParser {
             return (index, hour)
         }.first
         if let (_, hour) = bareHour {
-            let evening = words.contains("evening") || words.contains("tonight") || words.contains("night")
+            // "every night at 12" is midnight and "at 1 at night" the small hours; 6 to 11 are the evening.
+            if words.contains("night") || words.contains("nights") {
+                return (hour == 12 ? 0 : hour < earliestNightHour ? hour : hour + 12, 0)
+            }
+            let evening = words.contains("evening") || words.contains("tonight")
             let afternoon = (appointment && hour < 7) || (evening && hour < 12)
             return (afternoon ? hour + 12 : hour, 0)
         }

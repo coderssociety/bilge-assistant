@@ -23,10 +23,19 @@ public enum HomeCommand {
                                    "keyboard", "display", "laptop", "phone"]
     private static let turkishGuards = ["kilit", "kilid", "garaj", "alarm"]
     private static let englishGuards = ["lock", "unlock", "garage", "alarm"]
-    private static let turkishQuestion: Set<String> = [
-        "mi", "mı", "mu", "mü", "misin", "mıdır", "midir", "mudur", "müdür", "ne", "kaç", "nedir", "hangi",
-    ]
-    private static let englishQuestion: Set<String> = ["is", "are", "what", "which", "how", "did", "does", "do"]
+    /// "kapıyı aç", "open the front door": opening a door lets someone in as much as unlocking it does.
+    private static let turkishDoor = "kapi"
+    private static let turkishOpen = "ac"
+    private static let englishDoors: Set<String> = ["door", "doors", "gate", "gates"]
+    private static let englishOpen: Set<String> = ["open", "opens"]
+    /// "kilitli mi", "açık mı": the question particle on its own asks about a state. "Açar mısın" is a polite request,
+    /// so its "mısın" is not one of them.
+    private static let turkishParticles: Set<String> = ["mi", "mı", "mu", "mü", "midir", "mıdır", "mudur", "müdür"]
+    /// "Alarm ne durumda"; "ne olur" is a plea ("please"), not a question.
+    private static let turkishQuestionWords: Set<String> = ["ne", "kaç", "nedir", "hangi"]
+    /// Folded endings that turn "… mı" into a request: "açar mı", "açabilir mi", "açılsın mı", "açalım mı", "açayım mı".
+    private static let turkishRequestEndings = ["ar", "er", "ir", "ur", "sin", "sun", "lim", "yim"]
+    private static let englishQuestion: Set<String> = ["is", "are", "what", "whats", "which", "how", "did", "does", "do"]
 
     public static func namesHomeDevice(_ command: String, language: AssistantLanguage) -> Bool {
         let words = folded(command)
@@ -37,19 +46,33 @@ public enum HomeCommand {
         return words.contains { word in turkishDevices.contains(where: word.hasPrefix) } || hasPhrase(words, turkishPhrases)
     }
 
-    /// Changes a lock, the garage door or the alarm; asking whether the door is locked changes nothing.
+    /// Changes a lock, the garage door, the alarm or opens a door; asking whether the door is locked changes nothing.
+    /// A question mark proves nothing: speech recognition adds one to "kilidi açar mısın" and "can you unlock the door".
     public static func guardsTheHouse(_ command: String, language: AssistantLanguage) -> Bool {
-        let guards = language == .english ? englishGuards : turkishGuards
-        return folded(command).contains { word in guards.contains(where: word.hasPrefix) } && !isQuestion(command, language: language)
+        let words = folded(command)
+        let guarded: Bool
+        if language == .english {
+            guarded = words.contains { word in englishGuards.contains(where: word.hasPrefix) }
+                || (words.contains(where: englishDoors.contains) && words.contains(where: englishOpen.contains))
+        } else {
+            guarded = words.contains { word in turkishGuards.contains(where: word.hasPrefix) }
+                || (words.contains { $0.hasPrefix(turkishDoor) } && words.contains { $0.hasPrefix(turkishOpen) })
+        }
+        return guarded && !asksAboutState(command, language: language)
     }
 
-    public static func isQuestion(_ command: String, language: AssistantLanguage) -> Bool {
-        if command.trimmingCharacters(in: .whitespaces).hasSuffix("?") { return true }
+    private static func asksAboutState(_ command: String, language: AssistantLanguage) -> Bool {
         if language == .english { return folded(command).first.map(englishQuestion.contains) ?? false }
         // The question particle is its own word ("kilitli mi"); folding would mix "mi" with "mı".
         let punctuation = CharacterSet(charactersIn: "?.,!")
-        return TurkishText.lowercased(command).split(separator: " ").contains { word in
-            turkishQuestion.contains(word.trimmingCharacters(in: punctuation))
+        let words = TurkishText.lowercased(command).split(separator: " ").map { $0.trimmingCharacters(in: punctuation) }
+        if zip(words, words.dropFirst() + [""]).contains(where: { turkishQuestionWords.contains($0) && $1 != "olur" }) {
+            return true
+        }
+        return zip(words, words.dropFirst()).contains { before, particle in
+            guard turkishParticles.contains(particle) else { return false }
+            let verb = TurkishText.folded(before)
+            return verb == "var" || !turkishRequestEndings.contains(where: verb.hasSuffix)
         }
     }
 

@@ -561,6 +561,9 @@ final class AssistantController {
         lastReply = ""
         flow.responseStarted()
         Earcon.wake.play()
+        // "Her sabah 8'de haberleri İngilizce oku" is read in the English voice, as when it is said.
+        speech.replyLanguageCode = handler.replyLanguageCode(for: command, isWorkInput: false, heard: nil)
+        defer { speech.replyLanguageCode = nil }
         do {
             try await speech.speak(streaming: replyFragments(from: handler.respondUnattended(to: command)))
         } catch is CancellationError {

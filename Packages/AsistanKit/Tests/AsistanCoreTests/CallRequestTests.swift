@@ -23,6 +23,8 @@ struct CallRequestTests {
     @Test("'ara' as a search is not a call", arguments: [
         "Atatürk'ü internette ara", "Kadıköy'ü haritada ara", "en yakın eczaneyi ara", "kediyi ara",
         "Google'da Ahmet'i ara", "İstanbul'daki otelleri ara", "bir taksi ara", "Ahmet'in numarasını bul",
+        "Spotify'da Tarkan'ı ara", "Mail'de Ahmet'i ara", "Deezer'da Sezen Aksu'yu ara", "Safari'de Ahmet'i ara",
+        "Notlar'da Ayşe'yi ara", "müzikte Tarkan'ı ara",
     ])
     func search(command: String) {
         #expect(CallRequest.parse(command) == nil)

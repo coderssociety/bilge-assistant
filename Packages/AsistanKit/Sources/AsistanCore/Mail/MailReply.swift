@@ -55,25 +55,26 @@ public struct MailReference: Equatable, Sendable {
 
 /// readMail's script prints one line per listed message after what it reads: the marker, then id, sender
 /// name, sender address, subject and whether its text was read, separated by tabs. Those lines are split off
-/// before the rest goes to the language model.
+/// before the rest goes to the language model. Only the block the script adds at the very end counts, so a marker
+/// line inside a message is text, never a message to reply to.
 public enum MailReadOutput {
     public static let marker = "\u{1F}MAILREF"
 
     public static func split(_ output: String) -> (text: String, references: [MailReference]) {
-        var text: [Substring] = []
-        var references: [MailReference] = []
-        for line in output.split(separator: "\n", omittingEmptySubsequences: false) {
-            guard line.hasPrefix(marker) else {
-                text.append(line)
-                continue
-            }
-            let fields = line.dropFirst(marker.count).split(separator: "\t", omittingEmptySubsequences: false).dropFirst()
-            guard fields.count >= 5, let id = fields.first, !id.isEmpty, id.allSatisfy(\.isNumber) else { continue }
-            let values = Array(fields)
-            references.append(MailReference(id: String(id), senderName: String(values[1]), senderAddress: String(values[2]),
-                                            subject: values[3..<values.count - 1].joined(separator: "\t"),
-                                            contentWasRead: values[values.count - 1] == "1"))
-        }
-        return (text.joined(separator: "\n").trimmingCharacters(in: .newlines), references)
+        let lines = output.split(separator: "\n", omittingEmptySubsequences: false)
+        let trailing = lines.reversed().prefix { $0.hasPrefix(marker) || $0.isEmpty }.count
+        let references = lines.suffix(trailing).compactMap(reference)
+        let text = lines.dropLast(trailing).joined(separator: "\n").trimmingCharacters(in: .newlines)
+        return (text, references)
+    }
+
+    private static func reference(_ line: Substring) -> MailReference? {
+        guard line.hasPrefix(marker) else { return nil }
+        let fields = line.dropFirst(marker.count).split(separator: "\t", omittingEmptySubsequences: false).dropFirst()
+        guard fields.count >= 5, let id = fields.first, !id.isEmpty, id.allSatisfy(\.isNumber) else { return nil }
+        let values = Array(fields)
+        return MailReference(id: String(id), senderName: String(values[1]), senderAddress: String(values[2]),
+                             subject: values[3..<values.count - 1].joined(separator: "\t"),
+                             contentWasRead: values[values.count - 1] == "1")
     }
 }

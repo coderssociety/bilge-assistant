@@ -2,8 +2,9 @@ import AsistanCore
 import Foundation
 import FoundationModels
 
-/// "Alışveriş notumda ne yazıyor?", "son notumu oku". Note text is user content, but it is still
-/// answered by the tool-less session, like screen text. "Notlarım neler" lists the latest titles instead.
+/// "Alışveriş notumda ne yazıyor?", "son notumu oku". Notes can hold text clipped from the web or a mail, so their
+/// text and titles are untrusted: answered by the tool-less session like screen text, and marking a multi-step plan
+/// as having read outside content. "Notlarım neler" lists the latest titles instead.
 struct ReadNotesTool: AssistantTool {
     let name = "readNotes"
     let description = "Notlar uygulamasında bir notu arar ve içeriğini okur; konu söylenmezse en son notu okur. Notların listesini de söyler."
