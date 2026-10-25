@@ -7,7 +7,7 @@ import AsistanCore
 enum MusicPlayback {
     /// Settings' default service; absent means "Otomatik".
     static let serviceKey = "musicService"
-    private static let deezerApp = "com.deezer.deezer-desktop"
+    private static let deezerScheme = "deezer"
     private static let musicStartTimeout: Duration = .seconds(4)
     private static let musicStartPoll: Duration = .milliseconds(500)
 
@@ -75,10 +75,11 @@ enum MusicPlayback {
     }
 
     private static func open(_ track: MusicTrack, on service: MusicService) async -> String {
-        let deezerInApp = await MainActor.run { service == .deezer && NSWorkspace.shared.urlForApplication(withBundleIdentifier: deezerApp) != nil }
+        let deezerApp = service == .deezer ? MusicSearch.appURL(track.url, scheme: deezerScheme) : nil
+        let deezerInApp = await MainActor.run { deezerApp.flatMap(NSWorkspace.shared.urlForApplication(toOpen:)) != nil }
         let target: URL? = switch service {
         case .appleMusic: MusicSearch.appURL(track.url, scheme: "music")
-        case .deezer where deezerInApp: MusicSearch.appURL(track.url, scheme: "deezer")
+        case .deezer where deezerInApp: deezerApp
         default: track.url
         }
         guard let target, await openURL(target) else {
