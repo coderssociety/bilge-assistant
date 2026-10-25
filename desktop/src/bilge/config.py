@@ -94,6 +94,15 @@ class MailSettings:
 
 
 @dataclass
+class CustomCommand:
+    """A program the user can start by voice ("yedekleme komutunu çalıştır"); run without a shell, and never with
+    anything spoken added to it."""
+
+    name: str
+    argv: list[str] = field(default_factory=list)
+
+
+@dataclass
 class Settings:
     language: str = AssistantLanguage.TURKISH.value
     model: ModelSettings = field(default_factory=ModelSettings)
@@ -110,6 +119,7 @@ class Settings:
     check_updates: bool = True
     # While Bilge runs, say so when a strong earthquake happens near the weather city.
     earthquake_alerts: bool = True
+    commands: list[CustomCommand] = field(default_factory=list)
 
     @property
     def assistant_language(self) -> AssistantLanguage:
@@ -167,12 +177,25 @@ def load_settings(path: Path | None = None) -> Settings:
         setup_done=bool(data.get("setup_done", False)),
         check_updates=bool(data.get("check_updates", True)),
         earthquake_alerts=bool(data.get("earthquake_alerts", True)),
+        commands=_commands(data.get("commands")),
         model=ModelSettings(
             provider=str(model.get("provider", "lmstudio")),
             model=str(model.get("model", "")),
             base_url=model.get("base_url") or None,
         ),
     )
+
+
+def _commands(value: object) -> list[CustomCommand]:
+    """The well-formed entries of a list that may have been edited by hand."""
+    found = []
+    for item in value if isinstance(value, list) else []:
+        if not isinstance(item, dict):
+            continue
+        name, argv = str(item.get("name") or "").strip(), item.get("argv")
+        if name and isinstance(argv, list) and argv and all(isinstance(part, str) for part in argv) and argv[0].strip():
+            found.append(CustomCommand(name, list(argv)))
+    return found
 
 
 def save_settings(settings: Settings, path: Path | None = None) -> None:

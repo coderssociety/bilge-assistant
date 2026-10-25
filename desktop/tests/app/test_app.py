@@ -433,3 +433,39 @@ def test_garbage_is_collected_on_the_window_thread(qapp):
     finally:
         collector.stop()
     assert gc.isenabled()
+
+
+def test_custom_commands_are_added_edited_and_removed_in_the_settings(qapp, isolated, tmp_path):
+    from bilge.app.settings import SettingsWindow
+
+    texts.use(AssistantLanguage.TURKISH)
+    old = config.CustomCommand("Eski", ["true"])
+    window = SettingsWindow(config.Settings(commands=[old]), tmp_path / "settings.json")
+    page = window.pages["commands"]
+    assert page.table.rowCount() == 1
+    page.add_row("Yedekleme", "rsync -a '/home/ayşe/Belgeler' /mnt/yedek")
+    page.add_row()
+    page.table.setCurrentCell(0, 0)
+    page.remove_row()
+    window.save()
+    assert config.load_settings(tmp_path / "settings.json").commands == [
+        config.CustomCommand("Yedekleme", ["rsync", "-a", "/home/ayşe/Belgeler", "/mnt/yedek"])
+    ]
+
+
+def test_a_command_table_that_cannot_be_read_is_not_saved(qapp, isolated, tmp_path):
+    from bilge.app.settings import SettingsWindow
+    from bilge.app.settings.commands import commands_from_rows
+
+    texts.use(AssistantLanguage.TURKISH)
+    window = SettingsWindow(config.Settings(), tmp_path / "settings.json")
+    window.pages["commands"].add_row("Yarım", "echo 'kapanmadı")
+    window.save()
+    assert window.message.text() == "Bir komut satırında kapanmamış bir tırnak var."
+    assert not (tmp_path / "settings.json").exists()
+    assert commands_from_rows([("A", "ls"), ("a", "pwd")])[1] == "commands.duplicate"
+    assert commands_from_rows([("A", "")])[1] == "commands.incomplete"
+    assert commands_from_rows([("", "  "), ("B", r"C:\x\y.exe /q")], windows=True) == (
+        [config.CustomCommand("B", [r"C:\x\y.exe", "/q"])],
+        None,
+    )

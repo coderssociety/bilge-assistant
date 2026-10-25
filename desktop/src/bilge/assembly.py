@@ -155,7 +155,7 @@ def build_agent(
     if found is not None and alarms is not None:
         last_reply = lambda: built[0].last_reply if built else None  # noqa: E731
         tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply, text_reading,
-                                                             people)  # fmt: skip
+                                                             people, settings.commands)  # fmt: skip
         for tool in tools:
             registry.add(tool)
         rules = [*desktop_rules, *rules]
@@ -204,12 +204,15 @@ def _desktop_tools(
     last_reply: Callable[[], str | None],
     text_reading: TextReading,
     people: ContactLookup,
+    custom_commands: list[config.CustomCommand],
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
+    from bilge.tools.command_approvals import CommandApprovals
     from bilge.tools.desktop import (
         apps,
         clipboard,
+        commands,
         files,
         hardware,
         notes,
@@ -226,6 +229,8 @@ def _desktop_tools(
 
     dictation = typing.DictationSession(found.keyboard, language)
     sheet = spreadsheet.SpreadsheetSession(language)
+    own_commands = commands.CommandTools(custom_commands, CommandApprovals(config.data_dir() / "command-approvals.json"),
+                                         Runner(), language)  # fmt: skip
     sheet_tool = spreadsheet.SpreadsheetTool(_spreadsheet_apps(LibreOfficeCalc(Runner())), sheet, language)
     tools = [
         *apps.app_tools(apps.AppCatalog(found.apps), language),
@@ -247,11 +252,13 @@ def _desktop_tools(
         spreadsheet.spreadsheet_tool(sheet_tool),
         *_office_tools(language, text_reading, people),
         *notes.note_tools(NotesFolder(notes_folder(found.folders.documents(), language)), language, text_reading),
+        *commands.command_tools(own_commands),
     ]
     rules = [
         rule("startDictation", lambda command: dictation_command.is_start(command, language)),
         rule("spreadsheet", sheet.claims, lambda command: {"command": command}),
         *notes.note_rules(language),
+        *commands.command_rules(own_commands, language),
     ]
     modes = [
         Mode(lambda: dictation.active, dictation.window, lambda _: True, dictation.end, takes=dictation.handle,

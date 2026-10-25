@@ -84,3 +84,16 @@ def test_earthquake_alerts_can_be_turned_off(tmp_path):
     path = tmp_path / "settings.json"
     config.save_settings(config.Settings(earthquake_alerts=False), path)
     assert config.load_settings(path).earthquake_alerts is False
+
+
+def test_custom_commands_round_trip_and_broken_entries_are_dropped(tmp_path):
+    path = tmp_path / "settings.json"
+    backup = config.CustomCommand("yedekleme", ["rsync", "-a", "/home/ayse/Belgeler", "/mnt/yedek"])
+    config.save_settings(config.Settings(commands=[backup]), path)
+    assert config.load_settings(path).commands == [backup]
+    path.write_text(
+        '{"commands": [{"name": "boş", "argv": []}, {"name": "", "argv": ["ls"]}, {"name": "x", "argv": "ls -l"},'
+        ' {"name": "sayı", "argv": ["ls", 3]}, "metin", {"name": " liste ", "argv": ["ls", "-l"]}]}',
+        encoding="utf-8",
+    )
+    assert config.load_settings(path).commands == [config.CustomCommand("liste", ["ls", "-l"])]

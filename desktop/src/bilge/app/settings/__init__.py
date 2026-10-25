@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QTabWidget, QVB
 
 from bilge import config
 from bilge.app.settings.calendar import CalendarPage
+from bilge.app.settings.commands import CommandsPage
 from bilge.app.settings.general import GeneralPage
 from bilge.app.settings.mail import MailPage
 from bilge.app.settings.model import ModelChooser
@@ -39,6 +40,7 @@ class SettingsWindow(QDialog):
         # On Windows mail comes from Outlook.
         if sys.platform != "win32":
             self.pages["mail"] = MailPage()
+        self.pages["commands"] = CommandsPage()
         tabs = QTabWidget()
         for name, page in self.pages.items():
             page.load(settings)
@@ -66,10 +68,11 @@ class SettingsWindow(QDialog):
         return updated
 
     def save(self) -> None:
-        problem = self.pages["general"].problem()
-        if problem is not None:
-            self.message.setText(problem)
-            return
+        for page in self.pages.values():
+            problem = page.problem() if hasattr(page, "problem") else None
+            if problem is not None:
+                self.message.setText(problem)
+                return
         updated = self.collect()
         try:
             for page in self.pages.values():
