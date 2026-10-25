@@ -134,6 +134,9 @@ enum StreamReplies {
     static func resume() -> String {
         let player = StreamPlayer.shared
         guard let item = player.current else { return nothingPlaying }
+        if player.state == .playing {
+            return item.kind == .radio ? String(localized: "\(item.title) zaten çalıyor.") : String(localized: "Podcast zaten çalıyor.")
+        }
         player.resume()
         return item.kind == .radio ? String(localized: "\(item.title) yeniden çalıyor.") : String(localized: "Podcast'e devam ediyorum.")
     }

@@ -786,6 +786,16 @@
         }
       }
     },
+    "%@ zaten çalıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is already playing."
+          }
+        }
+      }
+    },
     "%@ · tür: %@": {
       "localizations": {
         "en": {
@@ -6138,6 +6148,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't get the podcast information. %@"
+          }
+        }
+      }
+    },
+    "Podcast zaten çalıyor.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The podcast is already playing."
           }
         }
       }

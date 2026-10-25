@@ -65,9 +65,10 @@ final class StreamPlayer {
         apply()
     }
 
-    /// A live stream starts again from now rather than from where it was paused.
+    /// A live stream starts again from now rather than from where it was paused; one already playing is left alone,
+    /// as reloading it would break off and reconnect.
     func resume() {
-        guard let current else { return }
+        guard let current, !wantsPlayback else { return }
         if current.kind == .radio { load(current.url) }
         wantsPlayback = true
         apply()
