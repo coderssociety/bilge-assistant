@@ -1,3 +1,5 @@
+import gc
+import weakref
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -100,6 +102,23 @@ def test_speech_keeps_it_on_and_closing_ends_it():
     assert not interpreter.expired()
     interpreter.close()
     assert not interpreter.active
+
+
+def test_stopping_lets_go_of_a_model_loaded_just_for_the_mode():
+    loaded = []
+
+    def load():
+        loaded.append(Detecting())
+        return loaded[-1]
+
+    interpreter = Interpreter(load, Provider, AssistantLanguage.TURKISH, clock=Clock())
+    interpreter.start({"languages": ""})
+    held = weakref.ref(loaded.pop())
+    interpreter.stop()
+    gc.collect()
+    assert held() is None
+    interpreter.start({"languages": ""})
+    assert interpreter.active and len(loaded) == 1
 
 
 def test_the_rule_passes_the_command_as_the_languages():
