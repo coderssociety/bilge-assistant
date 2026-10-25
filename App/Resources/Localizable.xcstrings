@@ -3116,6 +3116,16 @@
         }
       }
     },
+    "Hangi şehrin saatini sorduğunu anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which city's time you asked about."
+          }
+        }
+      }
+    },
     "Hangisini iptal edeyim? ": {
       "localizations": {
         "en": {
