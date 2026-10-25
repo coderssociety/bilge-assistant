@@ -152,6 +152,10 @@ class Session(Protocol):
 class Network(Protocol):
     def wifi_enabled(self) -> bool | None: ...
 
+    def wifi_name(self) -> str | None:
+        """The name (SSID) of the Wi-Fi network connected to; None when there is none or it can't be read."""
+        ...
+
     def set_wifi(self, enabled: bool) -> None: ...
 
 

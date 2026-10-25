@@ -4,6 +4,7 @@ things on Windows."""
 import asyncio
 import contextlib
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -121,11 +122,16 @@ class WindowsWindowControl:
             api.show(window, command)
 
 
+# "    SSID                   : Ev Ağı"; the label stays English in every Windows language, and BSSID doesn't match.
+_SSID_LINE = re.compile(r"^\s*SSID\s*:\s*(.+?)\s*$", re.MULTILINE)
+
+
 class WindowsNetwork:
     """Wi-Fi through the radio switch Windows shows in its quick settings; it needs no administrator rights."""
 
-    def __init__(self, radios=None):
+    def __init__(self, radios=None, runner: Runner | None = None):
         self._radios = radios
+        self._runner = runner or Runner()
 
     async def _wifi(self):
         if self._radios is not None:
@@ -144,8 +150,16 @@ class WindowsNetwork:
 
         try:
             return asyncio.run(read())
-        except (DesktopError, OSError):
+        except (DesktopError, OSError, RuntimeError):
+            # WinRT reports a missing or refused radio as RuntimeError, which must not take systemInfo down.
             return None
+
+    def wifi_name(self) -> str | None:
+        done = self._runner.run(["netsh", "wlan", "show", "interfaces"])
+        if not done.ok:
+            return None
+        found = _SSID_LINE.search(done.stdout)
+        return found.group(1) if found else None
 
     def set_wifi(self, enabled: bool) -> None:
         async def change():
@@ -160,7 +174,7 @@ class WindowsNetwork:
 
         try:
             asyncio.run(change())
-        except OSError as error:
+        except (OSError, RuntimeError) as error:
             raise DesktopError(f"Wi-Fi: {error}") from error
 
 

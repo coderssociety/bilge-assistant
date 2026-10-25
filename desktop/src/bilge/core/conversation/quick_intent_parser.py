@@ -111,7 +111,7 @@ class DateTime:
 
 @dataclass(frozen=True)
 class Battery:
-    pass
+    time_left: bool = False
 
 
 @dataclass(frozen=True)
@@ -324,13 +324,17 @@ def _date_time(w: list[str]) -> QuickIntent | None:
 
 _BATTERY_WORDS = ("pil", "sarj", "batarya")
 _BATTERY_ALLOWED = frozenset({"durumu", "durum", "kac", "ne", "kadar", "nedir", "durumda", "yuzde", "seviyesi", "oldu"})
+# "Pil ne kadar dayanır", "şarjım ne kadar yeter": how long, not how full.
+_BATTERY_DURATION = frozenset({"dayanir", "yeter", "gider", "sure", "suresi", "daha"})
 _MAX_BATTERY_WORDS = 5
 
 
 def _battery(w: list[str]) -> QuickIntent | None:
     if len(w) > _MAX_BATTERY_WORDS or not w[0].startswith(_BATTERY_WORDS):
         return None
-    return Battery() if all(word in _BATTERY_ALLOWED for word in w[1:]) else None
+    if not all(word in _BATTERY_ALLOWED | _BATTERY_DURATION for word in w[1:]):
+        return None
+    return Battery(time_left=any(word in _BATTERY_DURATION for word in w[1:]))
 
 
 _SET_VOLUME_VERBS = frozenset({"yap", "getir", "ayarla", "indir", "cek", "dusur", "cikar"})

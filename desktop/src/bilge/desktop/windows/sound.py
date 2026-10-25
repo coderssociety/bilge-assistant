@@ -93,7 +93,7 @@ class WindowsMedia:
     def _run(self, coroutine):
         try:
             return asyncio.run(coroutine)
-        except OSError as error:
+        except (OSError, RuntimeError) as error:
             raise DesktopError(f"Media controls: {error}") from error
 
     def now_playing(self) -> NowPlaying | None:

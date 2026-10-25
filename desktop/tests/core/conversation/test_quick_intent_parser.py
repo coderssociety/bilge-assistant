@@ -43,6 +43,7 @@ def parse(text: str) -> QuickIntent | None:
         ("ayın kaçı", DateTime()),
         ("Pil durumu nedir", Battery()),
         ("şarjım ne kadar", Battery()),
+        ("pil ne kadar dayanır", Battery(time_left=True)),
         ("Sesi yüzde otuz yap", Volume(SetVolume(30))),
         ("sesi elliye getir", Volume(SetVolume(50))),
         ("Sesi biraz kıs", Volume(VolumeStep.DOWN)),

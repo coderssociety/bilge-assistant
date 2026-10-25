@@ -48,7 +48,10 @@ _TEXTS = {
         "dark_off": "Karanlık mod kapalı.",
         "no_theme_variant": "Kullandığın temanın {kind} bir sürümü yüklü değil; Görünüm ayarlarından başka bir tema seçebilirsin.",
         "dark_kind": "karanlık", "light_kind": "aydınlık",
-        "battery": "Pil doluluk yüzdesini ve şarj durumunu verir.",
+        "battery": "Pil doluluk yüzdesini ve şarj durumunu verir; sorulursa pilin ne kadar yeteceğini de.",
+        "time_left_param": "Pilin ne kadar dayanacağı sorulduysa true",
+        "time_left": " Yaklaşık {time} daha yeter.",
+        "time_unknown": " Ne kadar yeteceği henüz hesaplanamadı.",
         "no_battery": "Bu bilgisayarda pil yok, prize bağlı çalışıyor.",
         "battery_state": "Pil yüzde {percent}, {state}.",
         "charging": "şarj oluyor",
@@ -63,6 +66,7 @@ _TEXTS = {
         "wifi_on": "Wi-Fi açık", "wifi_off": "Wi-Fi kapalı", "wifi_unknown": "Wi-Fi durumu okunamadı",
         "no_network": "{wifi}; ağ bağlantısı görünmüyor.",
         "network": "{wifi}. Yerel IP adresin {address}.",
+        "wifi_connected": "Wi-Fi açık, '{name}' ağına bağlı",
         "wifi": "Wi-Fi'ı açar ya da kapatır.",
         "wifi_question": "Wi-Fi'ı kapatırsam internet bağlantın kesilir. Kapatayım mı?",
         "wifi_done_on": "Wi-Fi açıldı.", "wifi_done_off": "Wi-Fi kapatıldı.",
@@ -89,7 +93,10 @@ _TEXTS = {
         "dark_off": "Dark mode is off.",
         "no_theme_variant": "Your theme has no {kind} version installed; you can pick another theme in the appearance settings.",
         "dark_kind": "dark", "light_kind": "light",
-        "battery": "Gives the battery level and whether it's charging.",
+        "battery": "Gives the battery level and whether it's charging; when asked, how long it will last.",
+        "time_left_param": "true if asked how long the battery will last",
+        "time_left": " It will last about {time} more.",
+        "time_unknown": " How long it will last isn't known yet.",
         "no_battery": "This computer has no battery; it runs on mains power.",
         "battery_state": "The battery is at {percent} percent, {state}.",
         "charging": "charging",
@@ -104,6 +111,7 @@ _TEXTS = {
         "wifi_on": "Wi-Fi is on", "wifi_off": "Wi-Fi is off", "wifi_unknown": "I couldn't read the Wi-Fi state",
         "no_network": "{wifi}; there's no network connection.",
         "network": "{wifi}. Your local IP address is {address}.",
+        "wifi_connected": "Wi-Fi is on, connected to '{name}'",
         "wifi": "Turns Wi-Fi on or off.",
         "wifi_question": "Turning Wi-Fi off cuts your internet connection. Shall I turn it off?",
         "wifi_done_on": "Wi-Fi is on.", "wifi_done_off": "Wi-Fi is off.",
@@ -159,16 +167,27 @@ def system_action_tool(session: Session, language: AssistantLanguage) -> Tool:
 def battery_tool(language: AssistantLanguage, read: Callable[[], Any] = psutil.sensors_battery) -> Tool:
     texts = _TEXTS[language]
 
-    def run(_: dict[str, Any]) -> str:
+    def time_left(battery: Any) -> str:
+        if battery.power_plugged:
+            return ""
+        seconds = getattr(battery, "secsleft", psutil.POWER_TIME_UNKNOWN)
+        # psutil marks "unknown" and "unlimited" with negative constants.
+        if not isinstance(seconds, int | float) or seconds < 0:
+            return texts["time_unknown"]
+        return texts["time_left"].format(time=_elapsed(seconds, texts))
+
+    def run(arguments: dict[str, Any]) -> str:
         battery = read()
         if battery is None:
             return texts["no_battery"]
         percent = round(battery.percent)
         plugged_state = "plugged" if percent >= 100 else "charging"
         state = texts[plugged_state if battery.power_plugged else "discharging"]
-        return texts["battery_state"].format(percent=percent, state=state)
+        answer = texts["battery_state"].format(percent=percent, state=state)
+        return answer + time_left(battery) if arguments.get("timeLeft") is True else answer
 
-    return Tool("batteryStatus", texts["battery"], run=run)
+    parameters = obj(timeLeft={"type": "boolean", "description": texts["time_left_param"]})
+    return Tool("batteryStatus", texts["battery"], run=run, parameters=parameters)
 
 
 def system_info_tool(network: Network, folders: Folders, language: AssistantLanguage) -> Tool:
@@ -190,7 +209,9 @@ def system_info_tool(network: Network, folders: Folders, language: AssistantLang
             return texts["os"].format(os=os_name())
         return _network(network, texts)
 
-    return Tool("systemInfo", texts["info"], run=run, parameters=obj(["topic"], topic=choice(InfoTopic, "")))
+    # The Wi-Fi network's name is chosen by whoever runs it.
+    return Tool("systemInfo", texts["info"], run=run, parameters=obj(["topic"], topic=choice(InfoTopic, "")),
+                untrusted_output=lambda arguments: arguments.get("topic") == InfoTopic.NETWORK)  # fmt: skip
 
 
 def os_name() -> str:
@@ -206,9 +227,13 @@ def os_name() -> str:
 def _network(network: Network, texts: dict[str, str]) -> str:
     try:
         enabled = network.wifi_enabled()
+        name = network.wifi_name() if enabled is not False else None
     except DesktopError:
-        enabled = None
-    wifi = texts["wifi_unknown"] if enabled is None else texts["wifi_on" if enabled else "wifi_off"]
+        enabled, name = None, None
+    if name:
+        wifi = texts["wifi_connected"].format(name=name)
+    else:
+        wifi = texts["wifi_unknown"] if enabled is None else texts["wifi_on" if enabled else "wifi_off"]
     address = local_ipv4()
     return texts["network"].format(wifi=wifi, address=address) if address else texts["no_network"].format(wifi=wifi)
 

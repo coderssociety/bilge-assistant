@@ -29,8 +29,8 @@ def _tool_and_arguments(intent: q.QuickIntent | None) -> tuple[str, dict] | None
             return "currentDateTime", {}
         case q.Calculate(expression=expression):
             return "calculate", {"expression": expression}
-        case q.Battery():
-            return "batteryStatus", {}
+        case q.Battery(time_left=time_left):
+            return "batteryStatus", {"timeLeft": True} if time_left else {}
         case q.Reminders():
             return "readReminders", {}
         case q.Volume(change=q.SetVolume(level=level)):

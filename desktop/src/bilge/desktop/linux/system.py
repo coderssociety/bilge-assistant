@@ -110,6 +110,21 @@ class LinuxNetwork:
         done = self._runner.run(["nmcli", "radio", "wifi"])
         return done.stdout.strip() == "enabled" if done.ok else None
 
+    def wifi_name(self) -> str | None:
+        if self._runner.has("nmcli"):
+            done = self._runner.run(["nmcli", "-t", "-f", "ACTIVE,SSID", "device", "wifi"])
+            if done.ok:
+                for line in done.stdout.splitlines():
+                    active, _, name = line.partition(":")
+                    if active == "yes" and name:
+                        # Terse output escapes colons in the name.
+                        return name.replace("\\:", ":")
+                return None
+        if self._runner.has("iwgetid"):
+            done = self._runner.run(["iwgetid", "--raw"])
+            return (done.stdout.strip() or None) if done.ok else None
+        return None
+
     def set_wifi(self, enabled: bool) -> None:
         if not self._runner.has("nmcli"):
             raise MissingProgram("nmcli")

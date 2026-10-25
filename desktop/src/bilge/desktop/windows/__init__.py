@@ -33,7 +33,7 @@ def build() -> Desktop:
         keyboard=WindowsKeyboard(),
         windows=WindowsWindowControl(),
         session=WindowsSession(),
-        network=WindowsNetwork(),
+        network=WindowsNetwork(runner=runner),
         screenshots=WindowsScreenshots(opener),
         settings=WindowsSettings(opener),
         opener=opener,
