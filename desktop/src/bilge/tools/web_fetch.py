@@ -179,7 +179,7 @@ def _get_once(
         location = _location(reply)
         if reply.status in _REDIRECTS and location:
             return Response(url, reply.status, "", b""), location
-        body = _read_limited(reply, max_bytes, deadline)
+        body = _read_limited(connection, reply, max_bytes, deadline)
         return Response(url, reply.status, reply.getheader("Content-Type", ""), body), None
     except (OSError, http.client.HTTPException) as error:
         raise WebFetchError(Reason.CONNECT) from error
@@ -196,7 +196,7 @@ def post_json(
     body = json.dumps(payload).encode()
     connection, reply = _open(url, language, user_agent, "POST", body, {"Content-Type": "application/json"})
     try:
-        data = _read_limited(reply, MAX_BYTES, deadline)
+        data = _read_limited(connection, reply, MAX_BYTES, deadline)
     except (OSError, http.client.HTTPException) as error:
         raise WebFetchError(Reason.CONNECT) from error
     finally:
@@ -299,7 +299,7 @@ def _open(
     body: bytes | None = None,
     extra_headers: dict[str, str] | None = None,
     any_port: bool = False,
-) -> tuple[http.client.HTTPConnection, http.client.HTTPResponse]:
+) -> tuple["_PinnedConnection", http.client.HTTPResponse]:
     """Sends the request to a checked address and returns the open connection with its answer's headers read."""
     scheme, host, port, path = _target(url)
     if scheme not in _DEFAULT_PORTS or not host:
@@ -362,15 +362,28 @@ def _is_public(address: str) -> bool:
     return ip.is_global and network_address.is_public(address)
 
 
-def _read_limited(reply: http.client.HTTPResponse, max_bytes: int, deadline: float) -> bytes:
+def _read_limited(
+    connection: "_PinnedConnection", reply: http.client.HTTPResponse, max_bytes: int, deadline: float
+) -> bytes:
+    """`read1` returns whatever has arrived, and each wait is cut to the time left: `read` would wait for a whole
+    chunk, which a server sending a byte a second never fills before its socket timeout."""
     chunks: list[bytes] = []
     total = 0
-    while chunk := reply.read(_CHUNK):
+    # The answer closes its socket as soon as the last byte is read.
+    while not reply.isclosed():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise WebFetchError(Reason.TOO_SLOW)
+        connection.wait_at_most(min(remaining, TIMEOUT_SECONDS))
+        try:
+            chunk = reply.read1(_CHUNK)
+        except TimeoutError as error:
+            raise WebFetchError(Reason.TOO_SLOW) from error
+        if not chunk:
+            break
         total += len(chunk)
         if total > max_bytes:
             raise WebFetchError(Reason.TOO_LARGE)
-        if time.monotonic() > deadline:
-            raise WebFetchError(Reason.TOO_SLOW)
         chunks.append(chunk)
     return b"".join(chunks)
 
@@ -397,9 +410,15 @@ class _PinnedConnection(http.client.HTTPConnection):
         super().__init__(host, port, timeout=TIMEOUT_SECONDS)
         self._scheme = scheme
         self._address = address
+        # Kept apart from `sock`, which http.client lets go when the answer takes the socket over.
+        self._socket: socket.socket | None = None
 
     def connect(self) -> None:
         sock = socket.create_connection((self._address, self.port), self.timeout)
         if self._scheme == "https":
             sock = _tls_context().wrap_socket(sock, server_hostname=self.host)
-        self.sock = sock
+        self.sock = self._socket = sock
+
+    def wait_at_most(self, seconds: float) -> None:
+        if self._socket is not None:
+            self._socket.settimeout(seconds)

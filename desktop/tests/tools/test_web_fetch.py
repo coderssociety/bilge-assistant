@@ -3,6 +3,7 @@ import http.server
 import socket
 import ssl
 import threading
+import time
 
 import pytest
 
@@ -260,6 +261,22 @@ def raw_server(monkeypatch):
 
 
 OK = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok"
+
+
+def test_a_trickling_server_is_given_up_on_at_the_deadline(raw_server, monkeypatch):
+    def trickle(connection):
+        connection.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 60\r\n\r\n")
+        for _ in range(60):
+            connection.sendall(b"x")
+            time.sleep(0.05)
+
+    server = raw_server(trickle)
+    monkeypatch.setattr(web_fetch, "TOTAL_SECONDS", 0.5)
+    started = time.monotonic()
+    with pytest.raises(web_fetch.WebFetchError) as raised:
+        web_fetch.get(f"http://trickle.example:{server.port}/")
+    assert raised.value.reason is web_fetch.Reason.TOO_SLOW
+    assert time.monotonic() - started < 1.5
 
 
 def test_turkish_letters_in_the_name_and_path_are_encoded(raw_server):
