@@ -17,6 +17,8 @@ from bilge.tools.desktop.common import (
     string_argument,
     text,
 )
+from bilge.tools.player import PlaybackError, Player
+from bilge.tools.player import failure as playback_failure
 
 VOLUME_STEP = 10
 
@@ -63,6 +65,14 @@ _TEXTS = {
         MusicAction.TOGGLE: "{player} oynat/duraklat yapıldı.",
         MusicAction.NEXT: "Sonraki parçaya geçildi.",
         MusicAction.PREVIOUS: "Önceki parçaya dönüldü.",
+        "own_paused": "{name} duraklatıldı.",
+        "own_stopped": "{name} kapatıldı.",
+        "own_resumed": "{name} devam ediyor.",
+        "own_playing": "{name} zaten çalıyor.",
+        "own_station": "{name} radyosu çalıyor.",
+        "own_episode": "{name} podcasti çalıyor: {title}",
+        "own_no_skip": "Bunda parça atlanamıyor; başka bir istasyon ya da bölüm isteyebilirsin.",
+        "own_failed": "{name} yeniden açılamadı. ",
     },
     AssistantLanguage.ENGLISH: {
         "volume": "Sets, raises or lowers the computer's volume, or mutes and unmutes it.",
@@ -88,6 +98,14 @@ _TEXTS = {
         MusicAction.TOGGLE: "Toggled play and pause in {player}.",
         MusicAction.NEXT: "Skipped to the next track.",
         MusicAction.PREVIOUS: "Went back to the previous track.",
+        "own_paused": "{name} is paused.",
+        "own_stopped": "{name} is off.",
+        "own_resumed": "{name} is playing again.",
+        "own_playing": "{name} is already playing.",
+        "own_station": "{name} is on.",
+        "own_episode": "Playing {name}: {title}",
+        "own_no_skip": "There are no tracks to skip here; ask for another station or episode instead.",
+        "own_failed": "I couldn't start {name} again. ",
     },
 }
 
@@ -133,8 +151,38 @@ def volume_tool(volume: Volume, language: AssistantLanguage) -> Tool:
     return Tool("setVolume", texts["volume"], run=run, parameters=parameters, refine=refine_level)
 
 
-def music_tool(media: Media, language: AssistantLanguage, launcher: MusicLauncher | None = None) -> Tool:
+def music_tool(
+    media: Media, language: AssistantLanguage, launcher: MusicLauncher | None = None, player: Player | None = None
+) -> Tool:
+    """`player`: Bilge's own radio and podcast player, which "durdur" and "devam et" reach first while it plays."""
     texts = _TEXTS[language]
+
+    def own(action: MusicAction) -> str | None:
+        playback = player.playback if player is not None else None
+        if playback is None or not playback.is_active or playback.source is None:
+            return None
+        source = playback.source
+        if not playback.is_playing:
+            if action not in (MusicAction.PLAY, MusicAction.TOGGLE):
+                return None
+            try:
+                player.resume()
+            except PlaybackError as error:
+                raise ToolError(
+                    texts["own_failed"].format(name=source.name) + playback_failure(error, language)
+                ) from error
+            return texts["own_resumed"].format(name=source.name)
+        if action is MusicAction.PLAY:
+            return texts["own_playing"].format(name=source.name)
+        if action in (MusicAction.PAUSE, MusicAction.TOGGLE):
+            player.pause()
+            # A station can't wait: pausing it lets it go, and "devam et" tunes in again.
+            return texts["own_stopped" if source.is_live else "own_paused"].format(name=source.name)
+        if action is MusicAction.NOW_PLAYING:
+            if source.is_live or not source.title:
+                return texts["own_station"].format(name=source.name)
+            return texts["own_episode"].format(name=source.name, title=source.title)
+        return texts["own_no_skip"]
 
     def start() -> str:
         """Play with no player open: start the user's player rather than give up."""
@@ -150,6 +198,9 @@ def music_tool(media: Media, language: AssistantLanguage, launcher: MusicLaunche
             action = MusicAction(string_argument(arguments, "action"))
         except ValueError:
             action = MusicAction.TOGGLE
+        handled = own(action)
+        if handled is not None:
+            return handled
         try:
             if action is MusicAction.NOW_PLAYING:
                 playing = media.now_playing()

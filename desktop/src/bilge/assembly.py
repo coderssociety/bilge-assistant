@@ -3,7 +3,7 @@
 import logging
 import sys
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -21,7 +21,18 @@ from bilge.desktop.base import Desktop
 from bilge.llm.providers import ProviderError, make_provider
 from bilge.models.downloader import Downloader, ModelSpec
 from bilge.tools.base import Registry, Tool
-from bilge.tools.builtin import earthquakes, football, internet, prayer, prices, routines, stocks, wikipedia
+from bilge.tools.builtin import (
+    earthquakes,
+    football,
+    internet,
+    podcasts,
+    prayer,
+    prices,
+    radio,
+    routines,
+    stocks,
+    wikipedia,
+)
 from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
@@ -32,13 +43,16 @@ from bilge.tools.builtin.mail import read_mail_tool
 from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.builtin.units import convert_units
 from bilge.tools.builtin.world_clock import world_clock_tool
+from bilge.tools.builtin.youtube import summarize_video_tool
 from bilge.tools.memory_store import MemoryStore
+from bilge.tools.player import Player
 from bilge.tools.reading import TextReading, continue_reading_tool
 
 if TYPE_CHECKING:
     from bilge.desktop.base import TextMessages
     from bilge.tools.desktop.timers import TimerService
     from bilge.voice.assistant import Service
+    from bilge.voice.media_player import MediaPlayer
 
 log = logging.getLogger(__name__)
 CALDAV_SECRET = "caldav"
@@ -107,10 +121,12 @@ def build_agent(
     announce: Callable[[str], None] | None = None,
     services: list["Service"] | None = None,
     run_routine: Callable[[str], None] | None = None,
+    player: "MediaPlayer | None" = None,
 ) -> Agent:
     """`announce` says something unprompted (a timer going off). Work that runs while Bilge listens (the earthquake
     watcher, the routines) is added to `services` for the voice assistant to start and stop. `run_routine` runs a
-    routine's command unattended and says the reply; without it routines can be set up but don't run."""
+    routine's command unattended and says the reply; without it routines can be set up but don't run. `player` plays
+    radio and podcasts; without one (the text chat) a player with its own speaker output is made."""
     language = settings.assistant_language
     preset = provider or settings.model.provider
     chosen = model or settings.model.model
@@ -128,6 +144,7 @@ def build_agent(
     text_reading = TextReading(language)
     people = ContactLookup(lambda: contact_source(settings), language)
     found = desktop.current(language)
+    player = player or _media_player(language)
     alert = _alert(found, announce)
     alarms = _timer_service(language, alert) if found is not None else None
     if services is not None and settings.earthquake_alerts:
@@ -153,6 +170,9 @@ def build_agent(
         stocks.stocks(language),
         internet.read_web_page(language, text_reading),
         continue_reading_tool(text_reading, language),
+        radio.radio_tool(language, player, radio.StationMemory(config.data_dir() / "radio.json")),
+        podcasts.podcast_tool(language, player),
+        summarize_video_tool(language, text_reading, _pasted(found)),
         briefing_tool(briefing),
         find_contact_tool(people, language),
         *calendar_tools(calendar, language, alert=_reminder_alert(alarms) if alarms is not None else None),
@@ -161,6 +181,8 @@ def build_agent(
     if sys.platform != "win32":
         registry.add(read_mail_tool(lambda: mailbox(settings.mail), language, reading=text_reading))
     rules: list[Rule] = [
+        rule("radio", radio.claims, radio.rule_arguments),
+        rule("podcast", podcasts.claims, podcasts.rule_arguments),
         rule("dailyBriefing", briefing.claims),
         rule("news", internet.news_source_rule_claims(language, news_reading)),
         rule("goldPrice", internet.asks_for_gold(language)),
@@ -178,7 +200,7 @@ def build_agent(
     if found is not None and alarms is not None:
         last_reply = lambda: built[0].last_reply if built else None  # noqa: E731
         tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply, text_reading,
-                                                             people, settings.commands)  # fmt: skip
+                                                             people, settings.commands, player)  # fmt: skip
         for tool in tools:
             registry.add(tool)
         rules = [*desktop_rules, *rules]
@@ -196,6 +218,28 @@ def build_agent(
     for tool in memory_tools(memory, language, lambda: agent.last_reply):
         registry.add(tool)
     return agent
+
+
+def _media_player(language: AssistantLanguage) -> "MediaPlayer":
+    from bilge.voice.media_player import MediaPlayer
+
+    return MediaPlayer(language)
+
+
+def _pasted(found: Desktop | None) -> Callable[[], Iterator[str]] | None:
+    """The clipboard's text, then the selection: where a video's address is looked for when none is said."""
+    if found is None:
+        return None
+    from bilge.desktop.process import DesktopError
+
+    def pasted() -> Iterator[str]:
+        for read in (found.clipboard.read, found.clipboard.selection):
+            try:
+                yield read()
+            except DesktopError:
+                log.info("Could not read the clipboard or the selection", exc_info=True)
+
+    return pasted
 
 
 def _alert(found: Desktop | None, announce: Callable[[str], None] | None) -> Callable[[str], None]:
@@ -234,6 +278,7 @@ def _desktop_tools(
     text_reading: TextReading,
     people: ContactLookup,
     custom_commands: list[config.CustomCommand],
+    player: Player,
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
@@ -269,9 +314,9 @@ def _desktop_tools(
     tools = [
         *apps.app_tools(apps.AppCatalog(found.apps), language),
         sound.volume_tool(found.volume, language),
-        sound.music_tool(found.media, language, found.music),
+        sound.music_tool(found.media, language, found.music, player),
         sound.music_search_tool(found.music, language),
-        playback.playback_tool(found.media, language),
+        playback.playback_tool(found.media, language, player),
         *hardware.hardware_tools(
             found.brightness, found.do_not_disturb, found.bluetooth, found.power, found.settings, language
         ),
@@ -383,6 +428,7 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
     from bilge.voice.assistant import Options, VoiceAssistant
     from bilge.voice.audio_io import FrontEnd, SoundDevice
     from bilge.voice.echo import EchoCanceller
+    from bilge.voice.media_player import MediaPlayer
     from bilge.voice.recognizers import GuardedRecognizer, WhisperRecognizer
     from bilge.voice.speaker import CampPlus, SpeakerGate, VoiceStore
     from bilge.voice.speech_output import SpeechOutput
@@ -393,6 +439,7 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
     root = models_dir()
     holder: dict = {}
     services: list = []
+    player = MediaPlayer(language)
     agent = build_agent(
         settings,
         confirm=lambda question: holder["assistant"].confirm(question),
@@ -401,6 +448,7 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
         announce=lambda text: holder["assistant"].announce(text),
         services=services,
         run_routine=lambda command: holder["assistant"].run_unattended(command),
+        player=player,
     )
     # The wake word is Turkish in both languages.
     wake = GuardedRecognizer(
@@ -416,6 +464,7 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
         recognizer = GuardedRecognizer(_recognizer(voice, language, root))
     try:
         device = SoundDevice(voice.input_device, voice.output_device)
+        player.attach(device)
         speech = SpeechOutput(Supertonic(root / models.SUPERTONIC.name), device, language, voice.voice)
         gate = None
         if voice.speaker_check:
@@ -428,8 +477,9 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
                       wake_word=voice.wake_word or not voice.hotkey)  # fmt: skip
     interpreter, recorder = _listening_modes(agent, recognizer, language, root,
                                              announce=lambda text: holder["assistant"].announce(text))  # fmt: skip
-    assistant = VoiceAssistant(recognizer, speech, agent, language, options, gate, on_event, wake_recognizer=wake,
-                               services=services, interpreter=interpreter, recorder=recorder)  # fmt: skip
+    assistant = VoiceAssistant(recognizer, speech, agent, language, options, gate, _making_way(player, on_event),
+                               wake_recognizer=wake, services=services, interpreter=interpreter,
+                               recorder=recorder)  # fmt: skip
     holder["assistant"] = assistant
     front_end = FrontEnd(device, assistant.on_chunk, EchoCanceller() if voice.barge_in else None)
     return assistant, front_end
@@ -467,6 +517,21 @@ def _interpreting_recognizer(recognizer, language: AssistantLanguage, root: Path
         return None
     device = "cuda" if has_cuda() else "cpu"
     return GuardedRecognizer(WhisperRecognizer(str(root / models.WHISPER_TURBO.name), language, device=device))
+
+
+def _making_way(player: "MediaPlayer", on_event):
+    """The radio is turned down (and a podcast waits) from the wake word until Bilge has answered; it stops when
+    listening is turned off, since the speaker stops with it."""
+
+    def handle(kind: str, text: str) -> None:
+        if kind == "status":
+            if text == "off":
+                player.stop()
+            player.set_busy(text not in ("listening", "off"))
+        if on_event is not None:
+            on_event(kind, text)
+
+    return handle
 
 
 def _recognizer(voice: config.VoiceSettings, language: AssistantLanguage, root: Path):

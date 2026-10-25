@@ -29,7 +29,10 @@ TRANSIENT_STATUSES = frozenset({502, 503, 504})
 RETRY_DELAY_SECONDS = 0.4
 ALLOWED_PORTS = frozenset({80, 443})
 _DEFAULT_PORTS = {"http": 80, "https": 443}
+_REDIRECTS = frozenset({301, 302, 303, 307, 308})
 USER_AGENT = "Mozilla/5.0 (compatible; Bilge/0.1)"
+# Shoutcast servers send their HTML status page, not the stream, to anything calling itself Mozilla.
+STREAM_USER_AGENT = "Bilge/0.1"
 # For the few services that turn away anything that doesn't look like a browser.
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
@@ -168,6 +171,100 @@ def _follow(url: str, language: AssistantLanguage, max_bytes: int, user_agent: s
 def _get_once(
     url: str, language: AssistantLanguage, max_bytes: int, deadline: float, user_agent: str
 ) -> tuple[Response, str | None]:
+    connection, reply = _open(url, language, user_agent)
+    try:
+        location = reply.getheader("Location")
+        if reply.status in _REDIRECTS and location:
+            return Response(url, reply.status, "", b""), location
+        body = _read_limited(reply, max_bytes, deadline)
+        return Response(url, reply.status, reply.getheader("Content-Type", ""), body), None
+    except (OSError, http.client.HTTPException) as error:
+        raise WebFetchError(Reason.CONNECT) from error
+    finally:
+        connection.close()
+
+
+def post_json(
+    url: str, payload: Any, language: AssistantLanguage = AssistantLanguage.TURKISH, user_agent: str = USER_AGENT
+) -> Any:
+    """For the few services asked with a JSON body (YouTube's player). Redirects are not followed: a POST that is
+    sent elsewhere is not what the caller meant."""
+    deadline = time.monotonic() + TOTAL_SECONDS
+    body = json.dumps(payload).encode()
+    connection, reply = _open(url, language, user_agent, "POST", body, {"Content-Type": "application/json"})
+    try:
+        data = _read_limited(reply, MAX_BYTES, deadline)
+    except (OSError, http.client.HTTPException) as error:
+        raise WebFetchError(Reason.CONNECT) from error
+    finally:
+        connection.close()
+    if reply.status != 200:
+        raise WebFetchError(Reason.STATUS, reply.status)
+    try:
+        return json.loads(data)
+    except ValueError as error:
+        raise WebFetchError(Reason.UNEXPECTED) from error
+
+
+class Stream:
+    """An open answer read as it arrives (a radio stream, a podcast episode), with no size or time limit: the
+    caller stops reading. `length` is the whole file's size when the server says it; `ranged` that it started
+    at the asked offset."""
+
+    def __init__(self, connection: http.client.HTTPConnection, reply: http.client.HTTPResponse, start: int):
+        self._connection = connection
+        self._reply = reply
+        self.content_type = reply.getheader("Content-Type", "")
+        self.ranged = start > 0 and reply.status == 206
+        self.length = _whole_length(reply, start)
+
+    def read(self, size: int) -> bytes:
+        try:
+            return self._reply.read(size)
+        except (OSError, http.client.HTTPException) as error:
+            raise WebFetchError(Reason.CONNECT) from error
+
+    def close(self) -> None:
+        self._connection.close()
+
+
+def open_stream(url: str, language: AssistantLanguage = AssistantLanguage.TURKISH, start: int = 0) -> Stream:
+    """Like `get`, but the body is left to the caller. Radio servers often listen on other ports (8000, 1020), so
+    any port is allowed here; the address must still be public, and what comes back only goes to the decoder."""
+    headers = {"Range": f"bytes={start}-"} if start > 0 else {}
+    current = url
+    for _ in range(MAX_REDIRECTS + 1):
+        connection, reply = _open(current, language, STREAM_USER_AGENT, extra_headers=headers, any_port=True)
+        location = reply.getheader("Location")
+        if reply.status in _REDIRECTS and location:
+            connection.close()
+            current = urljoin(current, location)
+            continue
+        if reply.status not in (200, 206):
+            connection.close()
+            raise WebFetchError(Reason.STATUS, reply.status)
+        return Stream(connection, reply, start)
+    raise WebFetchError(Reason.REDIRECTS)
+
+
+def _whole_length(reply: http.client.HTTPResponse, start: int) -> int | None:
+    total = (reply.getheader("Content-Range") or "").rpartition("/")[2]
+    if total.isdigit():
+        return int(total)
+    length = reply.getheader("Content-Length") or ""
+    return int(length) + (start if reply.status == 206 else 0) if length.isdigit() else None
+
+
+def _open(
+    url: str,
+    language: AssistantLanguage,
+    user_agent: str,
+    method: str = "GET",
+    body: bytes | None = None,
+    extra_headers: dict[str, str] | None = None,
+    any_port: bool = False,
+) -> tuple[http.client.HTTPConnection, http.client.HTTPResponse]:
+    """Sends the request to a checked address and returns the open connection with its answer's headers read."""
     parts = urlsplit(url)
     scheme = parts.scheme.lower()
     if scheme not in _DEFAULT_PORTS or not parts.hostname:
@@ -176,7 +273,7 @@ def _get_once(
         port = parts.port or _DEFAULT_PORTS[scheme]
     except ValueError as error:
         raise WebFetchError(Reason.UNSUPPORTED) from error
-    if port not in ALLOWED_PORTS:
+    if port not in ALLOWED_PORTS and not any_port:
         raise WebFetchError(Reason.UNSUPPORTED)
     host = parts.hostname
     if network_address.is_local_name(host):
@@ -187,25 +284,22 @@ def _get_once(
         "User-Agent": user_agent,
         "Accept-Language": "en,tr;q=0.8" if language is AssistantLanguage.ENGLISH else "tr,en;q=0.8",
         "Accept-Encoding": "identity",
+        **(extra_headers or {}),
     }
+    if body is not None:
+        headers["Content-Length"] = str(len(body))
     last_error: Exception | None = None
     # Each checked address is tried in turn: a dual-stack name may list IPv6 first on a network without it.
     for address in _public_addresses(host, port):
         connection = _PinnedConnection(scheme, host, port, address)
         try:
-            connection.putrequest("GET", path, skip_host=True, skip_accept_encoding=True)
+            connection.putrequest(method, path, skip_host=True, skip_accept_encoding=True)
             for name, value in headers.items():
                 connection.putheader(name, value)
-            connection.endheaders()
-            reply = connection.getresponse()
-            location = reply.getheader("Location")
-            if reply.status in (301, 302, 303, 307, 308) and location:
-                return Response(url, reply.status, "", b""), location
-            body = _read_limited(reply, max_bytes, deadline)
-            return Response(url, reply.status, reply.getheader("Content-Type", ""), body), None
+            connection.endheaders(body)
+            return connection, connection.getresponse()
         except (OSError, http.client.HTTPException) as error:
             last_error = error
-        finally:
             connection.close()
     raise WebFetchError(Reason.CONNECT) from last_error
 
