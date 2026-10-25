@@ -94,9 +94,10 @@ struct PodcastTests {
     }
 
     @Test("pausing, resuming and seeking a podcast are media commands", arguments: [
-        ("podcast'i durdur", QuickIntent.media(.pause)), ("podcaste devam et", .media(.play)),
-        ("podcasti devam ettir", .media(.play)), ("podcast'i 30 saniye ileri sar", .media(.seekForward(30))),
-        ("bölümü bir dakika geri sar", .media(.seekBackward(60))),
+        ("podcast'i durdur", QuickIntent.media(.pause, subject: .stream)), ("podcaste devam et", .media(.play, subject: .stream)),
+        ("podcasti devam ettir", .media(.play, subject: .stream)), ("podcast'i aç", .media(.play, subject: .stream)),
+        ("podcast'i 30 saniye ileri sar", .media(.seekForward(30), subject: .stream)),
+        ("bölümü bir dakika geri sar", .media(.seekBackward(60), subject: .stream)),
     ])
     func controls(command: String, expected: QuickIntent) {
         #expect(QuickIntentParser.parse(TurkishNumberParser.digitize(command)) == expected)

@@ -92,16 +92,33 @@ struct MediaTool: AssistantTool {
     }
 
     @Generable
+    enum Subject {
+        case music, radioOrPodcast
+    }
+
+    @Generable
     struct Arguments {
         var action: Action
         @Guide(description: "Sadece seekForward/seekBackward için saniye: '30 saniye ileri sar' → 30, '1 dakika geri sar' → 60. Söylenmediyse boş bırak.", .range(1...3600))
         var seconds: Int?
+        @Guide(description: "Komut müziği ya da radyo/podcast'i açıkça söylüyorsa o; söylemiyorsa boş bırak.")
+        var subject: Subject?
     }
 
+    /// The subject is taken from the words, not the model's guess: it decides whether Bilge's player is skipped.
     func refine(_ arguments: Arguments, command: String) -> Arguments {
-        guard [.seekForward, .seekBackward].contains(arguments.action) else { return arguments }
-        let said = MacControlRequest.seekSeconds(command, language: AppLanguage.current)
-        return Arguments(action: arguments.action, seconds: said ?? arguments.seconds)
+        let seconds = [.seekForward, .seekBackward].contains(arguments.action)
+            ? MacControlRequest.seekSeconds(command, language: AppLanguage.current) ?? arguments.seconds
+            : arguments.seconds
+        return Arguments(action: arguments.action, seconds: seconds, subject: Self.subject(MediaSubject(command)))
+    }
+
+    static func subject(_ subject: MediaSubject) -> Subject? {
+        switch subject {
+        case .unnamed: nil
+        case .music: .music
+        case .stream: .radioOrPodcast
+        }
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -117,17 +134,32 @@ struct MediaTool: AssistantTool {
         }
     }
 
-    /// Radio or a podcast playing in Bilge takes play, pause, seeking and "what is playing" before Music and Spotify;
-    /// next, previous, shuffle and repeat stay theirs.
+    /// Radio or a podcast in Bilge takes play, pause, seeking and "what is playing" before Music and Spotify, as
+    /// `StreamMediaChoice` decides; next, previous, shuffle and repeat stay theirs.
+    private static func streamReply(_ arguments: Arguments) async -> String? {
+        guard [.play, .pause, .toggle, .nowPlaying, .seekForward, .seekBackward].contains(arguments.action) else { return nil }
+        let stream = await StreamPlayer.shared.state
+        let subject: MediaSubject = switch arguments.subject {
+        case .music: .music
+        case .radioOrPodcast: .stream
+        case nil: .unnamed
+        }
+        if subject == .stream, stream == .idle {
+            return [.play, .toggle].contains(arguments.action) ? await StreamReplies.noPodcastOpen : await StreamReplies.nothingPlaying
+        }
+        let pausing = arguments.action == .pause || (arguments.action == .toggle && stream == .playing)
+        guard await StreamMediaChoice.takes(pausing: pausing, stream: stream, subject: subject,
+                                            musicHoldsTrack: MusicPlayers.holdsTrack) else { return nil }
+        return await streamAction(arguments)
+    }
+
     @MainActor
-    private static func streamReply(_ arguments: Arguments) -> String? {
-        let player = StreamPlayer.shared
-        guard player.current != nil else { return nil }
+    private static func streamAction(_ arguments: Arguments) -> String? {
         let seconds = arguments.seconds ?? defaultSeekSeconds
         switch arguments.action {
         case .pause: return StreamReplies.pause()
         case .play: return StreamReplies.resume()
-        case .toggle: return player.state == .playing ? StreamReplies.pause() : StreamReplies.resume()
+        case .toggle: return StreamPlayer.shared.state == .playing ? StreamReplies.pause() : StreamReplies.resume()
         case .nowPlaying: return StreamReplies.nowPlaying()
         case .seekForward: return StreamReplies.seek(by: seconds)
         case .seekBackward: return StreamReplies.seek(by: -seconds)
@@ -153,15 +185,19 @@ struct MediaTool: AssistantTool {
         }
         let othersSounding = playing == nil && AudioActivity.othersSounding()
         let mediaTab = playing == nil && transport != .pause && !othersSounding ? await Self.browserMediaTab() != nil : false
+        let reply: String
         switch MusicPlayerChoice.transportTarget(transport, players: players, othersSounding: othersSounding, mediaTab: mediaTab) {
-        case let .app(app): return try await tell(app, action)
-        case .mediaKey: return try await pressMediaKey(action)
+        case let .app(app): reply = try await tell(app, action)
+        case .mediaKey: reply = try await pressMediaKey(action)
         case .alreadyPlaying: return String(localized: "Zaten bir şey çalıyor.")
         case .nothing:
             return action == .pause
                 ? String(localized: "Şu an çalan bir şey yok.")
                 : String(localized: "Devam ettirilecek bir şey bulamadım.")
         }
+        // Music that starts takes over from a paused radio or podcast, which would otherwise keep "devam et" for itself.
+        if transport != .pause, playing == nil, !othersSounding { await MainActor.run { StreamPlayer.shared.stop() } }
+        return reply
     }
 
     private func tell(_ app: MusicApp, _ action: Action) async throws -> String {

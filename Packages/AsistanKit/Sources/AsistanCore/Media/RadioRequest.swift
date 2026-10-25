@@ -65,12 +65,14 @@ public enum RadioRequest {
         return station(in: body, mentionsRadio: mentionsRadio)
     }
 
-    /// "Durdur", "devam et" and "sesini kıs" said while the in-app player has something.
+    /// "Durdur" and "sesini kıs" said while the in-app player plays, "devam et" while it is paused; a paused stream
+    /// leaves "durdur" and "sesini kıs" to whatever else plays.
     private static func bareStreamCommand(_ words: [String], stream: StreamState) -> RadioCommand? {
-        if [["durdur"], ["duraklat"], ["sustur"]].contains(words) { return .stop }
-        if stream == .paused, [["devam", "et"], ["devam"], ["devam", "ettir"], ["kaldigin", "yerden", "devam", "et"]].contains(words) {
-            return .resume
+        if stream == .paused {
+            let resumes: [[String]] = [["devam", "et"], ["devam"], ["devam", "ettir"], ["kaldigin", "yerden", "devam", "et"]]
+            return resumes.contains(words) ? .resume : nil
         }
+        if [["durdur"], ["duraklat"], ["sustur"]].contains(words) { return .stop }
         let rest = words.filter { $0 != "biraz" }
         guard rest.count == 2, rest[0] == "sesini" else { return nil }
         if quieter.contains(rest[1]) { return .volume(louder: false) }
@@ -86,9 +88,9 @@ public enum RadioRequest {
 
     private static func english(_ tokens: [SpokenToken], stream: StreamState) -> RadioCommand? {
         let words = tokens.map(\.folded).filter { $0 != "please" }
-        if stream != .idle {
+        if stream == .paused, [["resume"], ["unpause"], ["keep", "playing"], ["continue", "playing"]].contains(words) { return .resume }
+        if stream == .playing {
             if [["stop"], ["pause"], ["stop", "it"], ["pause", "it"]].contains(words) { return .stop }
-            if stream == .paused, [["resume"], ["unpause"], ["keep", "playing"], ["continue", "playing"]].contains(words) { return .resume }
             if [["turn", "it", "down"], ["quieter"], ["lower", "the", "volume"]].contains(words) { return .volume(louder: false) }
             if [["turn", "it", "up"], ["louder"]].contains(words) { return .volume(louder: true) }
         }

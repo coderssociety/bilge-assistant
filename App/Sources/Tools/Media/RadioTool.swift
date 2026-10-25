@@ -36,7 +36,7 @@ struct RadioTool: RuleRoutedTool {
         switch command {
         case let .play(station): return await play(station)
         case .stop: return await StreamReplies.stop()
-        case .resume: return await StreamReplies.resume()
+        case .resume: return try await resume()
         case .nowPlaying: return await StreamReplies.nowPlaying()
         case let .volume(louder): return await StreamReplies.changeVolume(louder: louder)
         }
@@ -68,6 +68,16 @@ struct RadioTool: RuleRoutedTool {
         } catch {
             return ToolReply.failure(String(localized: "Radyo listesine ulaşamadım. \(error.localizedDescription)"))
         }
+    }
+
+    /// A bare "devam et" is the music's when Music or Spotify holds a track, not a stream paused long ago.
+    private func resume() async throws -> String {
+        let stream = await StreamPlayer.shared.state
+        guard await StreamMediaChoice.takes(pausing: false, stream: stream, subject: .unnamed,
+                                            musicHoldsTrack: MusicPlayers.holdsTrack) else {
+            return try await MediaTool().call(arguments: .init(action: .play, seconds: nil, subject: .music))
+        }
+        return await StreamReplies.resume()
     }
 }
 
@@ -112,6 +122,9 @@ enum RadioBrowser {
 @MainActor
 enum StreamReplies {
     static var nothingPlaying: String { String(localized: "Şu an çalan bir radyo ya da podcast yok.") }
+    static var noPodcastOpen: String {
+        ToolReply.failure(String(localized: "Açık bir podcast yok. Örneğin 'Mesele Ekonomi podcastinin son bölümünü aç' diyebilirsin."))
+    }
 
     /// A station is turned off; an episode is paused, so it can go on later.
     static func stop() -> String {

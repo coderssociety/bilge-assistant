@@ -75,6 +75,19 @@ enum MusicPlayers {
         }
     }
 
+    /// Whether Music or Spotify has a track playing or paused, which a bare "devam et" would resume. False when they
+    /// cannot be asked, so Bilge's own player gets the command.
+    static func holdsTrack() async -> Bool {
+        let open = await MainActor.run { running() }
+        guard !open.isEmpty else { return false }
+        do {
+            return try await states(of: open).contains { $0.state != .stopped }
+        } catch {
+            Log.tools.error("Could not ask the music apps: \(error.localizedDescription, privacy: .public)")
+            return false
+        }
+    }
+
     /// Skips the query when it could not change the choice.
     static func controlTarget() async throws -> MusicApp? {
         let open = await MainActor.run { running() }

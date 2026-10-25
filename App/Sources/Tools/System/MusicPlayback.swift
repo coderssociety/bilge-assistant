@@ -148,6 +148,7 @@ enum MusicPlayback {
         let inApp = await MainActor.run { MusicPlayers.isInstalled(.spotify) }
         let url = inApp ? MusicSearch.spotifySearch(query) : MusicSearch.searchPage(.spotify, query: query, country: country)
         guard let url, await openURL(url) else { return ToolReply.failure(String(localized: "Spotify'da arama açılamadı.")) }
+        await stopBilgePlayer()
         return String(localized: "Spotify'da '\(query)' için arama sonuçlarını açtım; çalmak istediğini seçebilirsin.")
     }
 
@@ -155,6 +156,7 @@ enum MusicPlayback {
         guard let page = MusicSearch.searchPage(service, query: query, country: country), await openURL(page) else {
             return ToolReply.failure(String(localized: "\(place(service)) arama açılamadı."))
         }
+        await stopBilgePlayer()
         return reply
     }
 

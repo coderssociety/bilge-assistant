@@ -87,6 +87,18 @@ struct RadioTests {
         #expect(RadioRequest.parse("sesi kıs", stream: .playing) == nil)
     }
 
+    @Test("a paused stream only takes a bare resume, so stop and volume reach the music")
+    func paused() {
+        #expect(RadioRequest.parse("devam et", stream: .paused) == .resume)
+        #expect(RadioRequest.parse("durdur", stream: .paused) == nil)
+        #expect(RadioRequest.parse("sesini kıs", stream: .paused) == nil)
+        #expect(RadioRequest.parse("müziği durdur", stream: .paused) == nil)
+        #expect(RadioRequest.parse("resume", language: .english, stream: .paused) == .resume)
+        #expect(RadioRequest.parse("stop", language: .english, stream: .paused) == nil)
+        #expect(RadioRequest.parse("turn it down", language: .english, stream: .paused) == nil)
+        #expect(RadioRequest.parse("stop", language: .english, stream: .playing) == .stop)
+    }
+
     @Test("a command for later is not carried out now", arguments: [
         "30 dakika sonra radyoyu kapat", "radyoyu yarım saat sonra kapat", "radyoyu 1 saat sonra kapat",
         "10 dakikaya kadar radyoyu kapat", "turn off the radio in 30 minutes", "stop the radio after an hour",

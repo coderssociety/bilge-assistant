@@ -23,7 +23,7 @@ public enum QuickIntent: Sendable, Equatable {
     case openFolder(Folder)
     case timers(TimerAction)
     case volume(Volume)
-    case media(Media)
+    case media(Media, subject: MediaSubject = .unnamed)
     case system(System)
     case calendar(CalendarRange)
     case calculate(String)
@@ -53,12 +53,18 @@ public enum QuickIntentParser {
             dateTime, battery, volume, media, system, calendar, reminders, clipboard, folder, timers,
         ]
         for rule in wordRules {
-            if let intent = rule(words) { return intent }
+            if let intent = rule(words) { return named(intent, words) }
         }
-        if let intent = MacQuickIntents.parse(words) { return intent }
+        if let intent = MacQuickIntents.parse(words) { return named(intent, words) }
         if let intent = timer(words, text: text) { return intent }
         if let expression = TurkishArithmeticParser.expression(from: text) { return .calculate(expression) }
         return app(words, original: kept)
+    }
+
+    /// "Müziği durdur" must not reach a paused podcast, nor "podcast'i aç" a paused song.
+    private static func named(_ intent: QuickIntent, _ words: [String]) -> QuickIntent {
+        guard case let .media(media, _) = intent else { return intent }
+        return .media(media, subject: MediaSubject(foldedWords: words))
     }
 
     // MARK: - Politeness

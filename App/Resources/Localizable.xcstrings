@@ -1976,6 +1976,16 @@
         }
       }
     },
+    "Açık bir podcast yok. Örneğin 'Mesele Ekonomi podcastinin son bölümünü aç' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No podcast is open. You can say, for example, 'play the latest episode of Huberman Lab'."
+          }
+        }
+      }
+    },
     "Açık bir tarayıcı yok.": {
       "localizations": {
         "en": {

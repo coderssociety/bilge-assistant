@@ -17,8 +17,8 @@ struct FastPath {
             return await make("readReminders", RemindersQueryTool.self) { .init() }
         case let .volume(volume):
             return await make("setVolume", VolumeTool.self) { Self.arguments(for: volume) }
-        case let .media(media):
-            return await make("controlMusic", MediaTool.self) { Self.arguments(for: media) }
+        case let .media(media, subject):
+            return await make("controlMusic", MediaTool.self) { Self.arguments(for: media, subject: MediaTool.subject(subject)) }
         case let .system(system):
             return await make("systemAction", SystemActionTool.self) { .init(action: Self.action(for: system), focusName: nil) }
         case let .calendar(range):
@@ -84,19 +84,20 @@ struct FastPath {
         }
     }
 
-    private static func arguments(for media: QuickIntent.Media) -> MediaTool.Arguments {
-        switch media {
-        case .play: .init(action: .play, seconds: nil)
-        case .pause: .init(action: .pause, seconds: nil)
-        case .next: .init(action: .next, seconds: nil)
-        case .previous: .init(action: .previous, seconds: nil)
-        case .nowPlaying: .init(action: .nowPlaying, seconds: nil)
-        case .restartTrack: .init(action: .restartTrack, seconds: nil)
-        case let .seekForward(seconds): .init(action: .seekForward, seconds: seconds)
-        case let .seekBackward(seconds): .init(action: .seekBackward, seconds: seconds)
-        case let .shuffle(on): .init(action: on ? .shuffleOn : .shuffleOff, seconds: nil)
-        case let .repeatAll(on): .init(action: on ? .repeatOn : .repeatOff, seconds: nil)
+    private static func arguments(for media: QuickIntent.Media, subject: MediaTool.Subject?) -> MediaTool.Arguments {
+        let (action, seconds): (MediaTool.Action, Int?) = switch media {
+        case .play: (.play, nil)
+        case .pause: (.pause, nil)
+        case .next: (.next, nil)
+        case .previous: (.previous, nil)
+        case .nowPlaying: (.nowPlaying, nil)
+        case .restartTrack: (.restartTrack, nil)
+        case let .seekForward(seconds): (.seekForward, seconds)
+        case let .seekBackward(seconds): (.seekBackward, seconds)
+        case let .shuffle(on): (on ? .shuffleOn : .shuffleOff, nil)
+        case let .repeatAll(on): (on ? .repeatOn : .repeatOff, nil)
         }
+        return .init(action: action, seconds: seconds, subject: subject)
     }
 
     private static func action(for system: QuickIntent.System) -> SystemActionTool.Action {
