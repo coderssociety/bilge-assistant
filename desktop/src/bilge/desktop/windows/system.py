@@ -203,19 +203,22 @@ class WindowsScreenshots:
         return self._api
 
     def capture(self, area: ScreenshotArea, destination: Path) -> bool:
-        api = self.api
-        api.use_physical_pixels()
-        if area is ScreenshotArea.SELECTION:
-            pixels = self._snip()
-            if pixels is None:
-                return False
-        else:
-            window = api.foreground() if area is ScreenshotArea.FRONT_WINDOW else None
-            rect = api.window_rect(window) if window is not None else api.screen_rect()
-            pixels = api.capture(*rect)
+        pixels = self.pixels(area)
+        if pixels is None:
+            return False
         destination.write_bytes(image.png(pixels))
         self._last = (destination, pixels)
         return True
+
+    def pixels(self, area: ScreenshotArea) -> image.Pixels | None:
+        """The capture in memory; None when the user gave up choosing an area."""
+        api = self.api
+        api.use_physical_pixels()
+        if area is ScreenshotArea.SELECTION:
+            return self._snip()
+        window = api.foreground() if area is ScreenshotArea.FRONT_WINDOW else None
+        rect = api.window_rect(window) if window is not None else api.screen_rect()
+        return api.capture(*rect)
 
     def _snip(self) -> image.Pixels | None:
         api = self.api

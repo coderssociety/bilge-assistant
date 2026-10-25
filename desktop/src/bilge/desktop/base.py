@@ -233,6 +233,14 @@ class Screenshots(Protocol):
     def copy_image(self, image: Path) -> None: ...
 
 
+class ScreenText(Protocol):
+    def read(self, area: ScreenshotArea) -> str:
+        """The text shown in the front window or on the whole screen, recognized in a screenshot that is not kept.
+        Empty when the user cancelled the capture; MissingProgram or NotPossibleHere when nothing here can
+        recognize text."""
+        ...
+
+
 class SettingsPanes(Protocol):
     def open(self, pane: str) -> bool:
         """`pane` is one of the names in `bilge.core.conversation.quick_intent_parser.SettingsPane`; False when this
@@ -284,6 +292,7 @@ class Desktop:
     session: Session
     network: Network
     screenshots: Screenshots
+    screen_text: ScreenText
     settings: SettingsPanes
     opener: Opener
     notifier: Notifier

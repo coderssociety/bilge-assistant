@@ -38,6 +38,23 @@ def png(pixels: Pixels) -> bytes:
     )
 
 
+def shrunk(pixels: Pixels, limit: int) -> Pixels:
+    """Every n-th pixel in both directions, so neither side is longer than `limit`; unchanged when it already fits."""
+    step = max(-(-pixels.width // limit), -(-pixels.height // limit), 1)
+    if step == 1:
+        return pixels
+    stride = pixels.width * 4
+    width, height = -(-pixels.width // step), -(-pixels.height // step)
+    out = bytearray()
+    for y in range(0, pixels.height, step):
+        row = pixels.bgra[y * stride : (y + 1) * stride]
+        kept = bytearray(width * 4)
+        for channel in range(4):
+            kept[channel::4] = row[channel::4][::step]
+        out += kept
+    return Pixels(width, height, bytes(out))
+
+
 def dib(pixels: Pixels) -> bytes:
     """A 32-bit bottom-up DIB, which every Windows app pastes."""
     stride = pixels.width * 4
