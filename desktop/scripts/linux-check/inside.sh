@@ -16,7 +16,7 @@ pactl set-default-sink speakers
 mkdir -p work
 tar --exclude=.venv --exclude=.git --exclude=.pytest_cache --exclude=__pycache__ -cf - -C /src . | tar -xf - -C work
 cd work
-export UV_PYTHON=3.12
+export UV_PYTHON=3.14
 uv sync --quiet
 echo "== whole suite on $(. /etc/os-release && echo "$PRETTY_NAME")"
 uv run pytest -q -p no:warnings

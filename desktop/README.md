@@ -12,7 +12,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows" alt="Windows 10/11">
   <img src="https://img.shields.io/badge/Linux-AppImage-FCC624?logo=linux&logoColor=black" alt="Linux AppImage">
-  <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white" alt="Python 3.14">
 </p>
 
 <p align="center">
@@ -38,7 +38,7 @@ in a plain file.
 
 ## Status
 
-All five phases are done; 0.1.2 is the newest release.
+All five phases are done; 0.1.3 is the newest release.
 
 1. **Core** (done): the Turkish and English parsers from the Mac version with the same test cases, the
    tool-calling agent with confirmations and prompt-injection rules, and a text chat to try it.
@@ -95,7 +95,7 @@ models (1-2 GB). After that Bilge sits in the tray: say “Bilge” and your req
 
 ## Trying it from source
 
-Needs Python 3.12 and [uv](https://docs.astral.sh/uv/).
+Needs Python 3.14 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync

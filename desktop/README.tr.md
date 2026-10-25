@@ -12,7 +12,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows" alt="Windows 10/11">
   <img src="https://img.shields.io/badge/Linux-AppImage-FCC624?logo=linux&logoColor=black" alt="Linux AppImage">
-  <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white" alt="Python 3.14">
 </p>
 
 <p align="center">
@@ -39,7 +39,7 @@ Linux'ta Secret Service).
 
 ## Durum
 
-Beş aşamanın hepsi tamam; en yeni sürüm 0.1.2.
+Beş aşamanın hepsi tamam; en yeni sürüm 0.1.3.
 
 1. **Çekirdek** (tamam): Mac sürümündeki Türkçe ve İngilizce ayrıştırıcılar, aynı test örnekleriyle; onaylı ve
    istem enjeksiyonuna karşı kurallı araç çağıran ajan; denemek için yazılı sohbet.
@@ -96,7 +96,7 @@ satırını verir.
 
 ## Kaynaktan denemek
 
-Python 3.12 ve [uv](https://docs.astral.sh/uv/) gerekir.
+Python 3.14 ve [uv](https://docs.astral.sh/uv/) gerekir.
 
 ```bash
 uv sync

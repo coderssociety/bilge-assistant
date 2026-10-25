@@ -4,7 +4,7 @@ set -euo pipefail
 
 mkdir -p /work && tar --exclude=.venv --exclude=.git --exclude=build --exclude=dist -cf - -C /src . | tar -xf - -C /work
 cd /work
-export UV_PYTHON=3.12 UV_PYTHON_PREFERENCE=only-managed UV_HTTP_TIMEOUT=300
+export UV_PYTHON=3.14 UV_PYTHON_PREFERENCE=only-managed UV_HTTP_TIMEOUT=300
 uv sync --quiet --locked --extra app
 version=$(uv run python -c "from importlib.metadata import version; print(version('bilge'))")
 arch=$(uname -m)
