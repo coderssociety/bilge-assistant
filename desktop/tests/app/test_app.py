@@ -107,11 +107,13 @@ def test_settings_are_saved_with_keys_in_the_key_store(qapp, isolated, tmp_path)
     model.model.setCurrentText("llama-3.3-70b")
     model.key.setText("gsk-secret")
     window.pages["general"].city.setText("İzmir")
+    window.pages["general"].earthquakes.setChecked(False)
     window.pages["voice"].voice.setCurrentText("M2")
     window.pages["recognition"].buttons["groq"].setChecked(True)
     window.save()
     stored = config.load_settings(tmp_path / "settings.json")
     assert (stored.model.provider, stored.model.model, stored.weather_city) == ("groq", "llama-3.3-70b", "İzmir")
+    assert stored.earthquake_alerts is False
     assert (stored.voice.voice, stored.voice.recognizer) == ("M2", "groq")
     assert isolated == {"groq": "gsk-secret"}
     assert "gsk-secret" not in (tmp_path / "settings.json").read_text(encoding="utf-8")

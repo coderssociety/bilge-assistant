@@ -1,9 +1,13 @@
 import json
-from datetime import datetime, timedelta, timezone
+import threading
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
+from bilge.core.alerts import earthquake_alert
 from bilge.core.language import AssistantLanguage
+from bilge.core.web import provinces
+from bilge.core.web.earthquake_feed import Earthquake
 from bilge.tools import web_fetch
 from bilge.tools.base import ToolError
 from bilge.tools.builtin import earthquakes
@@ -88,3 +92,93 @@ def test_the_list_is_kept_for_a_minute(monkeypatch):
 )
 def test_the_rule_takes_questions_about_earthquakes_that_happened(command, claimed):
     assert earthquakes.asks_about_earthquakes(command) is claimed
+
+
+class Clock:
+    def __init__(self):
+        self.now = NOW
+
+    def __call__(self):
+        return self.now
+
+
+def near_istanbul(id, at, magnitude=4.6):
+    return Earthquake(id, at, 40.8, 29.0, 9.0, magnitude, "Marmara Denizi")
+
+
+def watcher(fetch, clock, said, city="İstanbul", announced=None):
+    return earthquakes.EarthquakeWatcher(TR, lambda: city, said.append, announced, fetch=fetch,
+                                         locate=provinces.named, clock=clock)  # fmt: skip
+
+
+def test_the_watcher_says_a_new_strong_earthquake_once():
+    clock, said = Clock(), []
+    found = [near_istanbul("afad:1", NOW - timedelta(minutes=2))]
+    windows = []
+
+    def fetch(since, now):
+        windows.append((since, now))
+        return found
+
+    watch = watcher(fetch, clock, said)
+    assert watch.poll() == earthquake_alert.POLL_SECONDS
+    assert said == [
+        "Yakınında deprem: Marmara Denizi: büyüklük 4,6, 2 dakika önce, derinlik 9 km, İstanbul'dan 23 km uzakta."
+    ]
+    clock.now += timedelta(minutes=2)
+    watch.poll()
+    assert len(said) == 1
+    assert windows[0] == (NOW - earthquakes.ALERT_WINDOW, NOW)
+
+
+def test_the_watcher_ignores_what_happened_before_it_started():
+    clock, said = Clock(), []
+    watch = watcher(lambda since, now: [near_istanbul("afad:1", NOW - timedelta(minutes=40))], clock, said)
+    watch.poll()
+    clock.now += timedelta(minutes=2)
+    watch.poll()
+    assert said == []
+
+
+def test_the_watcher_backs_off_on_errors_and_returns_to_normal():
+    clock, said = Clock(), []
+    failing = [True]
+
+    def fetch(since, now):
+        if failing[0]:
+            raise web_fetch.WebFetchError(web_fetch.Reason.CONNECT)
+        return []
+
+    watch = watcher(fetch, clock, said)
+    assert [watch.poll() for _ in range(5)] == [240, 480, 960, 1800, 1800]
+    failing[0] = False
+    assert watch.poll() == 120
+
+
+def test_a_city_that_cannot_be_placed_waits_long():
+    watch = watcher(lambda since, now: [], Clock(), [], city="Atlantis")
+    assert watch.poll() == earthquake_alert.MAX_RETRY_SECONDS
+
+
+def test_the_watcher_runs_on_its_own_thread_until_stopped():
+    polled = threading.Event()
+
+    def fetch(since, now):
+        polled.set()
+        return []
+
+    watch = watcher(fetch, lambda: datetime.now(UTC), [])
+    watch.start()
+    assert polled.wait(2)
+    watch.stop()
+
+
+def test_a_failing_announcement_does_not_stop_the_watcher():
+    def broken(message):
+        raise RuntimeError("no speaker")
+
+    watch = earthquakes.EarthquakeWatcher(
+        TR, lambda: "İstanbul", broken, fetch=lambda since, now: [near_istanbul("a", NOW)], locate=provinces.named,
+        clock=Clock(),
+    )  # fmt: skip
+    assert watch.poll() == earthquake_alert.POLL_SECONDS

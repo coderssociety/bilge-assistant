@@ -7,10 +7,11 @@ only listened to for the user cutting in ("Bilge, dur" or a new request).
 
 import logging
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
+from typing import Protocol
 
 import numpy as np
 
@@ -79,6 +80,14 @@ class Options:
 EventHandler = Callable[[str, str], None]
 
 
+class Service(Protocol):
+    """Runs alongside listening and stops with it (the earthquake watcher)."""
+
+    def start(self) -> None: ...
+
+    def stop(self) -> None: ...
+
+
 class VoiceAssistant:
     def __init__(
         self,
@@ -90,6 +99,7 @@ class VoiceAssistant:
         speaker_gate: SpeakerGate | None = None,
         on_event: EventHandler | None = None,
         wake_recognizer: Recognizer | None = None,
+        services: Sequence[Service] = (),
     ):
         self.recognizer = recognizer
         # A small, fast model for the wake word and cut-ins; the full one only for what is then said. The wake
@@ -100,6 +110,7 @@ class VoiceAssistant:
         self.language = language
         self.options = options or Options()
         self.speaker_gate = speaker_gate
+        self._services = tuple(services)
         self._on_event = on_event or (lambda kind, text: None)
         self.matcher = WakePhraseMatcher(self.options.wake_phrase)
         self.flow = ConversationFlow(self.matcher)
@@ -144,12 +155,19 @@ class VoiceAssistant:
         for target, name in [(self._process_utterances, "bilge-utterances"), (self._process_barge_ins, "bilge-barge-in"),
                              (self._tick, "bilge-tick")]:  # fmt: skip
             threading.Thread(target=target, name=name, daemon=True).start()
+        for service in self._services:
+            service.start()
         self._set_status(Status.LISTENING)
 
     def stop(self) -> None:
         self._running.clear()
         self._stopping.set()
         self._resolve(Answer.REJECTED)
+        for service in self._services:
+            try:
+                service.stop()
+            except Exception:
+                log.exception("Could not stop %s", type(service).__name__)
         self.speech.stop()
         with self._wake:
             self._wake.notify_all()
@@ -180,6 +198,11 @@ class VoiceAssistant:
     def interrupt(self) -> None:
         """Stops the reply in progress; Bilge keeps listening."""
         self._resolve(Answer.REJECTED)
+        for service in self._services:
+            try:
+                service.stop()
+            except Exception:
+                log.exception("Could not stop %s", type(service).__name__)
         self.speech.stop()
 
     # MARK: - Audio (called on the audio thread for each 512-sample chunk)
