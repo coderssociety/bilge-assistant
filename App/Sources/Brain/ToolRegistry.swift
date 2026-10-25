@@ -58,6 +58,7 @@ struct ToolRegistry {
             WeatherTool(),
             ExchangeRateTool(),
             NewsTool(reading: news),
+            NewsSourceTool(news: NewsTool(reading: news)),
             NewsArticleTool(reading: news),
             ReadWebPageTool(),
             ReadMailTool(),

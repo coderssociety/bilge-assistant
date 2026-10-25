@@ -91,4 +91,14 @@ struct HeadlineMemoryTests {
         #expect(heard.all == Array(feed[2..<4]) + Array(feed[0..<2]))
         #expect(memory.heardItems(at: start.addingTimeInterval(HeadlineMemory.lifetime + 11)).all.isEmpty)
     }
+
+    @Test("headlines are remembered per source, and the source just read is kept for a follow-up")
+    func perSource() {
+        var memory = HeadlineMemory()
+        _ = memory.next(feed, topic: "general", source: "anadolu", count: 5, at: start)
+        let other = memory.next(feed, topic: "general", source: "trtHaber", count: 5, at: start.addingTimeInterval(5))
+        #expect(other.kind == .first)
+        #expect(memory.recentSource(at: start.addingTimeInterval(10)) == "trtHaber")
+        #expect(memory.recentSource(at: start.addingTimeInterval(HeadlineMemory.continuationWindow + 6)) == nil)
+    }
 }

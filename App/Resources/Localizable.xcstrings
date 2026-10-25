@@ -82,6 +82,16 @@
         }
       }
     },
+    "%@ son %@ başlıkları. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latest %2$@ headlines (%1$@). "
+          }
+        }
+      }
+    },
     "%@ %@ %@ %@.": {
       "localizations": {
         "en": {
@@ -460,6 +470,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The %@ tab."
+          }
+        }
+      }
+    },
+    "%@ son başlıklar. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latest headlines (%@). "
           }
         }
       }
@@ -1102,26 +1122,6 @@
           "stringUnit": {
             "state": "new",
             "value": "Adım %1$lld / %2$lld"
-          }
-        }
-      }
-    },
-    "Anadolu Ajansı'ndan son %@ başlıkları. ": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Latest %@ headlines from Anadolu Agency. "
-          }
-        }
-      }
-    },
-    "Anadolu Ajansı'ndan son başlıklar. ": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Latest headlines from Anadolu Agency. "
           }
         }
       }
@@ -2254,6 +2254,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Thinking…"
+          }
+        }
+      }
+    },
+    "E-posta ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-mail "
           }
         }
       }

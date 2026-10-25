@@ -11,8 +11,13 @@ final class NewsReading: Sendable {
         memory.withLock { $0.recentTopic(at: .now) }.flatMap(NewsRequest.Topic.init(rawValue:))
     }
 
-    func next(_ items: [RSSHeadlines.Item], topic: NewsRequest.Topic, count: Int) -> HeadlineMemory.Reading {
-        memory.withLock { $0.next(items, topic: topic.rawValue, count: count, at: .now) }
+    func recentSource() -> NewsSource? {
+        memory.withLock { $0.recentSource(at: .now) }.flatMap(NewsSource.init(rawValue:))
+    }
+
+    func next(_ items: [RSSHeadlines.Item], topic: NewsRequest.Topic, source: NewsSource,
+              count: Int) -> HeadlineMemory.Reading {
+        memory.withLock { $0.next(items, topic: topic.rawValue, source: source.rawValue, count: count, at: .now) }
     }
 
     /// The headline just read that `command` points at.
@@ -29,7 +34,7 @@ final class NewsReading: Sendable {
 
 struct NewsTool: AssistantTool {
     let name = "news"
-    let description = "Son haber başlıklarını okur: gündem, ekonomi, spor, dünya ya da bilim-teknoloji (Anadolu Ajansı)."
+    let description = "Son haber başlıklarını okur: gündem, ekonomi, spor, dünya ya da bilim-teknoloji (Anadolu Ajansı, TRT Haber ya da BBC Türkçe)."
     let reading: NewsReading
     private static let headlineCount = 5
     /// Enough of the feed to go on with after the first few.
@@ -59,30 +64,6 @@ struct NewsTool: AssistantTool {
             }
         }
 
-        /// Anadolu Ajansı for Turkish, BBC News for English.
-        var feedURL: URL? {
-            switch AppLanguage.current {
-            case .turkish:
-                let slug = switch self {
-                case .general: "guncel"
-                case .economy: "ekonomi"
-                case .sports: "spor"
-                case .world: "dunya"
-                case .technology: "bilim-teknoloji"
-                }
-                return URL(string: "https://www.aa.com.tr/tr/rss/default?cat=\(slug)")
-            case .english:
-                let path = switch self {
-                case .general: "news/rss.xml"
-                case .economy: "news/business/rss.xml"
-                case .sports: "sport/rss.xml"
-                case .world: "news/world/rss.xml"
-                case .technology: "news/technology/rss.xml"
-                }
-                return URL(string: "https://feeds.bbci.co.uk/\(path)")
-            }
-        }
-
         /// As the feed names it: "bilim-teknoloji", "technology".
         var spokenName: String {
             switch (AppLanguage.current, self) {
@@ -103,20 +84,33 @@ struct NewsTool: AssistantTool {
     struct Arguments {
         @Guide(description: "Haber konusu; belirtilmediyse general")
         var category: Category
+        @Guide(description: "Boş bırak")
+        var source: String?
     }
 
-    /// A topic said in the command wins over the model's choice; "bu kadar mı" goes on with the topic just read.
+    /// A topic or source said in the command wins over the model's choice; "bu kadar mı" goes on with what was
+    /// just read, and "başka bir kaynak" turns to the next source.
     func refine(_ arguments: Arguments, command: String) -> Arguments {
-        guard let topic = NewsRequest.topic(in: command)
-            ?? (NewsRequest.isContinuation(command) ? reading.recentTopic() : nil)
-        else { return arguments }
-        var refined = arguments
-        refined.category = Category(topic)
-        return refined
+        let language = AppLanguage.current
+        let continues = NewsRequest.isContinuation(command)
+        let topic = NewsRequest.topic(in: command) ?? (continues ? reading.recentTopic() : nil) ?? arguments.category.topic
+        let source: NewsSource? = if let named = NewsSource.named(in: command, language: language) {
+            named
+        } else if NewsSource.asksForAnother(command) {
+            (reading.recentSource() ?? .preferred(for: language)).next(for: topic)
+        } else {
+            continues ? reading.recentSource() : nil
+        }
+        return Arguments(category: Category(topic), source: source?.rawValue)
     }
 
     func call(arguments: Arguments) async throws -> String {
-        guard let url = arguments.category.feedURL else {
+        let language = AppLanguage.current
+        let source = arguments.source.flatMap(NewsSource.init(rawValue:)).flatMap { $0.language == language ? $0 : nil }
+            ?? .preferred(for: language)
+        // A source without a feed of its own for the topic gives its general headlines, which the introduction says.
+        let category = source.feed(arguments.category.topic) == nil ? Category.general : arguments.category
+        guard let url = source.feed(category.topic) else {
             return ToolReply.failure(String(localized: "Haber kaynağı açılamadı."))
         }
         do {
@@ -124,31 +118,54 @@ struct NewsTool: AssistantTool {
             guard !feed.isEmpty else {
                 return ToolReply.failure(String(localized: "Haber başlığı bulunamadı."))
             }
-            let read = reading.next(feed, topic: arguments.category.topic, count: Self.headlineCount)
-            return Self.introduction(read.kind, arguments.category)
+            let read = reading.next(feed, topic: category.topic, source: source, count: Self.headlineCount)
+            return Self.introduction(read.kind, category, source)
                 + read.headlines.map { $0.hasSuffix(".") ? $0 : $0 + "." }.joined(separator: " ")
         } catch {
             return ToolReply.failure(String(localized: "Haberler alınamadı. \(error.localizedDescription)"))
         }
     }
 
-    private static func introduction(_ kind: HeadlineMemory.Reading.Kind, _ category: Category) -> String {
+    private static func introduction(_ kind: HeadlineMemory.Reading.Kind, _ category: Category,
+                                     _ source: NewsSource) -> String {
         let topic = category.spokenName
         switch (AppLanguage.current, kind) {
         case (.english, .first):
-            return topic.isEmpty ? "Latest headlines from BBC News. " : "Latest \(topic) headlines from BBC News. "
+            return topic.isEmpty ? "Latest headlines \(source.from). " : "Latest \(topic) headlines \(source.from). "
         case (.english, .next):
             return "The next headlines. "
         case (.english, .again):
             return "Nothing new since I last read them; the latest are still these. "
         case (.turkish, .first):
             return topic.isEmpty
-                ? String(localized: "Anadolu Ajansı'ndan son başlıklar. ")
-                : String(localized: "Anadolu Ajansı'ndan son \(topic) başlıkları. ")
+                ? String(localized: "\(source.from) son başlıklar. ")
+                : String(localized: "\(source.from) son \(topic) başlıkları. ")
         case (.turkish, .next):
             return String(localized: "Sıradaki başlıklar. ")
         case (.turkish, .again):
             return String(localized: "Son okuduğumdan beri yeni başlık yok; en son başlıklar yine şunlar. ")
         }
+    }
+}
+
+/// "Başka bir kaynak" after the headlines, and "TRT haberleri": the router model takes the first for small talk,
+/// so requests for a source are routed by rule to the news.
+struct NewsSourceTool: RuleRoutedTool {
+    let name = "newsFromSource"
+    let description = "Haberleri başka bir kaynaktan ya da söylenen kaynaktan okur."
+    let news: NewsTool
+
+    @MainActor
+    func claims(_ command: String) -> Bool {
+        if NewsSource.asksForAnother(command) { return news.reading.recentTopic() != nil }
+        return NewsSource.named(in: command, language: AppLanguage.current) != nil && NewsRequest.namesNews(command)
+    }
+
+    func arguments(fromCommand command: String) -> NewsTool.Arguments? {
+        news.refine(NewsTool.Arguments(category: .general, source: nil), command: command)
+    }
+
+    func call(arguments: NewsTool.Arguments) async throws -> String {
+        try await news.call(arguments: arguments)
     }
 }
