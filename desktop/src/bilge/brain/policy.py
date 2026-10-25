@@ -24,7 +24,7 @@ FREE_AFTER_UNTRUSTED = frozenset(
         "readDocument", "readNotes", "readScreen", "readSelection", "readClipboard", "readCalendar",
         "readReminders", "findContact", "readMail", "listShortcuts", "listRunningApps", "listMemories",
         # Figures from public data services, asked for by name.
-        "earthquakes",
+        "earthquakes", "football",
         # Opens only an address that came with a headline read out, so nothing can be carried off in it.
         "newsArticle",
     }
