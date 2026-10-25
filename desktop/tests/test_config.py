@@ -1,6 +1,6 @@
 import pytest
 
-from bilge import config
+from bilge import cli, config
 from bilge.core.language import AssistantLanguage
 
 
@@ -105,3 +105,19 @@ def test_custom_commands_round_trip_and_broken_entries_are_dropped(tmp_path):
         encoding="utf-8",
     )
     assert config.load_settings(path).commands == [config.CustomCommand("liste", ["ls", "-l"])]
+
+
+def test_the_music_service_round_trips_and_an_unknown_one_is_auto(tmp_path):
+    path = tmp_path / "settings.json"
+    config.save_settings(config.Settings(music_service="deezer"), path)
+    assert config.load_settings(path).music_service == "deezer"
+    path.write_text('{"music_service": "napster"}', encoding="utf-8")
+    assert config.load_settings(path).music_service == "auto"
+
+
+def test_the_music_service_is_shown_and_set_on_the_command_line(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(config, "settings_path", lambda: tmp_path / "settings.json")
+    assert cli.main(["music", "youtube"]) == 0
+    assert config.load_settings().music_service == "youtube"
+    assert cli.main(["music"]) == 0
+    assert capsys.readouterr().out.split() == ["youtube", "youtube"]

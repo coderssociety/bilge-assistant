@@ -1,5 +1,5 @@
 """Language, how Bilge is called and how the conversation flows, the corner window, starting with the computer,
-updates, the weather city, and earthquake alerts."""
+updates, the weather city, earthquake alerts, and the music service."""
 
 import contextlib
 import html
@@ -24,6 +24,7 @@ from bilge.app import autostart, worker
 from bilge.app.shortcut import listen_command
 from bilge.app.texts import t
 from bilge.core.language import AssistantLanguage
+from bilge.core.media.music_request import AUTO, NAMES
 from bilge.desktop.hotkey.shortcut import InvalidShortcut, parse
 
 
@@ -51,6 +52,10 @@ class GeneralPage(QWidget):
         self.update_state = QLabel(wordWrap=True, openExternalLinks=True)
         self.city = QLineEdit()
         self.earthquakes = QCheckBox(t("general.earthquakes"))
+        self.music = QComboBox()
+        self.music.addItem(t("general.music_auto"), AUTO)
+        for service, name in NAMES.items():
+            self.music.addItem(name, service.value)
         form = QFormLayout(self)
         form.addRow(t("general.language"), self.language)
         form.addRow("", QLabel(t("general.language_note")))
@@ -71,6 +76,8 @@ class GeneralPage(QWidget):
         form.addRow(t("general.city"), self.city)
         form.addRow("", self.earthquakes)
         form.addRow("", QLabel(t("general.earthquakes_note"), wordWrap=True))
+        form.addRow(t("general.music"), self.music)
+        form.addRow("", QLabel(t("general.music_note"), wordWrap=True))
 
     def load(self, settings: config.Settings) -> None:
         self.language.setCurrentIndex(max(0, self.language.findData(settings.language)))
@@ -83,6 +90,7 @@ class GeneralPage(QWidget):
         self.updates.setChecked(settings.check_updates)
         self.city.setText(settings.weather_city)
         self.earthquakes.setChecked(settings.earthquake_alerts)
+        self.music.setCurrentIndex(max(0, self.music.findData(settings.music_service)))
 
     def _hotkey_text(self) -> str:
         return self.hotkey.keySequence().toString(QKeySequence.SequenceFormat.PortableText)
@@ -112,6 +120,7 @@ class GeneralPage(QWidget):
         settings.check_updates = self.updates.isChecked()
         settings.weather_city = self.city.text().strip() or settings.weather_city
         settings.earthquake_alerts = self.earthquakes.isChecked()
+        settings.music_service = self.music.currentData()
 
     def save_secrets(self) -> None:
         pass
