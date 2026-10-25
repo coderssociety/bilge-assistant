@@ -13,6 +13,11 @@ struct TranslationRequestTests {
         ("ispanyolca diline çevirerek anlat", "es"),
         ("Read my email in Turkish", "tr"),
         ("translate the news into German", "de"),
+        ("bunu Lehçeye çevir", "pl"),
+        ("haberleri Lehçe oku", "pl"),
+        ("Fransızca da söyle", "fr"),
+        ("Türkçe yazılmış maili İngilizce oku", "en"),
+        ("İngilizce yazar mısın", "en"),
     ])
     func target(command: String, code: String) {
         #expect(TranslationRequest.target(in: command)?.code == code)
@@ -20,6 +25,8 @@ struct TranslationRequestTests {
 
     @Test("requests that only mention a language have no target", arguments: [
         "Maillerimi oku", "İngilizce maili aç", "Türkçe haberler", "fincanı yıka", "I speak English",
+        "Karadeniz lehçesini anlat", "Ege lehçesine çevir", "Almanca da biliyor musun", "İngilizce yazılmış maili oku",
+        "İngilizce yazılan maili oku", "Almanca konuşan biri var mı", "Fransızca konuşulan ülkeleri say",
     ])
     func noTarget(command: String) {
         #expect(TranslationRequest.target(in: command) == nil)
