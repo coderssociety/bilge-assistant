@@ -362,7 +362,7 @@ class Outlook:
                                                AllDayEvent=False)])  # fmt: skip
         self.tasks = Items([SimpleNamespace(Subject="Süt al", DueDate=datetime(4501, 1, 1), Complete=False,
                                             MarkComplete=lambda: None)])  # fmt: skip
-        self.inbox = Items([SimpleNamespace(SenderName="Ahmet", Subject="Toplantı")])
+        self.inbox = Items([SimpleNamespace(SenderName="Ahmet", Subject="Toplantı", Body="Yarın 10'da görüşelim.")])
         self.sent = []
 
     def GetNamespace(self, _):  # noqa: N802
@@ -409,6 +409,11 @@ def test_mail_is_read_as_untrusted_and_sent_only_to_the_resolved_recipient(no_co
     tools = {t.name: t for t in mail_tools(office.Outlook(application=lambda: app), TR)}
     assert tools["readMail"].untrusted_output
     assert tools["readMail"].run({}) == "1 okunmamış e-postan var. En yeniler: Ahmet: Toplantı"
+    arguments = tools["readMail"].refine({}, "İçeriğini oku")
+    assert arguments == {"content": True}
+    assert tools["readMail"].run(arguments) == (
+        "1 okunmamış e-postan var. En yeniler: Ahmet: Toplantı\n\nE-posta 1: Ahmet - Toplantı\nYarın 10'da görüşelim."
+    )
     send = tools["sendEmail"]
     arguments = {"to": "Ahmet", "subject": "Yarın", "body": "Toplantı 10'da."}
     assert send.question(arguments) == (

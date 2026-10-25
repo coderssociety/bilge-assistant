@@ -5,17 +5,24 @@ from dataclasses import dataclass
 from typing import Any
 
 from bilge.core.language import AssistantLanguage
+from bilge.core.mail_request import asks_for_content
 from bilge.desktop.windows.office import INBOX, MAIL_ITEM, OfficeError, Outlook, each, smtp_address
 from bilge.tools.base import Risk, Tool, ToolError
 from bilge.tools.desktop.common import obj, string_argument, text
 
 LISTED = 5
+# Messages whose text is read; each is cut, so a newsletter can't fill the answer.
+READ_MESSAGES = 3
+MAX_READ_CHARACTERS = 1500
 # The whole message is read out before it is sent; a longer one is refused rather than cut short in the question.
 MAX_BODY = 600
 
 _TEXTS = {
     AssistantLanguage.TURKISH: {
-        "read": "Outlook'taki okunmamış e-postaları sayar ve en yenilerinin gönderenini ve konusunu söyler.",
+        "read": "Outlook'taki okunmamış e-postaları sayar, en yenilerinin gönderenini ve konusunu, istenirse ne "
+        "yazdıklarını söyler.",
+        "content": "E-postaların ne yazdığı, içeriği isteniyorsa true",
+        "message": "E-posta {number}: {sender} - {subject}\n{body}",
         "not_running": "Outlook açık değil.",
         "new_outlook": "Yeni Outlook dışarıdan yönetilemiyor; klasik Outlook'un açık olması gerekiyor.",
         "too_long": "Bu e-posta sesle onaylamak için çok uzun; daha kısa söyler misin?",
@@ -32,7 +39,10 @@ _TEXTS = {
         "sent": "E-postayı {name} adresine gönderdim.",
     },
     AssistantLanguage.ENGLISH: {
-        "read": "Counts the unread e-mails in Outlook and says who sent the newest ones and their subjects.",
+        "read": "Counts the unread e-mails in Outlook and says who sent the newest ones, their subjects and, when "
+        "asked, what they say.",
+        "content": "True when the user wants to hear what the e-mails say",
+        "message": "E-mail {number}: {sender} - {subject}\n{body}",
         "not_running": "Outlook isn't open.",
         "new_outlook": "The new Outlook can't be controlled from outside; classic Outlook needs to be open.",
         "too_long": "That e-mail is too long to confirm by voice; could you say it shorter?",
@@ -72,22 +82,32 @@ def mail_tools(outlook: Outlook, language: AssistantLanguage) -> list[Tool]:
         except OfficeError as error:
             raise ToolError(texts.get(error.reason, texts["failed"])) from error
 
-    def read(_: dict[str, Any]) -> str:
-        def unread(app) -> tuple[int, list[str]]:
+    def read(arguments: dict[str, Any]) -> str:
+        with_content = bool(arguments.get("content"))
+
+        def unread(app) -> tuple[int, list[str], list[str]]:
             items = outlook.folder(app, INBOX).Items.Restrict("[UnRead] = True")
             items.Sort("[ReceivedTime]", True)
             count = int(items.Count)
+            newest = list(zip(range(LISTED), each(items), strict=False))
             # Reports and receipts in the inbox may have no sender.
-            newest = [
-                f"{getattr(item, 'SenderName', '') or '?'}: {getattr(item, 'Subject', '') or ''}"
-                for _, item in zip(range(LISTED), each(items), strict=False)
-            ]
-            return count, newest
+            listed = [f"{getattr(m, 'SenderName', '') or '?'}: {getattr(m, 'Subject', '') or ''}" for _, m in newest]
+            bodies = [
+                texts["message"].format(number=n + 1, sender=getattr(m, "SenderName", "") or "?",
+                                        subject=getattr(m, "Subject", "") or "",
+                                        body=(getattr(m, "Body", "") or "").strip()[:MAX_READ_CHARACTERS])
+                for n, m in newest[:READ_MESSAGES]
+            ] if with_content else []  # fmt: skip
+            return count, listed, bodies
 
-        count, newest = guarded(unread)
+        count, listed, bodies = guarded(unread)
         if not count:
             return texts["none"]
-        return texts["unread"].format(count=count, list="; ".join(newest))
+        return "\n\n".join([texts["unread"].format(count=count, list="; ".join(listed)), *bodies])
+
+    def refine(arguments: dict[str, Any], command: str) -> dict[str, Any]:
+        # "İçeriğini oku" asks for the text even when the model only lists the messages again.
+        return {**arguments, "content": bool(arguments.get("content")) or asks_for_content(command)}
 
     def key(arguments: dict[str, Any]) -> str:
         return repr(sorted((k, str(v)) for k, v in arguments.items()))
@@ -140,7 +160,14 @@ def mail_tools(outlook: Outlook, language: AssistantLanguage) -> list[Tool]:
 
     return [
         # Subjects and senders are written by whoever sent the mail.
-        Tool("readMail", texts["read"], run=read, untrusted_output=True),
+        Tool(
+            "readMail",
+            texts["read"],
+            run=read,
+            parameters=obj(content={"type": "boolean", "description": texts["content"]}),
+            refine=refine,
+            untrusted_output=True,
+        ),
         Tool(
             "sendEmail",
             texts["send"],
