@@ -107,7 +107,17 @@ uv run bilge listen                        # sesle; ilk seferde ses modellerini 
 uv sync --extra app && uv run bilge-app    # kurulum ve ayarlarıyla bildirim alanı uygulaması
 ```
 
-`uv run bilge models` seçili sağlayıcının modellerini listeler.
+`uv run bilge models` seçili sağlayıcının modellerini listeler. Birkaç komut daha:
+
+```bash
+uv run bilge devices          # mikrofonlar ve hoparlörler
+uv run bilge gpu              # ekran kartları ve Whisper'ın nerede çalıştığı
+uv run bilge download         # ses modellerini indirir
+uv run bilge say "Merhaba"    # bir cümleyi Bilge'nin sesiyle söyler
+uv run bilge enroll           # Bilge'ye sesini öğretir
+uv run bilge music youtube    # adı söylenen şarkıların nerede çalacağı ("Müzik servisi seçmek"e bak)
+uv run bilge calendar …       # takvim bağlar ("Takvim bağlamak"a bak)
+```
 
 ## Bilge'yi çağırmak
 
@@ -116,6 +126,9 @@ seçiliyken uyandırma kelimesi kapatılabilir; o zaman kısayola basılana kada
 X11 masaüstleri kısayolu doğrudan alır; Wayland'de masaüstü bir kez onayını ister (KDE Plasma 5.27+, GNOME 48+); KDE'de
 sonradan Sistem Ayarları → Kısayollar'dan değiştirilebilir. Bunun olmadığı yerde ve isteği alıp kendisi tuş atamayan
 Hyprland'de, `Bilge --listen` komutuna (tam hâli ayarlarda yazar) masaüstünün kendi klavye ayarlarından bir kısayol ata.
+
+Bilge cevap verdikten sonra kısa bir süre dinlemeye devam eder; ardından gelen soru için “Bilge” demen gerekmez.
+Konuşurken araya girebilirsin (“Bilge, dur”). İkisi de Ayarlar → Genel'den kapatılabilir.
 
 ## Konuşma tanıma
 
@@ -130,6 +143,10 @@ bekler.
 Arka planından yüksek hiçbir ses içermeyen bir kayıt yazıya dökülmez; Whisper'ın sessizlikte uydurduğu altyazı
 cümleleri (“Altyazı M.K.”, “Thanks for watching!”) yazdıklarından çıkarılır.
 
+Ayarlar → Tanıma'daki “Yalnızca benim sesime yanıt ver” seçeneği Bilge'nin başkalarını duymazdan gelmesini sağlar.
+Bir kez beş kısa cümle okursun (ya da `bilge enroll` çalıştırırsın); kayıtlar değil, yalnızca sesinin bir özeti
+saklanır. Denetim çalışamazsa Bilge seni dışarıda bırakmak yerine konuşmayı geçirir.
+
 ## Güncellemeler
 
 Bilge günde bir kez GitHub'a en yeni sürümü sorar; daha yenisi varsa bildirim alanı menüsünde sayfasının
@@ -137,40 +154,89 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 
 ## Neler yapar
 
+Bilge kurulumda seçilen dili, Türkçe ya da İngilizceyi konuşur ve o dildeki istekleri anlar. Sık kullanılan
+söyleyişler doğrudan ilgili araca gider; gerisini dil modeli alır ve uygun aracı seçer. Aşağıdaki örnekler Türkçe;
+İngilizceleri [İngilizce sayfada](README.md). “Yerleşik”, başka bir şey kurmak gerekmediği anlamına gelir.
+
+### Bilgisayarda
+
 | | Örnekler | Linux'ta | Windows'ta |
 |---|---|---|---|
-| Uygulamalar | “Firefox'u aç”, “hesap makinesini kapat”, “açık uygulamalar neler” | menü girdileri, `gio` | Başlat menüsü |
-| Ses | “sesi yüzde 30 yap”, “müziği durdur”, “ne çalıyor”, “30 saniye ileri sar”, “karışık çal” | `wpctl`, `pactl` ya da `amixer`; MPRIS çalarlar | Core Audio; sistemin medya denetimleri |
-| Müzik | “Tarkan çal”, “YouTube'da Kuzu Kuzu aç”, “YouTube Music'te Sezen Aksu çal”, “Deezer'da … çal”, “Apple Music'te Tarkan çal” | ilk eşleşen şarkıyı tarayıcıda YouTube, YouTube Music, Deezer ya da Apple Music'te açar (Deezer uygulaması yüklüyse onda); Spotify aramasını gösterir; servis söylenmezse Ayarlar → Genel'deki (ya da `bilge music`; otomatik: Spotify yüklüyse Spotify, değilse YouTube Music) | aynı |
-| Dosyalar | “kira sözleşmesini bul”, “son indirdiğim PDF'i özetle”, “eski faturayı çöpe at” | freedesktop çöp kutusu | Geri Dönüşüm Kutusu |
-| Yazma | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` ya da `ydotool` (Wayland) | yerleşik |
-| Takvim | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “süt almayı işaretle” | CalDAV ya da bir iCal adresi | aynısı ya da Outlook |
-| Tablo | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel ya da LibreOffice Calc |
-| E-posta | “okunmamış e-postalarım”, “içeriğini oku”, “buna yanıt ver: yarın uygunum”, “Ahmet'e yarın geleceğimi yaz” | IMAP, yalnızca okuma (Ayarlar → E-posta) | Outlook |
-| Notlar | “not al: …”, “alışveriş notuma süt ekle”, “notlarım neler”, “alışveriş notunu oku” | Belgeler/Bilge Notlar içinde Markdown dosyaları | aynı |
-| Kişiler | “Ahmet'in numarası ne”, “Ayşe'nin e-postası”; Windows'ta “Ahmet'e mail at” için adres de buradan | sunucusu sunuyorsa CalDAV hesabının adres defteri (CardDAV) | Outlook'un kişileri |
-| Komutların | “yedekleme komutunu çalıştır”, “komutlarım neler” | Ayarlar → Komutlar'a eklediğin komut satırları, kabuk olmadan çalışır; her biri ilk kez çalışmadan önce sorulur | aynı |
-| SMS | “Ahmet'e mesaj at: geliyorum” | KDE Connect ya da GSConnect ile eşleşmiş bir telefon (`kdeconnect-cli`) | henüz yok |
-| Sistem | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` ya da Plasma, `nmcli`, masaüstünün ekran görüntüsü aracı | yerleşik |
-| Ekran ve güç | “parlaklığı yüzde 50 yap”, “rahatsız etmeyini aç”, “Bluetooth'u kapat”, “bilgisayarı yeniden başlat” | GNOME ya da Plasma, `brightnessctl` ya da `ddcutil`; `bluetoothctl` ya da `rfkill`; `systemctl` | WMI (dizüstü ekranları); radyo anahtarı; `shutdown` (Rahatsız Etmeyin'in API'si yok: Bilge Win+N'ye basmanı söyler) |
-| Birim çevirme ve dünya saati | “10 mil kaç kilometre”, “2 litre kaç bardak”, “Tokyo'da saat kaç”, “New York ile aramızda kaç saat fark var” | yerleşik | yerleşik |
-| Pano | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” | `wl-clipboard`, `xclip` ya da `xsel` | yerleşik |
-| Haberler | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı, TRT Haber, BBC Türkçe (İngilizcede BBC News, The Guardian, NPR); “aç” haberi tarayıcıda da açar | aynı |
-| Depremler | “son depremler”, “İzmir'de deprem var mı”, “en son deprem nerede”; hava durumu şehrinin 150 km yakınında 4 ve üzeri bir deprem olunca sorulmadan söyler | AFAD, ulaşılamazsa Kandilli Rasathanesi | aynı |
-| Futbol | “Galatasaray maçı kaç kaç”, “Fenerbahçe ne zaman oynuyor”, “puan durumu”, “dün maç sonuçları” | ESPN'den Süper Lig | aynı |
-| Borsa | “borsa nasıl”, “BIST 100 kaç”, “THY hissesi”, “Aselsan bugün” | Yahoo Finance'ten Borsa İstanbul; yalnızca rakamlar, asla tavsiye değil | aynı |
-| Radyo ve podcast | “radyo aç”, “Power FM aç”, “radyonun sesini kıs”, “hangi radyo çalıyor”, “Fularsız Entellik podcastinin son bölümünü aç”, “Nasıl Olunur'un yeni bölümü var mı”, “durdur”, “30 saniye ileri sar” | Bilge'nin içinde çalar; Bilge dinlerken ve konuşurken sesi kısılır (podcast bölümü duraklar); istasyonlar radio-browser.info'dan, podcast'ler Apple'ın podcast aramasından ve kendi akışlarından | aynı |
-| YouTube | “şu videoyu özetle: …”, “panodaki videoyu özetle”, “devamını özetle” | videonun altyazısından (önce Türkçe); adres panodan ya da seçili metinden alınır | aynı |
-| Çeviri | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku” | ses 31 dilde konuşur | aynı |
-| Rutinler | “her gece 21'de hava durumunu söyle”, “hafta içi her gün 7'de haberleri oku”, “rutinlerim neler”, “akşam rutinini sil”; Bilge dinlerken çalışır, onay gerektiren bir adımı asla atmaz; Ayarlar → Rutinler'de listelenip silinir | yerleşik | yerleşik |
-| Akıllı ev | “salonun ışığını aç”, “klimayı 22 dereceye ayarla”, “kapı kilitli mi”, “ışıkları kapat”; kilit, garaj ve alarm için önce sorar | Home Assistant'ın konuşma API'si (Ayarlar → Akıllı ev: adresi ve uzun ömürlü erişim anahtarı) | aynı |
-| Diğer | zamanlayıcılar ve alarmlar, site ve arama açma, günlük özet | | |
+| Uygulamalar | “Firefox'u aç”, “hesap makinesini kapat”, “açık uygulamalar neler”. Kapatmadan önce sorar. | menü girdileri (`.desktop` dosyaları, Flatpak da), `gtk-launch` ya da `gio` ile açılır | Başlat menüsü, masaüstü ve Store uygulamaları; kapatma düğmesine basılmış gibi kapatılır, böylece kaydetmeyi sorabilirler |
+| Ses seviyesi | “sesi yüzde 30 yap”, “sesi 20 artır”, “sesi kapat” | `wpctl`, `pactl` ya da `amixer` | Core Audio |
+| Pencereler | “pencereyi küçült”, “pencereyi büyüt”, “tam ekran yap”, “bu pencereyi kapat”. Öndeki pencereye uygulanır; kapatmadan önce sorar. | X11'de `wmctrl` ya da `xdotool`; Sway ve Hyprland; Wayland'deki KDE'de `kdotool`. Wayland'deki GNOME hiçbir programa izin vermez; Bilge klavye kısayollarını söyler | yerleşik |
+| Tarayıcı | “sonraki sekmeye geç”, “üçüncü sekmeye geç”, “bu sekmeyi kapat”, “kapattığım sekmeyi geri aç”, “geri git”, “sayfayı yenile”, “aşağı kaydır”, “bu sayfada fiyat kelimesini ara”. Öndeki tarayıcıda tarayıcının kendi kısayollarına basar. Sekme adıyla seçilemez, numarayla yalnızca 1'den 8'e kadar. | `xdotool` (X11), `wtype` ya da `ydotool` (Wayland); öndeki pencereyi söylemeyen Wayland'deki GNOME'da çalışmaz | yerleşik |
+| Yazma ve dikte | “şunu yaz: beşte görüşürüz”, “dikte modunu başlat” … “dikteyi bitir”. İmlecin olduğu yere yazar, Enter'a asla basmaz. Terminallerde, kod düzenleyicilerde, uzak masaüstlerinde, sanal makinelerde ve parola yöneticilerinde reddeder. | `xdotool` (X11), `wtype` ya da `ydotool` (Wayland). Wayland'deki GNOME öndeki pencereyi söylemediği için orada Bilge yazmadan önce sorar | yerleşik; her karakter kendisi olarak gönderilir, Türkçe harfler her klavye düzeninde doğru çıkar |
+| Dosyalar | “kira sözleşmesini bul”, “ikincisini aç”, “son indirdiğim dosyayı aç”, “İndirilenler klasörünü aç”, “Belgeler'de Faturalar adında bir klasör oluştur”, “eski faturayı çöpe at”. Arama ev klasöründe yapılır, en yeniler önce gelir. Bulunan bir program çalıştırılmaz, dosya yöneticisinde gösterilir. Çöpe atmadan önce sorar. | freedesktop çöp kutusu | Geri Dönüşüm Kutusu |
+| Belgeler | “son indirdiğim PDF'i özetle”, “sözleşmede evcil hayvanlar hakkında ne yazıyor”, “devamını oku”. PDF, Word, Excel, PowerPoint, OpenDocument, RTF, HTML, Markdown, CSV ve metin dosyalarını açmadan okur; uzun olanı parça parça. Taranmış bir PDF metin değil sayfa resmi içerdiği için okunamaz. | yerleşik | yerleşik |
+| Ekran | “ekranda ne yazıyor”, “bu hatayı oku”, “bu sayfayı özetle”. Öndeki pencerenin ya da bütün ekranın yazısını okur (OCR). Alınan görüntü saklanmaz. | Türkçe ve İngilizce verisiyle Tesseract (Ubuntu'da `tesseract-ocr`, `tesseract-ocr-tur`) ve bir ekran görüntüsü aracı | Windows'un yerleşik OCR'ı; Türkçe ya da İngilizce dil paketi gerekir |
+| “Bu” ve “şu” | “bunu özetle”, “seçili metni İngilizceye çevir”, “bunu açıklar mısın”, “şu dosyayı aç”. Seçili metni, yoksa panodakini, yoksa dosya yöneticisinde seçili dosyayı, yoksa öndeki penceredeki yazıyı kullanır. | seçili dosya, dosya yöneticisinde Ctrl+C ile kopyalanandır | öndeki Dosya Gezgini penceresindeki seçim |
+| Pano | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” (son cevap) | `wl-clipboard`, `xclip` ya da `xsel` | yerleşik |
+| Tablo | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “D3'te ne var”, “geri al”, “tamam bitti”. Bir tabloyla çalışmaya başlayınca, bitti diyene kadar komutlar ona gider. Dolu bir hücrenin üzerine yazmadan önce sorar. | LibreOffice Calc (`python3-uno`) | açıkken Excel, ya da LibreOffice Calc |
+| Sistem | “ekranı kilitle”, “bilgisayarı uyut”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “bu pencerenin ekran görüntüsünü al”, “Bluetooth ayarlarını aç”, “pil kaç”, “diskte ne kadar yer kaldı”. Durum bilgisi boş disk alanını, bellek kullanımını, açılıştan beri geçen süreyi, sistem sürümünü, Wi-Fi'ı ve IP adresini söyler. Uyutmadan ve Wi-Fi'ı kapatmadan önce sorar. | `loginctl` ya da masaüstünün ekran kilidi; `gsettings`, Plasma, ya da XFCE ve Cinnamon'da koyu tema; `nmcli`; masaüstünün ekran görüntüsü aracı (`gnome-screenshot`, Spectacle, `grim`, `maim`, `scrot`) ya da masaüstü portalı | yerleşik |
+| Ekran ve güç | “parlaklığı yüzde 50 yap”, “ekranı karart”, “rahatsız etmeyini aç”, “Bluetooth'u kapat”, “bilgisayarı yeniden başlat”, “oturumu kapat”. Bluetooth'u kapatmadan, yeniden başlatmadan, kapatmadan ve oturumu kapatmadan önce sorar. | parlaklık GNOME ya da Plasma üzerinden, yoksa `brightnessctl` (dizüstü ekranı) ya da `ddcutil` (harici monitör); Rahatsız Etmeyin GNOME, Cinnamon, XFCE, KDE ve dunst'ta; `bluetoothctl` ya da `rfkill`; `systemctl` ve masaüstünün kendi oturum kapatması | parlaklık yalnızca dizüstü ekranlarında (WMI); Bluetooth radyo anahtarıyla; `shutdown`. Windows hiçbir uygulamanın Rahatsız Etmeyin'i değiştirmesine izin vermez: Bilge Win+N'ye basmanı söyler ve bildirim ayarlarını açar |
+| Komutların | “yedekleme komutunu çalıştır”, “komutlarım neler”. Kendi eklediğin programlar; [Kendi komutlarını eklemek](#kendi-komutlarını-eklemek)'e bak. | yerleşik | yerleşik |
 
-Dosyaları çöpe atmak, uygulama kapatmak, dolu bir hücrenin üzerine yazmak, takvime eklemek ya da takvimi değiştirmek,
-Wi-Fi'ı ya da Bluetooth'u kapatmak, bilgisayarı yeniden başlatmak, kapatmak ya da oturumu kapatmak önce sorulur; Bilge'nin başka bir yerde okuduğu metni taşıyabilecek her şey de öyle. Bir e-posta, gideceği adresle
-birlikte gönderilmeden önce sesli okunur; bir SMS de numarasıyla birlikte. Terminallerde, kod düzenleyicilerde, uzak masaüstlerinde, sanal
-makinelerde ve parola yöneticilerinde yazma reddedilir. Wayland'deki GNOME öndeki pencereyi başka programlara
-söylemediği için orada Bilge yazmadan önce sorar.
+### Sorular ve bilgi
+
+| | Örnekler | Linux'ta | Windows'ta |
+|---|---|---|---|
+| Tarih, saat, hesap | “bugün ayın kaçı”, “125'in yüzde 18'i kaç” | yerleşik | yerleşik |
+| Birim çevirme ve dünya saati | “10 mil kaç kilometre”, “2 litre kaç bardak”, “Tokyo'da saat kaç”, “New York ile aramızda kaç saat fark var”. Uzunluk, ağırlık, hacim, alan, hız, sıcaklık ve veri boyutu; model kullanılmadan, tam olarak hesaplanır. | yerleşik | yerleşik |
+| Hava durumu | “hava nasıl”, “akşam yağmur var mı”, “yarın sabah hava nasıl”, “şemsiye alayım mı”. Şehir söylenmezse Ayarlar → Genel'deki şehir. | Open-Meteo | aynı |
+| Para | “dolar kaç lira”, “100 euro kaç dolar”, “gram altın kaç lira”, “çeyrek altın ne kadar”, “İzmir'de motorin”, “benzin ne kadar”. Altın: gram, çeyrek, yarım, tam, Cumhuriyet altını ve ons. Akaryakıt: bir ilde benzin, motorin ve LPG'nin litre fiyatı; il söylenmezse hava durumu şehri. | kurlar Avrupa Merkez Bankası'ndan (Frankfurter); altın Truncgil'den, olmazsa Altınkaynak'tan; akaryakıt Opet ve Petrol Ofisi'nden | aynı |
+| Namaz vakitleri | “akşam ezanı kaçta”, “iftara kaç dakika kaldı”, “bugünkü namaz vakitleri”, “Konya'da yarın imsak kaçta”. Şehir söylenmezse hava durumu şehri. | Diyanet'in aylık takvimi (ezanvakti.emushaf.net), olmazsa Diyanet yöntemiyle Aladhan | aynı |
+| Ansiklopedi | “Atatürk kimdir”, “fotosentez nedir”, “Mars hakkında bilgi ver”. Wikipedia'dan kısa bir cevap. | Türkçe ya da İngilizce Wikipedia | aynı |
+| Haberler | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “TRT'den haberler”, “üçüncü haberi anlat”, “Tesla haberini aç”, “devamını oku”. Gündem, ekonomi, spor, dünya ya da bilim-teknoloji başlıkları; “aç” haberi okur ve tarayıcıda da açar. | Türkçede Anadolu Ajansı, TRT Haber, BBC Türkçe; İngilizcede BBC News, The Guardian, NPR | aynı |
+| Web | “şu sayfayı oku ve özetle: …”, “Google'da tren saatlerini ara”, “YouTube'da kedi videoları bul”, “ntv.com.tr'yi aç”. Okumak için sayfa indirilir; arama ve site açma tarayıcıda olur (Google, YouTube, Google Haritalar, Wikipedia). Yerel ağdaki adresler asla indirilmez. | varsayılan tarayıcı | aynı |
+| Depremler | “son depremler”, “İzmir'de deprem var mı”, “en son deprem nerede”. Bilge çalışırken, hava durumu şehrinin 150 km yakınında 4 ve üzeri bir deprem olunca sorulmadan da söyler (Ayarlar → Genel'den kapatılabilir). | AFAD, ulaşılamazsa Kandilli Rasathanesi | aynı |
+| Futbol | “Galatasaray maçı kaç kaç”, “Fenerbahçe ne zaman oynuyor”, “puan durumu”, “dün maç sonuçları”; bir takımın skoru ya da maçın dakikası. Yalnızca Süper Lig. | ESPN | aynı |
+| Borsa | “borsa nasıl”, “BIST 100 kaç”, “THY hissesi”, “Aselsan bugün”. Borsa İstanbul: endeks ya da bir hissenin fiyatı ve günlük değişimi. Yalnızca rakamlar, asla tavsiye değil. | Yahoo Finance | aynı |
+| Günün özeti | “günaydın” (sabahın ilki), “günün özeti”, “bugün beni neler bekliyor”. Tarih, hava durumu, bugünün kalan etkinlikleri ve zamanı gelen anımsatıcılar; geciken ya da alınamayan bir kısım atlanır. | yerleşik | yerleşik |
+| Çeviri | “İngilizce maili Türkçe oku”, “haberleri Fransızca oku”, “bunu Almancaya çevir”. Ses sonucu o dilde okur; “devamını oku” çevirmeye devam eder. | yerleşik | yerleşik |
+
+### E-posta, takvim ve kişiler
+
+| | Örnekler | Linux'ta | Windows'ta |
+|---|---|---|---|
+| Takvim | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “toplantıyı bir saat ertele”. Tekrarlanan bir etkinlikte, hepsi demedikçe yalnızca o gün değişir. Eklemeden, taşımadan ve silmeden önce sorar. Bir iCal adresi yalnızca okunur. | CalDAV ya da bir iCal adresi; [Takvim bağlamak](#takvim-bağlamak)'a bak | aynı, ya da klasik Outlook açıkken Outlook'un takvimi |
+| Anımsatıcılar | “anımsatıcılarım neler”, “süt almayı anımsatıcılara ekle”, “faturayı ödedim, işaretle”. Gün ve saat verilirse zamanı gelince Bilge söyler. Eklemeden önce sorar. | CalDAV hesabının görev listeleri | aynı, ya da Outlook'un görevleri |
+| E-posta | “okunmamış e-postalarım”, “Ahmet'in mailini oku”, “son e-postamı oku”, “içeriğini oku”; Windows'ta ayrıca “buna yanıt ver: yarın uygunum”, “Ahmet'e yarın geleceğimi yaz”, “bunu Ahmet'e gönder”. Bir e-posta gideceği adresle birlikte okunur ve yalnızca evet dersen gönderilir. | IMAP, yalnızca okuma; [E-posta bağlamak](#e-posta-bağlamak)'a bak | klasik Outlook açıkken: okuma, yanıtlama ve gönderme. “Bunu gönder” seçili metni ya da panodakini gönderir, ya da Dosya Gezgini'nde seçili dosyaları ekler |
+| Kişiler | “Ahmet'in numarası ne”, “Ayşe'nin e-postası”. Bir e-postanın ya da SMS'in kime gideceği de buradan bulunur. | sunucusunda varsa CalDAV hesabının adres defteri (CardDAV) | Outlook'un kişileri |
+| SMS | “Ahmet'e mesaj at: geliyorum”. Numarayı ve mesajı okur, önce sorar. | KDE Connect ya da GSConnect ile eşleşmiş bir telefon (`kdeconnect-cli`) | yok |
+| Notlar | “not al: tesisatçıyı ara”, “alışveriş notuma süt ekle”, “notlarım neler”, “alışveriş notunu oku”. Her not, herhangi bir metin düzenleyicinin açabildiği bir Markdown dosyasıdır. Bir nota eklemeden önce sorar. | Belgeler/Bilge Notlar içinde (İngilizcede Bilge Notes; iki addan biriyle zaten var olan klasör kullanılır) | aynı |
+| Hafıza | “kahvemi şekersiz içtiğimi unutma”, “neleri hatırlıyorsun”, “kahveyle ilgili bilgiyi unut”. En çok 50 kısa bilgi; her istekte dil modeline verilir. Unutmadan önce sorar. Ayarlar → Hafıza'da listelenip silinir. | yerleşik | yerleşik |
+| Toplantılar | “toplantıyı kaydetmeye başla”, “kaydı bitir”, “özeti oku”, “son indirdiğim ses kaydını yazıya dök”. Durdurana kadar mikrofonun duyduğunu yazar, sonra dökümü modelin özetiyle birlikte Belgeler/Bilge/Toplantılar'a kaydeder. Ses ve video dosyaları (m4a, mp3, wav, mp4) da aynı şekilde yazıya dökülür; bitince Bilge söyler. Ses değil, yalnızca yazı saklanır. Bilge sesle dinlerken çalışır. | yerleşik | yerleşik |
+| Tercüman | “tercüman modunu aç: Türkçe ve İngilizce”, “Almanca tercüme et”, “tercümanı kapat”. İki kişiden birinin söylediği diğer dile çevrilip seslendirilir; köşe penceresi her çeviriyi gösterir. Çevrilecek bir şey olmadan iki dakika geçince kendiliğinden kapanır. İşlemcide ya da NVIDIA kartta Whisper gerekir: diğer kartlardaki whisper.cpp'ye ve konuşma API'lerine dil önceden söylendiği için hangisinin konuşulduğunu ayırt edemezler. | yerleşik | yerleşik |
+
+### Müzik, radyo ve video
+
+| | Örnekler | Linux'ta | Windows'ta |
+|---|---|---|---|
+| Müzik | “Tarkan çal”, “YouTube'da Kuzu Kuzu aç”, “YouTube Music'te Sezen Aksu çal”, “Deezer'da Tarkan çal”, “Apple Music'te Tarkan çal”. İlk eşleşen şarkıyı tarayıcıda YouTube, YouTube Music, Deezer (yüklüyse Deezer uygulamasında) ya da Apple Music'te açar. Spotify'ın herkese açık bir araması olmadığından Bilge yalnızca Spotify aramasını açar, şarkıyı sen seçersin. Servis söylenmezse ayarlarda seçilen kullanılır; [Müzik servisi seçmek](#müzik-servisi-seçmek)'e bak. Tarayıcının otomatik oynatma kuralları YouTube'un, sayfaya tıklayana kadar başlamasını engelleyebilir. | varsayılan tarayıcı | aynı |
+| Çalarlar | “müziği durdur”, “sonraki şarkı”, “ne çalıyor”, “30 saniye ileri sar”, “şarkıyı baştan başlat”, “karışık çal”, “bu şarkıyı tekrarla”. Açık çaları (Spotify, Rhythmbox, VLC, bir tarayıcı…) yönetir; açık çalar yoksa yüklü olanlardan birini başlatır. | MPRIS | sistemin medya denetimleri |
+| Radyo | “Power FM aç”, “radyo aç” (son istasyon), “radyonun sesini kıs”, “hangi radyo çalıyor”, “durdur”. Bilge'nin içinde çalar; Bilge dinlerken ve konuşurken sesi kısılır. | istasyonlar adıyla radio-browser.info'dan | aynı |
+| Podcast | “Fularsız Entellik podcastinin son bölümünü aç”, “Nasıl Olunur'un yeni bölümü var mı”, “durdur”, “devam et”, “30 saniye ileri sar”. Bilge'nin içinde çalar; Bilge dinlerken ve konuşurken bekler. | programlar Apple'ın podcast aramasından, bölümler programın kendi akışından | aynı |
+| YouTube özeti | “şu videoyu özetle: …”, “panodaki videoyu özetle”, “devamını özetle”. Videonun altyazısını kullanır: önce Bilge'nin dilinde, yoksa videonun konuşulan dilinde, yoksa İngilizce. Adres söylenmezse panodaki ya da seçili metindeki adres. Gizli, kaldırılmış ya da yaş sınırlı bir video okunamaz. | yerleşik | yerleşik |
+
+### Zamanlayıcılar, rutinler ve ev
+
+| | Örnekler | Linux'ta | Windows'ta |
+|---|---|---|---|
+| Zamanlayıcı ve alarm | “10 dakikalık çay zamanlayıcısı kur”, “yarın 07:30'da uyandır”, “kaç dakika kaldı”, “çay zamanlayıcısını iptal et”. Bilge'de tutulur, yeniden başlatınca da kaybolmaz; süre dolunca Bilge söyler ve bildirim gösterir. | yerleşik | yerleşik |
+| Rutinler | “her gece 21'de hava durumunu söyle”, “hafta içi her gün 7'de haberleri oku”, “rutinlerim neler”, “akşam rutinini sil”. Kurmadan önce sorar. Rutin, komutunu sen söylemişsin gibi çalıştırır; yalnızca Bilge dinlerken çalışır ve cevap verecek kimse olmadığı için onay gerektiren bir adımı asla atmaz. Ayarlar → Rutinler'de listelenip silinir. | yerleşik | yerleşik |
+| Akıllı ev | “salonun ışığını aç”, “klimayı 22 dereceye ayarla”, “kapı kilitli mi”, “ışıkları kapat”. Kilit, garaj kapısı ve alarm için önce sorar. [Home Assistant bağlamak](#home-assistant-bağlamak)'a bak. | Home Assistant'ın konuşma API'si | aynı |
+
+### Önce sorar
+
+Bir şeyi değiştiren, silen ya da gönderen her iş sesli bir “evet”i (ya da köşe penceresindeki Evet düğmesini)
+bekler: dosyaları çöpe atmak, bir uygulamayı ya da pencereyi kapatmak, dolu bir hücrenin üzerine yazmak, takvime ve
+anımsatıcılara eklemek ya da onları değiştirmek, bir nota eklemek, unutmak, rutin kurmak, bilgisayarı uyutmak,
+Wi-Fi'ı ya da Bluetooth'u kapatmak, yeniden başlatmak, kapatmak ya da oturumu kapatmak, evde bir kilit, garaj kapısı
+ya da alarm, ve kendi komutlarının her birinin ilk çalışması. Bilge'nin başka bir yerde okuduğu metni (bir web
+sayfası, bir e-posta, pano) taşıyabilecek her adım da öyle. Bir e-posta, gideceği adresle birlikte gönderilmeden
+önce sesli okunur; bir SMS de numarasıyla birlikte. Ayarlar → Geçmiş, Bilge'nin ne yaptığını ve neye hayır dediğini
+gösterir.
 
 ### Takvim bağlamak
 
@@ -182,7 +248,81 @@ uv run bilge calendar off
 ```
 
 Parola (hizmet sunuyorsa uygulama parolası kullan) ve gizli adres gizli olarak yazılır ve sistemin anahtar
-deposunda saklanır. CalDAV'a, aynı bilgisayardaki bir sunucu dışında yalnızca HTTPS üzerinden bağlanılır.
+deposunda saklanır. CalDAV'a, aynı bilgisayardaki bir sunucu dışında yalnızca HTTPS üzerinden bağlanılır. `--name`
+yeni etkinliklerin gideceği takvimi seçer; verilmezse etkinlik kabul eden ilk takvim. Ayarlar → Takvim aynısını
+yapar ve bağlantıyı deneyebilir. Linux'ta anımsatıcılar ve kişiler de aynı CalDAV hesabından gelir.
+
+### E-posta bağlamak
+
+Linux'ta Ayarlar → E-posta'ya bir IMAP hesabı gir: sunucu (örneğin `imap.gmail.com` ya da `sunucu:port`), kullanıcı
+adı ve uygulama parolası; sonra “Bağlantıyı dene”. Bilge gelen kutusunu TLS üzerinden okur ve yalnızca okur: hiçbir
+ileti okundu olarak işaretlenmez, taşınmaz ya da silinmez; gönderemez ve yanıtlayamaz. Parola sistemin anahtar
+deposunda saklanır.
+
+Windows'ta e-posta, açıkken klasik Outlook'tan gelir. Yeni Outlook başka programlarca yönetilemediği için Bilge bunu
+söyler.
+
+### Kişiler
+
+Kişiler için ayrıca bir ayar gerekmez. Windows'ta Outlook'tan, Linux'ta Ayarlar → Takvim'deki CalDAV hesabının adres
+defterinden gelir; sunucu bunu da sunuyorsa (Nextcloud, Radicale, Baïkal ve başkaları sunar).
+
+### Kendi komutlarını eklemek
+
+Ayarlar → Komutlar'da bir komuta ad ve komut satırı ver, örneğin “yedekleme” ve
+`rsync -a ~/Documents /media/backup`. Sonra “yedekleme komutunu çalıştır” de ya da “komutlarım neler” diye sor.
+Komut yazıldığı gibi, kabuk olmadan çalışır: anlaşılan tek kısaltma `~`'dir, boşluklu bir yol tırnak içine yazılır ve
+söylediğin hiçbir şey komuta eklenmez. 60 saniye içinde bitmelidir; Bilge yazdırdığı çıktının başını okur. Her komut
+ilk çalışmasından önce, değiştirildikten sonra da yeniden, evet demeni bekler.
+
+### Home Assistant bağlamak
+
+Ayarlar → Akıllı ev'e Home Assistant'ın adresini (örneğin `http://homeassistant.local:8123`) ve uzun ömürlü bir
+erişim anahtarı gir; anahtarı Home Assistant'ta profilinin Güvenlik bölümünde oluşturursun. “Bağlantıyı dene” ikisini
+de denetler. Anahtar yalnızca sistemin anahtar deposunda saklanır.
+
+Bilge söylediğini Home Assistant'ın konuşma API'sine iletir; hangi cihazı kastettiğine Home Assistant karar verir.
+Bu yüzden odalar ve cihazlar Home Assistant'taki adlarıyla anılır. İstekler yalnızca girdiğin adrese gider.
+
+### Müzik servisi seçmek
+
+Ayarlar → Genel → Müzik servisi, ya da `bilge music` ile `auto`, `spotify`, `youtube`, `youtube_music`, `deezer`
+veya `apple_music` (servis verilmezse geçerli seçimi yazar). Otomatik: Spotify uygulaması yüklüyse Spotify, değilse
+YouTube Music. İstekte söylenen servis her zaman önceliklidir: “YouTube'da Tarkan çal” YouTube'u kullanır.
+
+## Gizlilik
+
+Whisper bilgisayarda çalışırken sesin bilgisayardan çıkmaz; OpenAI ya da Groq tanıyıcısıyla her isteğin sesi o
+şirkete gider. Uyandırma kelimesi her zaman bilgisayarda tanınır. İnternetteki bir dil modeliyle, söylediklerin ve
+araçların getirdikleri (bir e-posta, bir belge, bir web sayfası) o sağlayıcıya gider; yerel bir model bunları
+bilgisayarda tutar.
+
+Ayarlar, hafıza, rutinler, zamanlayıcılar, notlar, toplantı dökümleri ve yapılan işlerin geçmişi bilgisayarda kalır.
+
+Bilge şu servislere yalnızca bir özellik gerektirdiğinde bağlanır:
+
+| Servis | Ne için |
+|---|---|
+| seçilen dil modeli sağlayıcısı; konuşma için OpenAI ya da Groq | ayarlarda biri seçildiğinde |
+| Hugging Face | ses modellerini indirmek |
+| GitHub | günlük güncelleme denetimi (kapatılabilir) |
+| Open-Meteo | hava durumu ve şehir bulma |
+| Frankfurter (Avrupa Merkez Bankası kurları) | döviz kurları |
+| Truncgil, Altınkaynak, Opet, Petrol Ofisi | altın ve akaryakıt fiyatları |
+| ezanvakti.emushaf.net, Aladhan | namaz vakitleri |
+| Wikipedia | ansiklopedi cevapları |
+| Anadolu Ajansı, TRT Haber, BBC, The Guardian, NPR | haber akışları ve açılan haberin sayfası |
+| AFAD, Kandilli Rasathanesi | depremler; uyarılar açıksa Bilge çalışırken düzenli olarak bakılır |
+| ESPN | futbol |
+| Yahoo Finance | borsa |
+| radio-browser.info ve istasyonun kendisi | radyo |
+| Apple'ın iTunes araması ve her programın kendi akışı | podcast'ler ve Apple Music şarkıları |
+| YouTube, YouTube Music, Deezer | şarkı bulmak ve bir videonun altyazısı |
+| adını verdiğin bir web sayfası | o sayfayı okumak; yerel ağdaki adresler reddedilir |
+| CalDAV, iCal ve IMAP sunucuların | takvim, anımsatıcılar, kişiler ve e-posta |
+| Home Assistant | yalnızca girdiğin adreste |
+
+Açmasını istediğin aramalar ve siteler kendi tarayıcında gösterilir.
 
 ## Geliştirme
 
