@@ -138,11 +138,12 @@ public enum QuickIntentParser {
     }
 
     private static func media(_ w: [String]) -> QuickIntent? {
-        let subject: Set<String> = ["muzigi", "sarkiyi", "calmayi"]
+        let subject: Set<String> = ["muzigi", "sarkiyi", "calmayi", "podcasti"]
+        if [["podcaste", "devam", "et"], ["podcasti", "devam", "ettir"]].contains(w) { return .media(.play) }
         if w.count == 2, subject.contains(w[0]) {
             switch w[1] {
             case "durdur", "duraklat": return .media(.pause)
-            case "baslat", "cal", "ac": return w[0] == "muzigi" ? .media(.play) : nil
+            case "baslat", "cal", "ac": return ["muzigi", "podcasti"].contains(w[0]) ? .media(.play) : nil
             case "gec", "degistir": return w[0] == "sarkiyi" ? .media(.next) : nil
             default: return nil
             }

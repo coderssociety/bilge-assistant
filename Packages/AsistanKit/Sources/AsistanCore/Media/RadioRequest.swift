@@ -33,14 +33,14 @@ public enum RadioRequest {
     private static let nowPlayingWords: Set<String> = ["caliyor", "acik", "bu", "dinliyorum", "dinliyoruz", "calan", "yayinda"]
 
     public static func parse(_ text: String, language: AssistantLanguage = .turkish, stream: StreamState = .idle) -> RadioCommand? {
-        let tokens = Token.split(text)
+        let tokens = SpokenToken.split(text)
         guard !tokens.isEmpty else { return nil }
         return language == .english ? english(tokens, stream: stream) : turkish(tokens, stream: stream)
     }
 
     // MARK: - Turkish
 
-    private static func turkish(_ all: [Token], stream: StreamState) -> RadioCommand? {
+    private static func turkish(_ all: [SpokenToken], stream: StreamState) -> RadioCommand? {
         var tokens = all
         while let last = tokens.last, tokens.count > 1, politeness.contains(last.folded) { tokens.removeLast() }
         let words = tokens.map(\.folded)
@@ -81,7 +81,7 @@ public enum RadioRequest {
     private static let englishPlayLeads: [[String]] = [["play"], ["put", "on"], ["turn", "on"], ["switch", "on"], ["listen", "to"], ["open"], ["start"]]
     private static let englishFillers: Set<String> = ["the", "some", "a", "please", "me"]
 
-    private static func english(_ tokens: [Token], stream: StreamState) -> RadioCommand? {
+    private static func english(_ tokens: [SpokenToken], stream: StreamState) -> RadioCommand? {
         let words = tokens.map(\.folded).filter { $0 != "please" }
         if stream != .idle {
             if [["stop"], ["pause"], ["stop", "it"], ["pause", "it"]].contains(words) { return .stop }
@@ -104,7 +104,7 @@ public enum RadioRequest {
 
     // MARK: - Station names
 
-    private static func station(in body: [Token], mentionsRadio: Bool) -> RadioCommand? {
+    private static func station(in body: [SpokenToken], mentionsRadio: Bool) -> RadioCommand? {
         guard !body.isEmpty else { return nil }
         let folded = body.map(\.folded)
         if folded.contains(where: otherObjects.contains) { return nil }
@@ -130,21 +130,5 @@ public enum RadioRequest {
         if folded.hasPrefix("radio") && folded != "radio" && folded.count <= 9 { return "Radio" }
         if folded.hasPrefix("fm") && folded.count <= 4 { return "FM" }
         return word
-    }
-
-    private struct Token {
-        let folded: String
-        /// The word without the suffix after its apostrophe: "Radio'yu" → "Radio".
-        let stem: String
-
-        static func split(_ text: String) -> [Token] {
-            text.split(whereSeparator: \.isWhitespace).compactMap { raw in
-                let word = String(raw).trimmingCharacters(in: .punctuationCharacters.subtracting(["'", "’"]))
-                let folded = TurkishText.folded(word)
-                guard !folded.isEmpty else { return nil }
-                let stem = word.split(whereSeparator: { $0 == "'" || $0 == "’" }).first.map(String.init) ?? word
-                return Token(folded: folded, stem: stem)
-            }
-        }
     }
 }

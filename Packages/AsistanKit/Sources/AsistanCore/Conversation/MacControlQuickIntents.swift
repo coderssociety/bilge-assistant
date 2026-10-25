@@ -4,7 +4,7 @@ enum MacControlQuickIntents {
     private static let upVerbs: Set<String> = ["artir", "arttir", "yukselt", "ac"]
     private static let downVerbs: Set<String> = ["azalt", "dusur", "kis", "alcalt"]
     private static let setVerbs: Set<String> = ["yap", "getir", "ayarla", "cek", "indir", "cikar"]
-    private static let mediaSubjects: Set<String> = ["sarkiyi", "videoyu", "muzigi", "parcayi"]
+    private static let mediaSubjects: Set<String> = ["sarkiyi", "videoyu", "muzigi", "parcayi", "podcasti", "bolumu"]
     private static let secondsPerMinute = 60
     private static let maxPercent = 100
 
