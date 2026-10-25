@@ -6,6 +6,7 @@ again leaves a gap: the name could resolve to a local address the second time (D
 could then reach the router or a service on this machine.
 """
 
+import functools
 import http.client
 import ipaddress
 import json
@@ -345,6 +346,21 @@ def _read_limited(reply: http.client.HTTPResponse, max_bytes: int, deadline: flo
     return b"".join(chunks)
 
 
+@functools.cache
+def _tls_context() -> ssl.SSLContext:
+    """The system's trust store, as a browser uses: the roots Python carries lack some a Turkish government site
+    chains to (AFAD's GlobalSign Root R46), and Windows fetches missing roots only for programs that ask it."""
+    try:
+        import truststore
+    except ImportError:
+        try:
+            import certifi
+        except ImportError:
+            return ssl.create_default_context()
+        return ssl.create_default_context(cafile=certifi.where())
+    return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+
 class _PinnedConnection(http.client.HTTPConnection):
     """Connects to an address checked beforehand while keeping the host name for TLS and the Host header."""
 
@@ -356,5 +372,5 @@ class _PinnedConnection(http.client.HTTPConnection):
     def connect(self) -> None:
         sock = socket.create_connection((self._address, self.port), self.timeout)
         if self._scheme == "https":
-            sock = ssl.create_default_context().wrap_socket(sock, server_hostname=self.host)
+            sock = _tls_context().wrap_socket(sock, server_hostname=self.host)
         self.sock = sock

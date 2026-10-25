@@ -1,4 +1,5 @@
 import http.server
+import ssl
 import threading
 
 import pytest
@@ -198,3 +199,11 @@ def test_the_whole_length_is_read_from_a_range_or_a_plain_answer():
     assert web_fetch._whole_length(FakeReply(206, {"Content-Range": "bytes 100-999/1000"}), 100) == 1000
     assert web_fetch._whole_length(FakeReply(200, {"Content-Length": "45558925"}), 0) == 45558925
     assert web_fetch._whole_length(FakeReply(200, {}), 0) is None
+
+
+def test_certificates_are_checked_against_the_systems_trust_store():
+    import truststore
+
+    context = web_fetch._tls_context()
+    assert isinstance(context, truststore.SSLContext)
+    assert context.check_hostname and context.verify_mode is ssl.CERT_REQUIRED
