@@ -3076,6 +3076,16 @@
         }
       }
     },
+    "Hangi birimden hangisine çevireceğimi anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which units to convert between."
+          }
+        }
+      }
+    },
     "Hangi günlere bakacağımı anlayamadım.": {
       "localizations": {
         "en": {
