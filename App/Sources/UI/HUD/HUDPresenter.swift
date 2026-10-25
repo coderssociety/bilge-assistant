@@ -49,7 +49,7 @@ final class HUDPresenter {
 
     private func update(status: AssistantController.Status, enabled: Bool) {
         let engaged = switch status {
-        case .awake, .transcribing, .thinking, .speaking, .confirming, .failed: true
+        case .awake, .transcribing, .thinking, .speaking, .confirming, .recording, .failed: true
         default: false
         }
         guard enabled, engaged else {

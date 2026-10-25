@@ -2112,6 +2112,16 @@
         }
       }
     },
+    "Bu dosyada ses yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file has no audio."
+          }
+        }
+      }
+    },
     "Bu ekranın parlaklığını Mac'ten değiştiremiyorum; harici ekranlarda ekranın kendi düğmelerini kullanman gerekiyor.": {
       "localizations": {
         "en": {
@@ -2342,6 +2352,16 @@
         }
       }
     },
+    "Bu ses dosyasını okuyamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't read this audio file."
+          }
+        }
+      }
+    },
     "Bu tarayıcıda sekmelere adıyla geçemiyorum.": {
       "localizations": {
         "en": {
@@ -2478,6 +2498,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "This needs Accessibility permission. Turn on Bilge in System Settings > Privacy & Security > Accessibility."
+          }
+        }
+      }
+    },
+    "Bunun için Whisper konuşma tanıma modeli gerekiyor. Ayarlar > Tanıma bölümünden Whisper'ı bir kez seçip indirebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This needs the Whisper speech recognition model. Choose Whisper once in Settings > Recognition to download it."
           }
         }
       }
@@ -2814,6 +2844,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Files can only be deleted with voice confirmation."
+          }
+        }
+      }
+    },
+    "Dosyada yazıya dökülecek konuşma bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I found no speech to transcribe in the file."
           }
         }
       }
@@ -3916,6 +3956,16 @@
         }
       }
     },
+    "İndirilenler'de bir ses kaydı bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find an audio recording in Downloads."
+          }
+        }
+      }
+    },
     "İndirilenler'de bu türde bir dosya yok.": {
       "localizations": {
         "en": {
@@ -4042,6 +4092,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Record and Read"
+          }
+        }
+      }
+    },
+    "Kaydı bitir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End recording"
+          }
+        }
+      }
+    },
+    "Kaydı bitirdim ama konuşma duymadım, dosya oluşturmadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I stopped recording, but I heard no speech, so I didn't create a file."
+          }
+        }
+      }
+    },
+    "Kaydı bitirdim, özetliyorum. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording stopped; I'm summarizing it. "
+          }
+        }
+      }
+    },
+    "Kayıt başladı. Sen bitirene kadar konuşulanları yazıya döküyorum, sesin kendisi saklanmıyor. Bitirmek için “kaydı bitir” de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording started. Until you end it, I'm transcribing what's said; the audio itself isn't kept. To finish, say “stop recording”."
           }
         }
       }
@@ -4342,6 +4432,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Speech recognition engine"
+          }
+        }
+      }
+    },
+    "Konuşma tanımayı hazırlıyorum. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Getting speech recognition ready. "
           }
         }
       }
@@ -4926,6 +5026,16 @@
         }
       }
     },
+    "Notları Belgeler'deki %@ klasöründe, Toplantılar'a kaydettim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I saved the notes in Documents, in the Toplantılar folder of %@."
+          }
+        }
+      }
+    },
     "O gün için namaz vakitlerini bulamadım.": {
       "localizations": {
         "en": {
@@ -5478,6 +5588,16 @@
         }
       }
     },
+    "Ses dökümü — %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio transcript — %@"
+          }
+        }
+      }
+    },
     "Ses Laboratuvarı": {
       "localizations": {
         "en": {
@@ -5730,6 +5850,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't find any selected text."
+          }
+        }
+      }
+    },
+    "Seçili bir ses dosyası göremedim. Finder'da dosyayı seçip yeniden söyle ya da “son indirdiğim ses kaydını yazıya dök” de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't see a selected audio file. Select it in Finder and ask again, or say “transcribe the last recording I downloaded”."
           }
         }
       }
@@ -6230,6 +6360,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Repeat is off."
+          }
+        }
+      }
+    },
+    "Tercüman açık: %@ ve %@. Her konuşmayı öbür dile çevirip o dilde söyleyeceğim. Bitirmek için “tercümanı kapat” de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interpreter on: %1$@ and %2$@. I'll translate everything said into the other language and say it in that language. To finish, say “stop interpreting”."
+          }
+        }
+      }
+    },
+    "Tercüman kapandı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interpreter off."
+          }
+        }
+      }
+    },
+    "Toplantı kaydediliyor — bitirmek için “kaydı bitir” de": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording the meeting — say “stop recording” to finish"
+          }
+        }
+      }
+    },
+    "Toplantı — %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meeting — %@"
           }
         }
       }
@@ -7101,6 +7271,16 @@
         }
       }
     },
+    "Zaten kaydediyorum. Bitirmek için “kaydı bitir” de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm already recording. To finish, say “stop recording”."
+          }
+        }
+      }
+    },
     "·": {
       "localizations": {
         "en": {
@@ -7217,6 +7397,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "In the next 7 days"
+          }
+        }
+      }
+    },
+    "Özeti okumamı ister misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I read the summary?"
+          }
+        }
+      }
+    },
+    "Özeti yazamadım, döküm dosyada.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't write a summary; the transcript is in the file."
           }
         }
       }
@@ -7431,6 +7631,16 @@
         }
       }
     },
+    "Şu an bir kayıt yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing is being recorded right now."
+          }
+        }
+      }
+    },
     "Şu an çalan bir şey yok.": {
       "localizations": {
         "en": {
@@ -7523,6 +7733,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Starts loading when you say “%@” and is mostly ready while you're still talking (Qwen ~4 s, Gemma ~6 s). It's unloaded from memory once the reply ends and no follow-up comes. If it's slow, it says “One moment.”"
+          }
+        }
+      }
+    },
+    "“%@” dosyasını yazıya döküyorum, uzun kayıtlar birkaç dakika sürebilir. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribing “%@”; long recordings can take a few minutes. "
           }
         }
       }

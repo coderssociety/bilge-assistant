@@ -17,6 +17,8 @@ final class AssistantController {
         case thinking
         case speaking
         case confirming
+        /// A meeting is being recorded and transcribed.
+        case recording
         case failed(String)
     }
 
@@ -40,6 +42,8 @@ final class AssistantController {
     private let speech: SpeechOutput
     private let handler: any CommandHandling
     private let microphone: any AudioSource
+    private let whisper: WhisperProvider
+    private let recorder: MeetingRecorder
     private var vad: VoiceActivityMonitor?
     private var recognizer: (any SpeechRecognizer)?
     private var flow: ConversationFlow
@@ -58,6 +62,8 @@ final class AssistantController {
     private var stoppedByUser = false
     /// The shortcut was pressed while listening was off or still starting.
     private var wakeWhenListening = false
+    /// The language the last work input was recognized in, for a session that detects languages.
+    private var heardLanguage: String?
 
     var bargeInDiagnostics: [String] { bargeIn?.diagnostics ?? [] }
     /// Everything the main pipeline transcribed, including speech it ignored (for diagnostics).
@@ -69,10 +75,12 @@ final class AssistantController {
     var speakerGate: SpeakerGate?
 
     init(settings: AssistantSettings, speech: SpeechOutput, handler: any CommandHandling,
-         audioSource: (any AudioSource)? = nil) {
+         audioSource: (any AudioSource)? = nil, whisper: WhisperProvider? = nil, recorder: MeetingRecorder = MeetingRecorder()) {
         self.settings = settings
         self.speech = speech
         self.handler = handler
+        self.whisper = whisper ?? WhisperProvider(language: settings.language)
+        self.recorder = recorder
         microphone = audioSource ?? MicrophoneCapture()
         flow = ConversationFlow(matcher: settings.makeWakeMatcher())
     }
@@ -121,6 +129,9 @@ final class AssistantController {
             let action = flow.shortcutPressed(at: .now)
             if case .returnToIdle = action { Earcon.cancelled.play() }
             perform(action)
+        case .recording:
+            // Only the stop phrase is acted on while a meeting is recorded.
+            break
         case .loading:
             // Without a listening task this is the first-run setup preparing models; it isn't listening yet.
             if isRunning { wakeWhenListening = true }
@@ -138,6 +149,12 @@ final class AssistantController {
             return status.title
         }
         return String(localized: "Kısayolu bekliyor (\(shortcut.display))")
+    }
+
+    /// Ends the meeting recording as if the stop phrase was said (menu action).
+    func finishRecording() {
+        guard recorder.isRecording, status == .recording else { return }
+        startStopRecordingTurn(MeetingCommand.stopPhrase(language: settings.language))
     }
 
     /// Stops the current reply (menu action); the assistant keeps listening.
@@ -173,7 +190,7 @@ final class AssistantController {
         isAudioSuspended = false
         // The shortcut stops an announcement; that must not cut the next reply's follow-up window.
         stoppedByUser = false
-        status = isRunning ? (flow.isAwaitingSpeech ? .awake : .listening) : .off
+        status = isRunning ? restingStatus : .off
     }
 
     // MARK: - Listening loop
@@ -229,9 +246,15 @@ final class AssistantController {
 
         if recognizer?.engine != settings.recognizer {
             status = .loading(String(localized: "Konuşma tanıma modeli yükleniyor…"))
-            let recognizer = RecognizerFactory.make(settings.recognizer, language: settings.language)
-            try await recognizer.prepare()
-            self.recognizer = recognizer
+            whisper.isListeningEngine = settings.recognizer == .whisper
+            if settings.recognizer == .whisper {
+                recognizer = try await whisper.prepared()
+            } else {
+                let recognizer = RecognizerFactory.make(settings.recognizer, language: settings.language)
+                try await recognizer.prepare()
+                self.recognizer = recognizer
+                if !self.recorder.isRecording { whisper.releaseUnlessListening() }
+            }
         }
 
         status = .loading(String(localized: "Ses hazırlanıyor…"))
@@ -315,16 +338,27 @@ final class AssistantController {
                 resolveConfirmation(ConfirmationParser.parse(answer, strict: confirmationIsStrict, language: settings.language))
                 return
             }
+            if recorder.isRecording {
+                await record(segment.samples)
+                return
+            }
             let isWakeCheck = flow.phase == .listeningForWake
             if isWakeCheck, !settings.listensForWakeWord { return }
             if !isWakeCheck { status = .transcribing }
-            guard let transcript = try await transcribe(segment.samples, with: recognizer, wakeCheckOnly: isWakeCheck),
-                  !isAudioSuspended
-            else { return }
+            let languages = isWakeCheck ? [] : flow.activeWorkSession?.languages ?? []
+            heardLanguage = nil
+            let heard: String?
+            if languages.isEmpty {
+                heard = try await transcribe(segment.samples, with: recognizer, wakeCheckOnly: isWakeCheck)
+            } else {
+                heard = try await transcribe(segment.samples, detectingAmong: languages, fallback: recognizer)
+            }
+            guard let transcript = heard, !isAudioSuspended else { return }
             Log.wake.debug("Heard: \(transcript, privacy: .private)")
-            if needsSpeakerCheck(transcript, isWakeCheck: isWakeCheck), await !speakerAllows(segment.samples) {
+            // Interpreting is a conversation with someone else, whose voice must be heard too.
+            if languages.isEmpty, needsSpeakerCheck(transcript, isWakeCheck: isWakeCheck), await !speakerAllows(segment.samples) {
                 recentTranscripts = Array((recentTranscripts + ["başka bir ses (yok sayıldı): “\(transcript)”"]).suffix(Self.maxRecentTranscripts))
-                if !isWakeCheck { status = flow.isAwaitingSpeech ? .awake : .listening }
+                if !isWakeCheck { status = restingStatus }
                 return
             }
             recentTranscripts = Array((recentTranscripts + ["\(isWakeCheck ? "uyandırma" : "komut"): “\(transcript)”"]).suffix(Self.maxRecentTranscripts))
@@ -332,10 +366,43 @@ final class AssistantController {
             if action != .none { lastHeard = transcript }
             perform(action)
             // The shortcut may have closed the window while this was being transcribed.
-            if !isWakeCheck, action == .none { status = flow.isAwaitingSpeech ? .awake : .listening }
+            if !isWakeCheck, action == .none { status = restingStatus }
         } catch {
             Log.speech.error("Transcription failed: \(error.localizedDescription, privacy: .public)")
-            if flow.phase != .listeningForWake { status = flow.isAwaitingSpeech ? .awake : .listening }
+            if flow.phase != .listeningForWake { status = restingStatus }
+        }
+    }
+
+    /// Whisper tells the session's languages apart; Apple dictation cannot, so its sessions use the shared Whisper,
+    /// and without one the speech is taken in the assistant's language.
+    private func transcribe(_ samples: [Float], detectingAmong languages: [String],
+                            fallback: any SpeechRecognizer) async throws -> String {
+        let detecting = recognizer?.engine == .whisper ? recognizer : whisper.loaded
+        if let detecting, let detected = try await detecting.transcribe(samples, detectingAmong: languages) {
+            heardLanguage = detected.language
+            return detected.text
+        }
+        return try await fallback.transcribe(samples)
+    }
+
+    /// While a meeting is recorded everything heard is transcribed by Whisper and kept; only the stop phrase is acted
+    /// on, whoever says it.
+    private func record(_ samples: [Float]) async {
+        guard let transcriber = recognizer?.engine == .whisper ? recognizer : whisper.loaded else { return }
+        let duration = Double(samples.count) / StreamingResampler.targetSampleRate
+        do {
+            let text = try await transcriber.transcribe(samples)
+            guard !text.isEmpty, recorder.isRecording, !isAudioSuspended else { return }
+            recentTranscripts = Array((recentTranscripts + ["kayıt: “\(text)”"]).suffix(Self.maxRecentTranscripts))
+            lastHeard = text
+            let command = flow.matcher.match(text)?.command ?? text
+            if MeetingCommand.parse(command, language: settings.language) == .stopRecording {
+                startStopRecordingTurn(command)
+                return
+            }
+            recorder.append(text, duration: duration)
+        } catch {
+            Log.speech.error("Recording transcription failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -385,28 +452,50 @@ final class AssistantController {
             handler.conversationWillStart()
             status = .awake
         case let .runCommand(command):
-            handler.conversationWillStart()
-            turnTask = Task { await runTurn(command) }
+            startTurn(command)
         case let .runWorkInput(input):
-            turnTask = Task { await runTurn(input, isWorkInput: true) }
+            let language = heardLanguage
+            turnTask = Task { await runTurn(input, isWorkInput: true, heard: language) }
         case let .returnToIdle(timedOut):
             if timedOut { Earcon.cancelled.play() }
             handler.endConversation()
-            status = .listening
+            status = restingStatus
         }
     }
 
-    private func runTurn(_ command: String, isWorkInput: Bool = false) async {
+    private func startTurn(_ command: String) {
+        handler.conversationWillStart()
+        turnTask = Task { await runTurn(command) }
+    }
+
+    /// Speech queued behind the stop phrase must not start the turn a second time.
+    private func startStopRecordingTurn(_ command: String) {
+        isAudioSuspended = true
+        startTurn(command)
+    }
+
+    private var restingStatus: Status {
+        if recorder.isRecording { return .recording }
+        return flow.isAwaitingSpeech ? .awake : .listening
+    }
+
+    private func runTurn(_ command: String, isWorkInput: Bool = false, heard: String? = nil) async {
         isAudioSuspended = true
         segmenter.reset()
         await bargeIn?.reset()
         status = .thinking
-        lastReply = ""
+        let replyLanguage = handler.replyLanguageCode(for: command, isWorkInput: isWorkInput, heard: heard)
+        // "TR → EN: …" while interpreting.
+        if isWorkInput, let heard, let replyLanguage {
+            lastReply = InterpreterPair.caption(from: heard, to: replyLanguage)
+        } else {
+            lastReply = ""
+        }
         flow.responseStarted()
-        speech.replyLanguageCode = isWorkInput ? nil : TranslationRequest.target(in: command)?.code
+        speech.replyLanguageCode = replyLanguage
         defer { speech.replyLanguageCode = nil }
         do {
-            try await speech.speak(streaming: replyFragments(for: command, isWorkInput: isWorkInput))
+            try await speech.speak(streaming: replyFragments(for: command, isWorkInput: isWorkInput, heard: heard))
         } catch is CancellationError {
             speech.stop()
         } catch {
@@ -422,7 +511,7 @@ final class AssistantController {
         stoppedByUser = false
         flow.responseFinished(at: .now, allowFollowUp: allowFollowUp, session: session)
         if !flow.isAwaitingSpeech { handler.endConversation() }
-        status = flow.isAwaitingSpeech ? .awake : .listening
+        status = restingStatus
         if let command = pendingBargeCommand {
             pendingBargeCommand = nil
             perform(flow.heard(command, at: .now))
@@ -430,8 +519,8 @@ final class AssistantController {
     }
 
     /// Forwards the handler's reply while mirroring it into the UI.
-    private func replyFragments(for command: String, isWorkInput: Bool) -> AsyncThrowingStream<String, any Error> {
-        let source = isWorkInput ? handler.respond(toWorkInput: command) : handler.respond(to: command)
+    private func replyFragments(for command: String, isWorkInput: Bool, heard: String?) -> AsyncThrowingStream<String, any Error> {
+        let source = isWorkInput ? handler.respond(toWorkInput: command, language: heard) : handler.respond(to: command)
         return AsyncThrowingStream { continuation in
             let forwarding = Task { @MainActor in
                 do {

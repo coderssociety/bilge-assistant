@@ -84,9 +84,13 @@ final class AppEnvironment {
         let timers = TimerService { await announcer.target?.announce($0) }
         let memory = MemoryStore()
         let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory, language: settings.language)
+        let whisper = WhisperProvider(language: settings.language)
+        let meetings = MeetingRecorder()
         let brain = AssistantBrain(tools: registry.makeTools(), context: registry.context, memory: memory,
-                                   spreadsheet: registry.spreadsheet, dictation: registry.dictation, language: settings.language)
-        let assistant = AssistantController(settings: settings, speech: speech, handler: brain)
+                                   spreadsheet: registry.spreadsheet, dictation: registry.dictation, meetings: meetings,
+                                   whisper: whisper, language: settings.language)
+        let assistant = AssistantController(settings: settings, speech: speech, handler: brain, whisper: whisper,
+                                            recorder: meetings)
         announcer.target = assistant
         brain.confirmer = assistant
         self.settings = settings

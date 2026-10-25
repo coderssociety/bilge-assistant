@@ -11,15 +11,22 @@ protocol CommandHandling: AnyObject {
     func conversationWillStart()
     /// Hands-free work in progress (Excel mode, dictation), which keeps listening after the reply.
     var workSession: ConversationFlow.WorkSession? { get }
-    /// Something said during that work without the wake phrase: a cell edit, text to type.
-    func respond(toWorkInput input: String) -> AsyncThrowingStream<String, any Error>
+    /// Something said during that work without the wake phrase: a cell edit, text to type, speech to interpret
+    /// (`language` is the one it was recognized in, when the session detects languages).
+    func respond(toWorkInput input: String, language: String?) -> AsyncThrowingStream<String, any Error>
+    /// The language to speak the reply in, nil for the assistant's own.
+    func replyLanguageCode(for input: String, isWorkInput: Bool, heard: String?) -> String?
 }
 
 extension CommandHandling {
     var workSession: ConversationFlow.WorkSession? { nil }
 
-    func respond(toWorkInput input: String) -> AsyncThrowingStream<String, any Error> {
+    func respond(toWorkInput input: String, language: String?) -> AsyncThrowingStream<String, any Error> {
         respond(to: input)
+    }
+
+    func replyLanguageCode(for input: String, isWorkInput: Bool, heard: String?) -> String? {
+        isWorkInput ? nil : TranslationRequest.target(in: input)?.code
     }
 }
 

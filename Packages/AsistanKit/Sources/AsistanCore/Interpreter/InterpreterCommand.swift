@@ -25,8 +25,11 @@ public struct InterpreterPair: Equatable, Sendable {
 
     /// "TR → EN: ", shown before a translation.
     public func caption(from code: String) -> String? {
-        guard let target = counterpart(of: code) else { return nil }
-        return "\(code.uppercased()) → \(target.code.uppercased()): "
+        counterpart(of: code).map { Self.caption(from: code, to: $0.code) }
+    }
+
+    public static func caption(from source: String, to target: String) -> String {
+        "\(source.uppercased()) → \(target.uppercased()): "
     }
 }
 

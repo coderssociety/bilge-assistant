@@ -67,7 +67,7 @@ private struct StatusOrb: View {
             Image(systemName: status.symbolName)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(tint)
-                .symbolEffect(.pulse, isActive: status == .thinking || status == .transcribing)
+                .symbolEffect(.pulse, isActive: status == .thinking || status == .transcribing || status == .recording)
                 .symbolEffect(.variableColor.iterative, isActive: status == .speaking)
         }
         .frame(width: Self.size, height: Self.size)
@@ -84,7 +84,7 @@ private struct StatusOrb: View {
         case .thinking: .purple
         case .speaking: .green
         case .confirming: .orange
-        case .failed: .red
+        case .recording, .failed: .red
         default: .secondary
         }
     }

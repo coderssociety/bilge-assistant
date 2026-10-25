@@ -25,6 +25,9 @@ final class AssistantBrain: CommandHandling {
     private let memory: MemoryStore
     private let spreadsheet: SpreadsheetSession
     private let dictation: DictationSession
+    let interpreter: InterpreterSession
+    let meetings: MeetingRecorder
+    let whisper: WhisperProvider
     private let tools: [any AssistantTool]
     let language: AssistantLanguage
     private let localModel = LocalModelResponder()
@@ -33,12 +36,17 @@ final class AssistantBrain: CommandHandling {
 
     init(tools: [any AssistantTool], context: ConversationContext = ConversationContext(),
          memory: MemoryStore = MemoryStore(fileURL: nil), spreadsheet: SpreadsheetSession = SpreadsheetSession(),
-         dictation: DictationSession = DictationSession(), language: AssistantLanguage = .turkish) {
+         dictation: DictationSession = DictationSession(), interpreter: InterpreterSession = InterpreterSession(),
+         meetings: MeetingRecorder = MeetingRecorder(), whisper: WhisperProvider? = nil,
+         language: AssistantLanguage = .turkish) {
         self.language = language
         self.context = context
         self.memory = memory
         self.spreadsheet = spreadsheet
         self.dictation = dictation
+        self.interpreter = interpreter
+        self.meetings = meetings
+        self.whisper = whisper ?? WhisperProvider(language: language)
         self.tools = tools
         do {
             router = try CommandRouter(tools: tools, language: language, model: model)
@@ -114,8 +122,13 @@ final class AssistantBrain: CommandHandling {
     }
 
     /// Dictation takes everything said; Excel mode only spreadsheet commands. Either way the window
-    /// stays open for the next input without the wake phrase.
+    /// stays open for the next input without the wake phrase. Interpreting takes even the wake phrase, in
+    /// either of its languages.
     var workSession: ConversationFlow.WorkSession? {
+        if let pair = interpreter.pair {
+            return ConversationFlow.WorkSession(window: InterpreterSession.window, takesEverything: true,
+                                                languages: pair.codes) { _ in true }
+        }
         if dictation.isActive { return ConversationFlow.WorkSession(window: DictationSession.window) { _ in true } }
         guard spreadsheet.isActive else { return nil }
         let language = language
@@ -124,7 +137,8 @@ final class AssistantBrain: CommandHandling {
         }
     }
 
-    func respond(toWorkInput input: String) -> AsyncThrowingStream<String, any Error> {
+    func respond(toWorkInput input: String, language heard: String?) -> AsyncThrowingStream<String, any Error> {
+        if interpreter.isActive { return interpret(input, heard: heard) }
         guard dictation.isActive else { return respond(to: input) }
         return AsyncThrowingStream { continuation in
             let task = Task { @MainActor in
@@ -136,7 +150,24 @@ final class AssistantBrain: CommandHandling {
         }
     }
 
+    /// An interpreted utterance is spoken in the pair's other language; "Almancaya tercüme et" starting the
+    /// interpreter is answered in the assistant's own.
+    func replyLanguageCode(for input: String, isWorkInput: Bool, heard: String?) -> String? {
+        if isWorkInput {
+            guard interpreter.isActive, !InterpreterCommand.isStop(input) else { return nil }
+            return interpreter.direction(heard: heard, assistant: language)?.target.code
+        }
+        if InterpreterCommand.start(in: input, language: language) != nil || MeetingCommand.parse(input, language: language) != nil {
+            return nil
+        }
+        return TranslationRequest.target(in: input)?.code
+    }
+
     func endConversation() {
+        if interpreter.isActive {
+            interpreter.end()
+            if !meetings.isRecording { whisper.releaseUnlessListening() }
+        }
         dictation.end()
         spreadsheet.end()
         conversation = nil
@@ -149,6 +180,8 @@ final class AssistantBrain: CommandHandling {
     }
 
     private func handle(_ command: String, continuation: AsyncThrowingStream<String, any Error>.Continuation) async throws {
+        // Before the model check: ending a recording must work, and save the transcript, even without a model.
+        if try await handleSessionCommand(command, continuation: continuation) { return }
         guard let router, unavailableReason == nil else {
             continuation.yield(unavailableReason ?? String(localized: "Dil modeli kullanılamıyor."))
             return
@@ -324,6 +357,15 @@ final class AssistantBrain: CommandHandling {
         let prompt = "Kullanıcının isteği: \(command)\n\nMetin:\n<<<\n\(material)\n>>>"
         let instructions = BrainInstructions.material(language: language)
             + (translation.map { BrainInstructions.translation(to: $0, language: language) } ?? "")
+        return try await streamUntrusted(prompt, instructions: instructions, into: continuation)
+    }
+
+    /// Streams a reply from a fresh session that has no tools, for prompts carrying untrusted text.
+    func streamUntrusted(
+        _ prompt: String,
+        instructions: String,
+        into continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws -> String {
         if localModel.isEnabled {
             do {
                 return try await localModel.answer(prompt, instructions: instructions, into: continuation)
@@ -341,6 +383,27 @@ final class AssistantBrain: CommandHandling {
             emitted = text
         }
         return emitted
+    }
+
+    /// A whole reply that is not spoken as it forms (a meeting summary), from a session with no tools.
+    func generate(
+        _ prompt: String,
+        instructions: String,
+        maxTokens: Int,
+        announcingWaitTo continuation: AsyncThrowingStream<String, any Error>.Continuation
+    ) async throws -> String {
+        if localModel.isEnabled {
+            do {
+                let reply = try await localModel.complete([.system(instructions), .user(prompt)], maxTokens: maxTokens,
+                                                          announcingWaitTo: continuation)
+                if !reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return reply }
+            } catch {
+                try Self.rethrowIfCancelled(error)
+            }
+        }
+        let session = LanguageModelSession(model: model, instructions: instructions)
+        let options = GenerationOptions(temperature: 0.2, maximumResponseTokens: maxTokens)
+        return try await session.respond(to: prompt, options: options).content
     }
 
     private func streamConversation(
@@ -397,7 +460,7 @@ final class AssistantBrain: CommandHandling {
         Log.brain.error("Local model unavailable, using Apple's: \(String(describing: error), privacy: .public)")
     }
 
-    private static func spokenMessage(for error: any Error) -> String {
+    static func spokenMessage(for error: any Error) -> String {
         guard let error = error as? LanguageModelError else {
             return String(localized: "Üzgünüm, bir sorun oluştu. Tekrar dener misin?")
         }

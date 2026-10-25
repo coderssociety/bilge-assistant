@@ -27,6 +27,9 @@ struct MenuBarContent: View {
         if assistant.status == .speaking || assistant.status == .thinking {
             Button("Yanıtı durdur") { assistant.interrupt() }
         }
+        if assistant.status == .recording {
+            Button("Kaydı bitir") { assistant.finishRecording() }
+        }
         Divider()
         SettingsLink { Text("Ayarlar…") }
             .keyboardShortcut(",")
@@ -57,6 +60,7 @@ extension AssistantController.Status {
         case .thinking: String(localized: "Düşünüyor…")
         case .speaking: String(localized: "Konuşuyor…")
         case .confirming: String(localized: "Onayını bekliyorum — evet ya da hayır de")
+        case .recording: String(localized: "Toplantı kaydediliyor — bitirmek için “kaydı bitir” de")
         case let .failed(message): String(localized: "Hata: \(message)")
         }
     }
@@ -70,6 +74,7 @@ extension AssistantController.Status {
         case .thinking: "ellipsis.circle.fill"
         case .speaking: "speaker.wave.2.circle.fill"
         case .confirming: "questionmark.circle.fill"
+        case .recording: "record.circle.fill"
         case .failed: "exclamationmark.circle"
         }
     }
