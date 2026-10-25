@@ -76,7 +76,7 @@ def test_a_gateway_hiccup_is_tried_once_more(monkeypatch):
                     web_fetch.Response("https://example.org", 200, "text/plain", b"ok")])  # fmt: skip
     calls = []
 
-    def follow(url, language, max_bytes):
+    def follow(url, language, max_bytes, user_agent):
         calls.append(url)
         return next(answers)
 
@@ -86,10 +86,23 @@ def test_a_gateway_hiccup_is_tried_once_more(monkeypatch):
     assert len(calls) == 2
 
 
+def test_a_browser_like_agent_is_sent_only_when_asked_for(monkeypatch):
+    agents = []
+
+    def follow(url, language, max_bytes, user_agent):
+        agents.append(user_agent)
+        return web_fetch.Response(url, 200, "", b"")
+
+    monkeypatch.setattr(web_fetch, "_follow", follow)
+    web_fetch.get("https://example.org")
+    web_fetch.get("https://example.org", user_agent=web_fetch.BROWSER_USER_AGENT)
+    assert agents == [web_fetch.USER_AGENT, web_fetch.BROWSER_USER_AGENT]
+
+
 def test_a_missing_page_is_not_tried_again(monkeypatch):
     calls = []
 
-    def follow(url, language, max_bytes):
+    def follow(url, language, max_bytes, user_agent):
         calls.append(url)
         return web_fetch.Response(url, 404, "", b"")
 

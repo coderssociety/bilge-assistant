@@ -11,8 +11,8 @@ from bilge.core.language import AssistantLanguage
 from bilge.tools import web_fetch
 
 
-def get_json(url: str, language: AssistantLanguage) -> Any:
-    response = web_fetch.get(url, language)
+def get_json(url: str, language: AssistantLanguage, user_agent: str = web_fetch.USER_AGENT) -> Any:
+    response = web_fetch.get(url, language, user_agent=user_agent)
     if response.status != 200:
         raise web_fetch.WebFetchError(web_fetch.Reason.STATUS, response.status)
     try:
