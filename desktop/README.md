@@ -145,7 +145,7 @@ page. Nothing is downloaded or installed by itself. Settings → General turns t
 | Typing | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` or `ydotool` (Wayland) | built in |
 | Calendar | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “süt almayı işaretle” | CalDAV or an iCal address | the same, or Outlook |
 | Spreadsheet | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel or LibreOffice Calc |
-| Mail | “okunmamış e-postalarım”, “içeriğini oku”, “Ahmet'e yarın geleceğimi yaz” | IMAP, reading only (Settings → Mail) | Outlook |
+| Mail | “okunmamış e-postalarım”, “içeriğini oku”, “buna yanıt ver: yarın uygunum”, “Ahmet'e yarın geleceğimi yaz” | IMAP, reading only (Settings → Mail) | Outlook |
 | System | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` or Plasma, `nmcli`, the desktop's screenshot tool | built in |
 | Clipboard | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” | `wl-clipboard`, `xclip` or `xsel` | built in |
 | News | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı, TRT Haber, BBC Türkçe (BBC News, The Guardian, NPR in English); “aç” also opens the story in the browser | the same |

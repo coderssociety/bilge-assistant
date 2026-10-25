@@ -145,7 +145,7 @@ bağlantısıyla görünür. Kendiliğinden hiçbir şey indirilmez ya da kurulm
 | Yazma | “şunu yaz: …”, “dikte modunu başlat” | `xdotool` (X11), `wtype` ya da `ydotool` (Wayland) | yerleşik |
 | Takvim | “yarın neler var”, “cuma 10'da diş hekimi ekle”, “yarınki toplantıyı iptal et”, “diş hekimini cumaya al”, “süt almayı işaretle” | CalDAV ya da bir iCal adresi | aynısı ya da Outlook |
 | Tablo | “D3'e B2 ile B1'i topla”, “C5'e 1250 yaz”, “geri al” | LibreOffice Calc (`python3-uno`) | Excel ya da LibreOffice Calc |
-| E-posta | “okunmamış e-postalarım”, “içeriğini oku”, “Ahmet'e yarın geleceğimi yaz” | IMAP, yalnızca okuma (Ayarlar → E-posta) | Outlook |
+| E-posta | “okunmamış e-postalarım”, “içeriğini oku”, “buna yanıt ver: yarın uygunum”, “Ahmet'e yarın geleceğimi yaz” | IMAP, yalnızca okuma (Ayarlar → E-posta) | Outlook |
 | Sistem | “ekranı kilitle”, “karanlık modu aç”, “Wi-Fi'ı kapat”, “ekran görüntüsü al”, “pil kaç” | `loginctl`, `gsettings` ya da Plasma, `nmcli`, masaüstünün ekran görüntüsü aracı | yerleşik |
 | Pano | “panoda ne var”, “seçili metni çevir”, “bunu kopyala” | `wl-clipboard`, `xclip` ya da `xsel` | yerleşik |
 | Haberler | “teknoloji haberleri”, “başka var mı”, “başka bir kaynak”, “üçüncü haberi anlat”, “Tesla haberini aç” | Anadolu Ajansı, TRT Haber, BBC Türkçe (İngilizcede BBC News, The Guardian, NPR); “aç” haberi tarayıcıda da açar | aynı |

@@ -62,8 +62,17 @@ _TEXTS = {
 }
 
 
-def read_mail_tool(mailbox: Callable[[], mailboxes.Mailbox | None], language: AssistantLanguage) -> Tool:
+def read_mail_tool(
+    mailbox: Callable[[], mailboxes.Mailbox | None],
+    language: AssistantLanguage,
+    on_read: Callable[[list[mailboxes.MailMessage]], None] | None = None,
+) -> Tool:
+    """`on_read` hears which messages were just read out or named, newest first, for "buna yanıt ver"."""
     texts = _TEXTS[language]
+
+    def told(messages: list[mailboxes.MailMessage]) -> None:
+        if on_read is not None:
+            on_read(messages)
 
     def guarded(action: Callable[[mailboxes.Mailbox], Any]) -> Any:
         found = mailbox()
@@ -76,6 +85,7 @@ def read_mail_tool(mailbox: Callable[[], mailboxes.Mailbox | None], language: As
 
     def read_one(sender: str, position: int) -> str:
         count, message = guarded(lambda box: box.message(sender, position))
+        told([message] if message is not None else [])
         if message is None:
             if sender and not count:
                 return texts["no_sender"].format(sender=sender)
@@ -94,6 +104,7 @@ def read_mail_tool(mailbox: Callable[[], mailboxes.Mailbox | None], language: As
             return read_one(sender, max(1, min(position or 1, MAX_POSITION)))
         bodies = READ_MESSAGES if arguments.get("content") else 0
         count, newest = guarded(lambda box: box.unread(LISTED, bodies))
+        told(newest[:bodies] if bodies else newest)
         if not count:
             return texts["none"]
         listed = "; ".join(f"{m.sender or '?'}: {m.subject}" for m in newest)
