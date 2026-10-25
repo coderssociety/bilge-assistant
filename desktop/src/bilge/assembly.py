@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from bilge import calendars, config, desktop, mailboxes
+from bilge import calendars, config, contacts, desktop, mailboxes
 from bilge.brain.action_log import ActionLog
 from bilge.brain.agent import Agent, Confirmer
 from bilge.brain.routing import Mode, Rule, rule
@@ -24,6 +24,7 @@ from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
+from bilge.tools.builtin.contacts import ContactLookup, find_contact_tool
 from bilge.tools.builtin.mail import read_mail_tool
 from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.builtin.units import convert_units
@@ -62,6 +63,18 @@ def calendar_source(settings: config.CalendarSettings) -> calendars.CalendarSour
     return None
 
 
+def contact_source(settings: config.Settings) -> contacts.ContactSource | None:
+    """Outlook's contacts on Windows; elsewhere the address book of the CalDAV account, when its server has one."""
+    if sys.platform == "win32":
+        from bilge.desktop.windows.office import Outlook, OutlookContacts
+
+        return OutlookContacts(Outlook())
+    calendar = settings.calendar
+    if calendar.kind == "caldav" and calendar.url:
+        return contacts.CardDAVContacts(calendar.url, calendar.username, config.api_key(CALDAV_SECRET) or "")
+    return None
+
+
 def mailbox(settings: config.MailSettings) -> mailboxes.Mailbox | None:
     """The IMAP account; on Windows mail comes from Outlook instead."""
     if not settings.server:
@@ -94,6 +107,7 @@ def build_agent(
     briefing = Briefing(language, weather, calendar, settings.voice.wake_phrase)
     news_reading = internet.NewsReading()
     text_reading = TextReading(language)
+    people = ContactLookup(lambda: contact_source(settings), language)
     found = desktop.current(language)
     alert = _alert(found, announce)
     alarms = _timer_service(language, alert) if found is not None else None
@@ -118,6 +132,7 @@ def build_agent(
         internet.read_web_page(language, text_reading),
         continue_reading_tool(text_reading, language),
         briefing_tool(briefing),
+        find_contact_tool(people, language),
         *calendar_tools(calendar, language, alert=_reminder_alert(alarms) if alarms is not None else None),
     ])  # fmt: skip
     if sys.platform != "win32":
@@ -139,7 +154,8 @@ def build_agent(
     built: list[Agent] = []
     if found is not None and alarms is not None:
         last_reply = lambda: built[0].last_reply if built else None  # noqa: E731
-        tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply, text_reading)
+        tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply, text_reading,
+                                                             people)  # fmt: skip
         for tool in tools:
             registry.add(tool)
         rules = [*desktop_rules, *rules]
@@ -187,6 +203,7 @@ def _desktop_tools(
     alarms: "TimerService",
     last_reply: Callable[[], str | None],
     text_reading: TextReading,
+    people: ContactLookup,
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
@@ -228,7 +245,7 @@ def _desktop_tools(
         *web.web_tools(found.opener, language),
         *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
-        *_office_tools(language, text_reading),
+        *_office_tools(language, text_reading, people),
         *notes.note_tools(NotesFolder(notes_folder(found.folders.documents(), language)), language, text_reading),
     ]
     rules = [
@@ -253,13 +270,13 @@ def _spreadsheet_apps(calc):
     return SpreadsheetApps({"excel": ExcelSheets(), "calc": calc})
 
 
-def _office_tools(language: AssistantLanguage, text_reading: TextReading) -> list[Tool]:
+def _office_tools(language: AssistantLanguage, text_reading: TextReading, people: ContactLookup) -> list[Tool]:
     if sys.platform != "win32":
         return []
     from bilge.desktop.windows.office import Outlook
     from bilge.tools.desktop.mail import mail_tools
 
-    return mail_tools(Outlook(), language, text_reading)
+    return mail_tools(Outlook(), language, text_reading, people)
 
 
 def voice_models(settings: config.Settings) -> tuple[ModelSpec, ...]:

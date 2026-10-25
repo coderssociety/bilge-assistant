@@ -5,15 +5,21 @@ from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta
 from typing import Any
 
-from bilge import calendars, mailboxes
+from bilge import calendars, contacts, mailboxes
+from bilge.core.contacts.contact import Contact
 from bilge.core.spreadsheet.cell_reference import CellReference, SpreadsheetNumber, SpreadsheetValue
 from bilge.desktop.calc import MAX_CELLS, CalcError, Location
 from bilge.desktop.windows import com
 
 EXCEL, OUTLOOK = "Excel.Application", "Outlook.Application"
 # Outlook's default folders and item kinds.
-INBOX, CALENDAR, TASKS = 6, 9, 13
+INBOX, CALENDAR, CONTACTS, TASKS = 6, 9, 10, 13
 MAIL_ITEM, APPOINTMENT_ITEM, TASK_ITEM = 0, 1, 3
+# olContact: the contacts folder also holds distribution lists.
+CONTACT_CLASS = 40
+MAX_CONTACTS = 5000
+_CONTACT_PHONES = ("MobileTelephoneNumber", "PrimaryTelephoneNumber", "BusinessTelephoneNumber", "HomeTelephoneNumber")
+_CONTACT_EMAILS = ("Email1Address", "Email2Address", "Email3Address")
 # Outlook writes "no date" as 1 January 4501.
 _NO_DATE_YEAR = 4000
 _SMTP_ADDRESS = "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
@@ -415,3 +421,42 @@ class OutlookCalendar:
             return False
 
         return self._guarded(complete)
+
+
+class OutlookContacts:
+    """The people in Outlook's Contacts folder."""
+
+    def __init__(self, outlook: Outlook):
+        self.outlook = outlook
+
+    def contacts(self) -> list[Contact]:
+        def read(app) -> list[Contact]:
+            found = []
+            for item in each(self.outlook.folder(app, CONTACTS).Items):
+                if int(getattr(item, "Class", CONTACT_CLASS) or 0) != CONTACT_CLASS:
+                    continue
+                contact = _contact(item)
+                if contact is not None:
+                    found.append(contact)
+                if len(found) >= MAX_CONTACTS:
+                    break
+            return found
+
+        try:
+            return self.outlook.call(read)
+        except OfficeError as error:
+            raise contacts.ContactsError(error.reason, str(error)) from error
+
+
+def _contact(item) -> Contact | None:
+    def field(name: str) -> str:
+        return str(getattr(item, name, "") or "").strip()
+
+    name = field("FullName") or field("FileAs") or field("CompanyName")
+    if not name:
+        return None
+    phones = tuple(phone for phone in map(field, _CONTACT_PHONES) if phone)
+    # An Exchange contact's address may be an internal name ("/o=ExchangeLabs/…") rather than an e-mail address.
+    emails = tuple(address for address in map(field, _CONTACT_EMAILS) if "@" in address)
+    nickname = field("NickName")
+    return Contact(name, phones, emails, (nickname,) if nickname else ())

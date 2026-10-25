@@ -9,8 +9,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from bilge import calendars
+from bilge import calendars, contacts
 from bilge.brain.agent import resolve
+from bilge.core.contacts.contact import Contact
 from bilge.core.language import AssistantLanguage
 from bilge.core.spreadsheet.cell_reference import CellReference, SpreadsheetNumber, SpreadsheetText
 from bilge.desktop import image
@@ -22,6 +23,7 @@ from bilge.desktop.windows.input import WindowsClipboard, WindowsKeyboard
 from bilge.desktop.windows.sound import WindowsMedia, player_name
 from bilge.desktop.windows.system import WindowsScreenshots, WindowsSession, WindowsSettings
 from bilge.tools.base import Risk, ToolError
+from bilge.tools.builtin.contacts import ContactLookup
 from bilge.tools.desktop.mail import mail_tools
 
 from .fakes import FakeRunner
@@ -377,11 +379,19 @@ class Outlook:
             SimpleNamespace(SenderName="Ahmet", SenderEmailAddress="ahmet@example.org", Subject="Fatura",
                             Body="Fatura ödendi.", UnRead=False, ReceivedTime=datetime(2026, 10, 13, 8, 15)),
         ])  # fmt: skip
+        self.contacts = Items([
+            SimpleNamespace(Class=office.CONTACT_CLASS, FullName="Ayşe Kaya", NickName="Ayşo",
+                            MobileTelephoneNumber="0555 111 22 33", Email1Address="ayse@example.org"),
+            SimpleNamespace(Class=office.CONTACT_CLASS, FullName="", FileAs="Destek", CompanyName="Bilge A.Ş.",
+                            BusinessTelephoneNumber="444 0 444", Email1Address="/o=ExchangeLabs/cn=destek"),
+            SimpleNamespace(Class=69, FullName="Ekip listesi"),
+        ])  # fmt: skip
         self.sent = []
         self.items = {}
 
     def GetNamespace(self, _):  # noqa: N802
-        folders = {office.CALENDAR: self.calendar, office.TASKS: self.tasks, office.INBOX: self.inbox}
+        folders = {office.CALENDAR: self.calendar, office.TASKS: self.tasks, office.INBOX: self.inbox,
+                   office.CONTACTS: self.contacts}  # fmt: skip
         return SimpleNamespace(GetDefaultFolder=lambda kind: SimpleNamespace(Items=folders[kind]),
                                GetItemFromID=lambda entry: self.items[entry])  # fmt: skip
 
@@ -495,6 +505,34 @@ def test_mail_is_read_as_untrusted_and_sent_only_to_the_resolved_recipient(no_co
     assert send.question({"to": "Bilinmeyen", "body": "x"}) is None
     with pytest.raises(ToolError, match="Bilinmeyen"):
         send.run({"to": "Bilinmeyen", "body": "x"})
+
+
+def test_outlook_contacts_skip_lists_and_internal_exchange_names(no_com):
+    found = office.OutlookContacts(office.Outlook(application=lambda: Outlook())).contacts()
+    assert found == [
+        Contact("Ayşe Kaya", ("0555 111 22 33",), ("ayse@example.org",), ("Ayşo",)),
+        Contact("Destek", ("444 0 444",), ()),
+    ]
+    closed = office.OutlookContacts(office.Outlook(application=lambda: None, running=lambda name: False))
+    with pytest.raises(contacts.ContactsError) as raised:
+        closed.contacts()
+    assert raised.value.reason == "not_running"
+
+
+def test_mail_goes_to_a_contact_outlook_does_not_resolve_after_naming_the_address(no_com):
+    app = Outlook()
+    outlook = office.Outlook(application=lambda: app)
+    lookup = ContactLookup(lambda: office.OutlookContacts(outlook), TR)
+    send = {t.name: t for t in mail_tools(outlook, TR, contacts=lookup)}["sendEmail"]
+    arguments = {"to": "Ayşe'ye", "subject": "Rapor", "body": "Rapor hazır."}
+    assert send.question(arguments) == (
+        "Ayşe Kaya (ayse@example.org) adresine 'Rapor' konulu e-postayı göndereyim mi? Metin: Rapor hazır."
+    )
+    send.run(arguments)
+    assert app.sent == [("ayse@example.org", "Rapor", "Rapor hazır.")]
+    assert send.question({"to": "Destek", "body": "x"}) is None
+    with pytest.raises(ToolError, match="'Destek' için bir e-posta adresi bulamadım"):
+        send.run({"to": "Destek", "body": "x"})
 
 
 def test_mail_is_picked_out_by_sender_and_place_read_or_not(no_com):

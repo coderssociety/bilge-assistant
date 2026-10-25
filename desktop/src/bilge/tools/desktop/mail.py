@@ -11,6 +11,7 @@ from bilge.core import mail_request
 from bilge.core.language import AssistantLanguage
 from bilge.desktop.windows.office import MAIL_ITEM, OfficeError, Outlook, OutlookMailbox, smtp_address
 from bilge.tools.base import Risk, Tool, ToolError
+from bilge.tools.builtin.contacts import ContactLookup
 from bilge.tools.builtin.mail import MAX_POSITION, read_mail_tool
 from bilge.tools.desktop.common import int_argument, integer, obj, string_argument, text
 from bilge.tools.reading import TextReading
@@ -28,7 +29,8 @@ _TEXTS = {
         "too_long": "Bu e-posta sesle onaylamak için çok uzun; daha kısa söyler misin?",
         "no_address": "'{to}' için bir e-posta adresi bulamadım.",
         "failed": "Outlook'a ulaşamadım.",
-        "send": "Outlook ile e-posta gönderir. Alıcı adres defterindeki bir ad ya da e-posta adresi olabilir.",
+        "send": "Outlook ile e-posta gönderir. Alıcı adres defterindeki ya da Kişiler'deki bir ad ya da e-posta adresi "
+        "olabilir ('Ahmet'e mail at: …').",
         "to": "Alıcının adı ya da e-posta adresi",
         "subject": "Konu",
         "body": "E-postanın metni, kullanıcının söylediği gibi",
@@ -54,7 +56,8 @@ _TEXTS = {
         "too_long": "That e-mail is too long to confirm by voice; could you say it shorter?",
         "no_address": "I couldn't find an e-mail address for '{to}'.",
         "failed": "I couldn't reach Outlook.",
-        "send": "Sends an e-mail with Outlook. The recipient can be a name from the address book or an address.",
+        "send": "Sends an e-mail with Outlook. The recipient can be a name from the address book or the contacts, or "
+        "an address ('email Anna: …').",
         "to": "The recipient's name or e-mail address",
         "subject": "The subject",
         "body": "The message, as the user said it",
@@ -94,7 +97,13 @@ class _Reply:
     body: str
 
 
-def mail_tools(outlook: Outlook, language: AssistantLanguage, reading: TextReading | None = None) -> list[Tool]:
+def mail_tools(
+    outlook: Outlook,
+    language: AssistantLanguage,
+    reading: TextReading | None = None,
+    contacts: ContactLookup | None = None,
+) -> list[Tool]:
+    """`contacts` finds the address of someone Outlook's own address book doesn't resolve."""
     texts = _TEXTS[language]
     # The resolved recipient behind the last question, so what is sent is what the user heard.
     pending: dict[str, _Draft] = {}
@@ -133,6 +142,9 @@ def mail_tools(outlook: Outlook, language: AssistantLanguage, reading: TextReadi
             return None
         try:
             found = guarded(resolve) if to else None
+            if found is None and to and contacts is not None:
+                person = contacts.find(to)
+                found = (person.name, person.email or "") if person is not None else None
         except ToolError as error:
             problem.append(str(error))
             return None
