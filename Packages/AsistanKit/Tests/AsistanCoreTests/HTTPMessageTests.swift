@@ -60,6 +60,14 @@ struct HTTPMessageTests {
         #expect(String(decoding: response.body, as: UTF8.self) == "hello")
     }
 
+    @Test("a SHOUTcast server's ICY status line, read up to the end of its headers")
+    func icy() throws {
+        let response = try HTTPResponse.parse(raw("ICY 200 OK\r\nicy-name: Radyo\r\n\r\n\u{1}\u{2}"), truncated: true)
+        #expect(response.status == 200)
+        #expect(response.header("icy-name") == "Radyo")
+        #expect(throws: HTTPResponseError.malformed) { try HTTPResponse.parse(raw("SPAM 200 OK\r\n\r\n")) }
+    }
+
     @Test("reads the body until the connection closed when no length is given")
     func untilClose() throws {
         let response = try HTTPResponse.parse(raw("HTTP/1.0 404 Not Found\r\n\r\nnope"))

@@ -74,7 +74,9 @@ public struct HTTPResponse: Sendable {
         let head = String(decoding: data[data.startIndex..<split.lowerBound], as: UTF8.self)
         let lines = head.components(separatedBy: "\r\n")
         let statusParts = lines[0].split(separator: " ", maxSplits: 2)
-        guard statusParts.count >= 2, statusParts[0].hasPrefix("HTTP/"), let status = Int(statusParts[1]) else {
+        // SHOUTcast radio servers answer "ICY 200 OK".
+        guard statusParts.count >= 2, statusParts[0].hasPrefix("HTTP/") || statusParts[0] == "ICY",
+              let status = Int(statusParts[1]) else {
             throw HTTPResponseError.malformed
         }
         let headers = lines.dropFirst().compactMap { line -> (name: String, value: String)? in
