@@ -32,6 +32,10 @@ public enum EnglishRouteGuard {
         if NoteRequest.asksForList(command, language: .english) { return "readNotes" }
         if CallRequest.parse(command, language: .english) != nil { return "callContact" }
         if let calendarAction = CalendarChange.reviewedAction(action, command: command, language: .english) { return calendarAction }
+        if MailReplyRequest.parse(command, language: .english) != nil,
+           previousAction == "readMail" || MailReplyRequest.mentionsMail(command, language: .english) {
+            return "replyMail"
+        }
         // "Type see you tomorrow" was read as a timer because of "tomorrow".
         if isDictation(words), action != "createNote" { return "typeText" }
         // Only answers about the selection; copying or sending it keeps its own action.

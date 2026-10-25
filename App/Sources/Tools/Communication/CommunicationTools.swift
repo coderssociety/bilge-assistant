@@ -229,10 +229,12 @@ struct SendMessageTool: AssistantTool {
 }
 
 /// Unread mail in the inbox. Senders and subjects are untrusted text, answered by the tool-less session.
+/// The messages listed are remembered, so "buna yanıt ver" can answer one of them.
 struct ReadMailTool: AssistantTool {
     let name = "readMail"
     let description = "Mail'deki okunmamış e-postaları söyler: kaç tane olduğunu, kimden geldiklerini, konularını ve istenirse ne yazdıklarını."
     let answersWithLanguageModel = true
+    let context: ConversationContext
     private static let maxMessages = 8
     /// Messages whose text is read; each is cut, so a newsletter can't fill the answer.
     private static let maxReadMessages = 3
@@ -265,23 +267,41 @@ struct ReadMailTool: AssistantTool {
             set output to output & linefeed & linefeed & \(AppleScriptRunner.quoted(String(localized: "E-posta "))) & i & ": " & (sender of m) & " - " & (subject of m) & linefeed & body
             end repeat
             """ : ""
+        let contentRead = arguments.withContent ? Self.maxReadMessages : 0
         do {
-            return try await AppleScriptRunner.run("""
+            let output = try await AppleScriptRunner.run("""
             tell application "Mail"
             set unread to (messages of inbox whose read status is false\(filter))
             set total to count of unread
             set output to \(AppleScriptRunner.quoted(String(localized: "Okunmamış e-posta sayısı: "))) & total
+            set refs to ""
             repeat with i from 1 to (total)
             if i > \(Self.maxMessages) then exit repeat
             set m to item i of unread
             set output to output & linefeed & "- " & (sender of m) & ": " & (subject of m)
+            set readFlag to "0"
+            if i is not greater than \(contentRead) then set readFlag to "1"
+            set refs to refs & linefeed & \(Self.referenceLine("m", flag: "readFlag"))
             end repeat
             \(bodies)
-            return output
+            return output & refs
             end tell
             """)
+            let (text, references) = MailReadOutput.split(output)
+            await MainActor.run { context.keepReadMail(references, at: .now) }
+            return text
         } catch {
             return ToolReply.failure(error)
         }
+    }
+
+    /// One `MailReadOutput` line for the message in the AppleScript variable `message`; the marker's control
+    /// character is built in the script rather than written into its source.
+    static func referenceLine(_ message: String, flag: String) -> String {
+        let marker = "(character id \(MailReadOutput.marker.unicodeScalars.first!.value)) & "
+            + AppleScriptRunner.quoted(String(MailReadOutput.marker.dropFirst()))
+        let fields = [marker, "(id of \(message) as text)", "(extract name from (sender of \(message)))",
+                      "(extract address from (sender of \(message)))", "(subject of \(message))", flag]
+        return fields.joined(separator: " & tab & ")
     }
 }

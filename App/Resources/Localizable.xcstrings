@@ -132,6 +132,16 @@
         }
       }
     },
+    "%@ kişisinden gelen bir e-posta bulamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find an e-mail from %@."
+          }
+        }
+      }
+    },
     "%@ son %@ başlıkları. ": {
       "localizations": {
         "en": {
@@ -668,6 +678,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ is free software: you can use, modify and distribute it under the terms of the GNU GPL 3.0. It comes with no warranty."
+          }
+        }
+      }
+    },
+    "%@, %@ adresinden gelen \"%@\" konulu e-postaya şu yanıtı gönderiyorum: %@. Göndermem için evet ya da gönder de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm replying to the e-mail \"%3$@\" from %1$@, %2$@, with: %4$@. Say yes or send to send it."
           }
         }
       }
@@ -3312,6 +3332,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "About"
+          }
+        }
+      }
+    },
+    "Hangi e-postaya ne yanıt vereceğimi anlayamadım. Örneğin 'buna yanıt ver: yarın uygunum' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't catch which e-mail to answer or what to say. You can say, for example, 'reply to this: I'm free tomorrow'."
+          }
+        }
+      }
+    },
+    "Hangi e-postaya yanıt vereceğimi bilmiyorum; önce 'maillerimi oku' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't know which e-mail to answer; you can say 'read my mail' first."
+          }
+        }
+      }
+    },
+    "Hangi e-postaya yanıt vereyim? Az önce okuduklarım: %@. Örneğin 'Ahmet'in mailine … diye yanıt ver' diyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which e-mail should I answer? The ones I just read: %@. You can say, for example, 'reply to Ahmet's email saying …'."
           }
         }
       }
@@ -6014,6 +6064,16 @@
         }
       }
     },
+    "Yanıt %@ kişisine gönderildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reply sent to %@."
+          }
+        }
+      }
+    },
     "Yanıt çok uzun sürdü. Tekrar dener misin?": {
       "localizations": {
         "en": {
@@ -6030,6 +6090,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reply: %@"
+          }
+        }
+      }
+    },
+    "Yanıtlanacak e-posta bulunamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find the e-mail to reply to."
+          }
+        }
+      }
+    },
+    "Yanıtta ne yazmamı istediğini söyler misin? Örneğin 'buna yanıt ver: yarın uygunum'.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What should the reply say? For example, 'reply to this: I'm free tomorrow'."
           }
         }
       }

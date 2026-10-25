@@ -54,6 +54,10 @@ public enum RouteGuard {
         if action == "callContact", words.contains(where: { word in searchSites.contains(where: word.hasPrefix) }) {
             return "searchWeb"
         }
+        // "Buna yanıt ver: …" after reading mail answers that mail; "…diye cevap yaz" is not dictation.
+        if MailReplyRequest.parse(command) != nil, previousAction == "readMail" || MailReplyRequest.mentionsMail(command) {
+            return "replyMail"
+        }
         // "Yarınki toplantıyı iptal et" was taken for reading the calendar or adding to it.
         if let calendarAction = CalendarChange.reviewedAction(action, command: command, language: .turkish) { return calendarAction }
         // "şunu yaz yarın sabah görüşelim" was read as an alarm because of its time words.

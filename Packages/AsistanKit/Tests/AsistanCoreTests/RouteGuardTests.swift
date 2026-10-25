@@ -165,6 +165,14 @@ struct RouteGuardTests {
         #expect(RouteGuard.review(action: modelAction, command: command) == expected)
     }
 
+    @Test("a reply after reading mail, or to a named mail, is replyMail")
+    func mailReplies() {
+        #expect(RouteGuard.review(action: "sendEmail", command: "buna yanıt ver: yarın uygunum", previousAction: "readMail") == "replyMail")
+        #expect(RouteGuard.review(action: "typeText", command: "Ahmet'in mailine teşekkür ederim diye cevap yaz") == "replyMail")
+        #expect(RouteGuard.review(action: "conversation", command: "bu soruya cevap ver") == "conversation")
+        #expect(RouteGuard.review(action: "sendEmail", command: "Ahmet'e toplantı iptal diye mail at") == "sendEmail")
+    }
+
     @Test("undo is never taken for quitting an app")
     func undoIsNotQuit() {
         #expect(RouteGuard.review(action: "quitApp", command: "geri al") == "conversation")
