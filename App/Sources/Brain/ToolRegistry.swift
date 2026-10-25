@@ -53,6 +53,7 @@ struct ToolRegistry {
             PlayMusicTool(),
             RadioTool(),
             PodcastTool(),
+            YouTubeSummaryTool(),
             SystemInfoTool(),
             WiFiTool(),
             ScreenshotTool(),

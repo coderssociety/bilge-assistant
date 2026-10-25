@@ -2512,6 +2512,26 @@
         }
       }
     },
+    "Bu videonun altyazısı yok, o yüzden özetleyemiyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This video has no captions, so I can't summarize it."
+          }
+        }
+      }
+    },
+    "Bu videoyu açamadım; özel, kaldırılmış ya da yaş sınırlı olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't open this video; it may be private, removed or age-restricted."
+          }
+        }
+      }
+    },
     "Bu zamanlayıcı az önce doldu.": {
       "localizations": {
         "en": {
@@ -3862,6 +3882,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't tell which prayer time you're asking about."
+          }
+        }
+      }
+    },
+    "Hangi videoyu özetleyeceğimi anlayamadım.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't tell which video to summarize."
           }
         }
       }
@@ -6584,6 +6614,16 @@
         }
       }
     },
+    "Tarayıcıdaki videoya ulaşamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't reach the video in the browser. %@"
+          }
+        }
+      }
+    },
     "Tekrar açık.": {
       "localizations": {
         "en": {
@@ -6870,6 +6910,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Video: %@ (%@ altyazısından)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video: %@ (from its %@ captions)"
+          }
+        }
+      }
+    },
+    "Video: %@ (otomatik %@ altyazısından)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video: %@ (from its automatic %@ captions)"
+          }
+        }
+      }
+    },
+    "Videonun altyazısını alamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't get the video's captions. %@"
+          }
+        }
+      }
+    },
+    "Videonun bilgilerini alamadım. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't get the video's details. %@"
           }
         }
       }
@@ -7667,6 +7747,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't write a summary; the transcript is in the file."
+          }
+        }
+      }
+    },
+    "Özetleyecek bir YouTube videosu bulamadım. Videoyu tarayıcıda aç ya da adresini kopyalayıp yine söyler misin?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't find a YouTube video to summarize. Could you open it in the browser, or copy its address, and ask again?"
           }
         }
       }
