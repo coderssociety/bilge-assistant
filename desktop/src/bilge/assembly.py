@@ -4,7 +4,9 @@ import logging
 import sys
 import threading
 from collections.abc import Callable
+from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from bilge import calendars, config, desktop
 from bilge.brain.action_log import ActionLog
@@ -23,6 +25,9 @@ from bilge.tools.builtin.calendar import calendar_tools
 from bilge.tools.builtin.clock import current_date_time
 from bilge.tools.builtin.memory import memory_tools
 from bilge.tools.memory_store import MemoryStore
+
+if TYPE_CHECKING:
+    from bilge.tools.desktop.timers import TimerService
 
 log = logging.getLogger(__name__)
 CALDAV_SECRET = "caldav"
@@ -70,6 +75,8 @@ def build_agent(
 
     briefing = Briefing(language, weather, calendar, settings.voice.wake_phrase)
     news_reading = internet.NewsReading()
+    found = desktop.current(language)
+    alarms = _timer_service(found, language, announce) if found is not None else None
     registry = Registry([
         current_date_time(language),
         calculator(language),
@@ -78,20 +85,19 @@ def build_agent(
         internet.news(language, news_reading),
         internet.read_web_page(language),
         briefing_tool(briefing),
-        *calendar_tools(calendar, language),
+        *calendar_tools(calendar, language, alert=_reminder_alert(alarms) if alarms is not None else None),
     ])  # fmt: skip
     rules: list[Rule] = [
         rule("dailyBriefing", briefing.claims),
         rule("news", internet.news_source_rule_claims(language, news_reading)),
     ]
     modes: list[Mode] = []
-    found = desktop.current(language)
     registry.add(internet.news_article(language, news_reading, found.opener.open if found is not None else None))
     # Tools that refer to "the previous answer" are built before the agent that remembers it.
     built: list[Agent] = []
-    if found is not None:
+    if found is not None and alarms is not None:
         last_reply = lambda: built[0].last_reply if built else None  # noqa: E731
-        tools, desktop_rules, desktop_modes = _desktop_tools(found, language, announce, last_reply)
+        tools, desktop_rules, desktop_modes = _desktop_tools(found, language, alarms, last_reply)
         for tool in tools:
             registry.add(tool)
         rules = [*desktop_rules, *rules]
@@ -104,15 +110,10 @@ def build_agent(
     return agent
 
 
-def _desktop_tools(
-    found: Desktop,
-    language: AssistantLanguage,
-    announce: Callable[[str], None] | None,
-    last_reply: Callable[[], str | None],
-) -> tuple[list[Tool], list[Rule], list[Mode]]:
-    from bilge.desktop.calc import LibreOfficeCalc
-    from bilge.desktop.process import Runner
-    from bilge.tools.desktop import apps, clipboard, files, sound, spreadsheet, system, timers, typing, web
+def _timer_service(
+    found: Desktop, language: AssistantLanguage, announce: Callable[[str], None] | None
+) -> "TimerService":
+    from bilge.tools.desktop import timers
 
     def alert(message: str) -> None:
         try:
@@ -121,6 +122,24 @@ def _desktop_tools(
             log.info("Could not show a notification", exc_info=True)
         if announce is not None:
             announce(message)
+
+    return timers.TimerService(alert, language)
+
+
+def _reminder_alert(alarms: "TimerService") -> Callable[[datetime, str], None]:
+    # The timer service runs on the local wall clock, without a zone.
+    return lambda due, title: alarms.schedule(due.astimezone().replace(tzinfo=None), title)
+
+
+def _desktop_tools(
+    found: Desktop,
+    language: AssistantLanguage,
+    alarms: "TimerService",
+    last_reply: Callable[[], str | None],
+) -> tuple[list[Tool], list[Rule], list[Mode]]:
+    from bilge.desktop.calc import LibreOfficeCalc
+    from bilge.desktop.process import Runner
+    from bilge.tools.desktop import apps, clipboard, files, sound, spreadsheet, system, timers, typing, web
 
     dictation = typing.DictationSession(found.keyboard, language)
     sheet = spreadsheet.SpreadsheetSession(language)
@@ -135,7 +154,7 @@ def _desktop_tools(
         typing.start_dictation_tool(dictation, language),
         *files.file_tools(found.folders, found.opener, language),
         *web.web_tools(found.opener, language),
-        *timers.timer_tools(timers.TimerService(alert, language), language),
+        *timers.timer_tools(alarms, language),
         spreadsheet.spreadsheet_tool(sheet_tool),
         *_office_tools(language),
     ]

@@ -1,6 +1,7 @@
 """Reading and adding calendar events and reminders. The day and clock time come from the user's own words where
 they say them; the model's numbers only fill gaps."""
 
+import logging
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from enum import StrEnum
@@ -10,10 +11,11 @@ from bilge import calendars
 from bilge.brain.instructions import month_name, weekday_name
 from bilge.core.language import AssistantLanguage
 from bilge.core.text import folded
-from bilge.core.tools import english_time_parser, phrase_matcher, relative_day_parser, timer_phrase_parser
+from bilge.core.tools import appointment_time, calendar_span, english_time_parser, phrase_matcher, relative_day_parser
 from bilge.tools.base import Risk, Tool, ToolError
 from bilge.tools.desktop.common import choice, int_argument, integer, obj, string_argument, text
 
+log = logging.getLogger(__name__)
 EN, TR = AssistantLanguage.ENGLISH, AssistantLanguage.TURKISH
 DEFAULT_DURATION_MINUTES = 60
 # A day mentioned without a time ("yarın") means a reminder in the morning.
@@ -27,15 +29,19 @@ class Range(StrEnum):
     TODAY = "today"
     TOMORROW = "tomorrow"
     THIS_WEEK = "thisWeek"
+    NEXT_WEEK = "nextWeek"
+    DAY = "day"
 
 
 _TEXTS = {
     TR: {
-        "not_configured": "Takvim bağlı değil. Bağlamak için bilgisayarda 'bilge calendar' komutunu çalıştır.",
+        "not_configured": "Takvim bağlı değil. Bilge Ayarları'ndaki Takvim sekmesinden bağlayabilirsin.",
         "read_only": "Bu takvim adresi yalnızca okunabiliyor, değişiklik yapamam.",
         "failed": "Takvime ulaşamadım.",
-        "read": "Takvimdeki etkinlikleri okur: bugün, yarın ya da bu hafta.",
-        "labels": {"today": "Bugün", "tomorrow": "Yarın", "thisWeek": "Önümüzdeki 7 günde"},
+        "read": "Takvimdeki etkinlikleri okur: bugün, yarın, belirli bir gün ('cuma', 'haftaya pazartesi'), bu hafta ya da önümüzdeki hafta.",
+        "range": "Belirli bir gün için 'day' ve dayOffset",
+        "read_day_offset": "range 'day' için bugünden kaç gün sonra: cuma, 15 Kasım…",
+        "labels": {"today": "Bugün", "tomorrow": "Yarın", "thisWeek": "Önümüzdeki 7 günde", "nextWeek": "Önümüzdeki hafta"},
         "no_events": "{label} takvimde etkinlik yok.",
         "events": "{label} {count} etkinlik var: {list}",
         "all_day": "tüm gün: {title}",
@@ -54,6 +60,7 @@ _TEXTS = {
         "reminders": "Anımsatıcılardaki tamamlanmamış yapılacakları listeler (zamanlayıcı ve alarmlar değil).",
         "no_reminders": "Bekleyen anımsatıcı yok.",
         "reminder_list": "{count} anımsatıcı var: {list}",
+        "due": "{title} ({when})",
         "add_reminder": "Anımsatıcılara yeni bir yapılacak ekler; istenirse belirli gün ve saatte hatırlatır.",
         "reminder_title": "Yapılacak iş, örn. 'Ekmek al'",
         "reminder_question": "'{title}' anımsatıcısını {when} için ekleyeyim mi?",
@@ -66,11 +73,13 @@ _TEXTS = {
         "completed": "'{title}' tamamlandı olarak işaretlendi.",
     },
     EN: {
-        "not_configured": "No calendar is connected. Run 'bilge calendar' on the computer to connect one.",
+        "not_configured": "No calendar is connected. You can connect one on the Calendar tab of Bilge Settings.",
         "read_only": "This calendar address is read-only; I can't change it.",
         "failed": "I couldn't reach the calendar.",
-        "read": "Reads calendar events: today, tomorrow or this week.",
-        "labels": {"today": "Today", "tomorrow": "Tomorrow", "thisWeek": "In the next 7 days"},
+        "read": "Reads calendar events: today, tomorrow, a given day ('Friday', 'November 15'), this week or next week.",
+        "range": "'day' with dayOffset for a given day",
+        "read_day_offset": "For range 'day': days from today",
+        "labels": {"today": "Today", "tomorrow": "Tomorrow", "thisWeek": "In the next 7 days", "nextWeek": "Next week"},
         "no_events": "{label} there's nothing on the calendar.",
         "events": "{label} there are {count} events: {list}",
         "all_day": "all day: {title}",
@@ -89,6 +98,7 @@ _TEXTS = {
         "reminders": "Lists the open to-dos in the reminders list (not timers or alarms).",
         "no_reminders": "There are no open reminders.",
         "reminder_list": "{count} reminders: {list}",
+        "due": "{title} ({when})",
         "add_reminder": "Adds a to-do to the reminders list, optionally with a day and time to be reminded.",
         "reminder_title": "The to-do, e.g. 'Buy bread'",
         "reminder_question": "Shall I add the reminder '{title}' for {when}?",
@@ -125,34 +135,58 @@ class Moments:
         return day.replace(hour=hour, minute=minute or 0).astimezone()
 
     def describe(self, moment: datetime) -> str:
+        return self.texts["at"].format(day=self._day(moment), time=f"{moment:%H:%M}")
+
+    def day_label(self, day_offset: int) -> str:
+        """ "23 Ekim Cuma" / "On Friday 23 October", to begin a sentence about that day."""
+        moment = self.resolve(day_offset, 0, 0)
+        day = self._day(moment)
+        if self.language is EN:
+            return day.capitalize() if day_offset < 2 else f"On {day}"
+        return day[:1].upper() + day[1:]
+
+    def _day(self, moment: datetime) -> str:
         days = (moment.date() - self.now().date()).days
         if days == 0:
-            day = self.texts["today"]
-        elif days == 1:
-            day = self.texts["tomorrow"]
-        elif self.language is EN:
-            day = f"{weekday_name(moment, EN)} {moment.day} {month_name(moment.month, EN)}"
-        else:
-            day = f"{moment.day} {month_name(moment.month, TR)} {weekday_name(moment, TR)}"
-        return self.texts["at"].format(day=day, time=f"{moment:%H:%M}")
+            return self.texts["today"]
+        if days == 1:
+            return self.texts["tomorrow"]
+        if self.language is EN:
+            return f"{weekday_name(moment, EN)} {moment.day} {month_name(moment.month, EN)}"
+        return f"{moment.day} {month_name(moment.month, TR)} {weekday_name(moment, TR)}"
 
     def refine(self, arguments: dict[str, Any], command: str) -> dict[str, Any]:
         """Day and clock time said in the command override the model's. A model hour is kept only when a part of
         the day was said ("yarın akşam"); otherwise it was invented, so it is dropped."""
         english = self.language is EN
         now = self.now()
+        ahead = (english_time_parser if english else appointment_time).seconds_from_now(command)
+        if ahead:
+            moment = now + timedelta(seconds=ahead)
+            return {**arguments, "dayOffset": (moment.date() - now.date()).days, "hour": moment.hour,
+                    "minute": moment.minute}  # fmt: skip
         parsed = (
             english_time_parser.day_offset(command, now) if english else relative_day_parser.day_offset(command, now)
         )
-        # A date the parser doesn't know ("15 Kasım'da") keeps the model's day.
-        day = parsed if parsed is not None else arguments.get("dayOffset")
-        clock = english_time_parser.parse(command) if english else timer_phrase_parser.parse(command)
-        if clock is not None and clock.hour is not None:
-            return {**arguments, "dayOffset": day, "hour": clock.hour, "minute": clock.minute}
+        # A date the parser doesn't know keeps the model's day.
+        day = parsed if parsed is not None else int_argument(arguments, "dayOffset")
+        clock = self._clock(command)
+        if clock is not None:
+            hour, minute = clock
+            # "Saat 2'de" said at four means tomorrow; a day the user named is kept even when it's past.
+            if parsed is None and not day and (hour, minute) <= (now.hour, now.minute):
+                day = 1
+            return {**arguments, "dayOffset": day, "hour": hour, "minute": minute}
         parts = english_time_parser.PART_OF_DAY_WORDS if english else _PARTS_OF_DAY
         if any(part in folded(command) for part in parts):
             return {**arguments, "dayOffset": day}
         return {**arguments, "dayOffset": day, "hour": None, "minute": None}
+
+    def _clock(self, command: str) -> tuple[int, int] | None:
+        if self.language is not EN:
+            return appointment_time.clock(command)
+        parsed = english_time_parser.parse(command)
+        return (parsed.hour, parsed.minute or 0) if parsed is not None and parsed.hour is not None else None
 
     def of(self, arguments: dict[str, Any]) -> datetime | None:
         return self.resolve(
@@ -164,7 +198,9 @@ def calendar_tools(
     source: Callable[[], calendars.CalendarSource | None],
     language: AssistantLanguage,
     clock: Callable[[], datetime] = datetime.now,
+    alert: Callable[[datetime, str], None] | None = None,
 ) -> list[Tool]:
+    """`alert` also says a reminder out loud when it falls due while Bilge is running."""
     texts = _TEXTS[language]
     moments = Moments(language, clock)
 
@@ -184,17 +220,25 @@ def calendar_tools(
         except calendars.CalendarError as error:
             raise ToolError(texts["failed"]) from error
 
+    def read_refine(arguments: dict[str, Any], command: str) -> dict[str, Any]:
+        found = calendar_span.span(command, moments.now(), language is EN)
+        if found is None:
+            return arguments
+        return {**arguments, "range": found.kind.value, "dayOffset": found.first}
+
     def read(arguments: dict[str, Any]) -> str:
         try:
             span = Range(string_argument(arguments, "range"))
         except ValueError:
             span = Range.TODAY
-        days = 7 if span is Range.THIS_WEEK else 1
-        first = 1 if span is Range.TOMORROW else 0
+        first = {Range.TOMORROW: 1, Range.DAY: max(0, int_argument(arguments, "dayOffset") or 0)}.get(span, 0)
+        if span is Range.NEXT_WEEK:
+            first = calendar_span.DAYS_IN_WEEK - moments.now().weekday()
+        days = calendar_span.DAYS_IN_WEEK if span in (Range.THIS_WEEK, Range.NEXT_WEEK) else 1
         start, end = moments.resolve(first, 0, 0), moments.resolve(first + days, 0, 0)
         calendar = connected()
         events = guarded(lambda: calendar.events(start, end))
-        label = texts["labels"][span.value]
+        label = moments.day_label(first) if span is Range.DAY else texts["labels"][span.value]
         if not events:
             return texts["no_events"].format(label=label)
         listed = "; ".join(_describe_event(event, days > 1, language) for event in events[:MAX_EVENTS])
@@ -222,10 +266,14 @@ def calendar_tools(
 
     def reminders(_: dict[str, Any]) -> str:
         calendar = connected()
-        titles = [r.title for r in guarded(calendar.open_reminders) if r.title]
-        if not titles:
+        found = [r for r in guarded(calendar.open_reminders) if r.title]
+        if not found:
             return texts["no_reminders"]
-        return texts["reminder_list"].format(count=len(titles), list="; ".join(titles[:MAX_REMINDERS]))
+        listed = [
+            texts["due"].format(title=r.title, when=moments.describe(r.due)) if r.due else r.title
+            for r in found[:MAX_REMINDERS]
+        ]
+        return texts["reminder_list"].format(count=len(found), list="; ".join(listed))
 
     def reminder_question(arguments: dict[str, Any]) -> str:
         title = string_argument(arguments, "title")
@@ -243,6 +291,11 @@ def calendar_tools(
         guarded(lambda: calendar.add_reminder(title, due))
         if due is None:
             return texts["reminder_added_undated"].format(title=title)
+        if alert is not None and due > moments.now():
+            try:
+                alert(due, title)
+            except Exception:  # noqa: BLE001 - the reminder is saved; only the spoken alert is missing
+                log.exception("Could not schedule the reminder's alert")
         return texts["reminder_added"].format(when=moments.describe(due))
 
     def complete_refine(arguments: dict[str, Any], command: str) -> dict[str, Any]:
@@ -282,8 +335,11 @@ def calendar_tools(
             "readCalendar",
             texts["read"],
             run=read,
-            parameters=obj(["range"], range=choice(Range, "")),
+            parameters=obj(
+                ["range"], range=choice(Range, texts["range"]), dayOffset=integer(texts["read_day_offset"], 0, 366)
+            ),
             untrusted_output=True,
+            refine=read_refine,
         ),
         Tool(
             "addCalendarEvent",

@@ -4,7 +4,7 @@ read-only iCal address (Google Calendar's "secret address in iCal format")."""
 import ipaddress
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import UTC, date, datetime, time
 from typing import Protocol
 from urllib.parse import urlsplit
 
@@ -185,7 +185,11 @@ class CalDAVSource:
         return self._run(read)
 
     def add_reminder(self, title: str, due: datetime | None) -> None:
-        details = {"summary": title, **({"due": due} if due else {})}
+        details: dict = {"summary": title}
+        if due is not None:
+            # A to-do's DUE alone alerts nobody; the alarm makes the user's phone or desktop client say it.
+            details |= {"due": due, "alarm_trigger": due.astimezone(UTC), "alarm_action": "DISPLAY",
+                        "alarm_description": title}  # fmt: skip
         self._run(lambda client: self._target(client, "VTODO").save_todo(**details))
 
     def complete_reminder(self, title: str) -> bool:

@@ -63,6 +63,21 @@ def test_reminders_go_to_a_task_list_and_can_be_completed(caldav_url):
     assert [r.title for r in source.open_reminders()] == ["Faturayı öde"]
 
 
+def test_a_reminder_with_a_due_time_carries_an_alarm(caldav_url):
+    import caldav
+
+    source = calendars.CalDAVSource(caldav_url, "ayse", "x")
+    due = datetime.now().astimezone().replace(microsecond=0) + timedelta(hours=5)
+    source.add_reminder("İlacı al", due)
+
+    with caldav.DAVClient(url=caldav_url, username="ayse", password="x", require_tls=False) as client:
+        todos = [t for c in client.principal().calendars() for t in c.search(todo=True)]
+        component = next(t.icalendar_component for t in todos if str(t.icalendar_component["SUMMARY"]) == "İlacı al")
+    alarm = next(c for c in component.subcomponents if c.name == "VALARM")
+    assert (str(alarm["ACTION"]), alarm["TRIGGER"].dt) == ("DISPLAY", due)
+    source.complete_reminder("İlacı al")
+
+
 def test_wrong_server_is_a_calendar_error():
     with pytest.raises(calendars.CalendarError):
         calendars.CalDAVSource("http://127.0.0.1:9/", "a", "b").events(datetime.now().astimezone(),

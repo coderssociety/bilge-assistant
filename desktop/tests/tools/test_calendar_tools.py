@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from bilge import calendars
+from bilge.brain.agent import resolve
 from bilge.core.language import AssistantLanguage
 from bilge.tools.base import ToolError
 from bilge.tools.builtin.calendar import calendar_tools
@@ -39,8 +40,13 @@ class FakeSource:
         return True
 
 
-def tools(source, language=TR):
-    return {tool.name: tool for tool in calendar_tools(lambda: source, language, clock=lambda: NOW)}
+def tools(source, language=TR, alert=None):
+    return {tool.name: tool for tool in calendar_tools(lambda: source, language, clock=lambda: NOW, alert=alert)}
+
+
+def when(tool, said, language=TR, model=None):
+    refined = tool.refine(dict(model or {"title": "x"}), resolve(said, language))
+    return refined["dayOffset"], refined["hour"], refined["minute"]
 
 
 def test_reading_tomorrow_and_the_week():
@@ -88,7 +94,7 @@ def test_reminders_are_listed_added_and_completed_by_a_loose_name():
 
 
 def test_unconfigured_read_only_and_unreachable_calendars_are_explained():
-    with pytest.raises(ToolError, match="bilge calendar"):
+    with pytest.raises(ToolError, match="Takvim sekmesinden"):
         {t.name: t for t in calendar_tools(lambda: None, TR)}["readCalendar"].run({"range": "today"})
     read_only = FakeSource()
     read_only.writable = False
@@ -125,3 +131,86 @@ def test_wall_clock_times_survive_a_change_to_summer_time(monkeypatch):
     finally:
         monkeypatch.delenv("TZ")
         time.tzset()
+
+
+def test_a_given_day_or_next_week_is_read_from_the_words():
+    source = FakeSource()
+    source.events_list.append(calendars.CalendarEvent("Kurs", NOW.astimezone().replace(hour=18, minute=0)
+                                                      + timedelta(days=4), False))  # fmt: skip
+    read = tools(source)["readCalendar"]
+    friday = read.refine({"range": "today"}, "cuma ne var")
+    assert friday == {"range": "day", "dayOffset": 1}
+    assert read.run(friday) == "Yarın 2 etkinlik var: tüm gün: Bayram; 10:00 Diş hekimi"
+    monday = read.refine({"range": "thisWeek"}, "haftaya pazartesi ne var")
+    assert read.run(monday) == "26 Ekim Pazartesi takvimde etkinlik yok."
+    assert read.run(read.refine({"range": "today"}, "önümüzdeki hafta ne var")) == (
+        "Önümüzdeki hafta 1 etkinlik var: Pazartesi 18:00 Kurs"
+    )
+    assert read.refine({"range": "thisWeek"}, "takvimde ne var") == {"range": "thisWeek"}
+    english = tools(source, EN)["readCalendar"]
+    assert english.run(english.refine({}, "what's on Monday")) == "On Monday 19 October there are 1 events: 18:00 Kurs"
+
+
+def test_small_hours_said_bare_are_in_the_afternoon():
+    add = tools(FakeSource())["addCalendarEvent"]
+    assert when(add, "yarın saat ikide toplantı ekle") == (1, 14, 0)
+    assert when(add, "yarın sabah saat ikide uçuş ekle") == (1, 2, 0)
+    assert when(add, "cuma akşam sekizde yemek ekle") == (1, 20, 0)
+    assert when(add, "yarın dokuz buçukta toplantı") == (1, 9, 30)
+
+
+def test_dates_relative_days_and_the_models_day():
+    add = tools(FakeSource())["addCalendarEvent"]
+    assert when(add, "15 Kasım'da saat üçte toplantı ekle") == (31, 15, 0)
+    assert when(add, "yarından sonra saat onda") == (2, 10, 0)
+    assert when(add, "öbür gün saat onda") == (2, 10, 0)
+    assert when(add, "haftaya saat onda") == (7, 10, 0)
+    assert when(add, "iki hafta sonra saat onda") == (14, 10, 0)
+    # The parser finds no day: the model's stays.
+    assert when(add, "o gün saat onda", model={"title": "x", "dayOffset": 5}) == (5, 10, 0)
+    assert when(tools(FakeSource(), EN)["addCalendarEvent"], "on November 15 at 3", EN) == (31, 15, 0)
+
+
+def test_a_time_already_past_today_means_tomorrow():
+    add = tools(FakeSource())["addCalendarEvent"]
+    # It is 14:05.
+    assert when(add, "saat ikide toplantı ekle", model={"title": "x", "dayOffset": 0}) == (1, 14, 0)
+    assert when(add, "saat üçte toplantı ekle") == (None, 15, 0)
+    assert when(add, "bugün saat ikide toplantı ekle") == (0, 14, 0)
+
+
+def test_reminders_in_a_while_are_from_now():
+    remind = tools(FakeSource())["addReminder"]
+    assert when(remind, "yarım saat sonra çayı hatırlat") == (0, 14, 35)
+    assert when(remind, "iki saat sonra hatırlat") == (0, 16, 5)
+    assert when(remind, "on saat sonra hatırlat") == (1, 0, 5)
+    assert when(tools(FakeSource(), EN)["addReminder"], "remind me in half an hour", EN) == (0, 14, 35)
+
+
+def test_listed_reminders_say_when_they_are_due():
+    source = FakeSource()
+    source.reminders.append(calendars.Reminder("Ekmek al", NOW.astimezone().replace(hour=9, minute=0)
+                                               + timedelta(days=1)))  # fmt: skip
+    assert tools(source)["readReminders"].run({}) == "2 anımsatıcı var: Süt al; Ekmek al (yarın saat 09:00)"
+    assert tools(source, EN)["readReminders"].run({}) == "2 reminders: Süt al; Ekmek al (tomorrow at 09:00)"
+
+
+def test_a_reminder_due_later_is_also_said_out_loud():
+    alerts = []
+    remind = tools(FakeSource(), alert=lambda due, title: alerts.append((due.hour, due.minute, title)))["addReminder"]
+    assert remind.run({"title": "Çay", "dayOffset": 0, "hour": 14, "minute": 35}) == (
+        "Ekledim, bugün saat 14:35 hatırlatacağım."
+    )
+    remind.run({"title": "Geçmiş", "dayOffset": 0, "hour": 9, "minute": 0})
+    remind.run({"title": "Tarihsiz"})
+    assert alerts == [(14, 35, "Çay")]
+
+
+def test_a_broken_alert_does_not_lose_the_reminder():
+    source = FakeSource()
+
+    def broken(due, title):
+        raise RuntimeError("no timers")
+
+    reply = tools(source, alert=broken)["addReminder"].run({"title": "Çay", "dayOffset": 1, "hour": 9})
+    assert reply.startswith("Ekledim") and source.added[0][0] == "Çay"
