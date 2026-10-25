@@ -124,4 +124,26 @@ struct RoutineRequestTests {
     func englishNight(said: String, hour: Int) {
         #expect(RoutineRequest.parse(said, language: .english)?.hour == hour)
     }
+
+    @Test("a single weekend or week is a one-off, not a routine", arguments: [
+        ("hafta sonu saat 10'da annemi aramayı hatırlat", AssistantLanguage.turkish), ("bu hafta sonu 10'da annemi ara", .turkish),
+        ("hafta içi 7'de haberleri oku", .turkish), ("gelecek hafta her gün 9'da haberleri oku", .turkish),
+        ("önümüzdeki hafta sonları 10'da annemi ara", .turkish),
+        ("next weekend at 10 remind me to pay rent", .english), ("this weekend at 10 call mom", .english),
+        ("weekday at 7 read the news", .english),
+    ])
+    func oneOffWeeks(said: String, language: AssistantLanguage) {
+        #expect(RoutineRequest.parse(said, language: language) == nil)
+    }
+
+    @Test("repeating weekends and weekdays are still routines", arguments: [
+        ("hafta sonları 10'da annemi ara", AssistantLanguage.turkish, RoutineSchedule.weekend),
+        ("her hafta sonu 10'da annemi ara", .turkish, RoutineSchedule.weekend),
+        ("hafta içi her gün 7'de haberleri oku", .turkish, RoutineSchedule.weekdays),
+        ("every weekend at 10 call mom", .english, RoutineSchedule.weekend),
+        ("weekdays at 7 read the news", .english, RoutineSchedule.weekdays),
+    ])
+    func repeatingWeeks(said: String, language: AssistantLanguage, days: Set<Int>) {
+        #expect(RoutineRequest.parse(said, language: language)?.days == days)
+    }
 }
