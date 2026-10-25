@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from bilge.core.language import AssistantLanguage
-from bilge.desktop.base import AppEntry, FrontWindow, MediaCommand, NowPlaying, VolumeState
+from bilge.desktop.base import AppEntry, FrontWindow, MediaCommand, NowPlaying, PlayerStart, VolumeState
 from bilge.desktop.process import MissingProgram
 from bilge.tools.base import ToolError
 from bilge.tools.desktop import apps, clipboard, sound, system, timers, typing, web
@@ -86,6 +86,27 @@ def test_volume_steps_stay_within_bounds():
         tool.run({"action": "set"})
 
 
+def test_volume_changes_by_the_amount_said():
+    fake = FakeVolume(40)
+    tool = sound.volume_tool(fake, TR)
+    assert tool.run({"action": "increase", "by": 20}) == "Ses seviyesi yüzde 60."
+    assert tool.run({"action": "decrease"}) == "Ses seviyesi yüzde 50."
+    assert tool.refine({"action": "increase"}, "sesi yüzde 25 artır") == {"action": "increase", "by": 25}
+    assert tool.refine({"action": "increase", "by": 10}, "sesi yüzde 80'e çıkar") == {
+        "action": "set", "level": 80, "by": None}  # fmt: skip
+    assert tool.refine({"action": "set", "level": 3}, "sesi yüzde 30 yap")["level"] == 30
+    assert tool.refine({"action": "mute"}, "sesi yüzde 30 yap") == {"action": "mute"}
+
+
+def test_unmuting_sound_that_is_on_turns_it_up():
+    fake = FakeVolume(30)
+    tool = sound.volume_tool(fake, TR)
+    assert tool.run({"action": "unmute"}) == "Ses seviyesi yüzde 40."
+    fake.muted = True
+    assert tool.run({"action": "unmute"}) == "Ses açıldı, seviye yüzde 40."
+    assert not fake.muted
+
+
 def test_missing_sound_program_is_named_to_the_user():
     class Broken(FakeVolume):
         def state(self):
@@ -114,6 +135,37 @@ def test_music_control_and_now_playing():
     assert tool.run({"action": "pause"}) == "Spotify duraklatıldı."
     assert media.sent == [MediaCommand.PAUSE]
     assert sound.music_tool(FakeMedia(None), TR).run({"action": "play"}) == "Açık bir müzik çalar bulamadım."
+
+
+class FakeLauncher:
+    def __init__(self, started):
+        self.started, self.searched = started, []
+
+    def start_player(self):
+        return self.started
+
+    def play_search(self, query):
+        self.searched.append(query)
+        return "Spotify"
+
+
+def test_play_with_no_open_player_starts_one():
+    tool = sound.music_tool(FakeMedia(None), TR, FakeLauncher(PlayerStart("Rhythmbox", True)))
+    assert tool.run({"action": "play"}) == "Rhythmbox açıldı ve çalıyor."
+    tool = sound.music_tool(FakeMedia(None), TR, FakeLauncher(PlayerStart("VLC", False)))
+    assert tool.run({"action": "play"}) == "VLC açıldı ama çalmayı başlatamadım; çalardan bir şarkı seçebilirsin."
+    tool = sound.music_tool(FakeMedia(None), TR, FakeLauncher(None))
+    assert tool.run({"action": "play"}).startswith("Yüklü bir müzik çalar bulamadım.")
+    assert tool.run({"action": "next"}) == "Açık bir müzik çalar bulamadım."
+
+
+def test_named_music_is_searched_for():
+    launcher = FakeLauncher(None)
+    tool = sound.music_search_tool(launcher, TR)
+    assert tool.run({"query": "Tarkan"}) == "Spotify içinde 'Tarkan' aramasını açtım; listeden bir şarkı seçebilirsin."
+    assert launcher.searched == ["Tarkan"]
+    with pytest.raises(ToolError):
+        tool.run({"query": " "})
 
 
 def test_battery_states():

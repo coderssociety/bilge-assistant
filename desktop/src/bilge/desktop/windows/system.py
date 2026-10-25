@@ -4,13 +4,14 @@ things on Windows."""
 import asyncio
 import contextlib
 import os
+import re
 import sys
 import time
 from pathlib import Path
 from xml.sax.saxutils import escape
 
 from bilge.desktop import image
-from bilge.desktop.base import ScreenshotArea
+from bilge.desktop.base import ScreenshotArea, WindowAction
 from bilge.desktop.process import DesktopError, MissingProgram, Runner
 
 _THEME_KEY = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
@@ -94,11 +95,45 @@ class WindowsSession:
         self.api.announce_setting_change("ImmersiveColorSet")
 
 
+# The desktop itself and the taskbar are windows too, but not ones to minimize or close.
+_SHELL_CLASSES = frozenset({"Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd"})
+
+
+class WindowsWindowControl:
+    def __init__(self, api=None):
+        self._api = api
+
+    @property
+    def api(self):
+        self._api = self._api or _api()
+        return self._api
+
+    def act(self, action: WindowAction) -> None:
+        api = self.api
+        window = api.foreground()
+        if window is None or window.class_name in _SHELL_CLASSES:
+            raise DesktopError("No window in front")
+        if action is WindowAction.CLOSE:
+            api.close(window)
+        elif action is WindowAction.FULL_SCREEN:
+            # Windows has no full-screen state of its own; apps that have one (browsers, Explorer, players) use F11.
+            api.press(api.VK_F11)
+        else:
+            command = {WindowAction.MINIMIZE: api.SW_MINIMIZE, WindowAction.MAXIMIZE: api.SW_MAXIMIZE,
+                       WindowAction.RESTORE: api.SW_RESTORE}[action]  # fmt: skip
+            api.show(window, command)
+
+
+# "    SSID                   : Ev Ağı"; the label stays English in every Windows language, and BSSID doesn't match.
+_SSID_LINE = re.compile(r"^\s*SSID\s*:\s*(.+?)\s*$", re.MULTILINE)
+
+
 class WindowsNetwork:
     """Wi-Fi through the radio switch Windows shows in its quick settings; it needs no administrator rights."""
 
-    def __init__(self, radios=None):
+    def __init__(self, radios=None, runner: Runner | None = None):
         self._radios = radios
+        self._runner = runner or Runner()
 
     async def _wifi(self):
         if self._radios is not None:
@@ -117,8 +152,16 @@ class WindowsNetwork:
 
         try:
             return asyncio.run(read())
-        except (DesktopError, OSError):
+        except (DesktopError, OSError, RuntimeError):
+            # WinRT reports a missing or refused radio as RuntimeError, which must not take systemInfo down.
             return None
+
+    def wifi_name(self) -> str | None:
+        done = self._runner.run(["netsh", "wlan", "show", "interfaces"])
+        if not done.ok:
+            return None
+        found = _SSID_LINE.search(done.stdout)
+        return found.group(1) if found else None
 
     def set_wifi(self, enabled: bool) -> None:
         async def change():
@@ -133,7 +176,7 @@ class WindowsNetwork:
 
         try:
             asyncio.run(change())
-        except OSError as error:
+        except (OSError, RuntimeError) as error:
             raise DesktopError(f"Wi-Fi: {error}") from error
 
 

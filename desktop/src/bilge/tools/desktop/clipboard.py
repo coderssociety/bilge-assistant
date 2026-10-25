@@ -25,6 +25,8 @@ _TEXTS = {
         "selection": "Öndeki uygulamada seçili (işaretlenmiş) metni okur; özetler, çevirir ya da açıklar.",
         "request": "Seçili metinle ne yapılacağı, örn. 'özetle', 'İngilizceye çevir', 'oku'",
         "no_selection": "Seçili bir metin bulamadım.",
+        "read_failed": "Panoyu okuyamadım; pano programı hata verdi.",
+        "copy_failed": "Panoya kopyalayamadım; pano programı hata verdi.",
     },
     AssistantLanguage.ENGLISH: {
         "read": "Reads the text on the clipboard (what was copied).",
@@ -37,6 +39,8 @@ _TEXTS = {
         "selection": "Reads the text selected in the app in front, to summarize, translate or explain it.",
         "request": "What to do with the selection, e.g. 'summarize', 'translate to Turkish', 'read'",
         "no_selection": "I couldn't find any selected text.",
+        "read_failed": "I couldn't read the clipboard; the clipboard program reported an error.",
+        "copy_failed": "I couldn't copy to the clipboard; the clipboard program reported an error.",
     },
 }
 
@@ -54,7 +58,7 @@ def clipboard_tools(
         try:
             content = clipboard.read()
         except DesktopError as error:
-            raise failure(error, language) from error
+            raise failure(error, language, texts["read_failed"]) from error
         if not content.strip():
             return texts["empty"]
         return texts["content"].format(text=_clipped(content, CLIPBOARD_CHARACTERS))
@@ -66,14 +70,14 @@ def clipboard_tools(
         try:
             clipboard.write(content)
         except DesktopError as error:
-            raise failure(error, language) from error
+            raise failure(error, language, texts["copy_failed"]) from error
         return texts["copied"]
 
     def selection(_: dict[str, Any]) -> str:
         try:
             content = clipboard.selection().strip()
         except DesktopError as error:
-            raise failure(error, language) from error
+            raise failure(error, language, texts["read_failed"]) from error
         if not content:
             raise ToolError(texts["no_selection"])
         return _clipped(content, SELECTION_CHARACTERS)

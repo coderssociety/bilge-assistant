@@ -128,7 +128,9 @@ def _timer_service(
         if announce is not None:
             announce(message)
 
-    return timers.TimerService(alert, language)
+    service = timers.TimerService(alert, language, store=config.data_dir() / "timers.json")
+    service.restore()
+    return service
 
 
 def _reminder_alert(alarms: "TimerService") -> Callable[[datetime, str], None]:
@@ -145,7 +147,7 @@ def _desktop_tools(
 ) -> tuple[list[Tool], list[Rule], list[Mode]]:
     from bilge.desktop.calc import LibreOfficeCalc
     from bilge.desktop.process import Runner
-    from bilge.tools.desktop import apps, clipboard, files, sound, spreadsheet, system, timers, typing, web
+    from bilge.tools.desktop import apps, clipboard, files, sound, spreadsheet, system, timers, typing, web, windows
 
     dictation = typing.DictationSession(found.keyboard, language)
     sheet = spreadsheet.SpreadsheetSession(language)
@@ -153,10 +155,12 @@ def _desktop_tools(
     tools = [
         *apps.app_tools(apps.AppCatalog(found.apps), language),
         sound.volume_tool(found.volume, language),
-        sound.music_tool(found.media, language),
+        sound.music_tool(found.media, language, found.music),
+        sound.music_search_tool(found.music, language),
         *system.system_tools(found.session, found.network, found.settings, found.screenshots, found.folders, language),
         *clipboard.clipboard_tools(found.clipboard, language, last_reply),
         typing.type_text_tool(found.keyboard, language),
+        windows.window_tool(found.windows, language),
         typing.start_dictation_tool(dictation, language),
         *files.file_tools(found.folders, found.opener, language, text_reading),
         *web.web_tools(found.opener, language),

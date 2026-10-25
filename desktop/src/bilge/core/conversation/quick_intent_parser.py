@@ -23,7 +23,13 @@ class VolumeStep(StrEnum):
     UNMUTE = "unmute"
 
 
-VolumeChange = SetVolume | VolumeStep
+@dataclass(frozen=True)
+class ChangeVolume:
+    up: bool
+    by: int
+
+
+VolumeChange = SetVolume | ChangeVolume | VolumeStep
 
 
 class MediaAction(StrEnum):
@@ -55,7 +61,9 @@ class Folder(StrEnum):
 
 class TimerAction(StrEnum):
     LIST = "list"
+    CANCEL = "cancel"
     CANCEL_ALL = "cancelAll"
+    REMAINING = "remaining"
 
 
 class WindowAction(StrEnum):
@@ -64,6 +72,8 @@ class WindowAction(StrEnum):
     LEFT_HALF = "leftHalf"
     RIGHT_HALF = "rightHalf"
     MAXIMIZE = "maximize"
+    RESTORE = "restore"
+    CLOSE = "close"
     HIDE_OTHERS = "hideOthers"
 
 
@@ -101,7 +111,7 @@ class DateTime:
 
 @dataclass(frozen=True)
 class Battery:
-    pass
+    time_left: bool = False
 
 
 @dataclass(frozen=True)
@@ -122,6 +132,7 @@ class OpenFolder:
 @dataclass(frozen=True)
 class Timers:
     action: TimerAction
+    label: str | None = None
 
 
 @dataclass(frozen=True)
@@ -237,6 +248,9 @@ def parse(text: str) -> QuickIntent | None:
         intent = rule(words)
         if intent is not None:
             return intent
+    intent = _one_timer(words, kept)
+    if intent is not None:
+        return intent
     intent = mac_quick_intents.parse(words)
     if intent is not None:
         return intent
@@ -310,18 +324,24 @@ def _date_time(w: list[str]) -> QuickIntent | None:
 
 _BATTERY_WORDS = ("pil", "sarj", "batarya")
 _BATTERY_ALLOWED = frozenset({"durumu", "durum", "kac", "ne", "kadar", "nedir", "durumda", "yuzde", "seviyesi", "oldu"})
+# "Pil ne kadar dayanır", "şarjım ne kadar yeter": how long, not how full.
+_BATTERY_DURATION = frozenset({"dayanir", "yeter", "gider", "sure", "suresi", "daha"})
 _MAX_BATTERY_WORDS = 5
 
 
 def _battery(w: list[str]) -> QuickIntent | None:
     if len(w) > _MAX_BATTERY_WORDS or not w[0].startswith(_BATTERY_WORDS):
         return None
-    return Battery() if all(word in _BATTERY_ALLOWED for word in w[1:]) else None
+    if not all(word in _BATTERY_ALLOWED | _BATTERY_DURATION for word in w[1:]):
+        return None
+    return Battery(time_left=any(word in _BATTERY_DURATION for word in w[1:]))
 
 
 _SET_VOLUME_VERBS = frozenset({"yap", "getir", "ayarla", "indir", "cek", "dusur", "cikar"})
 _UP_VOLUME_VERBS = frozenset({"artir", "arttir", "yukselt"})
 _DOWN_VOLUME_VERBS = frozenset({"kis", "azalt", "dusur", "alcalt"})
+# With a bare number these change the volume by it ("sesi 20 düşür"); with a dative ending they set it ("20'ye").
+_BY_OR_SET_VERBS = {"indir": False, "dusur": False, "cikar": True}
 _MAX_VOLUME_WORDS = 4
 
 
@@ -332,9 +352,15 @@ def _volume(w: list[str]) -> QuickIntent | None:
         return None
     rest = w[1:]
     level_words = rest[:-1]
-    if rest[-1] in _SET_VOLUME_VERBS:
-        level = next((n for n in map(_leading_number, level_words) if n is not None), None)
-        if level is not None and all(word == "yuzde" or _leading_number(word) is not None for word in level_words):
+    level = next((n for n in map(_leading_number, level_words) if n is not None), None)
+    only_level = level is not None and all(word == "yuzde" or _leading_number(word) is not None for word in level_words)
+    if only_level and level is not None:
+        verb, bare = rest[-1], level_words[-1].isdigit()
+        if verb in _BY_OR_SET_VERBS and bare:
+            return Volume(ChangeVolume(_BY_OR_SET_VERBS[verb], min(level, _MAX_VOLUME)))
+        if verb in _UP_VOLUME_VERBS | _DOWN_VOLUME_VERBS and bare:
+            return Volume(ChangeVolume(verb in _UP_VOLUME_VERBS, min(level, _MAX_VOLUME)))
+        if verb in _SET_VOLUME_VERBS:
             return Volume(SetVolume(min(level, _MAX_VOLUME)))
     if rest == ["kapat"]:
         return Volume(VolumeStep.MUTE)
@@ -488,13 +514,40 @@ def _timers(w: list[str]) -> QuickIntent | None:
             return Timers(TimerAction.CANCEL_ALL)
         if verb in (["listele"], ["oku"]):
             return Timers(TimerAction.LIST)
+    if w in _TIMER_REMAINING_PHRASES:
+        return Timers(TimerAction.REMAINING)
     return Timers(TimerAction.LIST) if w in _TIMER_LIST_PHRASES else None
+
+
+_TIMER_REMAINING_PHRASES = (
+    ["kac", "dakika", "kaldi"], ["zamanlayicida", "ne", "kadar", "kaldi"], ["zamanlayicida", "kac", "dakika", "kaldi"],
+    ["alarma", "ne", "kadar", "kaldi"], ["alarma", "kac", "dakika", "kaldi"],
+    ["zamanlayicinin", "bitmesine", "ne", "kadar", "kaldi"],
+)  # fmt: skip
+_ONE_TIMER_SUBJECTS = frozenset({"zamanlayicisini", "zamanlayiciyi", "alarmini", "alarmi"})
+_MAX_TIMER_LABEL_WORDS = 2
+
+
+def _one_timer(w: list[str], original: list[str]) -> QuickIntent | None:
+    """ "çay zamanlayıcısını iptal et", "alarmı iptal et": one timer, named by its label or the only one set."""
+    for verb in _CANCEL_VERBS:
+        size = len(verb) + 1
+        if len(w) <= len(verb) or w[-len(verb) :] != verb or w[-size] not in _ONE_TIMER_SUBJECTS:
+            continue
+        label_words = original[: len(w) - size]
+        if len(label_words) > _MAX_TIMER_LABEL_WORDS or any(_leading_number(word) is not None for word in label_words):
+            return None
+        if label_words and w[-size] in ("zamanlayiciyi", "alarmi"):
+            # "çay alarmı" would be "çay alarmını"; a word before the bare form is something else.
+            return None
+        return Timers(TimerAction.CANCEL, " ".join(label_words) or None)
+    return None
 
 
 _TIMER_TRIGGERS = frozenset({"zamanlayici", "zamanlayicisi", "alarm", "uyar", "uyandir"})
 _TIMER_ALLOWED = _TIMER_TRIGGERS | {
     "dakika", "dakikalik", "saniye", "saniyelik", "saat", "saatlik", "sonra", "kur", "baslat", "ayarla", "beni",
-    "bucuk", "yarin", "bir", "yarim", "ceyrek",
+    "bucuk", "yarin", "bir", "yarim", "ceyrek", "kala", "gece",
 }  # fmt: skip
 
 

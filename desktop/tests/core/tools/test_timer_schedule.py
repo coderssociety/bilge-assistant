@@ -43,3 +43,11 @@ def test_labels_are_trimmed_to_a_short_phrase():
     assert timer_schedule.clean_label("  çay  ") == "çay"
     assert timer_schedule.clean_label("") is None
     assert len(timer_schedule.clean_label("uzun " * 30) or "") <= 40
+
+
+def test_a_clock_time_without_part_of_day_takes_the_sooner_reading():
+    morning = datetime(2026, 10, 13, 6, tzinfo=ISTANBUL)
+    assert timer_schedule.nearer_half_day(7, 45, morning, ISTANBUL) == 7
+    assert timer_schedule.nearer_half_day(7, 45, NOW, ISTANBUL) == 19
+    late = datetime(2026, 10, 13, 22, tzinfo=ISTANBUL)
+    assert timer_schedule.nearer_half_day(7, 45, late, ISTANBUL) == 7

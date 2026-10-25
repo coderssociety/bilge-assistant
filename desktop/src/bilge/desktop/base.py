@@ -39,6 +39,14 @@ class NowPlaying:
     artist: str = ""
 
 
+@dataclass(frozen=True)
+class PlayerStart:
+    """A music player Bilge started; `playing` is False when it opened but didn't take the play command."""
+
+    name: str
+    playing: bool
+
+
 class MediaCommand(StrEnum):
     PLAY = "play"
     PAUSE = "pause"
@@ -51,6 +59,14 @@ class ScreenshotArea(StrEnum):
     WHOLE_SCREEN = "wholeScreen"
     FRONT_WINDOW = "frontWindow"
     SELECTION = "selection"
+
+
+class WindowAction(StrEnum):
+    MINIMIZE = "minimize"
+    MAXIMIZE = "maximize"
+    RESTORE = "restore"
+    FULL_SCREEN = "fullScreen"
+    CLOSE = "close"
 
 
 class Apps(Protocol):
@@ -83,6 +99,16 @@ class Media(Protocol):
         ...
 
 
+class MusicLauncher(Protocol):
+    def start_player(self) -> PlayerStart | None:
+        """Starts the user's music player and asks it to play; None when no player is installed."""
+        ...
+
+    def play_search(self, query: str) -> str:
+        """Opens a search for `query` in Spotify when it is installed, otherwise a web music search; returns where."""
+        ...
+
+
 class Clipboard(Protocol):
     def read(self) -> str: ...
 
@@ -107,6 +133,12 @@ class Keyboard(Protocol):
     def backspace(self, count: int) -> None: ...
 
 
+class WindowControl(Protocol):
+    def act(self, action: WindowAction) -> None:
+        """On the window in front. FULL_SCREEN toggles; CLOSE asks the window to close, as its close button does."""
+        ...
+
+
 class Session(Protocol):
     def lock(self) -> None: ...
 
@@ -120,12 +152,16 @@ class Session(Protocol):
 class Network(Protocol):
     def wifi_enabled(self) -> bool | None: ...
 
+    def wifi_name(self) -> str | None:
+        """The name (SSID) of the Wi-Fi network connected to; None when there is none or it can't be read."""
+        ...
+
     def set_wifi(self, enabled: bool) -> None: ...
 
 
 class Screenshots(Protocol):
     def capture(self, area: ScreenshotArea, destination: Path) -> bool:
-        """False when the user cancelled (for example, no area was selected)."""
+        """False when the user cancelled (for example, no area was selected); DesktopError when it failed."""
         ...
 
     def copy_image(self, image: Path) -> None: ...
@@ -175,8 +211,10 @@ class Desktop:
     apps: Apps
     volume: Volume
     media: Media
+    music: MusicLauncher
     clipboard: Clipboard
     keyboard: Keyboard
+    windows: WindowControl
     session: Session
     network: Network
     screenshots: Screenshots

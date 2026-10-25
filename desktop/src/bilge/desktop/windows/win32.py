@@ -23,6 +23,8 @@ INPUT_KEYBOARD = 1
 KEYEVENTF_KEYUP, KEYEVENTF_UNICODE = 0x0002, 0x0004
 VK_SHIFT, VK_CONTROL, VK_RETURN, VK_BACK = 0x10, 0x11, 0x0D, 0x08
 VK_C, VK_V = 0x43, 0x56
+VK_F11 = 0x7A
+SW_MAXIMIZE, SW_MINIMIZE, SW_RESTORE = 3, 6, 9
 WM_CLOSE = 0x0010
 GWL_EXSTYLE, WS_EX_TOOLWINDOW = -20, 0x00000080
 GW_OWNER = 4
@@ -75,6 +77,7 @@ def _declare() -> None:
     user32.GetWindow.restype = wintypes.HWND
     user32.GetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int]
     user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+    user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
     user32.SendInput.argtypes = [wintypes.UINT, ctypes.POINTER(_Input), ctypes.c_int]
     user32.OpenClipboard.argtypes = [wintypes.HWND]
     user32.GetClipboardData.argtypes = [wintypes.UINT]
@@ -179,6 +182,12 @@ def close(window: Window) -> None:
     """The same as clicking the window's close button: the app can still ask to save."""
     if not user32.PostMessageW(window.handle, WM_CLOSE, 0, 0):
         raise DesktopError(f"Could not close window {window.handle}")
+
+
+def show(window: Window, command: int) -> None:
+    """ShowWindow with SW_MINIMIZE, SW_MAXIMIZE or SW_RESTORE. Its result is whether the window was visible before,
+    not whether it worked, so it isn't checked."""
+    user32.ShowWindow(window.handle, command)
 
 
 def _send(inputs: list[_Input]) -> None:

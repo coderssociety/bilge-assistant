@@ -27,6 +27,19 @@ class Environment:
     def hyprland(self) -> bool:
         return "hyprland" in self.desktops
 
+    @property
+    def xfce(self) -> bool:
+        return "xfce" in self.desktops
+
+    @property
+    def cinnamon(self) -> bool:
+        return any(d in ("x-cinnamon", "cinnamon") for d in self.desktops)
+
+    @property
+    def tiling(self) -> bool:
+        """A tiling compositor: configured in text files, with no settings app or screen locker of its own."""
+        return self.sway or self.hyprland or "i3" in self.desktops
+
 
 def current(environ: dict[str, str] | None = None) -> Environment:
     env = os.environ if environ is None else environ

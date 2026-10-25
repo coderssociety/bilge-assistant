@@ -43,6 +43,15 @@ class MissingProgram(DesktopError):
         self.programs = programs
 
 
+class NotPossibleHere(DesktopError):
+    """This desktop doesn't let any program do it (GNOME on Wayland moving other apps' windows). `desktop` names it
+    when the user can be told another way ("gnome")."""
+
+    def __init__(self, message: str, desktop: str = ""):
+        super().__init__(message)
+        self.desktop = desktop
+
+
 @dataclass(frozen=True)
 class Completed:
     status: int
