@@ -5,6 +5,7 @@ from bilge.desktop.base import Desktop
 from bilge.desktop.music import MusicLauncher
 from bilge.desktop.process import Runner
 from bilge.desktop.windows.apps import WindowsApps
+from bilge.desktop.windows.file_selection import ExplorerSelection
 from bilge.desktop.windows.hardware import WindowsBluetooth, WindowsBrightness, WindowsDoNotDisturb, WindowsPower
 from bilge.desktop.windows.input import WindowsClipboard, WindowsKeyboard
 from bilge.desktop.windows.ocr import WindowsScreenText
@@ -39,6 +40,7 @@ def build() -> Desktop:
         network=WindowsNetwork(runner=runner),
         screenshots=screenshots,
         screen_text=WindowsScreenText(screenshots),
+        file_selection=ExplorerSelection(),
         settings=WindowsSettings(opener),
         opener=opener,
         notifier=WindowsNotifier(),

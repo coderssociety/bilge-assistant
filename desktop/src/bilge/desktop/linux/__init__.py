@@ -9,6 +9,7 @@ from bilge.desktop.linux.bluetooth import LinuxBluetooth
 from bilge.desktop.linux.clipboard import LinuxClipboard
 from bilge.desktop.linux.dbus import SessionBus
 from bilge.desktop.linux.display import LinuxBrightness
+from bilge.desktop.linux.file_selection import CopiedFiles
 from bilge.desktop.linux.keyboard import LinuxKeyboard
 from bilge.desktop.linux.media import MprisMedia, installed_players
 from bilge.desktop.linux.notifications import LinuxDoNotDisturb
@@ -49,6 +50,7 @@ def build(languages: tuple[str, ...]) -> Desktop:
         network=LinuxNetwork(runner),
         screenshots=screenshots,
         screen_text=TesseractScreenText(runner, screenshots),
+        file_selection=CopiedFiles(runner, env),
         settings=LinuxSettings(runner, env),
         opener=opener,
         notifier=LinuxNotifier(runner, bus),

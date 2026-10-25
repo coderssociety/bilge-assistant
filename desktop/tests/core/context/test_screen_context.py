@@ -79,3 +79,27 @@ def test_commands_worth_reading_the_screen_for():
     assert not context_intent.points("Ahmet'e geç kalacağımı yaz")
     assert context_intent.wanted_kind("bu linki") == Kind.PAGE
     assert context_intent.wanted_kind("bunu") is None
+
+
+def test_bu_falls_back_to_the_clipboard_text_when_nothing_is_selected():
+    copied = ScreenContext(selected_text=" ", clipboard_text="Kopyalanan paragraf", selected_files=(PDF,))
+    assert screen_context.resolve(None, copied) == Text("Kopyalanan paragraf", copied=True)
+    assert screen_context.resolve(Kind.TEXT, copied) == Text("Kopyalanan paragraf", copied=True)
+    assert screen_context.resolve(Kind.FILE, copied) == Files((PDF,))
+    selected = ScreenContext(selected_text="Seçili", clipboard_text="Kopyalanan")
+    assert screen_context.resolve(None, selected) == Text("Seçili")
+
+
+def test_a_copied_file_list_is_not_text_to_read():
+    nautilus = "x-special/nautilus-clipboard\ncopy\nfile:///home/u/rapor.pdf\n"
+    assert screen_context.names_files(nautilus)
+    assert screen_context.names_files("/home/u/a.txt\n/home/u/b.txt")
+    assert not screen_context.names_files("Toplantı yarın saat 10'da")
+    files_only = ScreenContext(clipboard_text=nautilus, selected_files=(PDF,))
+    assert screen_context.resolve(None, files_only) == Files((PDF,))
+
+
+def test_local_files_are_read_from_a_uri_list():
+    uri_list = "# copied\nfile:///home/u/Belgeler/rapor%20son.pdf\r\nhttps://ntv.com.tr\nfile://localhost/tmp/a.txt\n"
+    assert screen_context.file_paths(uri_list) == ("/home/u/Belgeler/rapor son.pdf", "/tmp/a.txt")
+    assert screen_context.file_paths("") == ()

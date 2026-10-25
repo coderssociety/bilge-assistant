@@ -30,6 +30,8 @@ FREE_AFTER_UNTRUSTED = frozenset(
         "earthquakes", "football", "stocks",
         # Opens only an address that came with a headline read out, so nothing can be carried off in it.
         "newsArticle",
+        # Reads what the user points at; it opens only documents the user selected, never programs.
+        "useContext",
     }
 )  # fmt: skip
 

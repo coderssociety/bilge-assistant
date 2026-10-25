@@ -241,6 +241,12 @@ class ScreenText(Protocol):
         ...
 
 
+class FileSelection(Protocol):
+    def selected(self) -> tuple[Path, ...]:
+        """The files the user picked in the file manager; empty when there are none or it won't say."""
+        ...
+
+
 class SettingsPanes(Protocol):
     def open(self, pane: str) -> bool:
         """`pane` is one of the names in `bilge.core.conversation.quick_intent_parser.SettingsPane`; False when this
@@ -293,6 +299,7 @@ class Desktop:
     network: Network
     screenshots: Screenshots
     screen_text: ScreenText
+    file_selection: FileSelection
     settings: SettingsPanes
     opener: Opener
     notifier: Notifier
