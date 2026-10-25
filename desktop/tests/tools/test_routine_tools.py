@@ -54,7 +54,7 @@ def test_routines_are_listed_and_deleted_by_voice(tmp_path):
     store = routines.RoutineStore(tmp_path / "routines.json")
     store.add(Routine("a", EVERY_DAY, 21, 0, "hava durumunu söyle"))
     store.add(Routine("b", EVERY_DAY, 19, 0, "salonun ışığını aç"))
-    agent, _ = agent_for(store)
+    agent, asked = agent_for(store, answers=[True, True])
     assert agent.handle("rutinlerim neler").text == (
         "2 rutin var: her gün 19:00'da “salonun ışığını aç”; her gün 21:00'de “hava durumunu söyle”."
     )
@@ -62,6 +62,32 @@ def test_routines_are_listed_and_deleted_by_voice(tmp_path):
     assert [r.id for r in store.load()] == ["a"]
     assert agent.handle("bütün rutinleri sil").text == "1 rutin silindi."
     assert agent.handle("rutinlerim neler").text == "Kurulu rutin yok."
+    assert asked == [
+        "Her gün 19:00'da “salonun ışığını aç” rutinini sileyim mi?",
+        "1 rutinin hepsini sileyim mi: her gün 21:00'de “hava durumunu söyle”?",
+    ]
+
+
+def test_a_routine_is_deleted_only_after_a_yes(tmp_path):
+    store = routines.RoutineStore(tmp_path / "routines.json")
+    store.add(Routine("a", EVERY_DAY, 8, 0, "günün özetini oku"))
+    agent, asked = agent_for(store, answers=[False])
+    assert agent.handle("sabah rutinini sil").text == "Tamam, yapmıyorum."
+    assert asked == ["Her gün 08:00'de “günün özetini oku” rutinini sileyim mi?"]
+    assert len(store.load()) == 1
+
+
+@pytest.mark.parametrize(
+    ("said", "language"),
+    [("stop the morning routine", EN), ("my morning routine is boring, stop the music", EN), ("rutini kapat", TR),
+     ("rutin kontrol randevumu iptal et", TR), ("yarın rutin kontrolüm var mı", TR)],
+)  # fmt: skip
+def test_stopping_something_or_a_routine_check_up_never_deletes_a_routine(tmp_path, said, language):
+    store = routines.RoutineStore(tmp_path / "routines.json")
+    store.add(Routine("a", EVERY_DAY, 8, 0, "günün özetini oku"))
+    rules = routines.routine_rules(language)
+    assert [call for route in rules if (call := route(said)) is not None] == []
+    assert len(store.load()) == 1
 
 
 def test_deleting_one_of_several_that_fit_asks_which(tmp_path):
