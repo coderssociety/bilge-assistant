@@ -1,10 +1,11 @@
+import CoreWLAN
 import Darwin
 import Foundation
 import FoundationModels
 
 struct SystemInfoTool: AssistantTool {
     let name = "systemInfo"
-    let description = "Mac'in durumunu söyler: boş disk alanı, bellek kullanımı, ne zamandır açık olduğu, macOS sürümü, Wi-Fi ve IP adresi."
+    let description = "Mac'in durumunu söyler: boş disk alanı, bellek kullanımı, ne zamandır açık olduğu, macOS sürümü, bağlı olunan Wi-Fi ağı ve IP adresi."
 
     @Generable
     enum Topic {
@@ -67,12 +68,23 @@ struct SystemInfoTool: AssistantTool {
 
     private static func network() async -> String {
         let wifi = await WiFiControl.isPoweredOn()
-        let wifiText = wifi.map { $0 ? String(localized: "Wi-Fi açık") : String(localized: "Wi-Fi kapalı") }
+        var wifiText = wifi.map { $0 ? String(localized: "Wi-Fi açık") : String(localized: "Wi-Fi kapalı") }
             ?? String(localized: "Wi-Fi durumu okunamadı")
+        if wifi == true { wifiText += ", " + wifiNetwork() }
         guard let address = localIPv4Address() else {
             return String(localized: "\(wifiText); ağ bağlantısı görünmüyor.")
         }
         return String(localized: "\(wifiText). Yerel IP adresin \(address).")
+    }
+
+    /// Since macOS 14 the network name is only given to apps with Location access, which Bilge does
+    /// not ask for; a connected interface without a name is that case, not a missing connection.
+    private static func wifiNetwork() -> String {
+        guard let interface = CWWiFiClient.shared().interface() else { return String(localized: "ağ bilgisi okunamadı") }
+        if let name = interface.ssid(), !name.isEmpty { return String(localized: "\(name) ağına bağlı") }
+        return interface.rssiValue() != 0
+            ? String(localized: "bir ağa bağlı; ağın adını macOS yalnızca Konum izni olan uygulamalara söylüyor")
+            : String(localized: "bir ağa bağlı değil")
     }
 
     private static func localIPv4Address() -> String? {

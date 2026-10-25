@@ -22,6 +22,7 @@ struct MacQuickIntentsTests {
         ("diskte ne kadar yer kaldı", .systemInfo(.disk)),
         ("bilgisayar ne zamandır açık", .systemInfo(.uptime)),
         ("IP adresim ne", .systemInfo(.network)),
+        ("hangi ağa bağlıyım", .systemInfo(.network)),
     ])
     func recognized(text: String, expected: QuickIntent) {
         #expect(QuickIntentParser.parse(text) == expected)

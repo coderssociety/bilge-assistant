@@ -89,7 +89,10 @@ enum MacQuickIntents {
             ["bilgisayar", "kac", "gundur", "acik"],
         ]
         if uptime.contains(w) { return .systemInfo(.uptime) }
-        let network: Set<[String]> = [["ip", "adresim", "ne"], ["ip", "adresim", "kac"], ["yerel", "ip", "adresim", "ne"]]
+        let network: Set<[String]> = [
+            ["ip", "adresim", "ne"], ["ip", "adresim", "kac"], ["yerel", "ip", "adresim", "ne"], ["hangi", "aga", "bagliyim"],
+            ["hangi", "aga", "bagliyiz"], ["bagli", "oldugum", "ag", "ne"],
+        ]
         if network.contains(w) { return .systemInfo(.network) }
         let os: Set<[String]> = [["macos", "surumu", "ne"], ["hangi", "macos", "surumu", "yuklu"], ["isletim", "sistemi", "surumu", "ne"]]
         return os.contains(w) ? .systemInfo(.osVersion) : nil

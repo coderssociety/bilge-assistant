@@ -82,6 +82,16 @@
         }
       }
     },
+    "%@ ağına bağlı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "connected to %@"
+          }
+        }
+      }
+    },
     "%@ son %@ başlıkları. ": {
       "localizations": {
         "en": {
@@ -1376,6 +1386,16 @@
         }
       }
     },
+    "ağ bilgisi okunamadı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "its network couldn't be read"
+          }
+        }
+      }
+    },
     "Aşağı kaydırdım.": {
       "localizations": {
         "en": {
@@ -1588,6 +1608,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "This information is stored only on this Mac."
+          }
+        }
+      }
+    },
+    "bir ağa bağlı değil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not connected to a network"
+          }
+        }
+      }
+    },
+    "bir ağa bağlı; ağın adını macOS yalnızca Konum izni olan uygulamalara söylüyor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "connected to a network; macOS only tells apps with Location access its name"
           }
         }
       }

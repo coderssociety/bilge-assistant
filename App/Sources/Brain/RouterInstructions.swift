@@ -208,7 +208,7 @@ enum RouterInstructions {
         - Someone's phone number or e-mail address is findContact.
         - Finishing a to-do ("I did…", "mark … as done", "cross … off") is completeReminder.
         - Playing a named song, artist, album or playlist is playMusic; play, pause, next and "what is playing" are controlMusic.
-        - Uptime, disk space, memory, IP address and macOS version are systemInfo, not currentDateTime.
+        - Uptime, disk space, memory, the Wi-Fi network, IP address and macOS version are systemInfo, not currentDateTime.
         - "open <section> settings" opens a System Settings section: openSettings, not openApp.
         - Making a new folder is createFolder; opening an existing folder is files.
         - Reading or summarizing a document file is readDocument; a note in the Notes app is readNotes.
