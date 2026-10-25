@@ -122,6 +122,34 @@ def test_english_exchange_defaults_to_the_dollar():
     assert tool.refine({"from": "EUR", "to": "TRY"}, "euro in lira")["to"] == "TRY"
 
 
+def test_the_amount_and_currencies_come_from_the_words():
+    tool = internet.exchange_rate(TR)
+    assert tool.refine({"from": "EUR", "to": "USD", "amount": 1}, "100 euro kaç para") == {
+        "from": "EUR",
+        "to": "TRY",
+        "amount": 100.0,
+    }
+    assert tool.refine({"from": "USD"}, "50 sterlin kaç dolar") == {"from": "GBP", "to": "USD", "amount": 50.0}
+    assert tool.refine({"from": "USD", "amount": 3}, "bugün kur ne")["amount"] == 3
+    english = internet.exchange_rate(EN)
+    assert english.refine({"from": "USD", "to": "TRY"}, "how much is €100") == {
+        "from": "EUR",
+        "to": "USD",
+        "amount": 100.0,
+    }
+
+
+def test_gold_is_refused_rather_than_taken_for_a_currency():
+    tool = internet.exchange_rate(TR)
+    arguments = tool.refine({"from": "TRY"}, "gram altın kaç lira")
+    with pytest.raises(ToolError, match="Altın fiyatlarını henüz söyleyemiyorum"):
+        tool.run(arguments)
+    with pytest.raises(ToolError, match="can't tell gold prices"):
+        internet.exchange_rate(EN).run({"gold": True})
+    assert internet.asks_for_gold(TR)("çeyrek altın ne kadar")
+    assert not internet.asks_for_gold(TR)("dolar ne kadar")
+
+
 def test_exchange_rate_sentence(monkeypatch):
     fake_web(monkeypatch, {"https://api.frankfurter.app": {"rates": {"TRY": 4123.456}}})
     assert internet.exchange_rate(TR).run({"from": "USD", "amount": 100}) == "100 dolar 4.123,46 lira."

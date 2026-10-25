@@ -13,7 +13,7 @@ from urllib.parse import urlencode
 from bilge.brain.instructions import weekday_name
 from bilge.core import text
 from bilge.core.language import AssistantLanguage
-from bilge.core.tools import english_time_parser, relative_day_parser
+from bilge.core.tools import currency_request, english_time_parser, relative_day_parser
 from bilge.core.web import html_text, news_request, news_source, rss_headlines, weather_report, weather_request
 from bilge.core.web import news_article as article_reference
 from bilge.tools import web_fetch
@@ -206,6 +206,17 @@ CURRENCIES = {
 }  # fmt: skip
 
 
+_TEXTS = {
+    TR: {"gold": "Altın fiyatlarını henüz söyleyemiyorum; şimdilik yalnızca döviz kurlarını biliyorum."},
+    EN: {"gold": "I can't tell gold prices yet; for now I only know exchange rates."},
+}
+
+
+def asks_for_gold(language: AssistantLanguage) -> Callable[[str], bool]:
+    """ "Gram altın kaç lira": answered by rule, so no model treats gold as a currency or guesses a price."""
+    return lambda command: currency_request.asks_for_gold(command, language is EN)
+
+
 def exchange_rate(language: AssistantLanguage) -> Tool:
     english = language is EN
 
@@ -213,15 +224,27 @@ def exchange_rate(language: AssistantLanguage) -> Tool:
         return CURRENCIES[code][1 if english else 0]
 
     def refine(arguments: dict[str, Any], command: str) -> dict[str, Any]:
-        # An unsaid target means lira to a Turkish speaker; in English the dollar (or the euro for dollars) is meant.
-        if not english or arguments.get("to") not in (None, "TRY"):
-            return arguments
+        """Currencies and the amount said in the command win over the model's ("100 Euro kaç para" is 100)."""
+        if currency_request.asks_for_gold(command, english):
+            return {"gold": True}
+        named = currency_request.currencies(command)
+        said = currency_request.amount(command, english)
+        refined = {**arguments, **({"amount": said} if said is not None else {})}
+        if named:
+            refined["from"] = named[0]
+            # An unsaid target means lira to a Turkish speaker.
+            refined["to"] = named[1] if len(named) > 1 else (None if english else "TRY")
+        # In English an unsaid target is the dollar, or the euro for dollars.
+        if not english or refined.get("to") not in (None, "TRY") or len(named) > 1:
+            return refined
         words = text.folded(command).split()
         if any(w in words for w in ("lira", "try", "tl", "turkish")):
-            return arguments
-        return {**arguments, "to": "EUR" if arguments.get("from") == "USD" else "USD"}
+            return refined
+        return {**refined, "to": "EUR" if refined.get("from") == "USD" else "USD"}
 
     def run(arguments: dict[str, Any]) -> str:
+        if arguments.get("gold"):
+            raise ToolError(_TEXTS[language]["gold"])
         source, target = arguments.get("from"), arguments.get("to") or ("USD" if english else "TRY")
         if source not in CURRENCIES or target not in CURRENCIES or source == target:
             raise ToolError(

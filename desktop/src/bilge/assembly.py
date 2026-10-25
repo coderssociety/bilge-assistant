@@ -90,6 +90,7 @@ def build_agent(
     rules: list[Rule] = [
         rule("dailyBriefing", briefing.claims),
         rule("news", internet.news_source_rule_claims(language, news_reading)),
+        rule("exchangeRate", internet.asks_for_gold(language), lambda _: {"gold": True}),
     ]
     modes: list[Mode] = []
     registry.add(internet.news_article(language, news_reading, found.opener.open if found is not None else None))
