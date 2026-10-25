@@ -8,6 +8,7 @@ from bilge.brain.routing import Mode, rule
 from bilge.core.language import AssistantLanguage
 from bilge.llm.messages import Reply
 from bilge.tools.base import Registry, Risk, Tool
+from bilge.tools.builtin import internet, prayer, prices
 
 from .test_agent import ScriptedProvider, recorder
 
@@ -130,3 +131,27 @@ def test_quick_tool_missing_from_this_platform_goes_to_the_model():
     provider = ScriptedProvider(Reply("Bunu burada yapamıyorum."))
     agent, _ = agent_with([Tool("currentDateTime", "", run=lambda _: "x")], provider=provider)
     assert agent.handle("ekranı kilitle").text == "Bunu burada yapamıyorum."
+
+
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        ("akşam ezanı kaçta", {"prayerTimes"}),
+        ("iftara kaç dakika kaldı", {"prayerTimes"}),
+        ("gram altın kaç lira", {"goldPrice"}),
+        ("ons kaç dolar", {"goldPrice"}),
+        ("İzmir'de motorin", {"fuelPrice"}),
+        ("LPG kaç lira", {"fuelPrice"}),
+        ("Atatürk kimdir", set()),
+        ("ezan nedir", set()),
+        ("dolar kaç lira", set()),
+        ("yarın İzmir'de hava nasıl", set()),
+    ],
+)
+def test_information_rules_claim_only_their_own_questions(command, expected):
+    rules = {
+        "goldPrice": internet.asks_for_gold(TR),
+        "prayerTimes": prayer.asks_for_prayer_times(TR),
+        "fuelPrice": prices.asks_for_fuel_prices(TR),
+    }
+    assert {name for name, claims in rules.items() if claims(command)} == expected

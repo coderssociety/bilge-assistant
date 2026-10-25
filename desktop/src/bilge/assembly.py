@@ -18,7 +18,7 @@ from bilge.desktop.base import Desktop
 from bilge.llm.providers import ProviderError, make_provider
 from bilge.models.downloader import Downloader, ModelSpec
 from bilge.tools.base import Registry, Tool
-from bilge.tools.builtin import internet, prayer, prices
+from bilge.tools.builtin import internet, prayer, prices, wikipedia
 from bilge.tools.builtin.briefing import Briefing, briefing_tool
 from bilge.tools.builtin.calculator import calculator
 from bilge.tools.builtin.calendar import calendar_tools
@@ -87,6 +87,7 @@ def build_agent(
         prices.gold_price(language),
         prices.fuel_price(language, lambda: settings.weather_city),
         prayer.prayer_times_tool(language, lambda: settings.weather_city),
+        wikipedia.wikipedia(language),
         internet.news(language, news_reading),
         internet.read_web_page(language, text_reading),
         continue_reading_tool(text_reading, language),
