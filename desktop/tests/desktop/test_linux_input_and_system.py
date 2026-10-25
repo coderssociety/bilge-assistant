@@ -93,8 +93,9 @@ def test_ydotool_pastes_text_it_cannot_type_and_restores_the_clipboard():
     keyboard = LinuxKeyboard(runner, GNOME_WAYLAND, clipboard)
     keyboard.type("plain ascii")
     keyboard.type("şeker")
-    assert runner.calls[0][1] == "plain ascii"
-    assert runner.commands[1] == ["ydotool", "key", "29:1", "47:1", "47:0", "29:0"]
+    calls = [call for call in runner.calls if call[0] != ["ydotool", "type", "--help"]]
+    assert calls[0] == (["ydotool", "type", "-d", "8", "--file", "-"], "plain ascii")
+    assert calls[1][0] == ["ydotool", "key", "29:1", "47:1", "47:0", "29:0"]
     assert clipboard.writes == ["şeker", "önceki"]
 
 
@@ -102,6 +103,51 @@ def test_wtype_is_not_tried_on_gnome_where_the_protocol_is_missing():
     with pytest.raises(MissingProgram) as error:
         LinuxKeyboard(FakeRunner({"wtype"}), GNOME_WAYLAND).type("x")
     assert error.value.programs == ("ydotool",)
+
+
+LEGACY_YDOTOOL_HELP = "Usage: type [--delay <ms>] [--key-delay <ms>] [--args N] [--file <filepath>] <things to type>"
+MODERN_YDOTOOL_HELP = (
+    "Usage: type [OPTION]... [STRINGS]...\n  -d, --key-delay=N\n  -H, --key-hold=N\n  -D, --next-delay=N"
+)
+
+
+def test_ydotool_0_1_8_gets_its_own_options_and_key_names():
+    runner = FakeRunner({"ydotool"}, {"ydotool type --help": LEGACY_YDOTOOL_HELP})
+    keyboard = LinuxKeyboard(runner, GNOME_WAYLAND)
+    keyboard.type("abc")
+    keyboard.new_line()
+    keyboard.backspace(2)
+    assert runner.commands[1:] == [
+        ["ydotool", "type", "--key-delay", "8", "--file", "-"],
+        ["ydotool", "key", "shift+enter"],
+        ["ydotool", "key", "--key-delay", "8", "backspace", "backspace"],
+    ]
+    assert runner.commands.count(["ydotool", "type", "--help"]) == 1
+
+
+def test_ydotool_1_x_takes_event_codes():
+    runner = FakeRunner({"ydotool"}, {"ydotool type --help": MODERN_YDOTOOL_HELP})
+    LinuxKeyboard(runner, GNOME_WAYLAND).new_line()
+    assert runner.commands[-1] == ["ydotool", "key", "42:1", "28:1", "28:0", "42:0"]
+
+
+def test_wtype_is_skipped_on_kde_and_ydotool_takes_over_when_wtype_is_refused():
+    runner = FakeRunner({"wtype", "ydotool"})
+    LinuxKeyboard(runner, KDE_WAYLAND).type("abc")
+    assert all(argv[0] == "ydotool" for argv in runner.commands)
+
+    refused = Completed(1, "", "Compositor does not support the virtual keyboard protocol")
+    runner = FakeRunner({"wtype", "ydotool"}, {"wtype": refused})
+    LinuxKeyboard(runner, SWAY).type("abc")
+    assert runner.commands[0][0] == "wtype"
+    assert runner.calls[-1] == (["ydotool", "type", "-d", "8", "--file", "-"], "abc")
+
+
+def test_the_last_typing_failure_is_reported_when_every_tool_fails():
+    runner = FakeRunner({"wtype", "ydotool"}, {"wtype": Completed(1, "", "no protocol"),
+                                               "ydotool type -d": Completed(2, "", "failed to connect socket")})  # fmt: skip
+    with pytest.raises(DesktopError, match="socket"):
+        LinuxKeyboard(runner, SWAY).type("abc")
 
 
 def test_window_class_comes_from_xprop_where_xdotool_is_too_old():

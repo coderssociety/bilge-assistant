@@ -58,7 +58,12 @@ class LinuxWindows:
             state = self._hyprland_state()
             if state == _FULL_SCREEN_STATE:
                 self._dispatch("fullscreen", "0")
-            if action is WindowAction.MAXIMIZE and state != _MAXIMIZED_STATE or action is WindowAction.RESTORE and state == _MAXIMIZED_STATE:
+            if (
+                action is WindowAction.MAXIMIZE
+                and state != _MAXIMIZED_STATE
+                or action is WindowAction.RESTORE
+                and state == _MAXIMIZED_STATE
+            ):
                 self._dispatch("fullscreen", "1")
 
     def _hyprland_state(self) -> int:
