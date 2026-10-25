@@ -21,7 +21,7 @@ struct MultiStepAgent {
     /// Tools whose results contain such text, besides those answered by a language model.
     private static let untrustedOutputTools: Set<String> = [
         "readClipboard", "readCalendar", "readReminders", "files", "findContact", "listShortcuts", "listRunningApps",
-        "news", "controlMusic", "readMail", "playMusic", "playMusicOnService",
+        "news", "controlMusic", "readMail", "playMusic", "playMusicOnService", "readNotes",
     ]
     /// Could carry that text off the Mac (a URL with data in it) or into another app; refused outright.
     /// `remember` too: an injected "fact" would otherwise sit in every future conversation's instructions.
