@@ -75,6 +75,7 @@ struct ToolRegistry {
             BriefingTool(),
             PrayerTimesTool(),
             GoldPriceTool(),
+            FuelPriceTool(),
         ]
     }
 }

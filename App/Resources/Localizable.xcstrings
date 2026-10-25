@@ -1176,6 +1176,26 @@
         }
       }
     },
+    "Akaryakıt fiyatlarını yalnızca Türkiye'deki iller için söyleyebiliyorum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can only give fuel prices for provinces in Turkey."
+          }
+        }
+      }
+    },
+    "Akaryakıt fiyatlarını şu an alamadım; kaynaklara ulaşılamadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't get fuel prices right now; the sources couldn't be reached."
+          }
+        }
+      }
+    },
     "Altın fiyatlarını şu an alamadım; kaynaklara ulaşılamadı.": {
       "localizations": {
         "en": {
