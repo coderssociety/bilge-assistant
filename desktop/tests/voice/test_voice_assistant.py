@@ -355,3 +355,163 @@ def test_services_run_while_listening():
     assert service.events == ["start"]
     assistant.stop()
     assert service.events == ["start", "stop"]
+
+
+class Detecting:
+    def __init__(self, *heard):
+        self.heard = list(heard)
+
+    def transcribe(self, samples):
+        return ""
+
+    def transcribe_detecting(self, samples, languages):
+        from bilge.voice.recognizers import Detected
+
+        text, language = self.heard.pop(0) if self.heard else ("", languages[0])
+        return Detected(text, language)
+
+
+class TranslatingProvider:
+    def __init__(self):
+        self.said = []
+
+    def complete(self, messages, tools=None, **_):
+        from bilge.llm.messages import Reply
+
+        self.said.append(messages[-1].content)
+        return Reply("Good morning.")
+
+    def list_models(self):
+        return []
+
+
+class Clock:
+    def __init__(self):
+        from datetime import datetime
+
+        self.now = datetime(2026, 10, 25, 12, 0)
+
+    def __call__(self):
+        return self.now
+
+
+def interpreting(*heard, clock=None):
+    from bilge.voice.interpreter import Interpreter
+
+    events = []
+    provider = TranslatingProvider()
+    interpreter = Interpreter(lambda: Detecting(*heard), lambda: provider, AssistantLanguage.TURKISH,
+                              clock=clock or Clock())  # fmt: skip
+    speech, agent = SilentSpeech(), EchoAgent()
+    assistant = VoiceAssistant(ScriptedRecognizer(), speech, agent, AssistantLanguage.TURKISH,
+                               on_event=lambda kind, text: events.append((kind, text)),
+                               wake_recognizer=ScriptedRecognizer(), interpreter=interpreter)  # fmt: skip
+    interpreter.start({"languages": "Türkçe ve İngilizce"})
+    return assistant, speech, agent, events, provider
+
+
+def test_in_interpreter_mode_speech_is_translated_and_spoken_in_the_other_language():
+    assistant, speech, agent, events, provider = interpreting(("Günaydın", "tr"))
+    assistant._handle_utterance(SPEECH)
+    assert speech.said == ["Good morning."] and speech.languages == ["en"]
+    assert ("heard", "Günaydın") in events and ("reply", "TR → EN: Good morning.") in events
+    assert provider.said == ["<<<\nGünaydın\n>>>"]
+    assert agent.commands == []
+    assert assistant.status is Status.INTERPRETING
+
+
+def test_the_stop_phrase_in_either_language_ends_interpreter_mode():
+    for stop in (("Tercümanı kapat.", "tr"), ("Stop interpreting.", "en")):
+        assistant, speech, agent, _, provider = interpreting(stop)
+        assistant.start()
+        assistant._handle_utterance(SPEECH)
+        assert wait(lambda s=speech: s.said == ["Tercümanı kapattım."])
+        assert not assistant.interpreter.active and provider.said == [] and agent.commands == []
+        assert wait(lambda a=assistant: a.status is Status.LISTENING)
+        assistant.stop()
+
+
+def test_interpreter_mode_ends_after_two_minutes_of_silence():
+    from datetime import timedelta
+
+    clock = Clock()
+    assistant, speech, *_ = interpreting(clock=clock)
+    assistant.start()
+    clock.now += timedelta(minutes=2)
+    assert wait(lambda: speech.said == ["İki dakikadır konuşma olmadı, tercümanı kapattım."])
+    assert not assistant.interpreter.active
+    assistant.stop()
+
+
+def test_the_shortcut_ends_interpreter_mode():
+    assistant, speech, *_ = interpreting()
+    assistant.start()
+    assistant.shortcut_pressed()
+    assert wait(lambda: speech.said == ["Tercümanı kapattım."])
+    assistant.stop()
+
+
+class Recorder:
+    def __init__(self):
+        self.active = True
+        self.added = []
+        self.abandoned = False
+
+    def add(self, samples):
+        self.added.append(samples)
+
+    def abandon(self):
+        self.abandoned, self.active = True, False
+
+
+def recording(*heard):
+    recorder = Recorder()
+    speech, agent = SilentSpeech(), EchoAgent()
+    recognizer = ScriptedRecognizer(*heard)
+    assistant = VoiceAssistant(recognizer, speech, agent, AssistantLanguage.TURKISH,
+                               wake_recognizer=ScriptedRecognizer(*heard), recorder=recorder)  # fmt: skip
+    return assistant, speech, agent, recorder, recognizer
+
+
+def test_while_a_meeting_is_recorded_only_the_stop_phrase_is_acted_on():
+    assistant, speech, agent, recorder, _ = recording("Bilge, saat kaç?", "Bütçeyi konuşalım.", "Kaydı bitir.")
+    assistant.start()
+    assistant._handle_utterance(SPEECH)
+    assistant._handle_utterance(SPEECH)
+    time.sleep(0.2)
+    assert agent.commands == [] and speech.said == []
+    assistant._handle_utterance(SPEECH)
+    assert wait(lambda: agent.commands == ["Kaydı bitir."])
+    assistant.stop()
+
+
+def test_a_long_utterance_in_the_meeting_is_not_even_checked_for_the_stop_phrase():
+    assistant, _, agent, _, recognizer = recording("Kaydı bitir.")
+    assistant._handle_utterance(np.zeros(16_000 * 6, dtype=np.float32))
+    assert recognizer.texts == ["Kaydı bitir."] and agent.commands == []
+
+
+def test_the_recording_takes_every_block_but_leaves_bilges_own_voice_out():
+    assistant, _, _, recorder, _ = recording()
+    loud = np.full(512, 0.3, dtype=np.float32)
+    assistant.on_chunk(loud)
+    assistant._suspended = assistant._speaking = True
+    assistant.on_chunk(loud)
+    assert len(recorder.added) == 2
+    assert recorder.added[0].max() == np.float32(0.3) and not recorder.added[1].any()
+
+
+def test_stopping_bilge_saves_the_meeting_being_recorded():
+    assistant, _, _, recorder, _ = recording()
+    assistant.start()
+    assert wait(lambda: assistant.status is Status.RECORDING)
+    assistant.stop()
+    assert recorder.abandoned
+
+
+def test_the_shortcut_does_not_cut_a_meeting_short():
+    assistant, speech, _, recorder, _ = recording()
+    assistant.start()
+    assistant.shortcut_pressed()
+    assert recorder.active and assistant.status is Status.RECORDING
+    assistant.stop()

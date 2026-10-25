@@ -15,6 +15,7 @@ from bilge.update import Release
 _COLOURS = {
     "listening": "#4caf50", "awake": "#2196f3", "transcribing": "#2196f3", "thinking": "#ff9800",
     "speaking": "#9c27b0", "confirming": "#ffc107", "starting": "#9e9e9e", "failed": "#f44336", "off": "#616161",
+    "interpreting": "#00bcd4", "recording": "#e91e63",
 }  # fmt: skip
 
 
