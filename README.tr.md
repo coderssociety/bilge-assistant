@@ -21,6 +21,12 @@
   <a href="README.md">English</a> · <b>Türkçe</b>
 </p>
 
+<p align="center">
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest">
+    <img src="docs/demo/readme-tr.gif" width="860" alt="Bilge demosu: “Bilge, yarın saat onda diş hekimi randevusu ekle”. Bilge eklemeden önce sorar, sonra sesle cevap verir">
+  </a>
+</p>
+
 <table>
   <tr>
     <td width="62%"><img src="mac/docs/images/hud-confirm.png" alt="Mac'te Bilge takvime etkinlik eklemeden önce soruyor"></td>

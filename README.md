@@ -21,6 +21,12 @@
   <b>English</b> · <a href="README.tr.md">Türkçe</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest">
+    <img src="docs/demo/readme-en.gif" width="860" alt="Bilge demo: “Bilge, add a dentist appointment tomorrow at ten”. Bilge asks before adding it, then answers out loud">
+  </a>
+</p>
+
 <table>
   <tr>
     <td width="62%"><img src="mac/docs/images/en/hud-confirm.png" alt="Bilge on the Mac asks before adding an event to the calendar"></td>
