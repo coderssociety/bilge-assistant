@@ -515,8 +515,9 @@ def test_a_secret_typed_but_never_tested_is_not_said_to_be_saved(qapp, isolated,
     window = SettingsWindow(config.Settings(), tmp_path / "settings.json")
     calendar = window.pages["calendar"]
     calendar.kind.setCurrentIndex(calendar.kind.findData("caldav"))
-    fields = [(window.pages["home"].token, "Ev:"), (window.pages["mail"].secret, "E-posta:"),
-              (calendar.secret, "Takvim:")]  # fmt: skip
+    fields = [(window.pages["home"].token, "Ev:"), (calendar.secret, "Takvim:")]
+    if "mail" in window.pages:  # Windows reads mail from Outlook and has no mail page
+        fields.append((window.pages["mail"].secret, "E-posta:"))
     for field, warning in fields:
         field.setText("denenmemiş")
         window.save()

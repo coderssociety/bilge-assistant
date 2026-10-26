@@ -1,3 +1,4 @@
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -14,6 +15,7 @@ X11 = environment.current({"DISPLAY": ":0", "XDG_CURRENT_DESKTOP": "XFCE"})
 WAYLAND = environment.current({"WAYLAND_DISPLAY": "wayland-0", "XDG_CURRENT_DESKTOP": "KDE"})
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="a Linux clipboard listing names POSIX paths")
 def test_files_copied_in_the_file_manager_are_read_as_a_uri_list(tmp_path):
     report = tmp_path / "rapor son.pdf"
     report.write_bytes(b"%PDF")
