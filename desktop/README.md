@@ -9,6 +9,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/coderssociety/bilge-desktop/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-desktop?label=Download%20for%20Windows%20%26%20Linux&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Windows and Linux"></a>
+  <br>
+  <sub>Free and open source · Windows 10/11 installer · Linux AppImage for x86_64 and arm64 ·
+  <a href="https://github.com/coderssociety/bilge-assistant">on a Mac? →</a></sub>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows" alt="Windows 10/11">
   <img src="https://img.shields.io/badge/Linux-AppImage-FCC624?logo=linux&logoColor=black" alt="Linux AppImage">
@@ -22,6 +29,20 @@
 <p align="center">
   <img src="docs/images/hud-confirm.png" width="380" alt="Bilge asks before adding an event to the calendar">
 </p>
+
+**Why Bilge**
+
+- **Made for Turkish.** It understands everyday Turkish and knows what a Turkish user asks for: prayer times,
+  earthquake alerts from AFAD, Süper Lig, Borsa İstanbul, gold and fuel prices. It speaks English too.
+- **Your choice of brain.** A model on your computer (Ollama, LM Studio, llama.cpp) or a hosted API (OpenAI,
+  Anthropic, Google Gemini, OpenRouter, Groq, DeepSeek), with keys in the system's key store.
+- **It gets things done, safely.** Apps, files and documents, Excel or LibreOffice Calc, Outlook, calendars, music
+  and your smart home, and it asks out loud before anything that can't be undone.
+- **Private where you want it.** Whisper runs on your processor or graphics card, so your voice stays on your
+  computer unless you pick a cloud recognizer.
+
+**Get started:** run the Windows installer or the AppImage, choose a language and a model, then say “Bilge, what
+time is it?”. [Installing](#installing) has the details.
 
 It is the sibling of [Bilge for macOS](https://github.com/coderssociety/bilge-assistant): the same assistant and
 the same rules (say “Bilge”, it asks before anything risky), rebuilt in Python because the Mac version is made of

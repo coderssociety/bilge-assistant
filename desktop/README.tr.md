@@ -9,6 +9,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/coderssociety/bilge-desktop/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-desktop?label=Windows%20ve%20Linux%20i%C3%A7in%20indir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Windows ve Linux için indir"></a>
+  <br>
+  <sub>Ücretsiz ve açık kaynak · Windows 10/11 kurulumu · x86_64 ve arm64 için Linux AppImage ·
+  <a href="https://github.com/coderssociety/bilge-assistant/blob/main/README.tr.md">Mac mi kullanıyorsun? →</a></sub>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows" alt="Windows 10/11">
   <img src="https://img.shields.io/badge/Linux-AppImage-FCC624?logo=linux&logoColor=black" alt="Linux AppImage">
@@ -22,6 +29,20 @@
 <p align="center">
   <img src="docs/images/tr/hud-confirm.png" width="380" alt="Bilge takvime etkinlik eklemeden önce soruyor">
 </p>
+
+**Neden Bilge?**
+
+- **Türkçe için yapıldı.** Günlük Türkçe konuşmayı anlar ve Türkiye'de sorulanı bilir: namaz vakitleri, AFAD
+  deprem uyarıları, Süper Lig, Borsa İstanbul, altın ve akaryakıt fiyatları. İngilizce de konuşur.
+- **Beyni sen seç.** Bilgisayarındaki bir model (Ollama, LM Studio, llama.cpp) ya da bir API (OpenAI, Anthropic,
+  Google Gemini, OpenRouter, Groq, DeepSeek); anahtarlar sistemin anahtar deposunda durur.
+- **İşi yapar, güvenle.** Uygulamalar, dosyalar ve belgeler, Excel ya da LibreOffice Calc, Outlook, takvimler, müzik
+  ve akıllı ev; geri alınamayan her işten önce sesli sorar.
+- **İstediğin yerde gizli.** Whisper işlemcinde ya da ekran kartında çalışır; bulutta bir tanıyıcı seçmedikçe sesin
+  bilgisayarından çıkmaz.
+
+**Hemen başla:** Windows kurulumunu ya da AppImage'ı çalıştır, dili ve modeli seç, sonra “Bilge, saat kaç?” de.
+Ayrıntılar [Kurulum](#kurulum) bölümünde.
 
 [Mac için Bilge](https://github.com/coderssociety/bilge-assistant)'nin kardeşidir: aynı asistan, aynı kurallar
 (“Bilge” de, riskli bir şey yapmadan önce sorar). Mac sürümü yalnızca Apple'a özgü parçalardan oluştuğu için
