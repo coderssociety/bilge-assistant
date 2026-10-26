@@ -206,9 +206,10 @@ class FileTools:
             Folder.MUSIC: self.folders.music, Folder.VIDEOS: self.folders.videos,
         }.get(name, self.folders.home)()  # fmt: skip
 
-    def open(self, path: Path) -> str:
+    def open(self, path: Path, known_folder: bool = False) -> str:
+        """`known_folder`: Desktop, Documents and the like, which open even before they exist on disk."""
         try:
-            if is_executable(path):
+            if not known_folder and is_executable(path):
                 self.opener.reveal(path)
                 return self.texts["revealed"].format(name=path.name)
             self.opener.open(str(path))
@@ -274,7 +275,7 @@ class FileTools:
         if action == FileAction.OPEN_LATEST_DOWNLOAD:
             latest = self.latest_download()
             return self.open(latest) if latest else texts["downloads_empty"]
-        return self.open(self.folder(string_argument(arguments, "folder")))
+        return self.open(self.folder(string_argument(arguments, "folder")), known_folder=True)
 
     def create_folder(self, arguments: dict[str, Any]) -> str:
         texts = self.texts

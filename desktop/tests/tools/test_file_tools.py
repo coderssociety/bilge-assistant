@@ -263,6 +263,10 @@ def test_on_windows_a_folder_opens_whatever_its_name_but_a_program_is_only_revea
     (tmp_path / "kurulum.exe").write_bytes(b"MZ")
     assert not files.is_executable(tmp_path / "Belgeler")
     assert files.is_executable(tmp_path / "kurulum.exe")
+    opener = Opener()
+    tools = FileTools(folders(tmp_path), opener, TR)
+    tools.files(tools.files_refine({"action": "openFolder", "folder": "home"}, "Resimler klasörünü aç"))
+    assert opener.opened == [str(tmp_path / "Resimler")] and opener.revealed == []
 
 
 def write_xlsx(path: Path):
