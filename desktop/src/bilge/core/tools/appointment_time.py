@@ -50,10 +50,15 @@ def seconds_from_now(text: str) -> int | None:
 
 def _afternoon(hour: int, folded_text: str) -> int:
     words = set(folded_text.split())
-    if words & _MORNING or hour >= 12:
+    if words & _MORNING:
+        return hour
+    # Before the 24-hour check: "gece saat 12" is midnight, not noon.
+    if words & _NIGHT:
+        if hour == 12:
+            return 0
+        return hour + 12 if _LAST_AFTERNOON_HOUR < hour < 12 else hour
+    if hour >= 12:
         return hour
     if words & _EVENING or ("ogleden" in words and "sonra" in words):
         return hour + 12
-    if words & _NIGHT:
-        return hour + 12 if hour > _LAST_AFTERNOON_HOUR else hour
     return hour + 12 if 1 <= hour <= _LAST_AFTERNOON_HOUR else hour

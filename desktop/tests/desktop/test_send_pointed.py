@@ -77,7 +77,7 @@ def test_dictated_words_are_not_resolved():
 def agent_with(app, item, answers):
     pending, asked = list(answers), []
 
-    def confirm(question):
+    def confirm(question, strict=False):
         asked.append(question)
         return pending.pop(0)
 

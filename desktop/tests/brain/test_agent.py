@@ -32,7 +32,7 @@ def make_agent(provider, tools, answers=(), language=AssistantLanguage.TURKISH):
     asked = []
     pending = list(answers)
 
-    def confirm(question):
+    def confirm(question, strict=False):
         asked.append(question)
         return pending.pop(0)
 
@@ -302,7 +302,7 @@ def test_reading_on_keeps_the_language_the_text_was_translated_into():
     provider = ScriptedProvider(
         call("readMail"), Reply("Teklif ekte."), call("continueReading"), Reply("Devamı."), Reply("Il est 14 h 05.")
     )
-    agent = Agent(provider, Registry([mail, continue_reading_tool(reading, TR)]), lambda q: True, TR,
+    agent = Agent(provider, Registry([mail, continue_reading_tool(reading, TR)]), lambda q, strict=False: True, TR,
                   clock=lambda: moments[0], reading=reading)  # fmt: skip
 
     assert agent.handle("İngilizce maili Türkçe oku").translation.code == "tr"
@@ -359,7 +359,7 @@ def test_an_unattended_rule_that_needs_a_yes_is_not_run():
     from bilge.brain.routing import rule
 
     tool, runs = recorder("systemAction", risk=Risk.CONFIRM, confirmation=lambda a: "Kapatayım mı?")
-    agent = Agent(ScriptedProvider(), Registry([tool]), lambda q: True, TR,
+    agent = Agent(ScriptedProvider(), Registry([tool]), lambda q, strict=False: True, TR,
                   rules=[rule("systemAction", lambda c: c == "bilgisayarı kapat")])  # fmt: skip
     assert "onayın gerekiyor" in agent.handle("bilgisayarı kapat", unattended=True).text
     assert runs == []
@@ -375,3 +375,19 @@ def test_after_untrusted_text_an_unattended_step_is_not_run_either():
     agent, asked = make_agent(provider, [page, lamp])
     assert "onayın gerekiyor" in agent.handle("sayfayı oku", unattended=True).text
     assert lamp_runs == [] and asked == []
+
+
+def test_a_tool_that_sends_asks_for_an_explicit_yes():
+    stricts = []
+
+    def confirm(question, strict=False):
+        stricts.append(strict)
+        return False
+
+    send, _ = recorder("sendMessage", risk=Risk.CONFIRM, confirmation=lambda _: "Gönderilsin mi?", explicit_yes=True)
+    delete, _ = recorder("trashFile", risk=Risk.CONFIRM, confirmation=lambda _: "Silinsin mi?")
+    provider = ScriptedProvider(call("sendMessage", text="x"), Reply("tamam"), call("trashFile"), Reply("tamam"))
+    agent = Agent(provider, Registry([send, delete]), confirm, TR)
+    agent.handle("Ayşe'ye mesaj at")
+    agent.handle("dosyayı sil")
+    assert stricts == [True, False]

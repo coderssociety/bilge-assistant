@@ -316,6 +316,7 @@ def mail_tools(
             ),
             risk=Risk.CONFIRM,
             confirmation=question,
+            explicit_yes=True,
         ),
         Tool(
             "replyToEmail",
@@ -328,6 +329,7 @@ def mail_tools(
             risk=Risk.CONFIRM,
             confirmation=reply_question,
             refine=reply_refine,
+            explicit_yes=True,
         ),
     ]  # fmt: skip
 

@@ -151,6 +151,8 @@ def command_tools(tools: CommandTools) -> list[Tool]:
             spoken_action=tools.spoken_action,
             # A program may print anything, a web page it fetched included.
             untrusted_output=True,
+            # Asked only before a command's first run (or for a name that merely resembles one), and it can do anything.
+            explicit_yes=True,
         ),
     ]
 

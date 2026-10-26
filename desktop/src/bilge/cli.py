@@ -16,7 +16,8 @@ from bilge.llm.providers import PRESETS, ProviderError, make_provider
 from bilge.models.downloader import DownloadError
 
 
-def ask_yes_no(question: str) -> bool:
+def ask_yes_no(question: str, strict: bool = False) -> bool:
+    """A typed answer is always an explicit one, so `strict` changes nothing here."""
     answer = input(f"  ? {question} [e/h] ").strip().lower()
     return answer in {"e", "evet", "y", "yes"}
 

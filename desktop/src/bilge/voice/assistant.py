@@ -157,6 +157,8 @@ class VoiceAssistant:
         self._answered = threading.Event()
         self._stopped_by_user = False
         self._asking = False
+        # The question being answered needs an explicit yes (see `confirm`).
+        self._strict_answer = False
         self._last_heard = ""
         self._barge_command: str | None = None
         self._running = threading.Event()
@@ -305,7 +307,11 @@ class VoiceAssistant:
                 return
             heard = self.recognizer.transcribe(samples)
             self._event("heard", heard)
-            self._resolve(confirmation_parser.parse(heard, language=self.language))
+            answer = confirmation_parser.parse(heard, strict=self._strict_answer, language=self.language)
+            # A cough, someone else talking or a word that isn't an answer doesn't end the question: the user still has
+            # until it lapses to say yes or no.
+            if answer is not Answer.UNCLEAR:
+                self._resolve(answer)
             return
         if self.recorder is not None and self.recorder.active:
             self._while_recording(samples)
@@ -687,9 +693,11 @@ class VoiceAssistant:
 
     # MARK: - Confirmation
 
-    def confirm(self, question: str) -> bool:
-        """Asks out loud and waits for a spoken yes or no (no wake word needed). Called on the turn thread."""
+    def confirm(self, question: str, strict: bool = False) -> bool:
+        """Asks out loud and waits for a spoken yes or no (no wake word needed). Called on the turn thread.
+        `strict`: only an explicit yes ("evet", "gönder") confirms; a casual "tamam" is not taken."""
         self._stopped_by_user = False
+        self._strict_answer = strict
         self._asking = True
         try:
             self._say(question)

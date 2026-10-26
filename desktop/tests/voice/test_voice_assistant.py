@@ -54,16 +54,17 @@ class EchoAgent:
     last_reply = None
     work_session = None
 
-    def __init__(self, assistant_holder=None, question=None):
+    def __init__(self, assistant_holder=None, question=None, strict=False):
         self.commands = []
         self.holder = assistant_holder
         self.question = question
+        self.strict = strict
         self.confirmed = None
 
     def handle(self, command):
         self.commands.append(command)
         if self.question:
-            self.confirmed = self.holder["a"].confirm(self.question)
+            self.confirmed = self.holder["a"].confirm(self.question, self.strict)
         return Outcome(f"Tamam: {command}", translation=translation_request.target(command))
 
     def handle_work_input(self, text):
@@ -147,6 +148,45 @@ def test_a_spoken_no_answers_the_confirmation():
     assistant._handle_utterance(SPEECH)
     assert wait(lambda: agent.confirmed is False)
     assert speech.said[0] == "Hepsini sileyim mi?"
+    assistant.stop()
+
+
+def test_an_unclear_answer_keeps_the_question_open_for_a_clear_one():
+    holder = {}
+    agent = EchoAgent(holder, question="Hepsini sileyim mi?")
+    assistant, _, _ = make(
+        ScriptedRecognizer("Bilge, hafızanı temizle", "", "akşam ne yiyoruz", "evet"),
+        agent,
+        quick=ScriptedRecognizer("Bilge, hafızanı temizle"),
+    )
+    holder["a"] = assistant
+    assistant.start()
+    assistant._handle_utterance(SPEECH)
+    assert wait(lambda: assistant.status is Status.CONFIRMING)
+    assistant._handle_utterance(SPEECH)
+    assistant._handle_utterance(SPEECH)
+    assert assistant.status is Status.CONFIRMING and agent.confirmed is None
+    assistant._handle_utterance(SPEECH)
+    assert wait(lambda: agent.confirmed is True)
+    assistant.stop()
+
+
+def test_sending_needs_an_explicit_yes_not_a_casual_one():
+    holder = {}
+    agent = EchoAgent(holder, question="Ayşe'ye gönderiyorum, gönderilsin mi?", strict=True)
+    assistant, _, _ = make(
+        ScriptedRecognizer("Bilge, Ayşe'ye mesaj at", "tamam", "evet gönder"),
+        agent,
+        quick=ScriptedRecognizer("Bilge, Ayşe'ye mesaj at"),
+    )
+    holder["a"] = assistant
+    assistant.start()
+    assistant._handle_utterance(SPEECH)
+    assert wait(lambda: assistant.status is Status.CONFIRMING)
+    assistant._handle_utterance(SPEECH)
+    assert assistant.status is Status.CONFIRMING and agent.confirmed is None
+    assistant._handle_utterance(SPEECH)
+    assert wait(lambda: agent.confirmed is True)
     assistant.stop()
 
 

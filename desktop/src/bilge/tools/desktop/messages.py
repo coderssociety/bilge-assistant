@@ -142,4 +142,5 @@ def send_message_tool(messages: TextMessages | None, people: ContactLookup, lang
         risk=Risk.CONFIRM,
         confirmation=question,
         refine=refine,
+        explicit_yes=True,
     )

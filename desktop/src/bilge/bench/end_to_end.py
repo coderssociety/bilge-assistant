@@ -153,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
     registry = Registry([current_date_time(language), calculator(language), internet.weather(language, lambda: "İstanbul"),
                          internet.exchange_rate(language), internet.news(language)])  # fmt: skip
     holder: dict[str, VoiceAssistant] = {}
-    agent = Agent(make_provider(args.provider, args.model), registry, confirm=lambda q: holder["a"].confirm(q),
+    agent = Agent(make_provider(args.provider, args.model), registry, confirm=lambda q, strict=False: holder["a"].confirm(q, strict),
                   language=language, memory=memory.prompt_lines)  # fmt: skip
     for tool in memory_tools(memory, language, lambda: agent.last_reply):
         registry.add(tool)

@@ -208,7 +208,7 @@ def test_fast_path_runs_the_new_tools_and_still_asks_before_power_actions():
     asked = []
     brightness, power = FakeBrightness(), FakePower()
     registry = Registry([hardware.brightness_tool(brightness, TR), hardware.power_tool(power, TR)])
-    agent = Agent(NoModel(), registry, lambda question: asked.append(question) or False, TR,
+    agent = Agent(NoModel(), registry, lambda question, strict=False: asked.append(question) or False, TR,
                   clock=lambda: datetime(2026, 10, 25, 14, 30))  # fmt: skip
     assert agent.handle("parlaklığı yüzde elli yap").text == "Parlaklık yüzde 50."
     assert brightness.value == 50

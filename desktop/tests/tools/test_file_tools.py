@@ -267,6 +267,8 @@ def test_on_windows_a_folder_opens_whatever_its_name_but_a_program_is_only_revea
     tools = FileTools(folders(tmp_path), opener, TR)
     tools.files(tools.files_refine({"action": "openFolder", "folder": "home"}, "Resimler klasörünü aç"))
     assert opener.opened == [str(tmp_path / "Resimler")] and opener.revealed == []
+    # The system's opener refuses a folder that isn't there, so it is made before opening.
+    assert (tmp_path / "Resimler").is_dir()
 
 
 def write_xlsx(path: Path):

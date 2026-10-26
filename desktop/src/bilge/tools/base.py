@@ -37,6 +37,9 @@ class Tool:
     # What the call will do, as a spoken question ("example.com sayfasını açıp okuyayım mı?"); used when a
     # normally safe step needs a yes because it follows text someone else wrote.
     spoken_action: Callable[[dict[str, Any]], str] | None = None
+    # Sends something on the user's behalf, powers the computer down or runs an arbitrary program: only an explicit
+    # "evet"/"yes" or "gönder"/"send" confirms it, not a casual "tamam" or "okay" from a TV or someone in the room.
+    explicit_yes: bool = False
 
     @property
     def spec(self) -> ToolSpec:
