@@ -10,6 +10,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Download%20for%20Mac&logo=apple&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Mac"></a>
+  <br>
+  <sub>Free and open source · macOS 27 or later on Apple silicon, with Apple Intelligence on ·
+  <a href="https://github.com/coderssociety/bilge-desktop">Windows and Linux →</a></sub>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/macOS-27%2B-black?logo=apple" alt="macOS 27+">
   <img src="https://img.shields.io/badge/Apple%20Silicon-required-555" alt="Apple Silicon required">
@@ -23,6 +30,19 @@
 <p align="center">
   <img src="docs/images/en/hud-confirm.png" width="760" alt="Bilge asks before adding an event to the calendar">
 </p>
+
+**Why Bilge**
+
+- **Made for Turkish.** It understands everyday Turkish and knows what a Turkish user asks for: prayer times,
+  earthquake alerts from AFAD, Süper Lig, Borsa İstanbul, gold and fuel prices. It speaks English too.
+- **Private by default.** Speech recognition, the language model and the voice run on your Mac. No account, no
+  subscription, and no recording is kept.
+- **It gets things done, safely.** Calendar, mail, messages, files, Excel, music, the browser and your smart home,
+  and it asks out loud before anything that can't be undone.
+- **Yours to shape.** Your own MLX model, Ollama or an API key; your own terminal commands; GPL-3.0 open source.
+
+**Get started:** download the DMG, drag Bilge to Applications, open it and say “Bilge, what time is it?”.
+[Installation](#installation) has the details.
 
 Say “Bilge” and it wakes up, works out what you want, does it on your Mac and answers out loud. Speech
 recognition, the language models and speech synthesis all run locally; there is no cloud service, account

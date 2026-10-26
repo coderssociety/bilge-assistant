@@ -10,6 +10,13 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Mac%20i%C3%A7in%20indir&logo=apple&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Mac için indir"></a>
+  <br>
+  <sub>Ücretsiz ve açık kaynak · Apple Silicon'lı Mac'te macOS 27 ve sonrası, Apple Intelligence açık ·
+  <a href="https://github.com/coderssociety/bilge-desktop/blob/main/README.tr.md">Windows ve Linux →</a></sub>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/macOS-27%2B-black?logo=apple" alt="macOS 27+">
   <img src="https://img.shields.io/badge/Apple%20Silicon-gerekli-555" alt="Apple Silicon gerekli">
@@ -23,6 +30,20 @@
 <p align="center">
   <img src="docs/images/hud-confirm.png" width="760" alt="Bilge takvime etkinlik eklemeden önce onay istiyor">
 </p>
+
+**Neden Bilge?**
+
+- **Türkçe için yapıldı.** Günlük Türkçe konuşmayı anlar ve Türkiye'de sorulanı bilir: namaz vakitleri, AFAD
+  deprem uyarıları, Süper Lig, Borsa İstanbul, altın ve akaryakıt fiyatları. İngilizce de konuşur.
+- **Varsayılan olarak gizli.** Konuşma tanıma, dil modeli ve ses Mac'inde çalışır. Hesap ve abonelik yok, ses
+  kaydı saklanmaz.
+- **İşi yapar, güvenle.** Takvim, e-posta, mesaj, dosyalar, Excel, müzik, tarayıcı ve akıllı ev; geri alınamayan
+  her işten önce sesli sorar.
+- **Senin kurallarınla.** Kendi MLX modelin, Ollama ya da API anahtarın; kendi terminal komutların; GPL-3.0 açık
+  kaynak.
+
+**Hemen başla:** DMG'yi indir, Bilge'yi Uygulamalar klasörüne sürükle, aç ve “Bilge, saat kaç?” de. Ayrıntılar
+[Kurulum](#kurulum) bölümünde.
 
 “Bilge” dediğinde uyanır, ne istediğini anlar, işi Mac'te yapar ve sesle cevap verir. Konuşma tanıma,
 dil modelleri ve ses üretimi Mac'te çalışır; bulut hizmeti, hesap ya da abonelik yoktur. İstersen sohbet
