@@ -1,0 +1,25 @@
+name: Feature request / Özellik önerisi
+description: Something Bilge should be able to do. / Bilge'nin yapabilmesi gereken bir şey.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: say
+    attributes:
+      label: What you'd like to say / Ne demek istersin
+      placeholder: "Bilge, eczane nöbetçi mi?"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What it should do, and why / Ne yapmalı ve neden
+    validations:
+      required: true
+  - type: checkboxes
+    id: apps
+    attributes:
+      label: Apps / Uygulamalar
+      options:
+        - label: Mac
+        - label: Windows
+        - label: Linux

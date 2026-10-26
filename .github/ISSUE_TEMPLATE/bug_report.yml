@@ -1,0 +1,41 @@
+name: Bug report / Hata bildirimi
+description: Something didn't work as expected. / Bir şey beklendiği gibi çalışmadı.
+labels: [bug]
+body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: App / Uygulama
+      options: [Mac, Windows, Linux]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Bilge version and system / Bilge sürümü ve sistem
+      placeholder: "0.6.0 · macOS 27.1 / Windows 11 / Ubuntu 24.04 (GNOME, Wayland)"
+    validations:
+      required: true
+  - type: textarea
+    id: said
+    attributes:
+      label: What you said or did / Ne söyledin ya da ne yaptın
+      placeholder: "Bilge, yarın 10'da dişçi randevusu ekle"
+    validations:
+      required: true
+  - type: textarea
+    id: happened
+    attributes:
+      label: What Bilge heard and did / Bilge ne duydu ve ne yaptı
+      description: The status panel or corner window shows what it heard. / Durum paneli ya da köşe penceresi ne duyduğunu gösterir.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected / Ne bekliyordun
+  - type: textarea
+    id: details
+    attributes:
+      label: Model, speech recognition, logs / Model, konuşma tanıma, kayıtlar
+      description: Remove anything private before pasting. / Yapıştırmadan önce özel bilgileri çıkar.

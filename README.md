@@ -1,12 +1,5 @@
 <p align="center">
-  <img src="mac/docs/images/logo.svg" width="128" height="128" alt="Bilge logo">
-</p>
-
-<h1 align="center">Bilge</h1>
-
-<p align="center">
-  A voice assistant that speaks Turkish and English, for the Mac, Windows and Linux.<br>
-  Say “Bilge”, ask for something, and it does it on your computer and answers out loud.
+  <img src="docs/images/banner-en.png" width="100%" alt="Bilge: a Turkish and English voice assistant for Mac, Windows and Linux. Say “Bilge”, ask for something, and it does it on your computer and answers out loud.">
 </p>
 
 <p align="center">
@@ -334,9 +327,10 @@ and the AppImages in Docker, published together as one draft release.
 
 ## Contributing
 
-Bug reports, ideas and pull requests are welcome in [Issues](https://github.com/coderssociety/bilge-assistant/issues).
-The two apps follow the same rules and share the Turkish and English command sets, so a change in one usually has a
-twin in the other.
+Bug reports, ideas and pull requests are welcome in [Issues](https://github.com/coderssociety/bilge-assistant/issues);
+a sentence Bilge misunderstands is a valuable report. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to build, test
+and propose a change, and [SECURITY.md](SECURITY.md) how to report a vulnerability privately. If Bilge is useful to
+you, a ⭐ helps others find it.
 
 ## License
 

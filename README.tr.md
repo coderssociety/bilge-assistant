@@ -1,12 +1,5 @@
 <p align="center">
-  <img src="mac/docs/images/logo.svg" width="128" height="128" alt="Bilge logosu">
-</p>
-
-<h1 align="center">Bilge</h1>
-
-<p align="center">
-  Mac, Windows ve Linux için Türkçe ve İngilizce konuşan sesli asistan.<br>
-  “Bilge” de, isteğini söyle; işi bilgisayarında yapar ve sesle cevap verir.
+  <img src="docs/images/banner-tr.png" width="100%" alt="Bilge: Mac, Windows ve Linux için Türkçe ve İngilizce sesli asistan. “Bilge” de, isteğini söyle; işi bilgisayarında yapar ve sesle cevap verir.">
 </p>
 
 <p align="center">
@@ -331,8 +324,9 @@ AppImage'lar Docker'da derlenir ve tek bir taslak sürümde birlikte yayımlanı
 ## Katkı
 
 Hata bildirimleri, fikirler ve pull request'ler [Issues](https://github.com/coderssociety/bilge-assistant/issues)
-sayfasında memnuniyetle karşılanır. İki uygulama aynı kurallara uyar ve aynı Türkçe ve İngilizce komut setlerini
-paylaşır; birinde yapılan değişikliğin genelde diğerinde de karşılığı olur.
+sayfasında memnuniyetle karşılanır; Bilge'nin yanlış anladığı bir cümle bile değerli bir bildirimdir. Derleme, test ve
+değişiklik önerme [CONTRIBUTING.md](CONTRIBUTING.md) dosyasında, güvenlik açığını gizlice bildirme
+[SECURITY.md](SECURITY.md) dosyasında anlatılıyor. Bilge işine yaradıysa bir ⭐ başkalarının da bulmasına yardım eder.
 
 ## Lisans
 
