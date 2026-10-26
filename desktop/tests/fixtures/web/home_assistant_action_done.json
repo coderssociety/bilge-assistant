@@ -1,0 +1,15 @@
+{
+  "continue_conversation": false,
+  "response": {
+    "speech": {"plain": {"speech": "Salon ışığı açıldı", "extra_data": null}},
+    "card": {},
+    "language": "tr",
+    "response_type": "action_done",
+    "data": {
+      "targets": [],
+      "success": [{"name": "Salon", "type": "area", "id": "living_room"}],
+      "failed": []
+    }
+  },
+  "conversation_id": "01JCQ7S3VE5M5W0Y0X3Q2P7J8K"
+}

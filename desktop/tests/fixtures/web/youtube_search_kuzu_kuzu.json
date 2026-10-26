@@ -1,0 +1,125 @@
+{
+ "contents": {
+  "twoColumnSearchResultsRenderer": {
+   "primaryContents": {
+    "sectionListRenderer": {
+     "contents": [
+      {
+       "itemSectionRenderer": {
+        "contents": [
+         {
+          "videoRenderer": {
+           "videoId": "NAHRpEqgcL4",
+           "title": {
+            "runs": [
+             {
+              "text": "TARKAN - Kuzu Kuzu (Official Music Video)"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Tarkan"
+             }
+            ]
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "webPageType": "WEB_PAGE_TYPE_WATCH"
+             }
+            },
+            "watchEndpoint": {
+             "videoId": "NAHRpEqgcL4"
+            }
+           },
+           "lengthText": {
+            "simpleText": "4:02"
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "_xgryOIbJj4",
+           "title": {
+            "runs": [
+             {
+              "text": "Kuzu Kuzu"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Tarkan"
+             }
+            ]
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "webPageType": "WEB_PAGE_TYPE_WATCH"
+             }
+            },
+            "watchEndpoint": {
+             "videoId": "_xgryOIbJj4"
+            }
+           },
+           "lengthText": {
+            "simpleText": "3:54"
+           }
+          }
+         },
+         {
+          "channelRenderer": {
+           "channelId": "UCnxZBLfmnZwjh8vSg6Kt-Dg",
+           "title": {
+            "simpleText": "Tarkan"
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "UDupqUeOqLs",
+           "title": {
+            "runs": [
+             {
+              "text": "Tarkan Nostalgy-Kuzu kuzu 2001"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Tarkan LATurk"
+             }
+            ]
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "webPageType": "WEB_PAGE_TYPE_WATCH"
+             }
+            },
+            "watchEndpoint": {
+             "videoId": "UDupqUeOqLs"
+            }
+           },
+           "lengthText": {
+            "simpleText": "1:53"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "continuationItemRenderer": {}
+      }
+     ]
+    }
+   }
+  }
+ }
+}

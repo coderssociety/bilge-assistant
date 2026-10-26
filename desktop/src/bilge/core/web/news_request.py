@@ -1,0 +1,114 @@
+"""What a news request asks for, read from its own words (the router model has answered "teknoloji haberlerinden
+başlık var mı" with the general headlines), and which headlines have been read out already, so asking again goes on
+with the next ones instead of repeating them."""
+
+import re
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+
+from bilge.core import text
+from bilge.core.web.rss_headlines import Item
+
+TOPICS = ("general", "economy", "sports", "world", "technology")
+_TOPIC_WORDS = (
+    ("teknoloj", "technology"), ("bilim", "technology"), ("tech", "technology"), ("science", "technology"),
+    ("ekonom", "economy"), ("econom", "economy"), ("borsa", "economy"), ("piyasa", "economy"),
+    ("finans", "economy"), ("financ", "economy"), ("business", "economy"),
+    ("spor", "sports"), ("sport", "sports"), ("futbol", "sports"), ("football", "sports"), ("basketbol", "sports"),
+    ("dunya", "world"), ("world", "world"), ("uluslararas", "world"), ("international", "world"),
+    ("gundem", "general"),
+)  # fmt: skip
+_NEWS_WORDS = ("haber", "baslik", "manset", "gundem", "news", "headline")
+# After this the news is read from the top again.
+LIFETIME = timedelta(minutes=30)
+# How long "bu kadar mı" still means the topic just read.
+CONTINUATION_WINDOW = timedelta(minutes=5)
+
+
+def _words(command: str) -> list[str]:
+    return [word for word in re.split(r"[^\w]+|_", text.folded(command)) if word and not word.isdigit()]
+
+
+def topic(command: str) -> str | None:
+    """The topic the command names, if it names one."""
+    for word in _words(command):
+        for prefix, named in _TOPIC_WORDS:
+            if word.startswith(prefix):
+                return named
+    return None
+
+
+def is_topic_word(word: str) -> bool:
+    """One folded word naming a topic: "teknoloji", "sporda"."""
+    return any(word.startswith(prefix) for prefix, _ in _TOPIC_WORDS)
+
+
+def is_continuation(command: str) -> bool:
+    """A follow-up such as "bu kadar mı" or "başka var mı": routed to the news without asking for news or naming a
+    topic, it goes on with the headlines just read."""
+    return topic(command) is None and not names_news(command)
+
+
+def names_news(command: str) -> bool:
+    """ "Haber", "başlık", "news" in any form."""
+    return any(w.startswith(n) for w in _words(command) for n in _NEWS_WORDS)
+
+
+class Kind(Enum):
+    # The latest headlines.
+    FIRST = "first"
+    # The ones after those read before.
+    NEXT = "next"
+    # Nothing new since the last reading: the same headlines again.
+    AGAIN = "again"
+
+
+@dataclass(frozen=True)
+class Reading:
+    items: list[Item]
+    kind: Kind
+
+    @property
+    def headlines(self) -> list[str]:
+        return [item.title for item in self.items]
+
+
+class HeadlineMemory:
+    def __init__(self) -> None:
+        self._read: dict[str, tuple[frozenset[str], datetime]] = {}
+        self._last: tuple[str, str, datetime] | None = None
+        # What was read out, newest reading first, for "o haberi aç".
+        self._heard: list[tuple[list[Item], datetime]] = []
+
+    def recent_topic(self, at: datetime) -> str | None:
+        if self._last is None or at - self._last[2] >= CONTINUATION_WINDOW:
+            return None
+        return self._last[0]
+
+    def recent_source(self, at: datetime) -> str | None:
+        """Where the headlines just read came from, for "bu kadar mı" and "başka bir kaynak"."""
+        if self._last is None or at - self._last[2] >= CONTINUATION_WINDOW or not self._last[1]:
+            return None
+        return self._last[1]
+
+    def heard_items(self, at: datetime) -> tuple[list[Item], list[Item]]:
+        """The headlines read out within the lifetime: the last reading in its order, and all of them."""
+        recent = [items for items, read_at in self._heard if at - read_at < LIFETIME]
+        return (recent[0] if recent else []), [item for items in recent for item in items]
+
+    def next(self, items: list[Item], topic: str, count: int, at: datetime, source: str = "") -> Reading:
+        """The next `count` of `items` (the feed, newest first) not yet read for `topic` from `source`."""
+        key = f"{source}/{topic}" if source else topic
+        titles, read_at = self._read.get(key, (frozenset(), at))
+        earlier = titles if at - read_at < LIFETIME else frozenset()
+        fresh = [item for item in items if item.title not in earlier]
+        if not fresh:
+            reading = Reading(items[:count], Kind.AGAIN)
+            self._read[key] = (frozenset(reading.headlines), at)
+        else:
+            reading = Reading(fresh[:count], Kind.NEXT if earlier else Kind.FIRST)
+            self._read[key] = (earlier | frozenset(reading.headlines), at)
+        self._last = (topic, source, at)
+        self._heard = [(reading.items, at), *((i, t) for i, t in self._heard if at - t < LIFETIME)]
+        return reading

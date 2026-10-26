@@ -1,0 +1,152 @@
+{
+ "contents": {
+  "twoColumnSearchResultsRenderer": {
+   "primaryContents": {
+    "sectionListRenderer": {
+     "contents": [
+      {
+       "itemSectionRenderer": {
+        "contents": [
+         {
+          "officialCardViewModel": {}
+         },
+         {
+          "videoRenderer": {
+           "videoId": "-CxauCeQ_SQ",
+           "title": {
+            "runs": [
+             {
+              "text": "TARKAN - Kış Güneşi (Official Music Video)"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Tarkan"
+             }
+            ]
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "webPageType": "WEB_PAGE_TYPE_WATCH"
+             }
+            },
+            "watchEndpoint": {
+             "videoId": "-CxauCeQ_SQ"
+            }
+           },
+           "lengthText": {
+            "simpleText": "3:36"
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "bdoqdoLSZCM",
+           "title": {
+            "runs": [
+             {
+              "text": "TARKAN - Adımı Kalbine Yaz (Official Audio)"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Tarkan"
+             }
+            ]
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "webPageType": "WEB_PAGE_TYPE_WATCH"
+             }
+            },
+            "watchEndpoint": {
+             "videoId": "bdoqdoLSZCM"
+            }
+           },
+           "lengthText": {
+            "simpleText": "5:13"
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "LJ9FpMXJmwY",
+           "title": {
+            "runs": [
+             {
+              "text": "TARKAN - Ölürüm Sana (Official Music Video)"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Tarkan"
+             }
+            ]
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "webPageType": "WEB_PAGE_TYPE_WATCH"
+             }
+            },
+            "watchEndpoint": {
+             "videoId": "LJ9FpMXJmwY"
+            }
+           },
+           "lengthText": {
+            "simpleText": "4:15"
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "_GOZDXq7I-I",
+           "title": {
+            "runs": [
+             {
+              "text": "TARKAN - Yolla (Official Music Video)"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Tarkan"
+             }
+            ]
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "webPageType": "WEB_PAGE_TYPE_WATCH"
+             }
+            },
+            "watchEndpoint": {
+             "videoId": "_GOZDXq7I-I"
+            }
+           },
+           "lengthText": {
+            "simpleText": "4:46"
+           }
+          }
+         },
+         {
+          "gridShelfViewModel": {}
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  }
+ }
+}

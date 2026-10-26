@@ -1,0 +1,750 @@
+"""The always-on voice loop: microphone → speech detection → utterances → recognition → wake word and
+conversation flow → the agent → spoken reply.
+
+While a reply is being prepared the microphone is ignored. While it is spoken, the echo-cancelled microphone is
+only listened to for the user cutting in ("Bilge, dur" or a new request).
+
+Two modes take the microphone over from the conversation: the interpreter, which translates every utterance, and a
+meeting being recorded, during which only the stop phrase is acted on.
+"""
+
+import logging
+import threading
+import time
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from datetime import datetime
+from enum import StrEnum
+from typing import TYPE_CHECKING, Protocol
+
+import numpy as np
+
+from bilge.brain.agent import Agent
+from bilge.core.audio.speech_segmenter import Configuration, SpeechSegmenter
+from bilge.core.conversation import confirmation_parser
+from bilge.core.conversation.barge_in_detector import BargeInDetector, Command, Stop
+from bilge.core.conversation.confirmation_parser import Answer
+from bilge.core.conversation.conversation_flow import (
+    AcknowledgeWake,
+    ConversationFlow,
+    ListeningForWake,
+    NoAction,
+    ReturnToIdle,
+    RunCommand,
+    RunWorkInput,
+)
+from bilge.core.language import AssistantLanguage
+from bilge.core.meeting import meeting_command
+from bilge.core.speaker.voice_print import Decision
+from bilge.core.text import folded, similarity
+from bilge.core.wake.wake_phrase_matcher import WakePhraseMatcher
+from bilge.llm.providers import ProviderError
+from bilge.voice.interpreter import Interpreter
+from bilge.voice.meeting import MeetingRecorder
+from bilge.voice.recognizers import Recognizer
+from bilge.voice.speaker import SpeakerGate
+from bilge.voice.speech_output import SpeechOutput, tone
+from bilge.voice.vad import CHUNK, SAMPLE_RATE, SileroVAD
+
+if TYPE_CHECKING:
+    from bilge.tools.meetings import Meetings
+
+log = logging.getLogger(__name__)
+
+WAKE_PROBE_SECONDS = 2.5
+# How close the full model's first word must be to the wake word to be taken as its spelling.
+WAKE_SPELLING_SIMILARITY = 0.4
+# Looser still for cut-ins: the full model checks what was said, this only decides whether to ask it.
+CUT_IN_GATE_SIMILARITY = 0.5
+TICK_SECONDS = 0.25
+CONFIRMATION_TIMEOUT = 8.0
+# Someone mid-sentence gets a little longer before the question lapses.
+CONFIRMATION_GRACE = 5.0
+# During a meeting only utterances this short are checked for the stop phrase; the recorder writes down the rest.
+STOP_PHRASE_SECONDS = 4.0
+# How long a routine waits for a conversation in progress to end before it runs anyway.
+ROUTINE_IDLE_WAIT = 120.0
+
+
+FAILED_TURN = {
+    AssistantLanguage.TURKISH: "Şu an cevap veremiyorum, dil modeline ulaşamadım.",
+    AssistantLanguage.ENGLISH: "I can't answer right now; I couldn't reach the language model.",
+}
+
+
+class Status(StrEnum):
+    OFF = "off"
+    LISTENING = "listening"
+    AWAKE = "awake"
+    TRANSCRIBING = "transcribing"
+    THINKING = "thinking"
+    SPEAKING = "speaking"
+    CONFIRMING = "confirming"
+    INTERPRETING = "interpreting"
+    RECORDING = "recording"
+
+
+@dataclass(frozen=True)
+class Options:
+    wake_phrase: str = "bilge"
+    follow_up: bool = True
+    barge_in: bool = True
+    # Off: only the shortcut starts a request, and nothing is transcribed until it is pressed.
+    wake_word: bool = True
+
+
+EventHandler = Callable[[str, str], None]
+
+
+class Service(Protocol):
+    """Runs alongside listening and stops with it (the earthquake watcher)."""
+
+    def start(self) -> None: ...
+
+    def stop(self) -> None: ...
+
+
+class VoiceAssistant:
+    def __init__(
+        self,
+        recognizer: Recognizer,
+        speech: SpeechOutput,
+        agent: Agent,
+        language: AssistantLanguage,
+        options: Options | None = None,
+        speaker_gate: SpeakerGate | None = None,
+        on_event: EventHandler | None = None,
+        wake_recognizer: Recognizer | None = None,
+        services: Sequence[Service] = (),
+        interpreter: Interpreter | None = None,
+        recorder: MeetingRecorder | None = None,
+        meetings: "Meetings | None" = None,
+    ):
+        self.recognizer = recognizer
+        # A small, fast model for the wake word and cut-ins; the full one only for what is then said. The wake
+        # word is Turkish in both languages, so the small model should listen in Turkish.
+        self.wake_recognizer = wake_recognizer or recognizer
+        self.speech = speech
+        self.agent = agent
+        self.language = language
+        self.options = options or Options()
+        self.speaker_gate = speaker_gate
+        self.interpreter = interpreter
+        self.recorder = recorder
+        self.meetings = meetings
+        self._services = tuple(services)
+        self._on_event = on_event or (lambda kind, text: None)
+        self.matcher = WakePhraseMatcher(self.options.wake_phrase)
+        self.flow = ConversationFlow(self.matcher)
+        self._flow_lock = threading.RLock()
+        self._vad = SileroVAD()
+        self._segmenter = SpeechSegmenter(Configuration(chunk_duration=CHUNK / SAMPLE_RATE, min_silence=0.6))
+        # Stricter while Bilge talks: what is left of its own voice must not open an utterance on its own.
+        self._barge_segmenter = SpeechSegmenter(
+            Configuration(chunk_duration=CHUNK / SAMPLE_RATE, start_threshold=0.75, end_threshold=0.4,
+                          min_silence=0.45, pre_roll=0.3, min_speech=0.3, max_segment=3)
+        )  # fmt: skip
+        self._barge_detector = BargeInDetector(self.matcher, language)
+        self._utterances: list[np.ndarray] = []
+        self._barge_utterances: list[np.ndarray] = []
+        self._wake = threading.Condition()
+        self._suspended = False
+        self._speaking = False
+        self._thinking = False
+        self._reply_so_far = ""
+        self._pending_answer: Answer | None = None
+        self._awaiting_answer = threading.Event()
+        self._answered = threading.Event()
+        self._stopped_by_user = False
+        self._asking = False
+        # The question being answered needs an explicit yes (see `confirm`).
+        self._strict_answer = False
+        self._last_heard = ""
+        self._barge_command: str | None = None
+        self._running = threading.Event()
+        # Set by stop(); the ticker sleeps on it so stopping wakes it at once.
+        self._stopping = threading.Event()
+        self._turn: threading.Thread | None = None
+        # One voice at a time: a turn and an announcement never talk over each other.
+        self._speaking_lock = threading.Lock()
+        self.status = Status.OFF
+
+    # MARK: - Lifecycle
+
+    def start(self) -> None:
+        self._stopping.clear()
+        self._running.set()
+        with self._flow_lock:
+            self.flow.reset()
+        for target, name in [(self._process_utterances, "bilge-utterances"), (self._process_barge_ins, "bilge-barge-in"),
+                             (self._tick, "bilge-tick")]:  # fmt: skip
+            threading.Thread(target=target, name=name, daemon=True).start()
+        for service in self._services:
+            service.start()
+        self._set_status(self._idle_status(False))
+
+    def stop(self) -> None:
+        self._running.clear()
+        self._stopping.set()
+        self._resolve(Answer.REJECTED)
+        for service in self._services:
+            try:
+                service.stop()
+            except Exception:
+                log.exception("Could not stop %s", type(service).__name__)
+        self.speech.stop()
+        self._end_modes()
+        with self._wake:
+            self._wake.notify_all()
+        # A recognizer may be a helper program (whisper.cpp) holding the graphics card's memory.
+        for recognizer in {id(r): r for r in (self.recognizer, self.wake_recognizer)}.values():
+            close = getattr(recognizer, "close", None)
+            if close is not None:
+                try:
+                    close()
+                except Exception:
+                    log.exception("Could not close a recognizer")
+        self._set_status(Status.OFF)
+
+    def _end_modes(self) -> None:
+        """A meeting being recorded is saved as far as it was transcribed, and a file being written down is given up;
+        nothing waits for the model."""
+        if self.recorder is not None:
+            try:
+                self.recorder.abandon()
+            except OSError:
+                log.exception("Could not save the meeting being recorded")
+        if self.meetings is not None:
+            self.meetings.close()
+        if self.interpreter is not None:
+            self.interpreter.close()
+
+    def shortcut_pressed(self) -> None:
+        """The listening shortcut: like saying the wake phrase; while Bilge answers, like "Bilge, dur"."""
+        if not self._running.is_set() or self._awaiting_answer.is_set():
+            return
+        if self._speaking or self._thinking:
+            self._stopped_by_user = True
+            self.interrupt()
+            return
+        if self.interpreter is not None and self.interpreter.active:
+            self._stop_interpreter(self.interpreter.texts["stopped"])
+            return
+        if self.recorder is not None and self.recorder.active:
+            # Only the stop phrase ends a recording, so a key pressed by mistake doesn't cut a meeting short.
+            return
+        with self._flow_lock:
+            action = self.flow.shortcut_pressed(at=datetime.now())
+        if isinstance(action, ReturnToIdle):
+            self.speech.play(tone(self.speech.device.sample_rate, (660, 440)))
+        self._perform(action)
+
+    def interrupt(self) -> None:
+        """Stops the reply in progress; Bilge keeps listening, and so do the services."""
+        self._resolve(Answer.REJECTED)
+        self.speech.stop()
+
+    # MARK: - Audio (called on the audio thread for each 512-sample chunk)
+
+    def on_chunk(self, chunk: np.ndarray) -> None:
+        if self.recorder is not None and self.recorder.active:
+            # Bilge's own voice is left out, but its length is kept so the transcript's times stay right.
+            self.recorder.add(np.zeros_like(chunk) if self._speaking else chunk)
+        probability = self._vad.probability(chunk)
+        samples = chunk.tolist()
+        if self._suspended:
+            # While Bilge thinks or talks, the user can still stop it or ask something else.
+            # Without the wake word, a cut-in is only listened for over a confirmation question.
+            if (
+                (self._speaking or self._thinking)
+                and self.options.barge_in
+                and (self.options.wake_word or self._asking)
+            ):
+                for segment in self._barge_segmenter.process(samples, probability):
+                    log.debug("Cut-in segment: %.1f s", len(segment.samples) / SAMPLE_RATE)
+                    self._queue(self._barge_utterances, np.asarray(segment.samples, dtype=np.float32))
+            return
+        was_in_speech = self._segmenter.is_in_speech
+        segments = self._segmenter.process(samples, probability)
+        if not was_in_speech and self._segmenter.is_in_speech:
+            with self._flow_lock:
+                self.flow.speech_started(at=datetime.now())
+        elif was_in_speech and not self._segmenter.is_in_speech:
+            with self._flow_lock:
+                self.flow.speech_ended(at=datetime.now())
+        for segment in segments:
+            self._queue(self._utterances, np.asarray(segment.samples, dtype=np.float32))
+
+    def _queue(self, target: list[np.ndarray], samples: np.ndarray) -> None:
+        with self._wake:
+            target.append(samples)
+            # Only the newest few matter; a backlog would answer things said long ago.
+            del target[:-4]
+            self._wake.notify_all()
+
+    def _next(self, source: list[np.ndarray]) -> np.ndarray | None:
+        with self._wake:
+            while self._running.is_set() and not source:
+                self._wake.wait(timeout=0.5)
+            return source.pop(0) if source else None
+
+    # MARK: - Utterances
+
+    def _process_utterances(self) -> None:
+        while self._running.is_set():
+            samples = self._next(self._utterances)
+            if samples is None or self._suspended:
+                continue
+            try:
+                self._handle_utterance(samples)
+            except Exception:
+                log.exception("Could not handle what was heard")
+
+    def _handle_utterance(self, samples: np.ndarray) -> None:
+        if self._awaiting_answer.is_set():
+            # A "yes" from the TV must not confirm anything.
+            if not self._speaker_allows(samples):
+                return
+            heard = self.recognizer.transcribe(samples)
+            self._event("heard", heard)
+            answer = confirmation_parser.parse(heard, strict=self._strict_answer, language=self.language)
+            # A cough, someone else talking or a word that isn't an answer doesn't end the question: the user still has
+            # until it lapses to say yes or no.
+            if answer is not Answer.UNCLEAR:
+                self._resolve(answer)
+            return
+        if self.recorder is not None and self.recorder.active:
+            self._while_recording(samples)
+            return
+        if self.interpreter is not None and self.interpreter.active:
+            self._interpret(samples)
+            return
+        with self._flow_lock:
+            is_wake_check = isinstance(self.flow.phase, ListeningForWake)
+        if is_wake_check and not self.options.wake_word:
+            return
+        if not is_wake_check:
+            self._set_status(Status.TRANSCRIBING)
+        transcript = self._transcribe(samples, wake_check_only=is_wake_check)
+        if transcript is None or self._suspended:
+            return
+        if self._needs_speaker_check(transcript, is_wake_check) and not self._speaker_allows(samples):
+            self._event("ignored", transcript)
+            if not is_wake_check:
+                with self._flow_lock:
+                    awaiting = self.flow.is_awaiting_speech
+                self._set_status(self._idle_status(awaiting))
+            return
+        with self._flow_lock:
+            action = self.flow.heard(transcript, at=datetime.now())
+        if not isinstance(action, NoAction):
+            self._event("heard", transcript)
+        self._perform(action)
+        if not is_wake_check and isinstance(action, NoAction):
+            # The shortcut may have closed the window while this was being transcribed.
+            with self._flow_lock:
+                awaiting = self.flow.is_awaiting_speech
+            self._set_status(self._idle_status(awaiting))
+
+    def _transcribe(self, samples: np.ndarray, wake_check_only: bool) -> str | None:
+        """While waiting for the wake word only the opening seconds are transcribed; the rest only if it is there."""
+        if not wake_check_only:
+            return self.recognizer.transcribe(samples)
+        probe = self.wake_recognizer.transcribe(samples[: int(WAKE_PROBE_SECONDS * SAMPLE_RATE)])
+        log.debug("Wake probe (%.1f s): %r", len(samples) / SAMPLE_RATE, probe)
+        match = self.matcher.match(probe)
+        if match is None:
+            return None
+        # A bare "Bilge" needs nothing more; anything after it is transcribed again with the full model.
+        if not match.command and len(samples) <= WAKE_PROBE_SECONDS * SAMPLE_RATE:
+            return probe
+        return self._with_wake_word(self.recognizer.transcribe(samples))
+
+    def _with_wake_word(self, transcript: str) -> str:
+        """The quick model has already heard the wake word. The full model, listening in English, often spells
+        the Turkish name differently ("Bilgé", "Bilgi"), which would make the flow drop the command."""
+        if self.matcher.match(transcript) is not None:
+            return transcript
+        words = transcript.split()
+        if words and similarity(folded(words[0]), folded(self.options.wake_phrase)) >= WAKE_SPELLING_SIMILARITY:
+            words = words[1:]
+        return f"{self.options.wake_phrase}, {' '.join(words)}".strip(", ")
+
+    def _needs_speaker_check(self, transcript: str, is_wake_check: bool) -> bool:
+        """A bare wake word is too short to judge; the command after it is checked instead."""
+        if not self.speaker_gate or not self.speaker_gate.is_active:
+            return False
+        if not is_wake_check:
+            return True
+        match = self.matcher.match(transcript)
+        return match is not None and bool(match.command)
+
+    def _speaker_allows(self, samples: np.ndarray) -> bool:
+        if not self.speaker_gate or not self.speaker_gate.is_active:
+            return True
+        return self.speaker_gate.check(samples) is not Decision.REJECTED
+
+    def _tick(self) -> None:
+        while not self._stopping.wait(TICK_SECONDS):
+            if self.interpreter is not None and self.interpreter.active and self.interpreter.expired():
+                self._stop_interpreter(self.interpreter.texts["timed_out"])
+            with self._flow_lock:
+                action = self.flow.tick(at=datetime.now())
+            self._perform(action)
+
+    # MARK: - Modes that take the microphone over
+
+    def _while_recording(self, samples: np.ndarray) -> None:
+        """Only the stop phrase is acted on; a long utterance can't be one and is left to the recorder."""
+        if len(samples) > STOP_PHRASE_SECONDS * SAMPLE_RATE:
+            return
+        heard = self.recognizer.transcribe(samples)
+        match = self.matcher.match(heard)
+        said = match.command if match is not None else heard
+        if not meeting_command.is_stop(said, addressed=match is not None):
+            return
+        if not self._speaker_allows(samples):
+            self._event("ignored", heard)
+            return
+        self._event("heard", heard)
+        self._perform(RunCommand(said))
+
+    def _interpret(self, samples: np.ndarray) -> None:
+        """Both people are translated, so the speaker check doesn't apply, and either may say the stop phrase."""
+        interpreter = self.interpreter
+        assert interpreter is not None
+        self._set_status(Status.TRANSCRIBING)
+        try:
+            heard = interpreter.recognize(samples)
+        finally:
+            self._set_status(self._idle_status(False))
+        if heard is None:
+            return
+        self._event("heard", heard.text)
+        match = self.matcher.match(heard.text)
+        if interpreter.is_stop(match.command if match is not None else heard.text):
+            self._stop_interpreter(interpreter.texts["stopped"])
+            return
+        with self._speaking_lock:
+            if not interpreter.active:
+                return
+            self._suspend()
+            self._set_status(Status.THINKING)
+            try:
+                line = interpreter.translate(heard)
+                self._say(line.translation, line.target.code, shown=line.caption)
+            except ProviderError as error:
+                log.warning("Could not translate: %s", error)
+                self._event("error", str(error))
+                self._say(interpreter.texts["failed"])
+            finally:
+                self._settle_barge_in()
+                self._resume()
+            self._stopped_by_user = False
+            command, self._barge_command = self._barge_command, None
+        if command is not None and interpreter.is_stop(command):
+            self._stop_interpreter(interpreter.texts["stopped"])
+            return
+        self._set_status(self._idle_status(False))
+
+    def _stop_interpreter(self, farewell: str) -> None:
+        if self.interpreter is not None:
+            self.interpreter.stop()
+        self.announce(farewell)
+
+    def _idle_status(self, awaiting: bool) -> Status:
+        if self.recorder is not None and self.recorder.active:
+            return Status.RECORDING
+        if self.interpreter is not None and self.interpreter.active:
+            return Status.INTERPRETING
+        return Status.AWAKE if awaiting else Status.LISTENING
+
+    # MARK: - Turns
+
+    def _perform(self, action) -> None:
+        if isinstance(action, AcknowledgeWake):
+            # A large model let go while idle starts loading while the request is still being said.
+            warm = getattr(self.recognizer, "warm", None)
+            if warm is not None:
+                warm()
+            self.speech.play(tone(self.speech.device.sample_rate, (880, 1320)))
+            self._set_status(Status.AWAKE)
+        elif isinstance(action, RunCommand | RunWorkInput):
+            work = isinstance(action, RunWorkInput)
+            text = action.text if work else action.command
+            self._turn = threading.Thread(target=self._run_turn, args=(text, work), name="bilge-turn", daemon=True)
+            self._turn.start()
+        elif isinstance(action, ReturnToIdle):
+            if action.timed_out:
+                self.speech.play(tone(self.speech.device.sample_rate, (660, 440)))
+            self.agent.forget_conversation()
+            self._set_status(self._idle_status(False))
+
+    def _run_turn(self, command: str, work: bool = False) -> None:
+        """`work`: input heard without the wake word in a hands-free mode (dictation, spreadsheet editing)."""
+        with self._speaking_lock:
+            self._run_turn_locked(command, work)
+
+    def _run_turn_locked(self, command: str, work: bool) -> None:
+        self._suspend()
+        self._set_status(Status.THINKING)
+        with self._flow_lock:
+            self.flow.response_started()
+        try:
+            self._thinking = True
+            try:
+                outcome = self.agent.handle_work_input(command) if work else self.agent.handle(command)
+            finally:
+                self._thinking = False
+            # Stopped or redirected while it was still thinking: the answer is no longer wanted.
+            if not self._stopped_by_user and self._barge_command is None:
+                target = None if work else outcome.translation
+                self._say(outcome.text, target.code if target else None)
+        except Exception as error:
+            log.exception("The turn failed")
+            self._event("error", str(error))
+            self.speech.play(tone(self.speech.device.sample_rate, (440, 330, 220)))
+            self._say(FAILED_TURN[self.language])
+        self._settle_barge_in()
+        self._resume()
+        allow_follow_up = self._barge_command is not None or (not self._stopped_by_user and self.options.follow_up)
+        self._stopped_by_user = False
+        with self._flow_lock:
+            self.flow.response_finished(
+                at=datetime.now(), allow_follow_up=allow_follow_up, session=self.agent.work_session
+            )
+            awaiting = self.flow.is_awaiting_speech
+        if not awaiting:
+            self.agent.forget_conversation()
+        self._set_status(self._idle_status(awaiting))
+        if self._barge_command is not None:
+            command, self._barge_command = self._barge_command, None
+            with self._flow_lock:
+                action = self.flow.heard(command, at=datetime.now())
+            self._perform(action)
+
+    def _say(self, text: str, language_code: str | None = None, shown: str | None = None) -> None:
+        """`shown`: what the corner window shows instead of the text itself ("TR → EN: …")."""
+        if not text.strip():
+            return
+        self._reply_so_far = ""
+        self._event("reply", shown or text)
+        self._speaking = True
+        self._set_status(Status.SPEAKING)
+
+        def spoken(sentence: str) -> None:
+            self._reply_so_far = f"{self._reply_so_far} {sentence}".strip()
+
+        try:
+            self.speech.speak(text, on_sentence=spoken, language_code=language_code)
+        finally:
+            self._speaking = False
+
+    def _suspend(self) -> None:
+        self._suspended = True
+        self._segmenter.reset()
+        self._barge_segmenter.reset()
+
+    def _resume(self) -> None:
+        self._vad.reset()
+        self._segmenter.reset()
+        self._suspended = False
+
+    # MARK: - Cutting in
+
+    def _process_barge_ins(self) -> None:
+        while self._running.is_set():
+            samples = self._next(self._barge_utterances)
+            if samples is None or not (self._speaking or self._thinking):
+                continue
+            try:
+                self._evaluate_barge_in(samples)
+            except Exception:
+                log.exception("Could not check a cut-in")
+
+    def _evaluate_barge_in(self, samples: np.ndarray) -> None:
+        quick = self.wake_recognizer.transcribe(samples)
+        log.debug("Cut-in probe (%.1f s): %r", len(samples) / SAMPLE_RATE, quick)
+        if self._asking:
+            # Over a confirmation question no wake word is needed, so every utterance is read properly.
+            heard = self.recognizer.transcribe(samples)
+        elif not self._sounds_like_wake_word(quick):
+            return
+        else:
+            # The quick model only spots that the user is talking to Bilge; the full one decides what they said
+            # ("Bilge dur" came out of the quick one as "Bilge tur", a request).
+            heard = self._with_wake_word(self.recognizer.transcribe(samples))
+        if self._asking and confirmation_parser.parse(heard, language=self.language) is Answer.REJECTED:
+            # "Hayır" over the confirmation question is the answer; there is no need to wait for it to end.
+            self._stopped_by_user = True
+            self._last_heard = heard
+            self._event("cut-in", heard)
+            self.speech.stop()
+            return
+        decision = self._barge_detector.evaluate(heard, speaking=self._reply_so_far)
+        if isinstance(decision, Command):
+            self._barge_command = decision.command
+        elif isinstance(decision, Stop):
+            self._stopped_by_user = True
+        else:
+            return
+        self._last_heard = heard
+        self._event("cut-in", heard)
+        self.interrupt()
+
+    def _sounds_like_wake_word(self, quick: str) -> bool:
+        """A loose gate: over Bilge's own voice the quick model writes the name as "Bilgeye" or "Bilgetler"."""
+        if self.matcher.match(quick) is not None:
+            return True
+        wake = folded(self.options.wake_phrase)
+        return any(similarity(word, wake) >= CUT_IN_GATE_SIMILARITY for word in folded(quick).split()[:2])
+
+    def _settle_barge_in(self) -> None:
+        """What the user started saying near the end of the reply is still judged, not thrown away."""
+        pending = self._barge_segmenter.flush()
+        self._barge_segmenter.reset()
+        if pending is not None and self.options.barge_in and len(pending.samples) > CHUNK:
+            self._speaking = True
+            try:
+                self._evaluate_barge_in(np.asarray(pending.samples, dtype=np.float32))
+            finally:
+                self._speaking = False
+
+    def announce(self, text: str) -> None:
+        """Says something nobody asked for just now (a timer going off), after any reply in progress."""
+        threading.Thread(target=self._announce, args=(text,), name="bilge-announce", daemon=True).start()
+
+    def _announce(self, text: str) -> None:
+        with self._speaking_lock:
+            if not self._running.is_set():
+                return
+            self._suspend()
+            try:
+                self.speech.play(tone(self.speech.device.sample_rate, (880, 1320)))
+                self._say(text)
+                self._settle_barge_in()
+            finally:
+                self._resume()
+            command = self._end_unasked()
+        self._answer_cut_in(command)
+
+    def run_unattended(self, command: str) -> None:
+        """Runs a routine's command as if it had been said, once nobody is talking to Bilge, and says the reply
+        like an announcement. Nobody is there to answer a question, so the agent runs nothing that needs a yes."""
+        threading.Thread(target=self._run_unattended, args=(command,), name="bilge-routine", daemon=True).start()
+
+    def _run_unattended(self, command: str) -> None:
+        deadline = time.monotonic() + ROUTINE_IDLE_WAIT
+        cut_in = None
+        while self._running.is_set():
+            with self._speaking_lock:
+                with self._flow_lock:
+                    busy = self.flow.is_awaiting_speech
+                # The interpreter or a meeting being recorded holds the microphone until it ends.
+                in_mode = self._idle_status(False) is not Status.LISTENING
+                if not in_mode and (not busy or time.monotonic() >= deadline):
+                    self._run_routine_locked(command)
+                    cut_in = self._end_unasked()
+                    break
+            if self._stopping.wait(TICK_SECONDS):
+                break
+        self._answer_cut_in(cut_in)
+
+    def _run_routine_locked(self, command: str) -> None:
+        self._suspend()
+        self._set_status(Status.THINKING)
+        try:
+            self._thinking = True
+            try:
+                outcome = self.agent.handle(command, unattended=True)
+            finally:
+                self._thinking = False
+            if not self._stopped_by_user and self._barge_command is None:
+                self.speech.play(tone(self.speech.device.sample_rate, (880, 1320)))
+                target = outcome.translation
+                self._say(outcome.text, target.code if target else None)
+            self._settle_barge_in()
+        except Exception as error:
+            log.exception("A routine failed")
+            self._event("error", str(error))
+        finally:
+            self._resume()
+        with self._flow_lock:
+            awaiting = self.flow.is_awaiting_speech
+        # Not a conversation the user started: unless one is going on, nothing of it carries into the next request.
+        if not awaiting:
+            self.agent.forget_conversation()
+
+    def _end_unasked(self) -> str | None:
+        """Called with the speaking lock held after something nobody asked for; returns a request said over it."""
+        # "Bilge, dur" over an announcement only stops it; a request said over it is still answered.
+        self._stopped_by_user = False
+        command, self._barge_command = self._barge_command, None
+        with self._flow_lock:
+            awaiting = self.flow.is_awaiting_speech
+        self._set_status(self._idle_status(awaiting))
+        return command
+
+    def _answer_cut_in(self, command: str | None) -> None:
+        if command is not None:
+            with self._flow_lock:
+                action = self.flow.heard(command, at=datetime.now())
+            self._perform(action)
+
+    # MARK: - Confirmation
+
+    def confirm(self, question: str, strict: bool = False) -> bool:
+        """Asks out loud and waits for a spoken yes or no (no wake word needed). Called on the turn thread.
+        `strict`: only an explicit yes ("evet", "gönder") confirms; a casual "tamam" is not taken."""
+        self._stopped_by_user = False
+        self._strict_answer = strict
+        self._asking = True
+        try:
+            self._say(question)
+            self._settle_barge_in()
+        finally:
+            self._asking = False
+        # A "no" said over the question is the answer; an early "yes" is not taken, agreeing by mistake costs more.
+        if (
+            self._stopped_by_user
+            and confirmation_parser.parse(self._last_heard, language=self.language) is Answer.REJECTED
+        ):
+            self._stopped_by_user = False
+            return False
+        self._stopped_by_user = False
+        self._pending_answer = None
+        self._answered.clear()
+        self._awaiting_answer.set()
+        self._resume()
+        self._set_status(Status.CONFIRMING)
+        answered = self._answered.wait(CONFIRMATION_TIMEOUT)
+        if not answered and self._segmenter.is_in_speech:
+            answered = self._answered.wait(CONFIRMATION_GRACE)
+        self._awaiting_answer.clear()
+        self._suspend()
+        self._set_status(Status.THINKING)
+        answer = self._pending_answer if answered else Answer.UNCLEAR
+        self._event("answer", str(answer))
+        return answer is Answer.CONFIRMED
+
+    def answer(self, confirmed: bool) -> None:
+        """A yes or no given on screen instead of out loud."""
+        self._resolve(Answer.CONFIRMED if confirmed else Answer.REJECTED)
+
+    def _resolve(self, answer: Answer) -> None:
+        if self._awaiting_answer.is_set():
+            self._pending_answer = answer
+            self._answered.set()
+
+    # MARK: - Events
+
+    def _set_status(self, status: Status) -> None:
+        if status is not self.status:
+            self.status = status
+            self._event("status", status.value)
+
+    def _event(self, kind: str, text: str) -> None:
+        try:
+            self._on_event(kind, text)
+        except Exception:
+            log.exception("Event handler failed")

@@ -1,0 +1,60 @@
+[
+ {
+  "provinceCode": 35,
+  "provinceName": "İZMİR",
+  "districtCode": "035002",
+  "districtName": "ALİAĞA",
+  "prices": [
+   {
+    "id": "81ee31a9-4fdf-468d-9099-ac720100bf22",
+    "productName": "Kurşunsuz Benzin 95",
+    "productShortName": "KURS",
+    "amount": 77.5,
+    "productCode": "A100"
+   },
+   {
+    "id": "c5f23466-de8e-45aa-8e24-ac720100bf22",
+    "productName": "Motorin UltraForce",
+    "productShortName": "MT_ULT",
+    "amount": 98.12,
+    "productCode": "A121"
+   },
+   {
+    "id": "0d4d74f8-63e5-48da-8b16-ac720100bf22",
+    "productName": "Motorin EcoForce",
+    "productShortName": "MT_ECO",
+    "amount": 98.12,
+    "productCode": "A128"
+   }
+  ]
+ },
+ {
+  "provinceCode": 35,
+  "provinceName": "İZMİR",
+  "districtCode": "035001",
+  "districtName": "MERKEZ",
+  "prices": [
+   {
+    "id": "da0a957e-ffd8-4c33-bd19-ac720100c02b",
+    "productName": "Kurşunsuz Benzin 95",
+    "productShortName": "KURS",
+    "amount": 77.51,
+    "productCode": "A100"
+   },
+   {
+    "id": "52babe59-d932-43ca-a853-ac720100c02b",
+    "productName": "Motorin UltraForce",
+    "productShortName": "MT_ULT",
+    "amount": 98.13,
+    "productCode": "A121"
+   },
+   {
+    "id": "13ec8009-0e5c-4609-9cb8-ac720100c02b",
+    "productName": "Motorin EcoForce",
+    "productShortName": "MT_ECO",
+    "amount": 98.13,
+    "productCode": "A128"
+   }
+  ]
+ }
+]

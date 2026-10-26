@@ -1,0 +1,22 @@
+[
+ {
+  "SehirAdi": "ADANA",
+  "SehirAdiEn": "ADANA",
+  "SehirID": "500"
+ },
+ {
+  "SehirAdi": "ANKARA",
+  "SehirAdiEn": "ANKARA",
+  "SehirID": "506"
+ },
+ {
+  "SehirAdi": "İSTANBUL",
+  "SehirAdiEn": "ISTANBUL",
+  "SehirID": "539"
+ },
+ {
+  "SehirAdi": "KAHRAMANMARAŞ",
+  "SehirAdiEn": "KAHRAMANMARAS",
+  "SehirID": "541"
+ }
+]

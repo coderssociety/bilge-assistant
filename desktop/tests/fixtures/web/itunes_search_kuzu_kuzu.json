@@ -1,0 +1,23 @@
+{
+ "resultCount": 2,
+ "results": [
+  {
+   "wrapperType": "track",
+   "kind": "song",
+   "trackId": 499334149,
+   "artistName": "Tarkan",
+   "trackName": "Kuzu Kuzu",
+   "trackViewUrl": "https://music.apple.com/tr/album/kuzu-kuzu/499333901?i=499334149&uo=4",
+   "isStreamable": true
+  },
+  {
+   "wrapperType": "track",
+   "kind": "song",
+   "trackId": 598277555,
+   "artistName": "Tarkan",
+   "trackName": "Kuzu Kuzu (Akustik Version)",
+   "trackViewUrl": "https://music.apple.com/tr/album/kuzu-kuzu-akustik-version/598277393?i=598277555&uo=4",
+   "isStreamable": true
+  }
+ ]
+}

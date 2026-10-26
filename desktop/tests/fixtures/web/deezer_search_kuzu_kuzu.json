@@ -1,0 +1,29 @@
+{
+ "data": [
+  {
+   "id": 16412320,
+   "readable": true,
+   "title": "Kuzu Kuzu",
+   "link": "https://www.deezer.com/track/16412320",
+   "duration": 233,
+   "type": "track",
+   "artist": {
+    "id": 3254,
+    "name": "Tarkan"
+   }
+  },
+  {
+   "id": 64307493,
+   "readable": true,
+   "title": "Kuzu Kuzu (Akustik Version)",
+   "link": "https://www.deezer.com/track/64307493",
+   "duration": 219,
+   "type": "track",
+   "artist": {
+    "id": 3254,
+    "name": "Tarkan"
+   }
+  }
+ ],
+ "total": 24
+}
