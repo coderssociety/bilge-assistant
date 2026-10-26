@@ -35,7 +35,7 @@ struct ModelSettingsView: View {
                 }
             }
 
-            if settings.localModel != nil {
+            if let model = settings.localModel, model.server.api == nil {
                 Section("Bellek") {
                     Picker("Model", selection: $settings.localModelKeepAlive) {
                         ForEach(LocalModelKeepAlive.allCases, id: \.self) { Text($0.displayName).tag($0) }
@@ -76,13 +76,17 @@ struct ModelSettingsView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// The external model in use, if any; clearing it goes back to Apple's model.
+    /// The LM Studio or vMLX model in use, if any; clearing it goes back to Apple's model.
     private var externalSelection: Binding<String?> {
         Binding {
-            settings.localModel?.server.isInApp == true ? nil : settings.localModelID
+            isServedByOtherProgram ? settings.localModelID : nil
         } set: { key in
-            if key != nil || settings.localModel?.server.isInApp != true { settings.localModelID = key }
+            if key != nil || isServedByOtherProgram { settings.localModelID = key }
         }
+    }
+
+    private var isServedByOtherProgram: Bool {
+        settings.localModel?.server == .lmStudio || settings.localModel?.server == .vmlx
     }
 
     @ViewBuilder
@@ -101,7 +105,7 @@ struct ModelSettingsView: View {
             }
         case .vmlx:
             readiness(vmlxRunning.contains(settings.localModel?.modelID ?? ""))
-        case .builtIn, .custom, .folder, nil:
+        default:
             EmptyView()
         }
     }
@@ -117,7 +121,7 @@ struct ModelSettingsView: View {
         return switch choice.server {
         case .lmStudio: lmStudioModels.contains { $0.id == choice.modelID }
         case .vmlx: vmlxModels.contains(choice.modelID)
-        case .builtIn, .custom, .folder: true
+        default: true
         }
     }
 

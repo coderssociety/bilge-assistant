@@ -40,7 +40,7 @@ final class VoiceEnrollment {
         guard phase == .ready, index < Self.prompts.count else { return }
         phase = .recording
         do {
-            let samples = try await Self.record(seconds: Self.recordingSeconds)
+            let samples = try await Self.record(seconds: Self.recordingSeconds, deviceUID: settings.inputDeviceUID)
             embeddings.append(try await gate.verifier.embedding(of: samples))
             index += 1
             if index < Self.prompts.count {
@@ -72,8 +72,9 @@ final class VoiceEnrollment {
         phase = .finished(consistency: voicePrint.consistency)
     }
 
-    private static func record(seconds: Double) async throws -> [Float] {
+    private static func record(seconds: Double, deviceUID: String?) async throws -> [Float] {
         let microphone = MicrophoneCapture()
+        microphone.deviceUID = deviceUID
         let stream = try microphone.start()
         defer { microphone.stop() }
         let wanted = Int(seconds * StreamingResampler.targetSampleRate)

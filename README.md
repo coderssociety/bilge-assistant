@@ -6,7 +6,7 @@
 
 <p align="center">
   A voice assistant for the Mac that speaks Turkish and English. It runs entirely on your Mac:
-  your voice and your commands never leave it.
+  your voice and your commands never leave it, unless you choose a hosted model with your own API key.
 </p>
 
 <p align="center">
@@ -26,7 +26,8 @@
 
 Say “Bilge” and it wakes up, works out what you want, does it on your Mac and answers out loud. Speech
 recognition, the language models and speech synthesis all run locally; there is no cloud service, account
-or subscription. The internet is used only for data you ask for, such as weather, news, prices or a song,
+or subscription. If you prefer, conversation can go to OpenAI, Anthropic, Google Gemini, OpenRouter, Groq or
+DeepSeek, and speech recognition to OpenAI or Groq, with your own API key ([Over an API](#over-an-api)). The internet is used only for data you ask for, such as weather, news, prices or a song,
 and for downloading models the first time. [Privacy](#privacy) lists which service each feature talks to.
 
 “Bilge” means *wise* in Turkish and is pronounced *BIL-geh*. The wake word stays the same in English.
@@ -54,9 +55,10 @@ assistant rebuilt for them.
 | | |
 |---|---|
 | **Mac control** | Open and quit apps, arrange windows, volume, brightness, Wi-Fi, Bluetooth, dark mode, Focus, lock, sleep, restart and shut down, screenshots, battery and system status, System Settings panes, Shortcuts |
-| **Files** | Find files by name, kind or date and open them, read and summarize PDF, Word and text documents, create folders, move files to the Trash |
+| **Files** | Find files by name, kind or date and open them, read and summarize PDF, Word, Excel, PowerPoint, OpenDocument and text documents, create folders, move files to the Trash |
 | **Calendar and reminders** | Read any day, week or month; add, move and cancel events; add and complete reminders. It tells you about upcoming meetings and due reminders on its own |
-| **Timers and routines** | Timers and alarms you can list and cancel one by one; routines that run a command by themselves at a set time, every day or on chosen days |
+| **Timers and routines** | Timers and alarms you can list and cancel one by one, kept across restarts and shown as a notification when due; routines that run a command by themselves at a set time, every day or on chosen days |
+| **Your commands** | Terminal commands you add in Settings > Commands, run by name: “run the backup command” |
 | **Mail, messages, calls** | Read unread mail and what it says, reply to it, send with Mail and Messages, find contacts, call by phone (through your iPhone) or FaceTime |
 | **Notes** | Create a note, read or list notes, add a line to an existing note |
 | **Music, radio, podcasts** | Play a song on Music, Spotify, YouTube, YouTube Music, Deezer or Apple Music; pause, skip, seek, shuffle and repeat; internet radio and the latest episode of a podcast play inside Bilge |
@@ -73,8 +75,11 @@ assistant rebuilt for them.
 | **Memory** | “Remember that …”, “forget that”. You can see and delete what it remembers in Settings |
 | **Voice ID** | Enroll your voice and it only follows your commands and confirmations |
 
-Anything that can't be undone, like deleting, sending, calling or adding, needs a spoken yes first. Routines
-run with nobody there to answer, so they never take a step that would need a yes. While Bilge is talking you
+Anything that can't be undone, like deleting, sending, calling or adding, needs a spoken yes first (“yes”,
+“sure”, “okay”; “no” or “cancel” to refuse), or a click on the status panel's buttons. Sending a mail or a message,
+restarting or shutting down, and your own commands need an explicit “yes”, “confirm” or “send”: a casual “okay”
+from the TV is not enough. Anything else heard while Bilge waits is ignored, and with no clear answer within a few
+seconds nothing is done. Routines run with nobody there to answer, so they never take a step that would need a yes. While Bilge is talking you
 can cut it off with “Bilge, stop”.
 
 New in 0.4.0: smart home, routines, interpreter mode, meeting transcription, radio, podcasts, YouTube video
@@ -193,7 +198,8 @@ Files are found with Spotlight. Moving to the Trash asks first and never deletes
 - How much time is left / Cancel the tea timer / Cancel all timers
 
 Adding, moving and cancelling events and adding reminders ask first. Timers and alarms live in Bilge, not in the
-Clock app: Bilge says so out loud when one is due, as long as it is running.
+Clock app: when one is due, Bilge says so out loud and shows a notification. They are kept across restarts; one
+that came due while Bilge was closed is announced the next time it starts.
 </details>
 
 <details>
@@ -260,6 +266,19 @@ sent only to that address.
 Commands that name a home device or a room go to Home Assistant as you said them; Home Assistant matches them
 to the devices you have exposed to its Assist and Bilge reads its answer. Changing a lock, the garage door or the alarm asks first. Asking
 whether the door is locked doesn't.
+</details>
+
+<details>
+<summary><b>Your own commands</b></summary>
+
+- Run the backup command / What are my commands
+
+In Settings > Commands, give a command a name and a command line, such as “backup” and
+`rsync -a ~/Documents /Volumes/Backup`. A command runs as written, without a shell: `~` is the only shortcut
+understood, a path with spaces goes in quotes, and nothing you say is added to it. It must finish within 60
+seconds, and Bilge reads out the start of what it prints. The first run of each command, and the first after it is
+changed, reads the command line out and waits for a yes; after that, naming it exactly runs it. For what an app can
+do, Shortcuts are still the way (“run the shortcut called Good Morning”).
 </details>
 
 <details>
@@ -397,12 +416,13 @@ captions, so a video without captions can't be summarized; “summarize the rest
 | Tab | What you can set |
 |---|---|
 | General | Language, listening by wake word, the wake word itself, listening shortcut, sensitivity, follow-up questions, cutting Bilge off, start at login, status panel, meeting and reminder announcements, morning briefing, earthquake alerts, update check, default music service, weather city |
-| Model | Conversation model: Apple's, a listed download, a model already on your Mac or your own |
-| Voice | Bilge's voice and speaking speed |
-| Recognition | Speech recognition engine (Apple dictation or Whisper) and voice ID |
+| Model | Conversation model: Apple's, a listed download, a model already on your Mac, your own, or one over an API with your key |
+| Voice | Bilge's voice and speaking speed, the microphone and the speaker, with a microphone level meter |
+| Recognition | Speech recognition engine (Apple dictation, Whisper, or OpenAI or Groq in the cloud) and voice ID |
 | Permissions | What Bilge is allowed to use, with buttons to grant or open System Settings |
 | Memory | What Bilge remembers about you; delete items or everything |
 | Routines | Your routines, each with a delete button |
+| Commands | Your own terminal commands, each with a name to say |
 | Smart home | Home Assistant address and access token, and a connection test |
 | History | What Bilge did and what waited for your yes, with the log file |
 | About | Version and the open-source licenses |
@@ -457,6 +477,25 @@ The folder needs `config.json`, `tokenizer.json` (or `tokenizer.model`) and the 
 copying a model you can also put a symbolic link to its folder elsewhere (LM Studio's, for instance). If
 Bilge's MLX version can't open a model type, Apple's model answers instead.
 
+### Over an API
+
+Instead of a model on the Mac, conversation can use a hosted model with your own API key: OpenAI, Anthropic,
+Google Gemini, OpenRouter, Groq or DeepSeek. Ollama and llama.cpp running on your Mac are offered the same way,
+without a key. In Settings > Model, under “Model over an API”, pick the service, save the key, press “Fetch
+models” (which also checks the key) and choose one, or type its name.
+
+- The key is kept in the Keychain and sent only to that service's address; requests follow no redirects.
+- Commands are still understood by Apple's on-device model and Mac actions stay on the Mac. What goes to the
+  service is the conversation and the text Bilge reads to answer it (the screen, a document, a web page, a mail),
+  and multi-step plans. It is billed to your key's account.
+- If the service doesn't answer, Apple's model answers that question instead.
+
+Speech recognition can also run in the cloud: choose OpenAI or Groq in Settings > Recognition (the key is the same
+as for its models). “Bilge” is still heard on the Mac, by Apple dictation in Turkish and by Whisper in English, so
+nothing said while Bilge waits for its name is sent. What is said once it listens goes to the service: the command
+after “Bilge”, follow-up questions, answers to its questions, and dictation. Interpreter mode and meeting transcription keep using Whisper
+on the Mac.
+
 ## Languages
 
 Turkish or English is chosen in the first setup step and can be changed in Settings > General (the app
@@ -478,7 +517,8 @@ Bilge was built for Turkish first. In English:
 ## Privacy
 
 - No audio is stored. Nothing before the wake word is listened to. A meeting recording keeps only the text.
-- Speech recognition, the language models, translation and speech synthesis run on the Mac.
+- Speech recognition, the language models, translation and speech synthesis run on the Mac, unless you choose a
+  model over an API or cloud speech recognition ([Over an API](#over-an-api)).
 - Network connections are only for data you ask for and for model downloads. Each feature talks to these
   services, and only when you use it:
 
@@ -502,13 +542,15 @@ Bilge was built for Turkish first. In English:
   | Smart home | Only the Home Assistant address you entered | Your command and the access token |
   | Update check | GitHub, once a day | Nothing beyond the request |
   | Models | Hugging Face | The model being downloaded |
+  | Model over an API (if chosen) | OpenAI, Anthropic, Google Gemini, OpenRouter, Groq or DeepSeek | Your conversation and the text read for it |
+  | Cloud speech recognition (if chosen) | OpenAI or Groq | The recording of what is said while Bilge listens: commands, follow-ups, answers, dictation |
 
 - Local network addresses are blocked when reading web pages, radio streams and feeds. Home Assistant is the
   one exception: a separate connection goes only to the address in Settings > Smart home, follows no redirects
   and bypasses proxies. Its token is kept in the Keychain and is never logged.
 - The update check only offers the new version's page in the menu; nothing is downloaded by itself. Settings >
   General turns it off.
-- Memory, routines, the voice ID and the action log are kept under `~/Library/Application Support/Asistan`, and
+- Memory, routines, your commands, timers, the voice ID and the action log are kept under `~/Library/Application Support/Asistan`, and
   meeting notes in `~/Documents/Bilge/Toplantılar`, in files only you can read.
 
 ## Troubleshooting
@@ -540,6 +582,10 @@ to download it (about 1.5 GB). You can switch back to Apple dictation afterwards
 
 **“Turn on do not disturb” doesn't work.** Bilge needs a shortcut of yours with the “Set Focus” action and a
 name such as “Focus On” or “Focus Off”. See Mac and apps under [Usage](#usage).
+
+**The model over an API doesn't answer.** Press “Fetch models” in Settings > Model: it says whether the key was
+accepted. Until the service answers, Apple's model replies instead. For Ollama or llama.cpp, the server must be
+running on this Mac on its usual port (11434 or 8080).
 
 **A routine didn't run.** Routines run only while Bilge is open and listening, and a time missed while the Mac
 slept is skipped. A routine whose command needs a yes stops at that step.

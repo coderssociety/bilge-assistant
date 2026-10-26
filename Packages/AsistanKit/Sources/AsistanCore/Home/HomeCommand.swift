@@ -36,6 +36,13 @@ public enum HomeCommand {
     /// Folded endings that turn "… mı" into a request: "açar mı", "açabilir mi", "açılsın mı", "açalım mı", "açayım mı".
     private static let turkishRequestEndings = ["ar", "er", "ir", "ur", "sin", "sun", "lim", "yim"]
     private static let englishQuestion: Set<String> = ["is", "are", "what", "whats", "which", "how", "did", "does", "do"]
+    /// "How about unlocking the door", "what about opening the garage", "what if you open the gate": a request worded
+    /// like a question.
+    private static let englishSuggestions: Set<String> = ["about", "if"]
+    private static let englishActionGerunds: Set<String> = [
+        "opening", "closing", "shutting", "locking", "unlocking", "arming", "disarming", "disabling", "enabling",
+        "activating", "deactivating", "raising", "lifting", "lowering", "silencing",
+    ]
 
     public static func namesHomeDevice(_ command: String, language: AssistantLanguage) -> Bool {
         let words = folded(command)
@@ -62,7 +69,12 @@ public enum HomeCommand {
     }
 
     private static func asksAboutState(_ command: String, language: AssistantLanguage) -> Bool {
-        if language == .english { return folded(command).first.map(englishQuestion.contains) ?? false }
+        if language == .english {
+            let words = folded(command)
+            guard let first = words.first, englishQuestion.contains(first) else { return false }
+            let isSuggestion = words.dropFirst().first.map(englishSuggestions.contains) ?? false
+            return !isSuggestion && !words.contains(where: englishActionGerunds.contains)
+        }
         // The question particle is its own word ("kilitli mi"); folding would mix "mi" with "mı".
         let punctuation = CharacterSet(charactersIn: "?.,!")
         let words = TurkishText.lowercased(command).split(separator: " ").map { $0.trimmingCharacters(in: punctuation) }

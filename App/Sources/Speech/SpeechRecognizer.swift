@@ -4,12 +4,31 @@ import Foundation
 enum RecognizerEngine: String, CaseIterable, Codable, Sendable {
     case whisper
     case appleDictation
+    /// Hosted with the user's key; the wake phrase is still heard on the Mac (`wakeEngine`).
+    case openAI = "openai"
+    case groq
 
     var displayName: String {
         switch self {
         case .whisper: "Whisper large-v3 turbo"
         case .appleDictation: String(localized: "Apple Dikte")
+        case .openAI: String(localized: "OpenAI (bulut)")
+        case .groq: String(localized: "Groq (bulut)")
         }
+    }
+
+    var cloudService: CloudTranscription? {
+        switch self {
+        case .openAI: .openAI
+        case .groq: .groq
+        case .whisper, .appleDictation: nil
+        }
+    }
+
+    /// The recognizer on the Mac that listens for the wake phrase and cut-ins: the engine itself, or for a cloud
+    /// engine the language's default, so that nothing said before the wake phrase leaves the Mac.
+    func wakeEngine(for language: AssistantLanguage) -> RecognizerEngine {
+        cloudService == nil ? self : RecognizerFactory.defaultEngine(for: language)
     }
 }
 
@@ -57,6 +76,8 @@ enum RecognizerFactory {
         let recognizer: any SpeechRecognizer = switch engine {
         case .whisper: WhisperKitRecognizer(language: language)
         case .appleDictation: AppleDictationRecognizer(language: language)
+        case .openAI: CloudSpeechRecognizer(engine: engine, service: .openAI, language: language)
+        case .groq: CloudSpeechRecognizer(engine: engine, service: .groq, language: language)
         }
         return guarded ? GuardedRecognizer(recognizer) : recognizer
     }

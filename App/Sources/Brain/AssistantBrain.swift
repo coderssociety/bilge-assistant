@@ -86,6 +86,11 @@ final class AssistantBrain: CommandHandling {
         localModel.select(choice)
     }
 
+    /// The API key of the selected model was saved or removed.
+    func reconnectLocalModel() {
+        localModel.reconnect()
+    }
+
     /// A catalog model finished downloading; if it is the selected one and kept loaded, load it now.
     func localModelDownloaded() {
         localModel.launched()

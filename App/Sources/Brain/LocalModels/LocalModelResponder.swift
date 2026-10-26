@@ -7,7 +7,7 @@ enum LocalModelError: Error {
     case emptyReply
 }
 
-/// Answers conversation and screen questions with a larger model served on this Mac (LM Studio or vMLX).
+/// Answers conversation and screen questions with a larger model: one run on this Mac, or one behind an API.
 /// Routing and Mac actions stay on Apple's model; this only ever produces text and has no tools.
 /// Loading starts when the wake phrase is heard, so it mostly overlaps with the user speaking;
 /// the model is freed again according to `keepAlive`.
@@ -33,6 +33,11 @@ final class LocalModelResponder {
     func select(_ choice: LocalModelChoice?) {
         history = ChatHistory()
         lifecycle.select(choice)
+    }
+
+    func reconnect() {
+        history = ChatHistory()
+        lifecycle.reconnect()
     }
 
     func launched() {
@@ -102,6 +107,7 @@ final class LocalModelResponder {
         } catch {
             if Task.isCancelled || error is CancellationError { throw CancellationError() }
             lifecycle.endpointFailed()
+            announceAPIFailure(error, to: continuation)
             throw error
         }
         return reply
@@ -130,11 +136,23 @@ final class LocalModelResponder {
             if Task.isCancelled || error is CancellationError { throw CancellationError() }
             // The model may have been unloaded or the server stopped; load afresh next time.
             lifecycle.endpointFailed()
-            guard !emitted.isEmpty else { throw error }
+            guard !emitted.isEmpty else {
+                announceAPIFailure(error, to: continuation)
+                throw error
+            }
             Log.brain.error("Local model stopped mid-reply: \(String(describing: error), privacy: .public)")
         }
         guard !emitted.isEmpty else { throw LocalModelError.emptyReply }
         return emitted
+    }
+
+    /// Apple's model answers next; a service behind an API says why first, so a wrong key or a spent quota does not go
+    /// unnoticed. It is said once: the service then rests (`LocalModelLifecycle.endpointFailed`).
+    private func announceAPIFailure(_ error: any Error, to continuation: AsyncThrowingStream<String, any Error>.Continuation) {
+        guard let api = lifecycle.choice?.server.api else { return }
+        Log.brain.error("\(api.name, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+        let reason = (error as? APIModelError)?.errorDescription ?? String(localized: "\(api.name) yanıt vermedi.")
+        continuation.yield(reason + " " + String(localized: "Bu soruyu Apple modeli yanıtlıyor. "))
     }
 
     /// Waits for a model that is still loading, saying "Bir saniye." (one moment) if it takes noticeably long.

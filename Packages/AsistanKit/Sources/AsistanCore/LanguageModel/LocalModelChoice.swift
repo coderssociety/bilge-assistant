@@ -10,6 +10,15 @@ public struct LocalModelChoice: Sendable, Hashable {
         /// An MLX model found elsewhere on the Mac (LM Studio, the Hugging Face cache, a folder the user added),
         /// run inside the app from where it is; the id is the model folder's absolute path.
         case folder
+        /// Reached over an HTTP API (see `ModelAPI`): hosted services with the user's key, or a server on this Mac.
+        case openAI = "openai"
+        case anthropic
+        case gemini
+        case openRouter = "openrouter"
+        case groq
+        case deepSeek = "deepseek"
+        case ollama
+        case llamaCpp = "llamacpp"
     }
 
     public let server: Server
@@ -38,4 +47,6 @@ public struct LocalModelChoice: Sendable, Hashable {
 extension LocalModelChoice.Server {
     /// Runs inside Bilge rather than behind another program's server.
     public var isInApp: Bool { self == .builtIn || self == .custom || self == .folder }
+
+    public var api: ModelAPI? { ModelAPI(server: self) }
 }

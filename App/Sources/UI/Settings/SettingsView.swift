@@ -13,7 +13,7 @@ struct SettingsView: View {
                 ModelSettingsView(settings: environment.settings, brain: environment.brain, downloads: environment.downloads)
             }
             Tab("Ses", systemImage: "speaker.wave.2") {
-                VoiceSettingsView(settings: environment.settings, speech: environment.speech)
+                VoiceSettingsView(settings: environment.settings, speech: environment.speech, assistant: environment.assistant)
             }
             Tab("Tanıma", systemImage: "waveform") {
                 RecognitionSettingsView(settings: environment.settings, assistant: environment.assistant, speakerGate: environment.speakerGate)
@@ -27,14 +27,20 @@ struct SettingsView: View {
             Tab("Rutinler", systemImage: "repeat") {
                 RoutinesView(store: environment.routines)
             }
+            Tab("Komutlar", systemImage: "terminal") {
+                CustomCommandsView(store: environment.commands)
+            }
             Tab("Akıllı ev", systemImage: "house") {
                 SmartHomeSettingsView(home: environment.home)
             }
-            Tab("Geçmiş", systemImage: "clock.arrow.circlepath") {
-                HistoryView()
-            }
-            Tab("Hakkında", systemImage: "info.circle") {
-                AboutView()
+            // A tab builder takes at most ten children.
+            Group {
+                Tab("Geçmiş", systemImage: "clock.arrow.circlepath") {
+                    HistoryView()
+                }
+                Tab("Hakkında", systemImage: "info.circle") {
+                    AboutView()
+                }
             }
         }
         .frame(width: 680, height: 470)

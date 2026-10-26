@@ -47,10 +47,11 @@ struct CreateFolderTool: AssistantTool {
 /// answered by the tool-less session.
 struct ReadDocumentTool: AssistantTool {
     let name = "readDocument"
-    let description = "Bir belgeyi (PDF, metin, Word, RTF) açmadan okur; özetler ya da içeriğiyle ilgili soruyu yanıtlar."
+    let description = "Bir belgeyi (PDF, metin, Word, RTF, Excel, PowerPoint) açmadan okur; özetler ya da içeriğiyle ilgili soruyu yanıtlar."
     let answersWithLanguageModel = true
     let readingLayout: ContinuedReading.Layout? = .text(maxCharacters: 6000)
-    static let readableExtensions: Set<String> = ["pdf", "txt", "md", "rtf", "rtfd", "docx", "doc", "odt", "html", "htm", "csv"]
+    static let readableExtensions: Set<String> = ["pdf", "txt", "md", "rtf", "rtfd", "docx", "doc", "odt", "html", "htm", "csv",
+                                                  "xlsx", "pptx", "ods", "odp"]
 
     @Generable
     struct Arguments {
@@ -71,9 +72,9 @@ struct ReadDocumentTool: AssistantTool {
                 return ToolReply.failure(arguments.query.map { String(localized: "'\($0)' adında okunabilir bir belge bulamadım.") }
                     ?? String(localized: "İndirilenler'de okunabilir bir belge bulamadım."))
             }
-            // Excel, Numbers, Pages and Keynote files keep their text in formats no system framework reads.
+            // Numbers, Pages, Keynote and old binary Office files keep their text in formats nothing here reads.
             guard Self.readableExtensions.contains(file.pathExtension.lowercased()) else {
-                return ToolReply.failure(String(localized: "'\(file.lastPathComponent)' dosyasını okuyamıyorum; PDF, Word, metin ve CSV belgelerini okuyabilirim. PDF olarak dışa aktarırsan okurum."))
+                return ToolReply.failure(String(localized: "'\(file.lastPathComponent)' dosyasını okuyamıyorum; PDF, Word, Excel, PowerPoint, metin ve CSV belgelerini okuyabilirim. PDF olarak dışa aktarırsan okurum."))
             }
             let text = try await Self.text(of: file).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else {
@@ -98,6 +99,9 @@ struct ReadDocumentTool: AssistantTool {
     }
 
     static func text(of file: URL) async throws -> String {
+        if let kind = OfficeDocumentText.Kind(rawValue: file.pathExtension.lowercased()) {
+            return try await OfficeArchive.text(of: file, kind: kind)
+        }
         switch file.pathExtension.lowercased() {
         case "pdf":
             guard let document = PDFDocument(url: file) else { return "" }

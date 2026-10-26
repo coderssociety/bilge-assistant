@@ -1334,16 +1334,6 @@
         }
       }
     },
-    "'%@' dosyasını okuyamıyorum; PDF, Word, metin ve CSV belgelerini okuyabilirim. PDF olarak dışa aktarırsan okurum.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "I can't read '%@'; I can read PDF, Word, text and CSV documents. If you export it as a PDF, I'll read it."
-          }
-        }
-      }
-    },
     "'%@' etkinliğini ekleyeyim mi?": {
       "localizations": {
         "en": {
@@ -4402,16 +4392,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Always keep loaded"
-          }
-        }
-      }
-    },
-    "Her iki motor da tamamen Mac'inde çalışır; ses kaydı saklanmaz.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Both engines run entirely on your Mac; no audio recordings are stored."
           }
         }
       }
@@ -9161,6 +9141,646 @@
           "stringUnit": {
             "state": "translated",
             "value": "Listen when I say “%@”"
+          }
+        }
+      }
+    },
+    "%@ için API anahtarı kayıtlı değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No API key is saved for %@."
+          }
+        }
+      }
+    },
+    "%@ API anahtarını kabul etmedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ didn't accept the API key."
+          }
+        }
+      }
+    },
+    "%@ bir hatayla yanıt verdi (%lld)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ returned an error (%lld)"
+          }
+        }
+      }
+    },
+    "API ile bağlanan model": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model over an API"
+          }
+        }
+      }
+    },
+    "OpenAI, Anthropic, Google Gemini, OpenRouter, Groq ve DeepSeek senin API anahtarınla; Ollama ve llama.cpp Mac'inde çalışan sunucudan.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI, Anthropic, Google Gemini, OpenRouter, Groq and DeepSeek with your API key; Ollama and llama.cpp from the server running on your Mac."
+          }
+        }
+      }
+    },
+    "Servis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service"
+          }
+        }
+      }
+    },
+    "Yeni API anahtarı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New API key"
+          }
+        }
+      }
+    },
+    "API anahtarı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API key"
+          }
+        }
+      }
+    },
+    "Anahtarı sil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete key"
+          }
+        }
+      }
+    },
+    "ör. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. %@"
+          }
+        }
+      }
+    },
+    "Listeden seç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick from the list"
+          }
+        }
+      }
+    },
+    "Modelleri getir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetch models"
+          }
+        }
+      }
+    },
+    "Kullan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use"
+          }
+        }
+      }
+    },
+    "Kullanılıyor: %@ · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In use: %@ · %@"
+          }
+        }
+      }
+    },
+    "Sohbet ve bilgi soruların, Bilge'nin onlar için okuduğu metinlerle (ekran, belge, web sayfası, e-posta) birlikte %@ servisine gider ve ücreti anahtarının hesabına yazılır. Komutları anlamak ve Mac'te iş yapmak yine Apple'ın cihaz içi modelinde kalır. Servis yanıt vermezse o cevabı Apple modeli verir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your conversation and questions go to %@, together with the text Bilge reads for them (the screen, a document, a web page, an email), and are billed to your key's account. Understanding commands and acting on the Mac stay with Apple's on-device model. If the service doesn't answer, Apple's model answers instead."
+          }
+        }
+      }
+    },
+    "%@ bu Mac'te çalışmalı; Bilge yalnızca 127.0.0.1 adresine bağlanır ve hiçbir şey Mac'inden çıkmaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ must be running on this Mac; Bilge connects only to 127.0.0.1 and nothing leaves your Mac."
+          }
+        }
+      }
+    },
+    "Bağlanıyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting…"
+          }
+        }
+      }
+    },
+    "Bağlantı tamam ama listelenen model yok; model adını kendin yaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected, but no models were listed; type the model name yourself."
+          }
+        }
+      }
+    },
+    "Bağlantı tamam: %lld model bulundu.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected: found %lld models."
+          }
+        }
+      }
+    },
+    "%@ sunucusuna ulaşılamadı; Mac'inde çalışıyor mu?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't reach %@; is it running on your Mac?"
+          }
+        }
+      }
+    },
+    "%@ anahtarı Anahtar Zinciri'nde kayıtlı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The %@ key is saved in the Keychain."
+          }
+        }
+      }
+    },
+    "%@ anahtarı kayıtlı değil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No %@ key saved."
+          }
+        }
+      }
+    },
+    "OpenAI (bulut)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenAI (cloud)"
+          }
+        }
+      }
+    },
+    "Groq (bulut)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Groq (cloud)"
+          }
+        }
+      }
+    },
+    "Komutları kaydedemedim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't save the commands."
+          }
+        }
+      }
+    },
+    "Henüz bir komutun yok; Bilge Ayarları'ndaki Komutlar sekmesinden ekleyebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have no commands yet; you can add some on the Commands tab of Bilge Settings."
+          }
+        }
+      }
+    },
+    "%lld komutun var: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have %lld commands: %@"
+          }
+        }
+      }
+    },
+    "'%@' adında bir komutun yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have no command called '%@'."
+          }
+        }
+      }
+    },
+    "'%@' komutunu çalıştırayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shall I run the command '%@'?"
+          }
+        }
+      }
+    },
+    "'%@' komutu ilk kez çalışacak: %@. Çalıştırayım mı?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The command '%@' runs for the first time: %@. Shall I run it?"
+          }
+        }
+      }
+    },
+    "Komutlar yalnızca adıyla istenince çalıştırılabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commands only run when asked for by name."
+          }
+        }
+      }
+    },
+    "'%@' komutunun programı bulunamadı: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The program of the command '%@' wasn't found: %@"
+          }
+        }
+      }
+    },
+    "'%@' komutu hata verdi (çıkış kodu %lld) ya da %lld saniyede bitmedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The command '%@' failed (exit code %lld) or didn't finish within %lld seconds."
+          }
+        }
+      }
+    },
+    "'%@' komutu çalıştı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The command '%@' ran."
+          }
+        }
+      }
+    },
+    "'%@' komutu çalıştı. Çıktısı: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The command '%@' ran. It printed: %@"
+          }
+        }
+      }
+    },
+    "'%@' komutu çalıştırılamadı: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The command '%@' couldn't run: %@"
+          }
+        }
+      }
+    },
+    "Henüz komut yok": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No commands yet"
+          }
+        }
+      }
+    },
+    "Bir ad ve bir komut satırı ekle; sonra “%@, yedekleme komutunu çalıştır” de.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a name and a command line, then say “%@, run the backup command”."
+          }
+        }
+      }
+    },
+    "Ad": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        }
+      }
+    },
+    "yedekleme": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "backup"
+          }
+        }
+      }
+    },
+    "Komut satırı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Command line"
+          }
+        }
+      }
+    },
+    "Bu komutu sil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this command"
+          }
+        }
+      }
+    },
+    "Komut ekle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add command"
+          }
+        }
+      }
+    },
+    "Komut kabuk olmadan, yazıldığı gibi çalışır: yalnızca ~ açılır, boşluklu yolu tırnağa al. Söylediğin hiçbir şey eklenmez. 60 saniyede bitmeli; çıktısının başını okurum. Her komut ilk kez ve değiştikten sonra ilk kez çalışmadan önce komut satırını okuyup onay isterim.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A command runs as written, without a shell: only ~ is expanded; put a path with spaces in quotes. Nothing you say is added to it. It must finish within 60 seconds; I read out the start of what it prints. Before a command's first run, and its first run after a change, I read the command line out and ask for a yes."
+          }
+        }
+      }
+    },
+    "Komutlar kaydedildi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commands saved."
+          }
+        }
+      }
+    },
+    "Her komutun hem adı hem komut satırı olmalı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every command needs both a name and a command line."
+          }
+        }
+      }
+    },
+    "'%@' komutunda kapanmamış bir tırnak var.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The command '%@' has an unclosed quote."
+          }
+        }
+      }
+    },
+    "'%@' adında iki komut olamaz.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There can't be two commands called '%@'."
+          }
+        }
+      }
+    },
+    "'%@' açılamadı; dosya bozuk ya da parola korumalı olabilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open '%@'; the file may be damaged or password-protected."
+          }
+        }
+      }
+    },
+    "'%@' dosyasını okuyamıyorum; PDF, Word, Excel, PowerPoint, metin ve CSV belgelerini okuyabilirim. PDF olarak dışa aktarırsan okurum.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't read '%@'; I can read PDF, Word, Excel, PowerPoint, text and CSV documents. If you export it as a PDF, I'll read it."
+          }
+        }
+      }
+    },
+    "%@ kapalıyken şu zamanlayıcıların zamanı geçti: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These timers went off while %@ was closed: %@."
+          }
+        }
+      }
+    },
+    "Aygıtlar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devices"
+          }
+        }
+      }
+    },
+    "Seviye": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Level"
+          }
+        }
+      }
+    },
+    "Mikrofon seviyesi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone level"
+          }
+        }
+      }
+    },
+    "Dinleme açıkken görünür": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shown while listening"
+          }
+        }
+      }
+    },
+    "Hoparlör": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speaker"
+          }
+        }
+      }
+    },
+    "Aygıtları yenile": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh devices"
+          }
+        }
+      }
+    },
+    "Sistem varsayılanı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System default"
+          }
+        }
+      }
+    },
+    "Bağlı değil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not connected"
+          }
+        }
+      }
+    },
+    "rsync -a ~/Documents /Volumes/Yedek": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rsync -a ~/Documents /Volumes/Backup"
+          }
+        }
+      }
+    },
+    "Apple Dikte ve Whisper tamamen Mac'inde çalışır; ses kaydı saklanmaz. Bulut motorlarında “%@” adı ve öncesi Mac'te duyulur; ondan sonraki komutun, devam sorularının, onay cevaplarının ve dikte gibi uyandırma kelimesi beklemeyen anlarda söylenenlerin kaydı o servise gönderilir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Dictation and Whisper run entirely on your Mac; no recording is kept. With a cloud engine, “%@” and anything before it are heard on the Mac; the recording of the command after it, of follow-up questions, of answers to confirmations and of what is said while no wake word is needed, such as dictation, is sent to that service."
+          }
+        }
+      }
+    },
+    "Bulutta, senin API anahtarınla çalışır; ücreti anahtarının hesabına yazılır. “%@” adını Mac'teki motor duyar (%@). Ondan sonraki komutun kaydı, ayrıca devam sorularında, onay cevaplarında ve dikte sırasında söylenenler %@ servisine gönderilir. İnternet yoksa komutlar anlaşılmaz. Anahtar, Model ayarlarındaki aynı servisin anahtarıyla ortaktır.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs in the cloud with your API key and is billed to your key's account. “%@” is heard by the engine on the Mac (%@). The recording of the command after it, and of what is said in follow-up questions, answers to confirmations and dictation, is sent to %@. Without internet, commands aren't understood. The key is shared with the same service in Model settings."
+          }
+        }
+      }
+    },
+    "%@ yanıt vermedi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ didn't answer."
+          }
+        }
+      }
+    },
+    "Bu soruyu Apple modeli yanıtlıyor. ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model answers this question. "
           }
         }
       }

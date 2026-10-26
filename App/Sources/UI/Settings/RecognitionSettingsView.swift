@@ -7,6 +7,7 @@ struct RecognitionSettingsView: View {
     let speakerGate: SpeakerGate
     @State private var enrolling = false
     @State private var wasListening = false
+    @State private var hasCloudKey = false
 
     var body: some View {
         Form {
@@ -21,10 +22,14 @@ struct RecognitionSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                if let service = settings.recognizer.cloudService {
+                    APIKeyField(api: service.service, hasKey: $hasCloudKey)
+                }
             }
             Section {
-                Text("Her iki motor da tamamen Mac'inde çalışır; ses kaydı saklanmaz.")
+                Text("Apple Dikte ve Whisper tamamen Mac'inde çalışır; ses kaydı saklanmaz. Bulut motorlarında “\(AppIdentity.name)” adı ve öncesi Mac'te duyulur; ondan sonraki komutun, devam sorularının, onay cevaplarının ve dikte gibi uyandırma kelimesi beklemeyen anlarda söylenenlerin kaydı o servise gönderilir.")
                     .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Section("Ses kimliği") {
                 if let stored = speakerGate.store.stored {
@@ -71,6 +76,8 @@ private extension RecognizerEngine {
             String(localized: "OpenAI Whisper'ın Mac'e uyarlanmış sürümü. İlk seçimde yaklaşık 1,5 GB indirilir ve hazırlanması birkaç dakika sürer. Testlerimizde daha yavaş ve daha az doğruydu (%6, 0,35 sn); aksanlı konuşmada denemeye değer.")
         case (.whisper, .english):
             String(localized: "Önerilen. İlk seçimde yaklaşık 1,5 GB indirilir. İngilizce testlerimizde Türkçe söylenen “\(AppIdentity.name)” adını 20 denemenin 17'sinde doğru duydu (0,35 sn).")
+        case (.openAI, _), (.groq, _):
+            String(localized: "Bulutta, senin API anahtarınla çalışır; ücreti anahtarının hesabına yazılır. “\(AppIdentity.name)” adını Mac'teki motor duyar (\(wakeEngine(for: language).displayName)). Ondan sonraki komutun kaydı, ayrıca devam sorularında, onay cevaplarında ve dikte sırasında söylenenler \(cloudService?.service.name ?? "") servisine gönderilir. İnternet yoksa komutlar anlaşılmaz. Anahtar, Model ayarlarındaki aynı servisin anahtarıyla ortaktır.")
         case (.appleDictation, .english):
             String(localized: "Sistemle gelir ve çok hızlıdır, ama İngilizce testlerimizde “\(AppIdentity.name)” adını neredeyse hiç tanımadı (“Bill”, “Build” diye duydu). Uyandırma kelimesini İngilizce bir kelimeyle değiştirirsen deneyebilirsin.")
         }

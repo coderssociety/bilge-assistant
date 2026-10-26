@@ -55,7 +55,7 @@ struct BuiltInChatModel: LoadedChatModel {
             return try CustomModels.folder(named: choice.modelID)
         case .folder:
             return try ModelLibrary.folder(path: choice.modelID)
-        case .lmStudio, .vmlx:
+        case .lmStudio, .vmlx, .openAI, .anthropic, .gemini, .openRouter, .groq, .deepSeek, .ollama, .llamaCpp:
             throw LocalModelServerError.loadFailed(choice.modelID)
         }
     }

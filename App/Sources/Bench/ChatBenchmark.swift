@@ -126,6 +126,8 @@ enum ChatBenchmark {
             return await VMLXServer.awakeModels().contains(choice.modelID)
         case .builtIn, .custom, .folder:
             return BuiltInChatModel.isLoaded(choice)
+        case .openAI, .anthropic, .gemini, .openRouter, .groq, .deepSeek, .ollama, .llamaCpp:
+            return false
         }
     }
 }

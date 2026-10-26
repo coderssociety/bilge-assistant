@@ -5,7 +5,8 @@
 <h1 align="center">Bilge</h1>
 
 <p align="center">
-  Mac için Türkçe ve İngilizce sesli asistan. Tamamen yerel çalışır: sesin ve komutların Mac'inden dışarı çıkmaz.
+  Mac için Türkçe ve İngilizce sesli asistan. Tamamen yerel çalışır: kendi API anahtarınla bulutta bir model
+  seçmedikçe sesin ve komutların Mac'inden dışarı çıkmaz.
 </p>
 
 <p align="center">
@@ -24,7 +25,9 @@
 </p>
 
 “Bilge” dediğinde uyanır, ne istediğini anlar, işi Mac'te yapar ve sesle cevap verir. Konuşma tanıma,
-dil modelleri ve ses üretimi Mac'te çalışır; bulut hizmeti, hesap ya da abonelik yoktur. İnternet yalnızca
+dil modelleri ve ses üretimi Mac'te çalışır; bulut hizmeti, hesap ya da abonelik yoktur. İstersen sohbet
+kendi API anahtarınla OpenAI, Anthropic, Google Gemini, OpenRouter, Groq ya da DeepSeek'e, konuşma tanıma da
+OpenAI ya da Groq'a gidebilir ([API ile bağlanan model](#api-ile-bağlanan-model)). İnternet yalnızca
 hava durumu, haber, fiyat ya da şarkı gibi istediğin veriler ve modellerin ilk indirmesi için kullanılır.
 Hangi özelliğin hangi hizmete bağlandığı [Gizlilik](#gizlilik) bölümünde yazılı.
 
@@ -51,9 +54,10 @@ aynı asistanın onlar için yeniden yazılmış hâli.
 | | |
 |---|---|
 | **Mac komutları** | Uygulama açma ve kapatma, pencere düzenleme, ses düzeyi, parlaklık, Wi-Fi, Bluetooth, karanlık mod, odak modu, kilitleme, uyutma, yeniden başlatma ve kapatma, ekran görüntüsü, pil ve sistem durumu, Sistem Ayarları bölümleri, Kestirmeler |
-| **Dosyalar** | Dosyayı adına, türüne ya da tarihine göre bulup açma; PDF, Word ve metin belgelerini okuyup özetleme; klasör oluşturma; Çöp Kutusu'na taşıma |
+| **Dosyalar** | Dosyayı adına, türüne ya da tarihine göre bulup açma; PDF, Word, Excel, PowerPoint, OpenDocument ve metin belgelerini okuyup özetleme; klasör oluşturma; Çöp Kutusu'na taşıma |
 | **Takvim ve anımsatıcılar** | Herhangi bir günü, haftayı ya da ayı okuma; etkinlik ekleme, taşıma ve iptal etme; anımsatıcı ekleme ve tamamlama. Yaklaşan toplantıyı ve vakti gelen anımsatıcıyı kendiliğinden söyler |
-| **Zamanlayıcı ve rutinler** | Listelenip tek tek iptal edilebilen zamanlayıcı ve alarmlar; her gün ya da seçilen günlerde belli bir saatte kendiliğinden çalışan rutinler |
+| **Zamanlayıcı ve rutinler** | Listelenip tek tek iptal edilebilen, yeniden başlatmada kaybolmayan ve süresi dolunca bildirim gösteren zamanlayıcı ve alarmlar; her gün ya da seçilen günlerde belli bir saatte kendiliğinden çalışan rutinler |
+| **Kendi komutların** | Ayarlar > Komutlar'a eklediğin terminal komutlarını adıyla çalıştırma: “yedekleme komutunu çalıştır” |
 | **E-posta, mesaj, arama** | Okunmamış e-postaları ve içeriklerini okuma, yanıtlama, Mail ve Mesajlar ile gönderme, kişi bulma, telefonla (iPhone üzerinden) ya da FaceTime ile arama |
 | **Notlar** | Not oluşturma, notları okuma ve listeleme, var olan bir notun sonuna ekleme |
 | **Müzik, radyo, podcast** | Müzik, Spotify, YouTube, YouTube Music, Deezer ya da Apple Music'te şarkı çalma; duraklatma, geçme, sarma, karışık çalma ve tekrar; internet radyosu ve podcast'in son bölümü Bilge'nin içinde çalar |
@@ -70,7 +74,11 @@ aynı asistanın onlar için yeniden yazılmış hâli.
 | **Hafıza** | “Şunu hatırla: …”, “bunu unut”. Hatırladıklarını Ayarlar'da görür ve silebilirsin |
 | **Ses kimliği** | Sesini tanıtırsan yalnızca senin komutlarına ve onaylarına uyar |
 
-Silme, gönderme, arama ve ekleme gibi geri alınamayan işlerde önce sesli onay ister. Rutinler sen yokken
+Silme, gönderme, arama ve ekleme gibi geri alınamayan işlerde önce sesli onay ister (“evet”, “olur”, “tamam”,
+“onaylıyorum”; reddetmek için “hayır” ya da “iptal”); durum panelindeki düğmelere de tıklayabilirsin. E-posta ya da
+mesaj göndermek, yeniden başlatmak ya da kapatmak ve kendi komutların açık bir “evet”, “onaylıyorum” ya da “gönder”
+ister: televizyondan gelen bir “tamam” yetmez. Bilge beklerken duyulan başka sözler cevap sayılmaz; birkaç saniye
+içinde net bir cevap gelmezse hiçbir şey yapılmaz. Rutinler sen yokken
 çalıştığı için onay gerektiren bir adımı hiçbir zaman yapmaz. Bilge konuşurken “Bilge, dur” diyerek sözünü
 kesebilirsin.
 
@@ -190,7 +198,8 @@ Dosyalar Spotlight ile bulunur. Çöp Kutusu'na taşımadan önce sorar, hiçbir
 - Kaç dakika kaldı / Çay zamanlayıcısını iptal et / Bütün alarmları sil
 
 Etkinlik eklemek, taşımak, iptal etmek ve anımsatıcı eklemek önce onay ister. Zamanlayıcı ve alarmlar Saat
-uygulamasında değil Bilge'nin içinde kurulur: Bilge açık olduğu sürece süre dolunca bunu sesli söyler.
+uygulamasında değil Bilge'nin içinde kurulur: süre dolunca Bilge bunu sesli söyler ve bildirim gösterir. Yeniden
+başlatmada kaybolmazlar; Bilge kapalıyken süresi dolan zamanlayıcıyı bir sonraki açılışta söyler.
 </details>
 
 <details>
@@ -257,6 +266,19 @@ ve yalnızca bu adrese gönderilir.
 Ev cihazı ya da oda adı geçen komutlar Home Assistant'a söylediğin gibi gönderilir; Home Assistant onları
 Assist'e açtığın cihazlarla eşleştirir, Bilge de cevabı okur. Kilit, garaj kapısı ve alarm değişiklikleri önce
 onay ister; kapının kilitli olup olmadığını sormak istemez.
+</details>
+
+<details>
+<summary><b>Kendi komutların</b></summary>
+
+- Yedekleme komutunu çalıştır / Komutlarım neler
+
+Ayarlar > Komutlar'da bir komuta ad ve komut satırı ver, örneğin “yedekleme” ve
+`rsync -a ~/Documents /Volumes/Yedek`. Komut kabuk olmadan, yazıldığı gibi çalışır: yalnızca `~` açılır, boşluklu
+yol tırnağa alınır ve söylediğin hiçbir şey komuta eklenmez. 60 saniyede bitmeli; Bilge çıktısının başını okur. Her
+komutun ilk çalıştırılması ve değiştikten sonraki ilk çalıştırılması komut satırını okuyup onay bekler; sonrasında
+adını tam söylemen yeter. Bir uygulamanın yapabildiği işler için yine Kestirmeler kullanılır (“Günaydın kestirmesini
+çalıştır”).
 </details>
 
 <details>
@@ -394,12 +416,13 @@ altyazısı olmayan video özetlenemez. Uzun bir videoda “devamını özetle�
 | Sekme | Neler ayarlanır |
 |---|---|
 | Genel | Dil, uyandırma kelimesiyle dinleme, uyandırma kelimesinin kendisi, dinleme kısayolu, hassasiyet, devam sorusu, sözünü kesme, oturum açılınca başlama, durum paneli, toplantı ve anımsatıcı hatırlatmaları, sabah özeti, deprem uyarısı, güncelleme denetimi, varsayılan müzik servisi, hava durumu şehri |
-| Model | Sohbet modeli: Apple'ınki, listeden indirilen, Mac'inde zaten olan ya da kendi modelin |
-| Ses | Bilge'nin sesi ve konuşma hızı |
-| Tanıma | Konuşma tanıma motoru (Apple Dikte ya da Whisper) ve ses kimliği |
+| Model | Sohbet modeli: Apple'ınki, listeden indirilen, Mac'inde zaten olan, kendi modelin ya da anahtarınla API üzerinden bağlanan |
+| Ses | Bilge'nin sesi ve konuşma hızı, mikrofon ve hoparlör, mikrofon seviye göstergesi |
+| Tanıma | Konuşma tanıma motoru (Apple Dikte, Whisper ya da bulutta OpenAI veya Groq) ve ses kimliği |
 | İzinler | Bilge'nin neleri kullanabildiği; izin verme ve Sistem Ayarları'nı açma düğmeleri |
 | Hafıza | Bilge'nin senin hakkında hatırladıkları; tek tek ya da hepsini silme |
 | Rutinler | Kurulu rutinler ve her birini silme düğmesi |
+| Komutlar | Söyleyeceğin adlarıyla kendi terminal komutların |
 | Akıllı ev | Home Assistant adresi, erişim anahtarı ve bağlantı denemesi |
 | Geçmiş | Bilge'nin yaptıkları ve onayını bekleyenler, günlük dosyasıyla |
 | Hakkında | Sürüm ve açık kaynak lisansları |
@@ -454,6 +477,25 @@ Ayarlar > Model'deki “Bilge'nin klasörünü aç” düğmesi bu klasörü Fin
 kopyalamak yerine başka yerdeki klasörüne (örneğin LM Studio'nunkine) bir sembolik bağ da koyabilirsin.
 Bilge'nin MLX sürümünün desteklemediği bir model türü açılamazsa o cevabı Apple modeli verir.
 
+### API ile bağlanan model
+
+Sohbet için Mac'teki bir model yerine kendi API anahtarınla bulutta bir model kullanabilirsin: OpenAI, Anthropic,
+Google Gemini, OpenRouter, Groq ya da DeepSeek. Mac'inde çalışan Ollama ve llama.cpp de anahtarsız olarak aynı yerde
+sunulur. Ayarlar > Model'de “API ile bağlanan model” altında servisi seç, anahtarı kaydet, “Modelleri getir”e bas
+(anahtarı da böyle denetler) ve bir model seç ya da adını yaz.
+
+- Anahtar Anahtar Zinciri'nde saklanır ve yalnızca o servisin adresine gönderilir; istekler yönlendirme izlemez.
+- Komutları yine Apple'ın cihaz içi modeli anlar, Mac'teki işler Mac'te kalır. Servise giden, sohbet ve Bilge'nin
+  onu yanıtlamak için okuduğu metinlerdir (ekran, belge, web sayfası, e-posta) ve çok adımlı planlardır. Ücreti
+  anahtarının hesabına yazılır.
+- Servis yanıt vermezse o soruyu Apple modeli yanıtlar.
+
+Konuşma tanıma da bulutta çalışabilir: Ayarlar > Tanıma'da OpenAI ya da Groq'u seç (anahtar, aynı servisin
+modelleriyle ortaktır). “Bilge” adı yine Mac'te duyulur, Türkçede Apple Dikte, İngilizcede Whisper ile; Bilge adını
+beklerken söylenen hiçbir şey gönderilmez. Dinlemeye geçtiğinde söylenenler servise gider: “Bilge”den sonraki komut,
+devam soruları, sorularına verdiğin cevaplar ve dikte. Tercüman modu ve toplantı kaydı Mac'teki Whisper'ı kullanmaya devam
+eder.
+
 ## Dil
 
 Kurulumun ilk adımında Türkçe ya da İngilizce seçilir; Ayarlar > Genel'den değiştirilebilir (uygulama
@@ -475,7 +517,8 @@ verileri Türkiye'yle ilgilidir. İngilizcede:
 
 - Ses kaydı saklanmaz. Uyandırma kelimesinden öncesi dinlenmez. Toplantı kaydında yalnızca yazıya dökülen metin
   tutulur.
-- Konuşma tanıma, dil modelleri, çeviri ve ses üretimi Mac'te çalışır.
+- Konuşma tanıma, dil modelleri, çeviri ve ses üretimi Mac'te çalışır; API ile bağlanan bir model ya da bulutta
+  konuşma tanıma seçersen o kısım hariç ([API ile bağlanan model](#api-ile-bağlanan-model)).
 - Ağ bağlantıları yalnızca istediğin veriler ve model indirmeleri içindir. Her özellik yalnızca kullandığında
   şu hizmetlere bağlanır:
 
@@ -499,13 +542,15 @@ verileri Türkiye'yle ilgilidir. İngilizcede:
   | Akıllı ev | Yalnızca girdiğin Home Assistant adresi | Komutunu ve erişim anahtarını |
   | Güncelleme denetimi | GitHub, günde bir kez | İstekten fazlasını değil |
   | Modeller | Hugging Face | İndirilen modeli |
+  | API ile bağlanan model (seçilirse) | OpenAI, Anthropic, Google Gemini, OpenRouter, Groq ya da DeepSeek | Sohbeti ve onun için okunan metni |
+  | Bulutta konuşma tanıma (seçilirse) | OpenAI ya da Groq | Bilge dinlerken söylenenlerin kaydını: komutlar, devam soruları, cevaplar, dikte |
 
 - Web sayfası, radyo yayını ve haber akışı okunurken yerel ağ adreslerine erişim engellenir. Tek istisna Home
   Assistant'tır: ayrı bir bağlantı yalnızca Ayarlar > Akıllı ev'deki adrese gider, yönlendirmeleri izlemez ve
   vekil sunucuları (proxy) atlar. Erişim anahtarı Anahtar Zinciri'nde saklanır, hiçbir zaman günlüğe yazılmaz.
 - Güncelleme denetimi yeni sürüm çıktıysa yalnızca sayfasını menüde gösterir; kendiliğinden hiçbir şey indirmez.
   Ayarlar > Genel'den kapatılabilir.
-- Hafıza, rutinler, ses kimliği ve işlem kaydı `~/Library/Application Support/Asistan` altında, toplantı notları
+- Hafıza, rutinler, kendi komutların, zamanlayıcılar, ses kimliği ve işlem kaydı `~/Library/Application Support/Asistan` altında, toplantı notları
   `~/Documents/Bilge/Toplantılar` içinde, yalnızca senin okuyabileceğin dosyalarda durur.
 
 ## Sorun giderme
@@ -540,6 +585,10 @@ indir (yaklaşık 1,5 GB). Sonra Apple Dikte'ye dönebilirsin; bu oturumlar yine
 **“Rahatsız etmeyi aç” çalışmıyor.** Bilge'nin “Odak Ayarla” eylemini içeren ve adında “Rahatsız Etme Aç” ya da
 “Rahatsız Etme Kapat” geçen bir kestirmene ihtiyacı var. Ayrıntı [Kullanım](#kullanım) bölümünde, Mac ve
 uygulamalar başlığında.
+
+**API ile bağlanan model yanıt vermiyor.** Ayarlar > Model'de “Modelleri getir”e bas: anahtarın kabul edilip
+edilmediğini söyler. Servis yanıt verene kadar cevapları Apple modeli verir. Ollama ya da llama.cpp için sunucu bu
+Mac'te, alıştığı bağlantı noktasında (11434 ya da 8080) çalışıyor olmalı.
 
 **Rutin çalışmadı.** Rutinler yalnızca Bilge açıkken ve dinlerken çalışır; Mac uykudayken kaçan bir vakit
 atlanır. Komutu onay gerektiren bir rutin o adımda durur.

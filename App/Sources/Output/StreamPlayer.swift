@@ -19,6 +19,21 @@ final class StreamPlayer {
     }
 
     static let shared = StreamPlayer()
+
+    /// `AudioDevices.Device.uid`; nil follows the system default.
+    private var outputDeviceUID: String?
+
+    func useOutputDevice(_ uid: String?) {
+        outputDeviceUID = uid
+        routeOutput()
+    }
+
+    /// A chosen speaker that is unplugged would leave the player silent, so the system default plays instead until it
+    /// is back; checked whenever playback starts or resumes.
+    private func routeOutput() {
+        let target = AudioDevices.connected(outputDeviceUID, .output)
+        if player.audioOutputDeviceUniqueID != target { player.audioOutputDeviceUniqueID = target }
+    }
     private static let duckedShare: Float = 0.2
     private static let volumeStep: Float = 0.2
     private static let quietestVolume: Float = 0.1
@@ -134,7 +149,12 @@ final class StreamPlayer {
             return
         }
         let heldForBilge = isDucked && current.kind == .podcast
-        if wantsPlayback, !heldForBilge { player.play() } else { player.pause() }
+        if wantsPlayback, !heldForBilge {
+            routeOutput()
+            player.play()
+        } else {
+            player.pause()
+        }
         player.volume = isDucked ? volume * Self.duckedShare : volume
     }
 

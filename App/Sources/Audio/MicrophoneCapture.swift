@@ -1,6 +1,6 @@
 @preconcurrency import AVFoundation
 
-/// Streams the default input device as 16 kHz mono Float32 chunks stamped with their capture time.
+/// Streams the chosen (or the default) input device as 16 kHz mono Float32 chunks stamped with their capture time.
 @MainActor
 final class MicrophoneCapture {
     private let engine = AVAudioEngine()
@@ -8,6 +8,11 @@ final class MicrophoneCapture {
     private var configurationObserver: NSObjectProtocol?
 
     var isRunning: Bool { continuation != nil }
+    /// `AudioDevices.Device.uid`; nil follows the system default. Takes effect at the next start.
+    var deviceUID: String? {
+        didSet { if deviceUID != oldValue { hasChosenDevice = true } }
+    }
+    private var hasChosenDevice = false
 
     static func requestPermission() async -> Bool {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
@@ -46,6 +51,7 @@ final class MicrophoneCapture {
 
     private func installTapAndStart(continuation: AsyncStream<AudioChunk>.Continuation) throws {
         let input = engine.inputNode
+        if hasChosenDevice { AudioDevices.apply(deviceUID, to: input, .input) }
         let format = input.outputFormat(forBus: 0)
         guard format.sampleRate > 0, format.channelCount > 0 else { throw AudioError.noInputDevice }
         let resampler = try StreamingResampler(inputFormat: format)

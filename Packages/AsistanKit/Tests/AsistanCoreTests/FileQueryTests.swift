@@ -26,7 +26,7 @@ struct FileQueryTests {
         #expect(query.spotlightQuery == "kMDItemFSName == \"*bütçe*\"cd && (kMDItemFSName == \"*.pdf\"c)"
             + " && kMDItemFSContentChangeDate >= $time.yesterday && kMDItemFSContentChangeDate < $time.today")
         #expect(FileQuery(kinds: [.presentation]).spotlightQuery
-            == "(kMDItemFSName == \"*.key\"c || kMDItemFSName == \"*.ppt\"c || kMDItemFSName == \"*.pptx\"c)")
+            == "(kMDItemFSName == \"*.key\"c || kMDItemFSName == \"*.odp\"c || kMDItemFSName == \"*.ppt\"c || kMDItemFSName == \"*.pptx\"c)")
         #expect(FileQuery(period: .lastWeek).spotlightQuery
             == "kMDItemFSContentChangeDate >= $time.this_week(-1) && kMDItemFSContentChangeDate < $time.this_week")
     }
@@ -48,7 +48,7 @@ struct FileQueryTests {
 
     @Test("kinds give their extensions")
     func extensions() {
-        #expect(FileQuery(kinds: [.pdf, .spreadsheet]).extensions == ["pdf", "xlsx", "xls", "numbers", "csv"])
+        #expect(FileQuery(kinds: [.pdf, .spreadsheet]).extensions == ["pdf", "xlsx", "xls", "numbers", "csv", "ods"])
         #expect(FileQuery().extensions.isEmpty)
     }
 }

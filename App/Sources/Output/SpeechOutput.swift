@@ -30,6 +30,11 @@ final class SpeechOutput {
         set { player.isMuted = newValue }
     }
     var isSpeaking: Bool { player.isPlaying }
+
+    /// `AudioDevices.Device.uid`; nil goes back to the system default.
+    func useOutputDevice(_ uid: String?) {
+        player.useOutputDevice(uid)
+    }
     var playbackTimeline: PlaybackTimeline { player.timeline }
 
     func prepare() async throws {
