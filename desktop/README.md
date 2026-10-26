@@ -38,7 +38,7 @@ in a plain file.
 
 ## Status
 
-All five phases are done; 0.1.3 is the newest release.
+All five phases are done; 0.1.4 is the newest release.
 
 1. **Core** (done): the Turkish and English parsers from the Mac version with the same test cases, the
    tool-calling agent with confirmations and prompt-injection rules, and a text chat to try it.
