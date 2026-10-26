@@ -34,7 +34,22 @@ struct MenuBarContent: View {
         SettingsLink { Text("Ayarlar…") }
             .keyboardShortcut(",")
         if let release = updates.available {
-            Button("Yeni sürüm: \(AppIdentity.name) \(release.version)…") { NSWorkspace.shared.open(release.page) }
+            switch updates.installer.state {
+            case let .working(step):
+                Text("\(AppIdentity.name) \(release.version): \(step)")
+            case .idle, .failed:
+                if updates.canInstall {
+                    Button("Güncelle ve yeniden başlat: \(AppIdentity.name) \(release.version)") {
+                        Task { await updates.installer.install(release) }
+                    }
+                }
+                Button(updates.canInstall ? "Neler yeni?" : "Yeni sürüm: \(AppIdentity.name) \(release.version)…") {
+                    NSWorkspace.shared.open(release.page)
+                }
+            }
+            if case let .failed(message) = updates.installer.state {
+                Text("Güncellenemedi: \(message)")
+            }
         }
         Button("Kurulum rehberi…") { show(WindowID.onboarding) }
         Button("Ses Laboratuvarı…") { show(WindowID.audioLab) }

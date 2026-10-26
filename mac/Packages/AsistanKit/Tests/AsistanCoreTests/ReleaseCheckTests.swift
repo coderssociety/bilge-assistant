@@ -21,6 +21,47 @@ struct ReleaseCheckTests {
         #expect(try ReleaseCheck.latest(from: data) == .init(version: "0.3.0", page: URL(string: page)!))
     }
 
+    @Test("keeps the release's own files and finds the Mac package and the checksums")
+    func readsTheFiles() throws {
+        let base = "https://github.com/coderssociety/bilge/releases/download/v0.6.0/"
+        let data = Data("""
+        {"tag_name": "v0.6.0", "html_url": "https://github.com/coderssociety/bilge/releases/tag/v0.6.0", "assets": [
+          {"name": "Bilge-0.6.0.dmg", "browser_download_url": "\(base)Bilge-0.6.0.dmg"},
+          {"name": "SHA256SUMS", "browser_download_url": "\(base)SHA256SUMS"},
+          {"name": "Bilge-Setup-0.6.0.exe", "browser_download_url": "https://example.com/Bilge-Setup-0.6.0.exe"}
+        ]}
+        """.utf8)
+        let release = try ReleaseCheck.latest(from: data)
+        #expect(release.assets.map(\.name) == ["Bilge-0.6.0.dmg", "SHA256SUMS"])
+        #expect(release.macPackage?.url.absoluteString == base + "Bilge-0.6.0.dmg")
+        #expect(release.checksums?.name == "SHA256SUMS")
+    }
+
+    @Test("a release remembered before files were kept still decodes")
+    func oldRecord() throws {
+        let old = Data(#"{"version": "0.5.0", "page": "https://github.com/coderssociety/bilge/releases/tag/v0.5.0"}"#.utf8)
+        let release = try JSONDecoder().decode(ReleaseCheck.Release.self, from: old)
+        #expect(release.assets.isEmpty && release.macPackage == nil)
+    }
+
+    @Test("only this project's downloads pass", arguments: [
+        ("https://github.com/coderssociety/bilge/releases/download/v0.6.0/Bilge-0.6.0.dmg", true),
+        ("https://github.com/coderssociety/bilge/releases/download/../../evil/x.dmg", false),
+        ("https://github.com/coderssociety/other/releases/download/v1/x.dmg", false),
+        ("http://github.com/coderssociety/bilge/releases/download/v1/x.dmg", false),
+        ("https://objects.githubusercontent.com/x.dmg", false),
+    ])
+    func projectDownloads(url: String, accepted: Bool) {
+        #expect(ReleaseCheck.isProjectDownload(URL(string: url)!) == accepted)
+    }
+
+    @Test("reads a SHA256SUMS file")
+    func checksums() {
+        let hash = String(repeating: "ab", count: 32)
+        let text = "\(hash)  Bilge-0.6.0.dmg\n\(hash.uppercased()) *Bilge-Setup-0.6.0.exe\nnot a line\nabc  short.txt\n"
+        #expect(ReleaseCheck.checksums(in: text) == ["Bilge-0.6.0.dmg": hash, "Bilge-Setup-0.6.0.exe": hash])
+    }
+
     @Test("refuses a page outside the project and malformed answers")
     func refusesStrangeAnswers() {
         let foreign = Data(#"{"tag_name": "v9.0.0", "html_url": "https://example.com/bilge.dmg"}"#.utf8)

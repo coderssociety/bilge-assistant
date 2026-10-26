@@ -567,7 +567,7 @@ verileri Türkiye'yle ilgilidir. İngilizcede:
   | YouTube özeti | YouTube | Videoyu |
   | Web sayfaları | İstediğin site | Sayfa adresini |
   | Akıllı ev | Yalnızca girdiğin Home Assistant adresi | Komutunu ve erişim anahtarını |
-  | Güncelleme denetimi | GitHub, günde bir kez | İstekten fazlasını değil |
+  | Güncelleme denetimi ve güncelleme | GitHub, günde bir kez; güncellemeyi seçince dosyalar | İstekten fazlasını değil |
   | Modeller | Hugging Face | İndirilen modeli |
   | API ile bağlanan model (seçilirse) | OpenAI, Anthropic, Google Gemini, OpenRouter, Groq ya da DeepSeek | Sohbeti ve onun için okunan metni |
   | Bulutta konuşma tanıma (seçilirse) | OpenAI ya da Groq | Bilge dinlerken söylenenlerin kaydını: komutlar, devam soruları, cevaplar, dikte |
@@ -575,7 +575,11 @@ verileri Türkiye'yle ilgilidir. İngilizcede:
 - Web sayfası, radyo yayını ve haber akışı okunurken yerel ağ adreslerine erişim engellenir. Tek istisna Home
   Assistant'tır: ayrı bir bağlantı yalnızca Ayarlar > Akıllı ev'deki adrese gider, yönlendirmeleri izlemez ve
   vekil sunucuları (proxy) atlar. Erişim anahtarı Anahtar Zinciri'nde saklanır, hiçbir zaman günlüğe yazılmaz.
-- Güncelleme denetimi yeni sürüm çıktıysa yalnızca sayfasını menüde gösterir; kendiliğinden hiçbir şey indirmez.
+- Güncelleme denetimi yalnızca yeni sürümü haber verir; kendiliğinden hiçbir şey indirmez. Menüdeki (ya da Ayarlar >
+  Genel'deki) “Güncelle ve yeniden başlat”, DMG'yi bu projenin sürümünden indirir, sürümün `SHA256SUMS` listesiyle ve
+  içinde o sürümdeki Bilge'nin imzası bozulmamış olarak bulunduğuyla denetler, uygulamanın yerine koyar ve yeniden
+  başlatır. Bunun için Bilge'nin yazılabilir bir klasörde, örneğin Uygulamalar'da olması gerekir; değilse menü sürüm
+  sayfasını açar. Güncellemeden sonra macOS mikrofon ve Erişilebilirlik izinlerini yeniden sorabilir. Denetim
   Ayarlar > Genel'den kapatılabilir.
 - Hafıza, rutinler, kendi komutların, zamanlayıcılar, ses kimliği ve işlem kaydı `~/Library/Application Support/Asistan` altında, toplantı notları
   `~/Documents/Bilge/Toplantılar` içinde, yalnızca senin okuyabileceğin dosyalarda durur.

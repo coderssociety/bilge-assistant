@@ -566,7 +566,7 @@ Bilge was built for Turkish first. In English:
   | YouTube summaries | YouTube | The video |
   | Web pages | The site you ask for | The page address |
   | Smart home | Only the Home Assistant address you entered | Your command and the access token |
-  | Update check | GitHub, once a day | Nothing beyond the request |
+  | Update check and update | GitHub, once a day; the files when you choose to update | Nothing beyond the request |
   | Models | Hugging Face | The model being downloaded |
   | Model over an API (if chosen) | OpenAI, Anthropic, Google Gemini, OpenRouter, Groq or DeepSeek | Your conversation and the text read for it |
   | Cloud speech recognition (if chosen) | OpenAI or Groq | The recording of what is said while Bilge listens: commands, follow-ups, answers, dictation |
@@ -574,8 +574,12 @@ Bilge was built for Turkish first. In English:
 - Local network addresses are blocked when reading web pages, radio streams and feeds. Home Assistant is the
   one exception: a separate connection goes only to the address in Settings > Smart home, follows no redirects
   and bypasses proxies. Its token is kept in the Keychain and is never logged.
-- The update check only offers the new version's page in the menu; nothing is downloaded by itself. Settings >
-  General turns it off.
+- The update check only tells you about a new version; nothing is downloaded by itself. “Update and restart” in
+  the menu (or in Settings > General) downloads the DMG from this project's release, checks it against the
+  release's `SHA256SUMS` and that it holds Bilge at that version with an intact signature, puts it in place of the
+  app and starts it again. This needs Bilge in a folder it can write to, such as Applications; otherwise the menu
+  offers the release page. macOS may ask for the microphone and Accessibility permissions again after an update.
+  Settings > General turns the check off.
 - Memory, routines, your commands, timers, the voice ID and the action log are kept under `~/Library/Application Support/Asistan`, and
   meeting notes in `~/Documents/Bilge/Toplantılar`, in files only you can read.
 

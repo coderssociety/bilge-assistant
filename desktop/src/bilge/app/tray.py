@@ -42,6 +42,7 @@ class Tray(QObject):
     settings_requested = Signal()
     setup_requested = Signal()
     quit_requested = Signal()
+    install_requested = Signal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -55,6 +56,9 @@ class Tray(QObject):
         menu.addAction(self.listen)
         menu.addAction(t("menu.settings"), self.settings_requested.emit)
         menu.addAction(t("menu.setup"), self.setup_requested.emit)
+        self.install = QAction(menu, visible=False)
+        self.install.triggered.connect(self.install_requested.emit)
+        menu.addAction(self.install)
         self.update = QAction(menu, visible=False)
         self.update.triggered.connect(self._open_release)
         menu.addAction(self.update)
@@ -83,13 +87,17 @@ class Tray(QObject):
     def notify(self, message: str) -> None:
         self.icon.showMessage("Bilge", message, app_icon())
 
-    def show_update(self, release: Release, announce: bool) -> None:
-        """A newer Bilge is out: the menu offers its download page; `announce` also says so, once per version."""
+    def show_update(self, release: Release, announce: bool, installable: bool) -> None:
+        """A newer Bilge is out: the menu offers to install it and restart when this copy can, and its release page;
+        `announce` also says so, once per version."""
         self._release = release
-        self.update.setText(t("menu.update", version=release.version))
+        self.install.setText(t("menu.install", version=release.version))
+        self.install.setVisible(installable)
+        self.install.setEnabled(True)
+        self.update.setText(t("menu.whats_new") if installable else t("menu.update", version=release.version))
         self.update.setVisible(True)
         if announce:
-            self.notify(t("update.notice", version=release.version))
+            self.notify(t("update.notice_install" if installable else "update.notice", version=release.version))
 
     def _open_release(self) -> None:
         if self._release is not None:

@@ -9784,6 +9784,146 @@
           }
         }
       }
+    },
+    "Bu sürümde Mac paketi ya da sağlama listesi yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This release has no Mac package or checksum list."
+          }
+        }
+      }
+    },
+    "%@ bulunduğu klasörde güncellenemiyor; Uygulamalar klasörüne taşıyıp yeniden dene.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ can't be updated where it is; move it to Applications and try again."
+          }
+        }
+      }
+    },
+    "İndirilemedi (%lld).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't download it (%lld)."
+          }
+        }
+      }
+    },
+    "Sağlama listesinde Mac paketi yok.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The checksum list has no Mac package."
+          }
+        }
+      }
+    },
+    "İndirilen paket sağlama toplamıyla uyuşmuyor; kurulmadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The downloaded package doesn't match its checksum; nothing was installed."
+          }
+        }
+      }
+    },
+    "Paketin içinden beklenen uygulama çıkmadı; kurulmadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The package didn't hold the expected app; nothing was installed."
+          }
+        }
+      }
+    },
+    "%@ çalışmadı.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ failed."
+          }
+        }
+      }
+    },
+    "İndiriliyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading…"
+          }
+        }
+      }
+    },
+    "Kuruluyor…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing…"
+          }
+        }
+      }
+    },
+    "%@ %@: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@: %@"
+          }
+        }
+      }
+    },
+    "Güncelle ve yeniden başlat: %@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update and restart: %@ %@"
+          }
+        }
+      }
+    },
+    "Neler yeni?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's new?"
+          }
+        }
+      }
+    },
+    "Güncellenemedi: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't update: %@"
+          }
+        }
+      }
+    },
+    "Güncelle ve yeniden başlat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update and restart"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

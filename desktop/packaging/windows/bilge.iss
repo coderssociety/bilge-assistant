@@ -54,7 +54,15 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 Filename: "{app}\Bilge.exe"; Description: "{cm:Launch}"; Flags: nowait postinstall skipifsilent
+; An update started from inside Bilge runs silently with /RELAUNCH=1 and starts the new Bilge when it is done.
+Filename: "{app}\Bilge.exe"; Flags: nowait; Check: RelaunchAfterUpdate
 
 [UninstallRun]
 Filename: "{cmd}"; Parameters: "/c taskkill /im Bilge.exe /f & taskkill /im bilge-cli.exe /f"; Flags: runhidden; \
     RunOnceId: "StopBilge"
+
+[Code]
+function RelaunchAfterUpdate: Boolean;
+begin
+  Result := WizardSilent and (ExpandConstant('{param:RELAUNCH|0}') = '1');
+end;

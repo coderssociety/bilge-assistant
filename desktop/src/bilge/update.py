@@ -1,12 +1,12 @@
-"""Whether a newer Bilge has been published on GitHub, and the page to get it from.
+"""Whether a newer Bilge has been published on GitHub, the page about it, and the files it comes in.
 
-Nothing is downloaded or installed: the release page is offered to the user. GitHub is asked at most once a day,
-and only for the newest published release (drafts and pre-releases are left out by GitHub itself).
+GitHub is asked at most once a day, and only for the newest published release (drafts and pre-releases are left out
+by GitHub itself). Installing one is `bilge.updater`'s job, and only when the user asks for it.
 """
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -20,6 +20,8 @@ log = logging.getLogger(__name__)
 REPOSITORY = "coderssociety/bilge"
 LATEST_URL = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 RELEASE_PAGES = f"https://github.com/{REPOSITORY}/releases/"
+DOWNLOADS = f"https://github.com/{REPOSITORY}/releases/download/"
+CHECKSUMS = "SHA256SUMS"
 CHECK_EVERY = timedelta(days=1)
 _TIMEOUT = httpx.Timeout(15.0, connect=10.0)
 
@@ -28,6 +30,8 @@ _TIMEOUT = httpx.Timeout(15.0, connect=10.0)
 class Release:
     version: str
     url: str
+    # File name → download address, only for files under this project's release downloads.
+    assets: dict[str, str] = field(default_factory=dict, compare=False)
 
 
 class UpdateError(Exception):
@@ -67,11 +71,40 @@ def latest_release(client: httpx.Client | None = None) -> Release | None:
     try:
         data = response.json()
         tag, page = str(data["tag_name"]), str(data["html_url"])
-    except (ValueError, KeyError, TypeError) as error:
+        files = data.get("assets") or []
+        assets = {str(f["name"]): str(f["browser_download_url"]) for f in files if isinstance(f, dict)}
+    except (ValueError, KeyError, TypeError, AttributeError) as error:
         raise UpdateError("Unexpected answer from GitHub") from error
     if not is_project_page(page) or _parsed(tag) is None:
         raise UpdateError(f"Unexpected release: {tag} at {page}")
-    return Release(tag.removeprefix("v"), page)
+    return Release(tag.removeprefix("v"), page, _project_downloads(assets))
+
+
+def _project_downloads(assets: object) -> dict[str, str]:
+    if not isinstance(assets, dict):
+        return {}
+    return {str(name): str(url) for name, url in assets.items() if is_project_download(str(url))}
+
+
+def is_project_download(url: str) -> bool:
+    """Files are only fetched from this project's own release downloads; GitHub then redirects to its file storage."""
+    parts = urlsplit(url)
+    path = parts.path.lower()
+    return (url.startswith(DOWNLOADS) and parts.hostname == "github.com" and parts.port is None
+            and parts.username is None and ".." not in path and "%2e" not in path and "%2f" not in path)  # fmt: skip
+
+
+def parse_checksums(text: str) -> dict[str, str]:
+    """The SHA-256 of each file in a SHA256SUMS file (`sha256sum` output: "<hex>  <name>" or "<hex> *<name>")."""
+    sums = {}
+    for line in text.splitlines():
+        parts = line.strip().split(maxsplit=1)
+        if len(parts) != 2:
+            continue
+        digest, name = parts[0].lower(), parts[1].strip().lstrip("*")
+        if len(digest) == 64 and all(c in "0123456789abcdef" for c in digest) and name:
+            sums[name] = digest
+    return sums
 
 
 def is_project_page(url: str) -> bool:
@@ -121,8 +154,8 @@ class CheckRecord:
         """The release found last time, if it is still newer than what runs now."""
         offered = self._read().get("newer")
         try:
-            release = Release(str(offered["version"]), str(offered["url"]))
-        except (KeyError, TypeError):
+            release = Release(str(offered["version"]), str(offered["url"]), _project_downloads(offered.get("assets")))
+        except (KeyError, TypeError, AttributeError):
             return None
         if running is None or not is_project_page(release.url) or not is_newer(release.version, running):
             return None

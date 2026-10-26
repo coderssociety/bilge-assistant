@@ -134,7 +134,18 @@ struct GeneralSettingsView: View {
         case let .upToDate(version)?:
             Text("\(AppIdentity.name) güncel (\(version)).").font(.caption).foregroundStyle(.secondary)
         case let .available(release)?:
-            Link("Yeni sürüm var: \(AppIdentity.name) \(release.version)", destination: release.page).font(.caption)
+            HStack {
+                Link("Yeni sürüm var: \(AppIdentity.name) \(release.version)", destination: release.page).font(.caption)
+                if updates.canInstall {
+                    Button("Güncelle ve yeniden başlat") { Task { await updates.installer.install(release) } }
+                        .disabled(updates.installer.isWorking)
+                }
+                switch updates.installer.state {
+                case let .working(step): Text(step).font(.caption).foregroundStyle(.secondary)
+                case let .failed(message): Text(message).font(.caption).foregroundStyle(.red)
+                case .idle: EmptyView()
+                }
+            }
         case let .failed(message)?:
             Text("Denetlenemedi: \(message)").font(.caption).foregroundStyle(.red)
         }

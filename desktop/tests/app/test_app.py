@@ -378,10 +378,25 @@ def test_a_newer_release_is_offered_in_the_menu(qapp):
     tray.notify = notified.append
     assert not tray.update.isVisible()
     release = Release("0.2.0", "https://github.com/coderssociety/bilge/releases/tag/v0.2.0")
-    tray.show_update(release, announce=True)
-    tray.show_update(release, announce=False)
+    tray.show_update(release, announce=True, installable=False)
+    tray.show_update(release, announce=False, installable=False)
     assert tray.update.isVisible() and "0.2.0" in tray.update.text()
+    assert not tray.install.isVisible()
     assert len(notified) == 1
+
+
+def test_an_installable_release_is_offered_as_update_and_restart(qapp):
+    from bilge.app.tray import Tray
+    from bilge.update import Release
+
+    tray = Tray()
+    tray.notify = lambda message: None
+    requested = []
+    tray.install_requested.connect(lambda: requested.append(True))
+    tray.show_update(Release("0.6.0", "https://github.com/coderssociety/bilge/releases/tag/v0.6.0"), True, True)
+    assert tray.install.isVisible() and "0.6.0" in tray.install.text()
+    tray.install.trigger()
+    assert requested == [True]
 
 
 def test_the_shortcut_is_ignored_while_the_settings_are_open(qapp, isolated, tmp_path, monkeypatch):

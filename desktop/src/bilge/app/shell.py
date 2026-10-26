@@ -1,11 +1,13 @@
 """Ties the windows to the assistant: the tray (or a small window where the desktop has no tray), the corner window,
 the settings and the setup."""
 
+from collections.abc import Callable
+
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon, QVBoxLayout, QWidget
 
-from bilge import config, update
-from bilge.app import texts
+from bilge import config, update, updater
+from bilge.app import texts, worker
 from bilge.app.controller import AssistantController
 from bilge.app.hud import Hud
 from bilge.app.settings import SettingsWindow
@@ -99,9 +101,10 @@ class Shell:
         self.tray.settings_requested.connect(self.open_settings)
         self.tray.setup_requested.connect(self.open_setup)
         self.tray.quit_requested.connect(self.quit)
+        self.tray.install_requested.connect(self.install_update)
         self.tray.show()
         if self._release is not None:
-            self.tray.show_update(self._release, announce=False)
+            self.tray.show_update(self._release, announce=False, installable=updater.can_install(self._release))
         self._status(self.controller.status)
 
     def _look_for_tray(self) -> None:
@@ -162,7 +165,30 @@ class Shell:
         first = self._release is None or self._release.version != release.version
         self._release = release
         if self.tray is not None:
-            self.tray.show_update(release, announce=first)
+            self.tray.show_update(release, announce=first, installable=updater.can_install(release))
+
+    def install_update(self) -> None:
+        """Downloads and checks the new version in the background; once it is in place the new Bilge is started and
+        this one quits."""
+        release = self._release
+        if release is None or self.tray is None or not self.tray.install.isEnabled():
+            return
+        self.tray.install.setEnabled(False)
+        self.tray.notify(t("update.installing", version=release.version))
+        worker.run(lambda: updater.prepare(release), self._update_ready, self._update_failed)
+
+    def _update_ready(self, start_new_bilge: Callable[[], None]) -> None:
+        start_new_bilge()
+        self.quit()
+
+    def _update_failed(self, reason: str) -> None:
+        try:
+            error = t(f"update.error.{reason}")
+        except KeyError:
+            error = reason
+        if self.tray is not None:
+            self.tray.install.setEnabled(True)
+            self.tray.notify(t("update.install_failed", error=error))
 
     def toggle_listening(self) -> None:
         if self.controller.is_on:

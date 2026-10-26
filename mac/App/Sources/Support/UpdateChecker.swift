@@ -24,6 +24,12 @@ final class UpdateChecker {
 
     /// A published release newer than this build, once known.
     private(set) var available: ReleaseCheck.Release?
+    let installer = UpdateInstaller()
+
+    /// Whether `available` can be installed from inside Bilge rather than from its release page.
+    var canInstall: Bool {
+        available?.macPackage != nil && available?.checksums != nil && UpdateInstaller.canReplaceItself
+    }
     @ObservationIgnored private let settings: AssistantSettings
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var loop: Task<Void, Never>?
