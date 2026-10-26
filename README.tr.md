@@ -10,6 +10,8 @@
 
 <p align="center">
   <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=%C4%B0ndir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi indir"></a>
+  <br>
+  <sub>Ücretsiz ve açık kaynak · Mac, Windows ve Linux · hesap ve abonelik yok</sub>
 </p>
 
 <p align="center">
@@ -39,6 +41,9 @@ Her sürümde üçü de var, [Sürümler](https://github.com/coderssociety/bilge
 | **Mac** | `Bilge-<sürüm>.dmg` | Apple Silicon'lı Mac'te macOS 27 ve sonrası, Apple Intelligence açık |
 | **Windows** | `Bilge-Setup-<sürüm>.exe` | Windows 10 ya da 11, 64 bit; yönetici izni olmadan senin kullanıcın için kurulur |
 | **Linux** | `Bilge-<sürüm>-x86_64.AppImage`, `Bilge-<sürüm>-aarch64.AppImage` | glibc 2.34+ (Ubuntu 22.04, Debian 12, Fedora 36 ve sonrası); arm64 için 2.39+ |
+
+**Hemen başla:** sistemine uygun dosyayı indir, aç, dili seç ve “Bilge, saat kaç?” de. Yeni sürümler uygulamanın
+içinde sunulur: “Güncelle ve yeniden başlat” kurar.
 
 `SHA256SUMS` dosyası sağlama toplamlarını içerir. Paketler henüz imzalı olmadığından macOS ve Windows ilk açılışta
 uyarır; nasıl açılacağı her uygulamanın sayfasında yazılı.

@@ -10,6 +10,8 @@
 
 <p align="center">
   <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Download&style=for-the-badge&color=2A2E7A" alt="Download Bilge"></a>
+  <br>
+  <sub>Free and open source · Mac, Windows and Linux · no account, no subscription</sub>
 </p>
 
 <p align="center">
@@ -40,6 +42,9 @@ Every release has all three, under [Releases](https://github.com/coderssociety/b
 | **Mac** | `Bilge-<version>.dmg` | macOS 27 or later on Apple silicon, with Apple Intelligence on |
 | **Windows** | `Bilge-Setup-<version>.exe` | Windows 10 or 11, 64-bit; installs for your user without administrator rights |
 | **Linux** | `Bilge-<version>-x86_64.AppImage`, `Bilge-<version>-aarch64.AppImage` | glibc 2.34+ (Ubuntu 22.04, Debian 12, Fedora 36 or newer); 2.39+ for arm64 |
+
+**Get started:** download the file for your system, open it, choose a language and say “Bilge, what time is it?”.
+New versions are offered inside the app: “Update and restart” installs them.
 
 `SHA256SUMS` lists the checksums. The packages aren't signed yet, so macOS and Windows warn the first time; each
 app's page explains how to open it.
