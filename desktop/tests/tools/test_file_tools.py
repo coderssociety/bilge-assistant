@@ -255,6 +255,16 @@ def test_pictures_music_and_videos_folders_open(home, command, folder):
     assert opener.opened == [str(home / folder)]
 
 
+def test_on_windows_a_folder_opens_whatever_its_name_but_a_program_is_only_revealed(tmp_path, monkeypatch):
+    from bilge.tools.desktop import files
+
+    monkeypatch.setattr(files.os, "name", "nt")
+    (tmp_path / "Belgeler").mkdir()
+    (tmp_path / "kurulum.exe").write_bytes(b"MZ")
+    assert not files.is_executable(tmp_path / "Belgeler")
+    assert files.is_executable(tmp_path / "kurulum.exe")
+
+
 def write_xlsx(path: Path):
     ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
     with zipfile.ZipFile(path, "w") as archive:

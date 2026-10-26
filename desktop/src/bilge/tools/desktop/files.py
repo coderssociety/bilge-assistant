@@ -363,7 +363,8 @@ class FileTools:
 
 def is_executable(path: Path) -> bool:
     if os.name == "nt":
-        return not _safe_on_windows(path.name)
+        # A folder opens in Explorer whatever its name; only files are judged by their extension.
+        return not path.is_dir() and not _safe_on_windows(path.name)
     if path.suffix.lower().lstrip(".") in _EXECUTABLE_SUFFIXES:
         return True
     try:
