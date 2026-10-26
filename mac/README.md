@@ -574,7 +574,8 @@ Bilge was built for Turkish first. In English:
 - Local network addresses are blocked when reading web pages, radio streams and feeds. Home Assistant is the
   one exception: a separate connection goes only to the address in Settings > Smart home, follows no redirects
   and bypasses proxies. Its token is kept in the Keychain and is never logged.
-- The update check only tells you about a new version; nothing is downloaded by itself. “Update and restart” in
+- The update check only tells you about a new version, with a small window once per version; nothing is downloaded
+  by itself. “Update and restart” in
   the menu (or in Settings > General) downloads the DMG from this project's release, checks it against the
   release's `SHA256SUMS` and that it holds Bilge at that version with an intact signature, puts it in place of the
   app and starts it again. This needs Bilge in a folder it can write to, such as Applications; otherwise the menu

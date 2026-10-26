@@ -171,7 +171,8 @@ saklanır. Denetim çalışamazsa Bilge seni dışarıda bırakmak yerine konuş
 
 ## Güncellemeler
 
-Bilge günde bir kez GitHub'a en yeni sürümü sorar; daha yenisi varsa bildirim alanı menüsünde görünür. Kendiliğinden
+Bilge günde bir kez GitHub'a en yeni sürümü sorar; daha yenisi her sürüm için bir kez küçük bir pencereyle haber
+verilir ve bildirim alanı menüsünde kalır. Kendiliğinden
 hiçbir şey indirilmez ya da kurulmaz. Menüdeki **Güncelle ve yeniden başlat**, sistemine uygun paketi bu projenin
 sürümünden indirir ve bir şey değiştirmeden önce sürümün `SHA256SUMS` listesiyle denetler. Windows'ta kurulum sessizce
 çalışır ve yeni Bilge'yi başlatır; Linux'ta AppImage çalışanın yerine konur (Bilge'nin yazabildiği bir klasörde olmalı)

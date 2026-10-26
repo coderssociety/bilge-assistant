@@ -120,3 +120,16 @@ def test_a_damaged_record_means_checking_again(tmp_path, content: str) -> None:
 )
 def test_only_this_projects_release_pages_are_opened(page: str, accepted: bool) -> None:
     assert update.is_project_page(page) is accepted
+
+
+def test_the_update_window_is_remembered_per_version_without_losing_the_check(tmp_path) -> None:
+    record = update.CheckRecord(tmp_path / "update.json")
+    now = datetime(2026, 10, 26, tzinfo=UTC)
+    newer = update.Release("0.7.0", "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.7.0")
+    record.record(now, newer)
+    assert record.announced() is None
+    record.mark_announced("0.7.0")
+    assert record.announced() == "0.7.0"
+    assert record.last() == now and record.found("0.6.0") == newer
+    record.record(now + timedelta(days=1), newer)
+    assert record.announced() == "0.7.0"

@@ -74,6 +74,7 @@ final class AppEnvironment {
     let shortcut: ListeningShortcut
     let updates: UpdateChecker
     private let hud: HUDPresenter
+    private let updatePrompt: UpdatePrompt
     private let alerts: ProactiveAlerts
     private let earthquakeAlerts: EarthquakeAlertMonitor
     private let routineScheduler: RoutineScheduler
@@ -125,6 +126,8 @@ final class AppEnvironment {
             assistant?.restartIfRunning()
         })
         updates = UpdateChecker(settings: settings)
+        updatePrompt = UpdatePrompt(updates: updates)
+        updates.onNewRelease = { [updatePrompt] release in updatePrompt.show(release) }
         hud = HUDPresenter(assistant: assistant, settings: settings)
         alerts = ProactiveAlerts(settings: settings, isListening: { [weak assistant] in assistant?.isRunning ?? false },
                                  announce: { await announcer.target?.announce($0) })

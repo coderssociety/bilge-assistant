@@ -3,8 +3,9 @@ the settings and the setup."""
 
 from collections.abc import Callable
 
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QSystemTrayIcon, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QSystemTrayIcon, QVBoxLayout, QWidget
 
 from bilge import config, update, updater
 from bilge.app import texts, worker
@@ -69,6 +70,8 @@ class Shell:
         self.updates = UpdateWatcher(lambda: self._settings().check_updates)
         self.updates.found.connect(self._update_found)
         self._release: update.Release | None = None
+        self._installing = False
+        self._update_box: QMessageBox | None = None
         self._build_menus()
 
     def _settings(self) -> config.Settings:
@@ -162,19 +165,49 @@ class Shell:
         self._failed(message)
 
     def _update_found(self, release: update.Release) -> None:
-        first = self._release is None or self._release.version != release.version
         self._release = release
+        installable = updater.can_install(release)
         if self.tray is not None:
-            self.tray.show_update(release, announce=first, installable=updater.can_install(release))
+            self.tray.show_update(release, announce=False, installable=installable)
+        # The window comes once per version; after "Later" the menu keeps the offer.
+        if self.updates.record.announced() != release.version:
+            self.updates.record.mark_announced(release.version)
+            self._offer_update(release, installable)
+
+    def _offer_update(self, release: update.Release, installable: bool) -> None:
+        """A window that doesn't block anything: Bilge keeps listening while it is open."""
+        box = QMessageBox(QMessageBox.Icon.Information, "Bilge", t("update.prompt_title", version=release.version))
+        box.setWindowIcon(app_icon())
+        box.setInformativeText(t("update.prompt_install" if installable else "update.prompt_page"))
+        main = box.addButton(t("update.install_now" if installable else "update.open_page"),
+                             QMessageBox.ButtonRole.AcceptRole)  # fmt: skip
+        news = box.addButton(t("menu.whats_new"), QMessageBox.ButtonRole.ActionRole)
+        box.addButton(t("update.later"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(main)
+        box.setWindowModality(Qt.WindowModality.NonModal)
+        box.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+
+        def clicked(button: object) -> None:
+            if button is main and installable:
+                self.install_update()
+            elif button is main or button is news:
+                QDesktopServices.openUrl(QUrl(release.url))
+
+        box.buttonClicked.connect(clicked)
+        self._update_box = box
+        box.show()
+        box.raise_()
 
     def install_update(self) -> None:
         """Downloads and checks the new version in the background; once it is in place the new Bilge is started and
         this one quits."""
         release = self._release
-        if release is None or self.tray is None or not self.tray.install.isEnabled():
+        if release is None or self._installing:
             return
-        self.tray.install.setEnabled(False)
-        self.tray.notify(t("update.installing", version=release.version))
+        self._installing = True
+        if self.tray is not None:
+            self.tray.install.setEnabled(False)
+        self._failed(t("update.installing", version=release.version))
         worker.run(lambda: updater.prepare(release), self._update_ready, self._update_failed)
 
     def _update_ready(self, start_new_bilge: Callable[[], None]) -> None:
@@ -186,9 +219,10 @@ class Shell:
             error = t(f"update.error.{reason}")
         except KeyError:
             error = reason
+        self._installing = False
         if self.tray is not None:
             self.tray.install.setEnabled(True)
-            self.tray.notify(t("update.install_failed", error=error))
+        self._failed(t("update.install_failed", error=error))
 
     def toggle_listening(self) -> None:
         if self.controller.is_on:

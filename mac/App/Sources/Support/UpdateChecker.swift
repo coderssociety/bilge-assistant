@@ -16,6 +16,7 @@ final class UpdateChecker {
     private enum Key {
         static let lastChecked = "updateLastChecked"
         static let newer = "updateNewerRelease"
+        static let announced = "updateAnnouncedVersion"
     }
 
     private static let firstCheckDelay = Duration.seconds(60)
@@ -25,6 +26,8 @@ final class UpdateChecker {
     /// A published release newer than this build, once known.
     private(set) var available: ReleaseCheck.Release?
     let installer = UpdateInstaller()
+    /// Told about a newer release the first time a daily check finds it, once per version.
+    @ObservationIgnored var onNewRelease: ((ReleaseCheck.Release) -> Void)?
 
     /// Whether `available` can be installed from inside Bilge rather than from its release page.
     var canInstall: Bool {
@@ -57,9 +60,15 @@ final class UpdateChecker {
     private func checkIfDue() async {
         let last = defaults.object(forKey: Key.lastChecked) as? Date
         guard settings.checkForUpdates, ReleaseCheck.isDue(lastChecked: last, now: .now) else { return }
-        if case let .failed(message) = await checkNow() {
+        switch await checkNow() {
+        case let .available(release) where defaults.string(forKey: Key.announced) != release.version:
+            defaults.set(release.version, forKey: Key.announced)
+            onNewRelease?(release)
+        case let .failed(message):
             // Tried again within the hour.
             Log.app.info("Could not check for a newer Bilge: \(message, privacy: .public)")
+        case .available, .upToDate:
+            break
         }
     }
 

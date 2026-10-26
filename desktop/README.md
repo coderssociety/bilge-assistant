@@ -172,7 +172,8 @@ Bilge lets speech through rather than lock you out.
 
 ## Updates
 
-Once a day Bilge asks GitHub for the newest release; a newer one shows up in the tray menu. Nothing is downloaded
+Once a day Bilge asks GitHub for the newest release; a newer one is announced in a small window, once per version,
+and stays in the tray menu. Nothing is downloaded
 or installed by itself. **Update and restart** in the menu downloads the package for your system from this project's
 release and checks it against the release's `SHA256SUMS` before anything is replaced. On Windows the installer then
 runs silently and starts the new Bilge; on Linux the AppImage is put in place of the running one (it needs a folder

@@ -162,7 +162,18 @@ class CheckRecord:
         return release
 
     def record(self, now: datetime, newer: Release | None) -> None:
-        data = {"checked": now.astimezone(UTC).isoformat(), "newer": vars(newer) if newer else None}
+        self._write({"checked": now.astimezone(UTC).isoformat(), "newer": vars(newer) if newer else None})
+
+    def announced(self) -> str | None:
+        """The last version the user was told about with the update window; it is shown once per version."""
+        value = self._read().get("announced")
+        return value if isinstance(value, str) else None
+
+    def mark_announced(self, version: str) -> None:
+        self._write({"announced": version})
+
+    def _write(self, changes: dict) -> None:
+        data = {**self._read(), **changes}
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             self.path.write_text(json.dumps(data), encoding="utf-8")

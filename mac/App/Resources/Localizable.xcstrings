@@ -9924,6 +9924,56 @@
           }
         }
       }
+    },
+    "%@ %@ çıktı": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@ is out"
+          }
+        }
+      }
+    },
+    "Şimdi indirip kurabilir ve yeniden başlayabilirim; birkaç dakika sürer. Neler değiştiğini sürüm sayfasında görebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can download and install it now, then restart; it takes a few minutes. The release page shows what changed."
+          }
+        }
+      }
+    },
+    "Yeni sürümü sürüm sayfasından indirebilirsin.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can download the new version from its release page."
+          }
+        }
+      }
+    },
+    "Sonra": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Later"
+          }
+        }
+      }
+    },
+    "İndirme sayfasını aç": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the download page"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -575,7 +575,8 @@ verileri Türkiye'yle ilgilidir. İngilizcede:
 - Web sayfası, radyo yayını ve haber akışı okunurken yerel ağ adreslerine erişim engellenir. Tek istisna Home
   Assistant'tır: ayrı bir bağlantı yalnızca Ayarlar > Akıllı ev'deki adrese gider, yönlendirmeleri izlemez ve
   vekil sunucuları (proxy) atlar. Erişim anahtarı Anahtar Zinciri'nde saklanır, hiçbir zaman günlüğe yazılmaz.
-- Güncelleme denetimi yalnızca yeni sürümü haber verir; kendiliğinden hiçbir şey indirmez. Menüdeki (ya da Ayarlar >
+- Güncelleme denetimi yalnızca yeni sürümü haber verir, her sürüm için bir kez küçük bir pencereyle; kendiliğinden
+  hiçbir şey indirmez. Menüdeki (ya da Ayarlar >
   Genel'deki) “Güncelle ve yeniden başlat”, DMG'yi bu projenin sürümünden indirir, sürümün `SHA256SUMS` listesiyle ve
   içinde o sürümdeki Bilge'nin imzası bozulmamış olarak bulunduğuyla denetler, uygulamanın yerine koyar ve yeniden
   başlatır. Bunun için Bilge'nin yazılabilir bir klasörde, örneğin Uygulamalar'da olması gerekir; değilse menü sürüm
