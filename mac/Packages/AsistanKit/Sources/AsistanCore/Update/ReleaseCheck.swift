@@ -43,7 +43,7 @@ public enum ReleaseCheck {
         case foreignPage(String)
     }
 
-    public static let repository = "coderssociety/bilge"
+    public static let repository = "coderssociety/bilge-assistant"
     public static let latestURL = URL(string: "https://api.github.com/repos/\(repository)/releases/latest")!
     public static let releasePages = "https://github.com/\(repository)/releases/"
     public static let downloads = "https://github.com/\(repository)/releases/download/"

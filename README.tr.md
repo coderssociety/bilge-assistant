@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=%C4%B0ndir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi indir"></a>
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=%C4%B0ndir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi indir"></a>
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@ belgeler, müzik, tarayıcı ve akıllı ev. Geri alınamayan her iş sesli bir 
 
 ## İndir
 
-Her sürümde üçü de var, [Sürümler](https://github.com/coderssociety/bilge/releases/latest) sayfasında:
+Her sürümde üçü de var, [Sürümler](https://github.com/coderssociety/bilge-assistant/releases/latest) sayfasında:
 
 | Sistem | Dosya | Gerekenler |
 |---|---|---|

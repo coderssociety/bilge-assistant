@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=Download&style=for-the-badge&color=2A2E7A" alt="Download Bilge"></a>
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Download&style=for-the-badge&color=2A2E7A" alt="Download Bilge"></a>
 </p>
 
 <p align="center">
@@ -33,7 +33,7 @@ spoken yes.
 
 ## Download
 
-Every release has all three, under [Releases](https://github.com/coderssociety/bilge/releases/latest):
+Every release has all three, under [Releases](https://github.com/coderssociety/bilge-assistant/releases/latest):
 
 | System | File | Needs |
 |---|---|---|

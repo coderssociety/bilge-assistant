@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=Mac%20i%C3%A7in%20indir&logo=apple&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Mac için indir"></a>
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Mac%20i%C3%A7in%20indir&logo=apple&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Mac için indir"></a>
   <br>
   <sub>Ücretsiz ve açık kaynak · Apple Silicon'lı Mac'te macOS 27 ve sonrası, Apple Intelligence açık ·
   <a href="../desktop/README.tr.md">Windows ve Linux →</a></sub>

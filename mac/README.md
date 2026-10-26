@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=Download%20for%20Mac&logo=apple&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Mac"></a>
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Download%20for%20Mac&logo=apple&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Mac"></a>
   <br>
   <sub>Free and open source · macOS 27 or later on Apple silicon, with Apple Intelligence on ·
   <a href="../desktop/README.md">Windows and Linux →</a></sub>

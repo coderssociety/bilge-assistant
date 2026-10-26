@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=Windows%20ve%20Linux%20i%C3%A7in%20indir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Windows ve Linux için indir"></a>
+  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Windows%20ve%20Linux%20i%C3%A7in%20indir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Windows ve Linux için indir"></a>
   <br>
   <sub>Ücretsiz ve açık kaynak · Windows 10/11 kurulumu · x86_64 ve arm64 için Linux AppImage ·
   <a href="../mac/README.tr.md">Mac mi kullanıyorsun? →</a></sub>
