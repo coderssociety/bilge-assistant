@@ -235,7 +235,10 @@ anımsatıcılara eklemek ya da onları değiştirmek, bir nota eklemek, unutmak
 Wi-Fi'ı ya da Bluetooth'u kapatmak, yeniden başlatmak, kapatmak ya da oturumu kapatmak, evde bir kilit, garaj kapısı
 ya da alarm, ve kendi komutlarının her birinin ilk çalışması. Bilge'nin başka bir yerde okuduğu metni (bir web
 sayfası, bir e-posta, pano) taşıyabilecek her adım da öyle. Bir e-posta, gideceği adresle birlikte gönderilmeden
-önce sesli okunur; bir SMS de numarasıyla birlikte. Ayarlar → Geçmiş, Bilge'nin ne yaptığını ve neye hayır dediğini
+önce sesli okunur; bir SMS de numarasıyla birlikte. E-posta ya da SMS göndermek, yeniden başlatmak, kapatmak ya da
+oturumu kapatmak ve kendi komutların açık bir “evet”, “onaylıyorum” ya da “gönder” ister: televizyondan gelen bir
+“tamam” yetmez. Bilge beklerken duyulan başka sözler cevap sayılmaz; birkaç saniye içinde net bir cevap gelmezse
+hiçbir şey yapılmaz. Ayarlar → Geçmiş, Bilge'nin ne yaptığını ve neye hayır dediğini
 gösterir.
 
 ### Takvim bağlamak

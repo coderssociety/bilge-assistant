@@ -23,7 +23,7 @@ def tools_for(store, language=TR):
 def agent_for(store, answers=(), language=TR):
     asked, pending = [], list(answers)
 
-    def confirm(question):
+    def confirm(question, strict=False):
         asked.append(question)
         return pending.pop(0)
 
@@ -199,7 +199,7 @@ def test_a_routine_carrying_a_listening_mode_command_is_set_up_rather_than_run_n
 
     monkeypatch.setattr(desktop, "folders", lambda: Folders(tmp_path))
     store = routines.RoutineStore(tmp_path / "routines.json")
-    agent = Agent(Provider(), Registry(routines.routine_tools(store, TR)), lambda _: False, TR,
+    agent = Agent(Provider(), Registry(routines.routine_tools(store, TR)), lambda _, strict=False: False, TR,
                   rules=routines.routine_rules(TR))  # fmt: skip
     assembly._listening_modes(agent, Recognizer(), TR, tmp_path, announce=lambda _: None)
     for said in ("her pazartesi 10'da toplantıyı kaydet", "her pazartesi 10'da tercüman modunu aç"):

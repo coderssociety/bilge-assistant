@@ -207,8 +207,14 @@ class FileTools:
         }.get(name, self.folders.home)()  # fmt: skip
 
     def open(self, path: Path, known_folder: bool = False) -> str:
-        """`known_folder`: Desktop, Documents and the like, which open even before they exist on disk."""
+        """`known_folder`: Desktop, Documents and the like, which open even before they exist on disk: the system's
+        opener refuses a missing folder, so it is made first, as the file manager does for these folders."""
         try:
+            if known_folder and not path.exists():
+                try:
+                    path.mkdir(parents=True)
+                except OSError as error:
+                    raise DesktopError(f"Could not create {path}: {error}") from error
             if not known_folder and is_executable(path):
                 self.opener.reveal(path)
                 return self.texts["revealed"].format(name=path.name)

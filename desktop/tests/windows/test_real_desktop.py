@@ -190,7 +190,7 @@ def test_an_everyday_command_runs_through_the_assembled_assistant(desktop):
     from bilge import assembly, config
 
     settings = config.Settings(model=config.ModelSettings("lmstudio", "not-needed-for-quick-commands"))
-    agent = assembly.build_agent(settings, confirm=lambda question: True)
+    agent = assembly.build_agent(settings, confirm=lambda question, strict=False: True)
     before = desktop.volume.state()
     try:
         assert agent.handle("sesi yüzde 40 yap").text == "Ses seviyesi yüzde 40."

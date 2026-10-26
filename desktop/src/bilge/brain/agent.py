@@ -35,7 +35,8 @@ MAX_ERROR_CHARACTERS = 300
 
 
 class Confirmer(Protocol):
-    def __call__(self, question: str) -> bool: ...
+    # `strict`: only an explicit yes counts (`Tool.explicit_yes`).
+    def __call__(self, question: str, strict: bool = False) -> bool: ...
 
 
 @dataclass(frozen=True)
@@ -282,7 +283,7 @@ class Agent:
         if self._unattended:
             self._record(call, "needs user", "")
             return _Step(texts["declined"].format(name=tool.name), False, False, "", needs_user=True)
-        if self.confirm(question):
+        if self.confirm(question, strict=tool.explicit_yes):
             return None
         self._record(call, "declined", "")
         return _Step(texts["declined"].format(name=tool.name), False, False, texts["declined_spoken"])

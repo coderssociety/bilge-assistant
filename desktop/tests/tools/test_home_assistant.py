@@ -92,7 +92,7 @@ def test_the_tool_speaks_the_reply_and_turns_failures_into_sentences():
 def agent_with_home(home, answers=()):
     asked, pending = [], list(answers)
 
-    def confirm(question):
+    def confirm(question, strict=False):
         asked.append(question)
         return pending.pop(0)
 

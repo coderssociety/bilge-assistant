@@ -33,7 +33,7 @@ def agent_with(tools, rules=(), modes=(), provider=None, answers=()):
     pending = list(answers)
     asked = []
 
-    def confirm(question):
+    def confirm(question, strict=False):
         asked.append(question)
         return pending.pop(0)
 

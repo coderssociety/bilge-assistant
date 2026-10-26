@@ -237,7 +237,10 @@ calendar and reminders, adding to a note, forgetting, setting up a routine, putt
 Wi-Fi or Bluetooth off, restarting, shutting down or logging out, a lock, garage door or alarm at home, and the first
 run of each of your own commands. So does any step that could carry text Bilge has read somewhere else, such as a
 web page, an e-mail or the clipboard. An e-mail is read out with the address it goes to before it is sent, and a
-text message with its number. Settings → History shows what Bilge did, and what you said no to.
+text message with its number. Sending an e-mail or a text, restarting, shutting down or logging out, and your own
+commands need an explicit “yes” or “send” (“evet”, “onaylıyorum”, “gönder” in Turkish): a casual “okay” from the TV
+is not enough. Anything else heard while Bilge waits is ignored, and with no clear answer within a few seconds nothing
+is done. Settings → History shows what Bilge did, and what you said no to.
 
 ### Connecting a calendar
 

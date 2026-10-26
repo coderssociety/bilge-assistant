@@ -206,7 +206,7 @@ def power_tool(power: Power, language: AssistantLanguage) -> Tool:
         return texts["question_" + action]
 
     return Tool("power", texts["power"], run=run, parameters=obj(["action"], action=choice(PowerAction, "")),
-                risk=Risk.CONFIRM, confirmation=question)  # fmt: skip
+                risk=Risk.CONFIRM, confirmation=question, explicit_yes=True)  # fmt: skip
 
 
 def hardware_tools(

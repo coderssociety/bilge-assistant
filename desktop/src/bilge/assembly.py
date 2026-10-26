@@ -448,7 +448,7 @@ def build_voice_assistant(settings: config.Settings, on_event, provider: str | N
     player = MediaPlayer(language)
     agent = build_agent(
         settings,
-        confirm=lambda question: holder["assistant"].confirm(question),
+        confirm=lambda question, strict=False: holder["assistant"].confirm(question, strict),
         provider=provider,
         model=model,
         announce=lambda text: holder["assistant"].announce(text),

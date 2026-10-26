@@ -30,12 +30,15 @@ _ENGLISH_GUARDS = ("lock", "unlock", "garage", "alarm", "door")
 # Doing something to a guard, said any way ("açar mısın?", "can you unlock…?"): asked as a question it still acts.
 _TURKISH_ACTION_WORDS = frozenset({"ac", "acin", "acsin", "kur", "kapa", "iptal", "devre", "devreye", "sustur"})
 _TURKISH_ACTION_STEMS = ("acar", "acabil", "aciver", "acsana", "acmak", "acman", "acal", "kapat", "kilitle",
-                         "kurar", "kurabil", "kursana", "kurman", "etkinlestir", "kaldir", "susturur")  # fmt: skip
-# "kilitlendi mi", "kapatılmış mı": asking what happened, not asking for it.
-_TURKISH_PASSIVE = ("kilitlen", "kapatil")
+                         "kurar", "kurabil", "kursana", "kurman", "etkinlestir", "kaldir", "susturur", "coz")  # fmt: skip
+# "kilitlendi mi", "kapatılmış mı", "kilit çözüldü mü": asking what happened, not asking for it.
+_TURKISH_PASSIVE = ("kilitlen", "kapatil", "cozul")
+# With their -ing forms: "how about unlocking the front door", "what about opening the garage".
 _ENGLISH_ACTIONS = frozenset({"open", "close", "shut", "lock", "unlock", "arm", "disarm", "disable", "enable",
                               "activate", "deactivate", "raise", "lift", "lower", "turn", "switch", "silence",
-                              "set"})  # fmt: skip
+                              "set", "opening", "closing", "shutting", "locking", "unlocking", "arming",
+                              "disarming", "disabling", "enabling", "activating", "deactivating", "raising",
+                              "lifting", "lowering", "turning", "switching", "silencing"})  # fmt: skip
 # "is the garage door open": a state after "is", unless something is asked of Bilge ("is it possible to open…").
 _ENGLISH_STATES = frozenset({"open", "shut", "lock"})
 _ENGLISH_STATE_QUESTION = frozenset({"is", "are", "was", "were"})
