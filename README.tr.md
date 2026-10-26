@@ -82,6 +82,12 @@ içinde net bir cevap gelmezse hiçbir şey yapılmaz. Rutinler sen yokken
 çalıştığı için onay gerektiren bir adımı hiçbir zaman yapmaz. Bilge konuşurken “Bilge, dur” diyerek sözünü
 kesebilirsin.
 
+0.5.0 ile gelenler: kendi API anahtarınla sohbet modeli (OpenAI, Anthropic, Google Gemini, OpenRouter, Groq,
+DeepSeek) ya da Mac'indeki Ollama ve llama.cpp, OpenAI ya da Groq ile bulutta konuşma tanıma, kendi terminal
+komutların, Excel, PowerPoint ve OpenDocument dosyalarını okuma, yeniden başlatmada kaybolmayan ve bildirim
+gösteren zamanlayıcılar, mikrofon ve hoparlör seçimi. Gönderme, kapatma ve kendi komutların artık açık bir “evet”
+ister.
+
 0.4.0 ile gelenler: akıllı ev, rutinler, tercüman modu, toplantı dökümü, radyo, podcast, YouTube video özeti,
 yeni müzik servisleri, telefon ve FaceTime araması, takvim etkinliklerini ve notları düzenleme, e-postaya yanıt,
 namaz vakitleri, altın ve akaryakıt fiyatları, depremler, Süper Lig, Borsa İstanbul, Vikipedi, dünya saati,

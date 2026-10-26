@@ -82,6 +82,12 @@ from the TV is not enough. Anything else heard while Bilge waits is ignored, and
 seconds nothing is done. Routines run with nobody there to answer, so they never take a step that would need a yes. While Bilge is talking you
 can cut it off with “Bilge, stop”.
 
+New in 0.5.0: conversation over an API with your own key (OpenAI, Anthropic, Google Gemini, OpenRouter, Groq,
+DeepSeek) or through Ollama and llama.cpp on your Mac, cloud speech recognition with OpenAI or Groq, your own
+terminal commands, reading Excel, PowerPoint and OpenDocument files, timers that survive a restart and show a
+notification, and a choice of microphone and speaker. Sending, powering off and your own commands now need an
+explicit yes.
+
 New in 0.4.0: smart home, routines, interpreter mode, meeting transcription, radio, podcasts, YouTube video
 summaries, more music services, calls, editing calendar events and notes, mail replies, prayer times, gold and
 fuel prices, earthquakes, Süper Lig, Borsa İstanbul, Wikipedia, world clock, unit conversion, and control of
