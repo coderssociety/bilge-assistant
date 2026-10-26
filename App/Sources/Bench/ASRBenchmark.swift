@@ -51,7 +51,8 @@ enum ASRBenchmark {
             } ?? language
             let samples = try await synthesize(references, language: voiceLanguage)
             var reports: [EngineReport] = []
-            for engine in RecognizerEngine.allCases {
+            // Cloud engines need a key and are billed per request.
+            for engine in RecognizerEngine.allCases where engine.cloudService == nil {
                 print("Ölçülüyor: \(engine.displayName)")
                 reports.append(try await evaluate(RecognizerFactory.make(engine, language: language, guarded: false), on: samples, language: language))
             }

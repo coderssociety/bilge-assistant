@@ -11,6 +11,7 @@ struct ToolRegistry {
     /// In memory only unless the app passes its stored one, so benchmarks never touch the user's facts.
     var memory = MemoryStore(fileURL: nil)
     var routines = RoutineStore(fileURL: nil)
+    var commands = CustomCommandStore(fileURL: nil)
     /// Only the app passes the user's Home Assistant; without it there is no smart-home tool.
     var home: HomeAssistantConfig?
     var spreadsheet = SpreadsheetSession()
@@ -25,7 +26,10 @@ struct ToolRegistry {
         let first: [any AssistantTool] = [
             AddRoutineTool(store: routines, language: language),
             ManageRoutinesTool(store: routines, language: language),
-        ] + (home.map { [SmartHomeTool(home: $0, language: language)] } ?? [])
+        ] + (home.map { [SmartHomeTool(home: $0, language: language)] } ?? []) + [
+            ListCustomCommandsTool(store: commands, language: language),
+            RunCustomCommandTool(store: commands, language: language),
+        ]
         return first + [
             OpenAppTool(catalog: catalog),
             QuitAppTool(catalog: catalog),

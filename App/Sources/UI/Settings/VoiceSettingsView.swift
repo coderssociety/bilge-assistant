@@ -5,6 +5,9 @@ import SwiftUI
 struct VoiceSettingsView: View {
     @Bindable var settings: AssistantSettings
     let speech: SpeechOutput
+    let assistant: AssistantController
+    @State private var microphones: [AudioDevices.Device] = []
+    @State private var speakers: [AudioDevices.Device] = []
     @State private var isPreviewing = false
     @State private var previewError: String?
 
@@ -36,16 +39,49 @@ struct VoiceSettingsView: View {
                     Text(previewError).font(.caption).foregroundStyle(.red)
                 }
             }
+            Section("Aygıtlar") {
+                devicePicker("Mikrofon", selection: $settings.inputDeviceUID, devices: microphones)
+                LabeledContent("Seviye") {
+                    if assistant.isRunning {
+                        ProgressView(value: Double(assistant.microphoneLevel))
+                            .animation(.easeOut(duration: 0.1), value: assistant.microphoneLevel)
+                            .accessibilityLabel("Mikrofon seviyesi")
+                    } else {
+                        Text("Dinleme açıkken görünür").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                devicePicker("Hoparlör", selection: $settings.outputDeviceUID, devices: speakers)
+                Button("Aygıtları yenile", action: refreshDevices)
+            }
             Section {
                 Text("Ses tamamen Mac'inde, Supertonic-3 modeliyle üretilir.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
+        .onAppear(perform: refreshDevices)
+        .onChange(of: settings.inputDeviceUID) { assistant.restartIfRunning() }
+        .onChange(of: settings.outputDeviceUID) { _, uid in AudioDevices.selectOutput(uid, speech: speech) }
         .onChange(of: settings.speechSpeed) { _, speed in speech.speed = speed }
         .onChange(of: settings.voice) { _, voice in
             Task { try? await speech.setVoice(voice) }
         }
+    }
+
+    /// A chosen device that is unplugged stays listed, so the choice is not lost; the system default plays meanwhile.
+    private func devicePicker(_ title: LocalizedStringKey, selection: Binding<String?>, devices: [AudioDevices.Device]) -> some View {
+        Picker(title, selection: selection) {
+            Text("Sistem varsayılanı").tag(String?.none)
+            ForEach(devices) { Text($0.name).tag(Optional($0.uid)) }
+            if let chosen = selection.wrappedValue, !devices.contains(where: { $0.uid == chosen }) {
+                Text("Bağlı değil").tag(Optional(chosen))
+            }
+        }
+    }
+
+    private func refreshDevices() {
+        microphones = AudioDevices.list(.input)
+        speakers = AudioDevices.list(.output)
     }
 
     private func togglePreview() {

@@ -1,7 +1,8 @@
 import AsistanCore
 import SwiftUI
 
-/// Apple's model, a downloadable one or the user's own MLX model for conversation, with what each can do.
+/// Apple's model, a downloadable one, the user's own MLX model or one behind an API for conversation, with what each
+/// can do.
 /// Used in onboarding and settings.
 struct ModelChoiceList: View {
     @Bindable var settings: AssistantSettings
@@ -28,6 +29,7 @@ struct ModelChoiceList: View {
                     cancel: { downloads.cancel(model) },
                     delete: { delete(model) })
             }
+            APIModelCard(settings: settings, use: use)
             LocalModelsHeader(refresh: refreshCustomModels, addFolder: addFolder)
             ForEach(customModels) { model in
                 row(for: model, choice: LocalModelChoice(server: .custom, modelID: model.name))

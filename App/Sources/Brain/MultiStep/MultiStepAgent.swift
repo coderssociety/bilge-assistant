@@ -24,6 +24,8 @@ struct MultiStepAgent {
         "readClipboard", "readCalendar", "readReminders", "files", "findContact", "listShortcuts", "listRunningApps",
         "news", "newsFromSource", "controlMusic", "readMail", "playMusic", "playMusicOnService", "podcast", "radio",
         "browserControl", "spreadsheet", "dailyBriefing", "readNotes",
+        // A program may print anything, a web page it fetched included.
+        "runCustomCommand", "listCustomCommands",
     ]
     /// Could carry that text off the Mac (a URL with data in it) or into another app; refused outright.
     /// `remember` too: an injected "fact" would otherwise sit in every future conversation's instructions.

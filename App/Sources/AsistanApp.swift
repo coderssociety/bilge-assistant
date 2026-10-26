@@ -65,6 +65,7 @@ final class AppEnvironment {
     let brain: AssistantBrain
     let memory: MemoryStore
     let routines: RoutineStore
+    let commands: CustomCommandStore
     let home: HomeAssistantConfig
     let downloads: ModelDownloads
     let speakerGate: SpeakerGate
@@ -83,13 +84,15 @@ final class AppEnvironment {
     init() {
         let settings = AssistantSettings()
         let speech = SpeechOutput(voice: settings.voice, speed: settings.speechSpeed, language: settings.language)
+        if let speaker = settings.outputDeviceUID { AudioDevices.selectOutput(speaker, speech: speech) }
         let announcer = Announcer()
-        let timers = TimerService { await announcer.target?.announce($0) }
+        let timers = TimerService(fileURL: isBenchmark ? nil : TimerService.defaultFileURL()) { await announcer.target?.announce($0) }
         let memory = MemoryStore()
         let routines = RoutineStore()
+        let commands = CustomCommandStore()
         let home = HomeAssistantConfig()
-        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory, routines: routines, home: home,
-                                    language: settings.language)
+        let registry = ToolRegistry(catalog: AppCatalog(), timers: timers, memory: memory, routines: routines,
+                                    commands: commands, home: home, language: settings.language)
         let whisper = WhisperProvider(language: settings.language)
         let meetings = MeetingRecorder()
         let brain = AssistantBrain(tools: registry.makeTools(), context: registry.context, memory: memory,
@@ -106,6 +109,7 @@ final class AppEnvironment {
         self.brain = brain
         self.memory = memory
         self.routines = routines
+        self.commands = commands
         self.home = home
         let downloads = ModelDownloads()
         downloads.onDownloaded = { _ in brain.localModelDownloaded() }
@@ -144,8 +148,33 @@ final class AppEnvironment {
         NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { brain.shutDownLocalModel() }
         }
+        NotificationCenter.default.addObserver(forName: .apiKeyChanged, object: nil, queue: .main) { note in
+            guard let change = note.object as? APIKeyChange else { return }
+            MainActor.assumeIsolated {
+                Self.apply(change, settings: settings, brain: brain, assistant: assistant)
+            }
+        }
         brain.prewarm()
         if settings.onboardingCompleted, settings.listenOnLaunch { assistant.start() }
+    }
+}
+
+extension AppEnvironment {
+    /// One key serves a company's conversation models and its speech recognition, whichever settings tab changed it:
+    /// both pick up a new key, and neither keeps using a deleted one.
+    fileprivate static func apply(_ change: APIKeyChange, settings: AssistantSettings, brain: AssistantBrain,
+                                  assistant: AssistantController) {
+        if let model = settings.localModel, model.server.api?.keyAccount == change.account {
+            if change.removed {
+                settings.localModelID = nil
+                brain.useLocalModel(nil)
+            } else {
+                brain.reconnectLocalModel()
+            }
+        }
+        if settings.recognizer.cloudService?.service.keyAccount == change.account {
+            assistant.recognizerKeyChanged()
+        }
     }
 }
 

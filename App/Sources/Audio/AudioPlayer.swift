@@ -43,6 +43,18 @@ final class AudioPlayer {
 
     var isPlaying: Bool { outstandingBuffers > 0 }
 
+    private var outputUID: String?
+    private var hasChosenDevice = false
+
+    /// `AudioDevices.Device.uid`; nil goes back to the system default.
+    func useOutputDevice(_ uid: String?) {
+        stop()
+        engine.stop()
+        outputUID = uid
+        hasChosenDevice = true
+        AudioDevices.apply(uid, to: engine.outputNode, .output)
+    }
+
     var isMuted: Bool {
         get { node.volume == 0 }
         set { node.volume = newValue ? 0 : 1 }
@@ -53,6 +65,9 @@ final class AudioPlayer {
         let buffer = try PCMBuffers.mono(samples, sampleRate: format.sampleRate)
 
         if !engine.isRunning {
+            // A device change stops the engine; applying again here follows a new system default, or keeps the
+            // chosen device once it is back.
+            if hasChosenDevice { AudioDevices.apply(outputUID, to: engine.outputNode, .output) }
             engine.prepare()
             try engine.start()
         }

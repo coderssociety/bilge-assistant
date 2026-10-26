@@ -7,7 +7,7 @@ import Foundation
 /// publishing it.
 @MainActor
 final class LocalModelLifecycle {
-    /// What Bilge must free again. A model the user loaded in LM Studio is never listed here.
+    /// What Bilge must free again. A model the user loaded in LM Studio, or one behind an API, is never listed here.
     enum Owned: Sendable {
         case lmStudioModel(String)
         /// Any vMLX server Bilge used: put to deep sleep after a conversation, it wakes on demand.
@@ -49,6 +49,13 @@ final class LocalModelLifecycle {
         if keepAlive == .always { load() }
     }
 
+    /// The key or server behind the selected model changed: drop the old connection and the pause after a failure.
+    func reconnect() {
+        unload()
+        unavailableUntil = nil
+        if keepAlive == .always { load() }
+    }
+
     func load() {
         discardWhenLoaded = false
         guard let choice, ready == nil, !isLoading else { return }
@@ -81,9 +88,11 @@ final class LocalModelLifecycle {
         discardWhenLoaded = true
     }
 
-    /// The server failed mid-use; free what is left and load afresh next time.
+    /// The server failed mid-use; free what is left and load afresh next time. A model behind an API also gets a rest:
+    /// a wrong key, a spent quota or a dead connection would otherwise hold up every following turn the same way.
     func endpointFailed() {
         unload()
+        if choice?.server.api != nil { unavailableUntil = .now + Self.retryDelay }
     }
 
     /// Called when the app quits: nothing can be awaited, so freeing is only started.
@@ -165,6 +174,9 @@ final class LocalModelLifecycle {
             return (try await VMLXServer.shared.prepare(choice.modelID), .vmlx)
         case .builtIn, .custom, .folder:
             return (try await BuiltInChatModel.load(choice), .builtIn)
+        case .openAI, .anthropic, .gemini, .openRouter, .groq, .deepSeek, .ollama, .llamaCpp:
+            // Nothing is held on this Mac, so there is nothing to free.
+            return (try APIModelEndpoint.connect(choice), nil)
         }
     }
 

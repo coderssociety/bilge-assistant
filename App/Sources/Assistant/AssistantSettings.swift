@@ -30,6 +30,8 @@ final class AssistantSettings {
         static let wakeWordEnabled = "wakeWordEnabled"
         static let listeningShortcut = "listeningShortcut"
         static let checkForUpdates = "checkForUpdates"
+        static let inputDeviceUID = "inputDeviceUID"
+        static let outputDeviceUID = "outputDeviceUID"
         static let language = AppLanguage.defaultsKey
         /// The system key that picks the app's localization; set together with `language`.
         static let appleLanguages = "AppleLanguages"
@@ -86,6 +88,10 @@ final class AssistantSettings {
     /// Once a day, whether a newer version has been published on GitHub.
     var checkForUpdates: Bool { didSet { defaults.set(checkForUpdates, forKey: Key.checkForUpdates) } }
 
+    /// `AudioDevices.Device.uid` of the microphone and the speaker; nil follows the system default.
+    var inputDeviceUID: String? { didSet { defaults.set(inputDeviceUID, forKey: Key.inputDeviceUID) } }
+    var outputDeviceUID: String? { didSet { defaults.set(outputDeviceUID, forKey: Key.outputDeviceUID) } }
+
     /// Without a shortcut the wake word is the only way in, so it counts as on whatever was saved.
     var listensForWakeWord: Bool { wakeWordEnabled || listeningShortcut == nil }
 
@@ -117,6 +123,8 @@ final class AssistantSettings {
         listeningShortcut = defaults.data(forKey: Key.listeningShortcut)
             .flatMap { try? JSONDecoder().decode(KeyCombination.self, from: $0) }
         checkForUpdates = defaults.object(forKey: Key.checkForUpdates) as? Bool ?? true
+        inputDeviceUID = defaults.string(forKey: Key.inputDeviceUID)
+        outputDeviceUID = defaults.string(forKey: Key.outputDeviceUID)
     }
 
     /// Maps the 0...1 sensitivity slider onto the matcher's similarity threshold (0.9 strict ... 0.65 loose).

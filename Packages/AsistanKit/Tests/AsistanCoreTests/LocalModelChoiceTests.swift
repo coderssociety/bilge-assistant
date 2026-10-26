@@ -20,7 +20,7 @@ struct LocalModelChoiceTests {
             == LocalModelChoice(server: .lmStudio, modelID: "qwen3.8-27b-uncensored-mlx"))
     }
 
-    @Test("rejects empty or unknown values", arguments: ["", "vmlx:", "ollama:llama3", ":x"])
+    @Test("rejects empty or unknown values", arguments: ["", "vmlx:", "unknown:llama3", ":x"])
     func invalid(key: String) {
         #expect(LocalModelChoice(storageKey: key) == nil)
     }

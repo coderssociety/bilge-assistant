@@ -50,6 +50,8 @@ final class AssistantController {
     private var confirmationIsStrict = false
     /// Latest speech probability (0...1) for level meters; updated about four times a second.
     private(set) var inputLevel: Float = 0
+    /// How loud the microphone is (0...1, on a 60 dB scale), for the level meter in settings.
+    private(set) var microphoneLevel: Float = 0
     /// Increments each time the user cuts the assistant off mid-reply.
     private(set) var interruptionCount = 0
     var isRunning: Bool { listenTask != nil }
@@ -62,6 +64,8 @@ final class AssistantController {
     private let recorder: MeetingRecorder
     private var vad: VoiceActivityMonitor?
     private var recognizer: (any SpeechRecognizer)?
+    /// Hears the wake phrase and cut-ins on the Mac; the same as `recognizer` unless that one is a cloud engine.
+    private var wakeRecognizer: (any SpeechRecognizer)?
     private var flow: ConversationFlow
     private var segmenter = SpeechSegmenter(configuration: .init(chunkDuration: VoiceActivityFrame.duration, minSilence: 0.6))
     private var segmentQueue: AsyncStream<SpeechSegmenter.Segment>.Continuation?
@@ -116,7 +120,19 @@ final class AssistantController {
         wakeWhenListening = false
         teardown()
         inputLevel = 0
+        microphoneLevel = 0
         status = .off
+    }
+
+    /// A cloud engine's key changed: the recognizer is made again so it reads the new key, or stops for a deleted one.
+    /// Listening that failed for want of a key starts again.
+    func recognizerKeyChanged() {
+        recognizer = nil
+        if case .failed = status {
+            start()
+        } else {
+            restartIfRunning()
+        }
     }
 
     /// Applies changed settings (wake phrase, recognizer, voice) by restarting if listening.
@@ -241,6 +257,7 @@ final class AssistantController {
             segmenter.reset()
             startSegmentConsumer()
             startTicker()
+            (microphone as? MicrophoneCapture)?.deviceUID = settings.inputDeviceUID
             let stream = try microphone.start()
             status = .listening
             Log.wake.info("Listening for wake phrase '\(self.settings.wakePhrase, privacy: .public)'")
@@ -250,6 +267,7 @@ final class AssistantController {
             }
             for await chunk in stream {
                 if Task.isCancelled { break }
+                microphoneLevel = Self.meterLevel(chunk.samples)
                 if isAudioSuspended {
                     if isBargeInActive { await listenForBargeIn(chunk) }
                     continue
@@ -280,15 +298,24 @@ final class AssistantController {
 
         if recognizer?.engine != settings.recognizer {
             status = .loading(String(localized: "Konuşma tanıma modeli yükleniyor…"))
-            whisper.isListeningEngine = settings.recognizer == .whisper
-            if settings.recognizer == .whisper {
-                recognizer = try await whisper.prepared()
+            let wakeEngine = settings.recognizer.wakeEngine(for: settings.language)
+            whisper.isListeningEngine = wakeEngine == .whisper
+            let wake: any SpeechRecognizer
+            if wakeEngine == .whisper {
+                wake = try await whisper.prepared()
             } else {
-                let recognizer = RecognizerFactory.make(settings.recognizer, language: settings.language)
-                try await recognizer.prepare()
-                self.recognizer = recognizer
-                if !self.recorder.isRecording { whisper.releaseUnlessListening() }
+                wake = RecognizerFactory.make(wakeEngine, language: settings.language)
+                try await wake.prepare()
+                if !recorder.isRecording { whisper.releaseUnlessListening() }
             }
+            if settings.recognizer.cloudService != nil {
+                let cloud = RecognizerFactory.make(settings.recognizer, language: settings.language)
+                try await cloud.prepare()
+                recognizer = cloud
+            } else {
+                recognizer = wake
+            }
+            wakeRecognizer = wake
         }
 
         status = .loading(String(localized: "Ses hazırlanıyor…"))
@@ -303,7 +330,7 @@ final class AssistantController {
     private func loadBargeIn() async {
         bargeIn = nil
         // Cutting in is done by saying the wake phrase; without it, the shortcut stops a reply instead.
-        guard settings.bargeInEnabled, settings.listensForWakeWord, let recognizer else { return }
+        guard settings.bargeInEnabled, settings.listensForWakeWord, let recognizer = wakeRecognizer ?? recognizer else { return }
         status = .loading(String(localized: "Yankı iptali hazırlanıyor…"))
         do {
             bargeIn = try await BargeInListener(
@@ -342,6 +369,12 @@ final class AssistantController {
         interrupt()
     }
 
+    private static func meterLevel(_ samples: [Float]) -> Float {
+        guard !samples.isEmpty else { return 0 }
+        let rms = (samples.reduce(0) { $0 + $1 * $1 } / Float(samples.count)).squareRoot()
+        return min(1, max(0, (20 * log10(max(rms, 1e-6)) + 60) / 60))
+    }
+
     private func handle(_ frame: VoiceActivityFrame) {
         inputLevel = frame.probability
         let wasInSpeech = segmenter.isInSpeech
@@ -367,9 +400,12 @@ final class AssistantController {
             if pendingConfirmation != nil {
                 // A "yes" from the TV must not confirm a message being sent.
                 guard await speakerAllows(segment.samples) else { return }
-                let answer = try await recognizer.transcribe(segment.samples)
-                lastHeard = answer
-                resolveConfirmation(ConfirmationParser.parse(answer, strict: confirmationIsStrict, language: settings.language))
+                let heard = try await recognizer.transcribe(segment.samples)
+                lastHeard = heard
+                let answer = ConfirmationParser.parse(heard, strict: confirmationIsStrict, language: settings.language)
+                // A cough, someone else talking or a word that isn't an answer doesn't end the question: the user still
+                // has until it lapses to say yes or no.
+                if answer != .unclear { resolveConfirmation(answer) }
                 return
             }
             if recorder.isRecording {
@@ -455,15 +491,19 @@ final class AssistantController {
     }
 
     /// While waiting for the wake phrase only the opening seconds are transcribed; the full utterance
-    /// is transcribed only if the phrase is there. Keeps background chatter cheap.
+    /// is transcribed only if the phrase is there. Keeps background chatter cheap, and with a cloud engine keeps
+    /// everything said before the phrase on the Mac.
     private func transcribe(_ samples: [Float], with recognizer: any SpeechRecognizer, wakeCheckOnly: Bool) async throws -> String? {
+        guard wakeCheckOnly else { return try await recognizer.transcribe(samples) }
+        let wake = wakeRecognizer ?? recognizer
+        let isCloud = wake.engine != recognizer.engine
         let probeLength = Int(Self.wakeProbeSeconds * StreamingResampler.targetSampleRate)
-        guard wakeCheckOnly, samples.count > probeLength else {
-            return try await recognizer.transcribe(samples)
-        }
-        let probe = try await recognizer.transcribe(Array(samples.prefix(probeLength)))
-        guard flow.matcher.match(probe) != nil else { return nil }
-        return try await recognizer.transcribe(samples)
+        guard samples.count > probeLength || isCloud else { return try await recognizer.transcribe(samples) }
+        let probe = try await wake.transcribe(Array(samples.prefix(probeLength)))
+        guard let match = flow.matcher.match(probe) else { return nil }
+        guard isCloud else { return try await recognizer.transcribe(samples) }
+        if match.command.isEmpty, samples.count <= probeLength { return probe }
+        return flow.matcher.restoring(settings.wakePhrase, in: try await recognizer.transcribe(samples))
     }
 
     private func startTicker() {

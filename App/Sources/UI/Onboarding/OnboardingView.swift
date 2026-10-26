@@ -20,7 +20,7 @@ struct OnboardingView: View {
                 case .permissions: PermissionsStep()
                 case .preparation: PreparationStep(assistant: environment.assistant, brain: environment.brain)
                 case .model: ModelStep(environment: environment)
-                case .voice: VoiceSettingsView(settings: environment.settings, speech: environment.speech)
+                case .voice: VoiceSettingsView(settings: environment.settings, speech: environment.speech, assistant: environment.assistant)
                 case .finish: FinishStep(settings: environment.settings)
                 }
             }

@@ -8,8 +8,8 @@ public struct FileQuery: Equatable, Sendable {
             switch self {
             case .pdf: ["pdf"]
             case .wordProcessing: ["doc", "docx", "odt", "pages"]
-            case .spreadsheet: ["xlsx", "xls", "numbers", "csv"]
-            case .presentation: ["key", "ppt", "pptx"]
+            case .spreadsheet: ["xlsx", "xls", "numbers", "csv", "ods"]
+            case .presentation: ["key", "ppt", "pptx", "odp"]
             case .image: ["jpg", "jpeg", "png", "heic", "gif", "tiff", "webp"]
             case .plainText: ["txt", "md", "rtf"]
             }

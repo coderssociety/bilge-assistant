@@ -17,6 +17,8 @@ public struct WakePhraseMatcher: Sendable {
     /// One misspelled letter in a short word is another common word ("bilge" → "bilgi"),
     /// so wake phrases this short must be spelled exactly (suffixes still allowed).
     private static let exactMatchMaxLength = 5
+    /// How close a second recognizer's first word must be to the phrase to count as its spelling.
+    private static let respellingMinimumSimilarity = 0.4
 
     private let phraseKey: String
     private let phraseFillers: [String]
@@ -53,6 +55,20 @@ public struct WakePhraseMatcher: Sendable {
         guard let best else { return nil }
         let command = tokens[best.end...].map(\.original).joined(separator: " ")
         return Match(command: Self.trimLeadingPunctuation(command), similarity: best.similarity)
+    }
+
+    /// A transcript from a second recognizer once a quick one on the Mac has already heard the wake phrase. The second
+    /// may spell the Turkish name differently ("Bilgé", "Bilgi"), which would make the command look like chatter,
+    /// so the phrase is put back in front.
+    public func restoring(_ phrase: String, in transcript: String) -> String {
+        guard match(transcript) == nil else { return transcript }
+        var words = transcript.split(whereSeparator: \.isWhitespace).map(String.init)
+        if let first = words.first,
+           FuzzyText.similarity(TurkishText.folded(first), phraseKey) >= Self.respellingMinimumSimilarity {
+            words.removeFirst()
+        }
+        let command = Self.trimLeadingPunctuation(words.joined(separator: " "))
+        return command.isEmpty ? phrase : "\(phrase), \(command)"
     }
 
     private func isFiller(_ key: String) -> Bool {
