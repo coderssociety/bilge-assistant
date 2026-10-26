@@ -95,7 +95,7 @@ struct SpreadsheetCommandTests {
 
     @Test("none of the routing benchmark commands is taken for a spreadsheet command")
     func benchmarkCommands() throws {
-        let bench = URL(filePath: #filePath).deletingLastPathComponent().appending(path: "../../../../Bench").standardized
+        let bench = URL(filePath: #filePath).deletingLastPathComponent().appending(path: "../../../../../bench").standardized
         let files = try FileManager.default.contentsOfDirectory(at: bench, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "tsv" && $0.lastPathComponent.hasPrefix("llm") || $0.lastPathComponent.hasPrefix("realworld") }
         #expect(!files.isEmpty)

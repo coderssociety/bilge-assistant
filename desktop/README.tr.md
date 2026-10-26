@@ -9,14 +9,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-desktop/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-desktop?label=Windows%20ve%20Linux%20i%C3%A7in%20indir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Windows ve Linux için indir"></a>
+  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=Windows%20ve%20Linux%20i%C3%A7in%20indir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Windows ve Linux için indir"></a>
   <br>
   <sub>Ücretsiz ve açık kaynak · Windows 10/11 kurulumu · x86_64 ve arm64 için Linux AppImage ·
-  <a href="https://github.com/coderssociety/bilge-assistant/blob/main/README.tr.md">Mac mi kullanıyorsun? →</a></sub>
+  <a href="../mac/README.tr.md">Mac mi kullanıyorsun? →</a></sub>
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows" alt="Windows 10/11">
   <img src="https://img.shields.io/badge/Linux-AppImage-FCC624?logo=linux&logoColor=black" alt="Linux AppImage">
   <img src="https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white" alt="Python 3.14">
@@ -44,7 +44,7 @@
 **Hemen başla:** Windows kurulumunu ya da AppImage'ı çalıştır, dili ve modeli seç, sonra “Bilge, saat kaç?” de.
 Ayrıntılar [Kurulum](#kurulum) bölümünde.
 
-[Mac için Bilge](https://github.com/coderssociety/bilge-assistant)'nin kardeşidir: aynı asistan, aynı kurallar
+[Mac için Bilge](../mac/README.tr.md)'nin kardeşidir: aynı asistan, aynı kurallar
 (“Bilge” de, riskli bir şey yapmadan önce sorar). Mac sürümü yalnızca Apple'a özgü parçalardan oluştuğu için
 Python ile yeniden yazıldı.
 
@@ -60,7 +60,8 @@ Linux'ta Secret Service).
 
 ## Durum
 
-Beş aşamanın hepsi tamam; en yeni sürüm 0.1.4.
+Beş aşamanın hepsi tamam. 0.6.0 sürümünden beri Windows ve Linux uygulaması Mac uygulamasıyla birlikte, aynı sürüm
+numarasıyla yayımlanır.
 
 1. **Çekirdek** (tamam): Mac sürümündeki Türkçe ve İngilizce ayrıştırıcılar, aynı test örnekleriyle; onaylı ve
    istem enjeksiyonuna karşı kurallı araç çağıran ajan; denemek için yazılı sohbet.
@@ -355,7 +356,7 @@ uv run pytest
 uv run ruff check src tests && uv run ruff format --check src tests
 ```
 
-`bench/`, Mac sürümünde yönlendirmeyi ölçmek için kullanılan komut kümelerini içerir. `scripts/linux-check` tüm
+`../bench/`, Mac sürümünde yönlendirmeyi ölçmek için kullanılan komut kümelerini içerir. `scripts/linux-check` tüm
 test paketini Ubuntu'da, ayrıca gerçek programları (yazma, pano, ses, bir MPRIS çalar, bildirimler, LibreOffice
 Calc…) ekransız bir masaüstünde süren testlerle birlikte çalıştırır:
 
@@ -378,4 +379,4 @@ $env:BILGE_REAL_DESKTOP = 1; uv run pytest tests/windows
 
 ## Lisans
 
-GPL-3.0, bkz. [LICENSE](LICENSE).
+GPL-3.0, bkz. [LICENSE](../LICENSE).

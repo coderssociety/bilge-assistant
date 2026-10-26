@@ -10,14 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Mac%20i%C3%A7in%20indir&logo=apple&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Mac için indir"></a>
+  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=Mac%20i%C3%A7in%20indir&logo=apple&style=for-the-badge&color=2A2E7A" alt="Bilge'yi Mac için indir"></a>
   <br>
   <sub>Ücretsiz ve açık kaynak · Apple Silicon'lı Mac'te macOS 27 ve sonrası, Apple Intelligence açık ·
-  <a href="https://github.com/coderssociety/bilge-desktop/blob/main/README.tr.md">Windows ve Linux →</a></sub>
+  <a href="../desktop/README.tr.md">Windows ve Linux →</a></sub>
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/lisans-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/lisans-GPL--3.0-blue" alt="Lisans: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/macOS-27%2B-black?logo=apple" alt="macOS 27+">
   <img src="https://img.shields.io/badge/Apple%20Silicon-gerekli-555" alt="Apple Silicon gerekli">
   <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
@@ -52,7 +52,7 @@ OpenAI ya da Groq'a gidebilir ([API ile bağlanan model](#api-ile-bağlanan-mode
 hava durumu, haber, fiyat ya da şarkı gibi istediğin veriler ve modellerin ilk indirmesi için kullanılır.
 Hangi özelliğin hangi hizmete bağlandığı [Gizlilik](#gizlilik) bölümünde yazılı.
 
-Windows ya da Linux mu kullanıyorsun? [Windows ve Linux için Bilge](https://github.com/coderssociety/bilge-desktop/blob/main/README.tr.md)
+Windows ya da Linux mu kullanıyorsun? [Windows ve Linux için Bilge](../desktop/README.tr.md)
 aynı asistanın onlar için yeniden yazılmış hâli.
 
 ## İçindekiler
@@ -659,11 +659,11 @@ Sertifika yoksa DMG yalnızca geliştirme imzalıdır.
 | `App/Sources/Tools` | Mac'te iş yapan araçlar (takvim, Excel, tarayıcı, dosyalar…) |
 | `App/Sources/UI` | Menü çubuğu, durum paneli, ayarlar, kurulum sihirbazı |
 | `Packages/AsistanKit` | Arayüzden bağımsız, testli çekirdek: Türkçe ve İngilizce ayrıştırıcılar, sayı okuma, uyandırma eşleme |
-| `Bench` | Konuşma tanıma, komut yönlendirme ve uçtan uca ölçüm setleri |
+| `../bench` | Konuşma tanıma, komut yönlendirme ve uçtan uca ölçüm setleri |
 
 ## Lisans ve teşekkür
 
-Bilge [GNU GPL 3.0](LICENSE) ile dağıtılır. Kullandığı açık kaynak bileşenler ve modeller,
+Bilge [GNU GPL 3.0](../LICENSE) ile dağıtılır. Kullandığı açık kaynak bileşenler ve modeller,
 lisanslarıyla birlikte [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) dosyasında listelenir;
 aynı liste uygulamada Ayarlar > Hakkında'da da görünür. Özellikle:
 

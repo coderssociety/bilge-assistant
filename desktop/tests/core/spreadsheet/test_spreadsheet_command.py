@@ -18,7 +18,7 @@ from bilge.core.spreadsheet.spreadsheet_command import (
 )
 
 # The routing benchmark lives in the Swift repository next to this one.
-BENCH = Path(__file__).resolve().parents[3] / "bench"
+BENCH = Path(__file__).resolve().parents[4] / "bench"
 
 
 def parse(text: str) -> SpreadsheetCommand | None:

@@ -9,14 +9,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-desktop/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-desktop?label=Download%20for%20Windows%20%26%20Linux&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Windows and Linux"></a>
+  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=Download%20for%20Windows%20%26%20Linux&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Windows and Linux"></a>
   <br>
   <sub>Free and open source · Windows 10/11 installer · Linux AppImage for x86_64 and arm64 ·
-  <a href="https://github.com/coderssociety/bilge-assistant">on a Mac? →</a></sub>
+  <a href="../mac/README.md">on a Mac? →</a></sub>
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows" alt="Windows 10/11">
   <img src="https://img.shields.io/badge/Linux-AppImage-FCC624?logo=linux&logoColor=black" alt="Linux AppImage">
   <img src="https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white" alt="Python 3.14">
@@ -44,7 +44,7 @@
 **Get started:** run the Windows installer or the AppImage, choose a language and a model, then say “Bilge, what
 time is it?”. [Installing](#installing) has the details.
 
-It is the sibling of [Bilge for macOS](https://github.com/coderssociety/bilge-assistant): the same assistant and
+It is the sibling of [Bilge for macOS](../mac/README.md): the same assistant and
 the same rules (say “Bilge”, it asks before anything risky), rebuilt in Python because the Mac version is made of
 Apple-only parts.
 
@@ -59,7 +59,8 @@ in a plain file.
 
 ## Status
 
-All five phases are done; 0.1.4 is the newest release.
+All five phases are done. Since 0.6.0 the Windows and Linux app is released together with the Mac app, under one
+version number.
 
 1. **Core** (done): the Turkish and English parsers from the Mac version with the same test cases, the
    tool-calling agent with confirmations and prompt-injection rules, and a text chat to try it.
@@ -356,7 +357,7 @@ uv run pytest
 uv run ruff check src tests && uv run ruff format --check src tests
 ```
 
-`bench/` holds the command sets used to measure routing in the Mac version. `scripts/linux-check` runs the
+`../bench/` holds the command sets used to measure routing in the Mac version. `scripts/linux-check` runs the
 whole suite on Ubuntu, plus tests that drive the real programs (typing, clipboard, sound, an MPRIS player,
 notifications, LibreOffice Calc…) on a screenless desktop:
 
@@ -379,4 +380,4 @@ $env:BILGE_REAL_DESKTOP = 1; uv run pytest tests/windows
 
 ## License
 
-GPL-3.0, see [LICENSE](LICENSE).
+GPL-3.0, see [LICENSE](../LICENSE).

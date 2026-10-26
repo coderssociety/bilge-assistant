@@ -1,9 +1,14 @@
-name: CI
+name: CI (Windows and Linux)
 
 on:
   push:
     branches: [main]
+    paths: ["desktop/**", "bench/**", ".github/workflows/ci-desktop.yml"]
   pull_request:
+    paths: ["desktop/**", "bench/**", ".github/workflows/ci-desktop.yml"]
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -12,6 +17,9 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2022]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
     env:
       QT_QPA_PLATFORM: offscreen
     steps:
@@ -19,6 +27,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.12.19"
+          working-directory: desktop
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libportaudio2 libegl1 libxkbcommon0
       - run: uv sync --locked --extra app

@@ -377,7 +377,7 @@ def test_a_newer_release_is_offered_in_the_menu(qapp):
     notified = []
     tray.notify = notified.append
     assert not tray.update.isVisible()
-    release = Release("0.2.0", "https://github.com/coderssociety/bilge-desktop/releases/tag/v0.2.0")
+    release = Release("0.2.0", "https://github.com/coderssociety/bilge/releases/tag/v0.2.0")
     tray.show_update(release, announce=True)
     tray.show_update(release, announce=False)
     assert tray.update.isVisible() and "0.2.0" in tray.update.text()

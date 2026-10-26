@@ -4,7 +4,7 @@ import Testing
 
 @Suite("Release check")
 struct ReleaseCheckTests {
-    private let page = "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.3.0"
+    private let page = "https://github.com/coderssociety/bilge/releases/tag/v0.3.0"
 
     @Test("versions compare", arguments: [
         ("v0.3.0", "0.2.0", true), ("0.2.1", "0.2.0", true), ("v0.3.0", "0.3.0-rc1", true), ("v0.2.0", "0.2.0", false),
@@ -31,12 +31,12 @@ struct ReleaseCheckTests {
     }
 
     @Test("only this project's release pages pass", arguments: [
-        ("https://github.com/coderssociety/bilge-assistant/releases/tag/v0.3.0", true),
-        ("https://github.com/coderssociety/bilge-assistant/releases/../../evil/repo", false),
-        ("https://github.com/coderssociety/bilge-assistant/releases/%2e%2e/%2e%2e/evil", false),
-        ("https://github.com.evil.example/coderssociety/bilge-assistant/releases/x", false),
-        ("http://github.com/coderssociety/bilge-assistant/releases/tag/v1", false),
-        ("https://user@github.com/coderssociety/bilge-assistant/releases/tag/v1", false),
+        ("https://github.com/coderssociety/bilge/releases/tag/v0.3.0", true),
+        ("https://github.com/coderssociety/bilge/releases/../../evil/repo", false),
+        ("https://github.com/coderssociety/bilge/releases/%2e%2e/%2e%2e/evil", false),
+        ("https://github.com.evil.example/coderssociety/bilge/releases/x", false),
+        ("http://github.com/coderssociety/bilge/releases/tag/v1", false),
+        ("https://user@github.com/coderssociety/bilge/releases/tag/v1", false),
     ])
     func projectPages(page: String, accepted: Bool) {
         #expect(ReleaseCheck.isProjectPage(URL(string: page)!) == accepted)

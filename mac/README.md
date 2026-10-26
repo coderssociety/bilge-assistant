@@ -10,14 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Download%20for%20Mac&logo=apple&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Mac"></a>
+  <a href="https://github.com/coderssociety/bilge/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge?label=Download%20for%20Mac&logo=apple&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Mac"></a>
   <br>
   <sub>Free and open source · macOS 27 or later on Apple silicon, with Apple Intelligence on ·
-  <a href="https://github.com/coderssociety/bilge-desktop">Windows and Linux →</a></sub>
+  <a href="../desktop/README.md">Windows and Linux →</a></sub>
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
   <img src="https://img.shields.io/badge/macOS-27%2B-black?logo=apple" alt="macOS 27+">
   <img src="https://img.shields.io/badge/Apple%20Silicon-required-555" alt="Apple Silicon required">
   <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
@@ -52,7 +52,7 @@ and for downloading models the first time. [Privacy](#privacy) lists which servi
 
 “Bilge” means *wise* in Turkish and is pronounced *BIL-geh*. The wake word stays the same in English.
 
-On Windows or Linux? [Bilge for Windows and Linux](https://github.com/coderssociety/bilge-desktop) is the same
+On Windows or Linux? [Bilge for Windows and Linux](../desktop/README.md) is the same
 assistant rebuilt for them.
 
 ## Contents
@@ -655,11 +655,11 @@ a development signature.
 | `App/Sources/Tools` | The tools that act on the Mac (calendar, Excel, browser, files…) |
 | `App/Sources/UI` | Menu bar, status panel, settings, setup |
 | `Packages/AsistanKit` | The tested, UI-free core: Turkish and English parsers, number reading, wake word matching |
-| `Bench` | Speech recognition, routing and end-to-end test sets |
+| `../bench` | Speech recognition, routing and end-to-end test sets |
 
 ## License and credits
 
-Bilge is released under the [GNU GPL 3.0](LICENSE). The open-source components and models it uses are
+Bilge is released under the [GNU GPL 3.0](../LICENSE). The open-source components and models it uses are
 listed with their licenses in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); the same list is in the
 app under Settings > About. In particular:
 

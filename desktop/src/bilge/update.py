@@ -17,7 +17,7 @@ from packaging.version import InvalidVersion, Version
 
 log = logging.getLogger(__name__)
 
-REPOSITORY = "coderssociety/bilge-desktop"
+REPOSITORY = "coderssociety/bilge"
 LATEST_URL = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 RELEASE_PAGES = f"https://github.com/{REPOSITORY}/releases/"
 CHECK_EVERY = timedelta(days=1)

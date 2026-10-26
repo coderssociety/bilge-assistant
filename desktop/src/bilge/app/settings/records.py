@@ -112,9 +112,7 @@ class AboutPage(QWidget):
             found = "dev"
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(t("about.text", version=found), wordWrap=True))
-        link = QLabel(
-            '<a href="https://github.com/coderssociety/bilge-desktop">github.com/coderssociety/bilge-desktop</a>'
-        )
+        link = QLabel('<a href="https://github.com/coderssociety/bilge">github.com/coderssociety/bilge</a>')
         link.setOpenExternalLinks(True)
         layout.addWidget(link)
         layout.addStretch()

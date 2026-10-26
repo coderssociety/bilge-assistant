@@ -23,7 +23,7 @@ from bilge.core.browser.browser_command import (
 )
 
 # The routing benchmark lives in the Swift repo next to this one.
-BENCH = Path(__file__).resolve().parents[3] / "bench"
+BENCH = Path(__file__).resolve().parents[4] / "bench"
 
 
 @pytest.mark.parametrize(

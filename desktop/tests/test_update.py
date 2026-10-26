@@ -5,7 +5,7 @@ import pytest
 
 from bilge import update
 
-PAGE = "https://github.com/coderssociety/bilge-desktop/releases/tag/v0.2.0"
+PAGE = "https://github.com/coderssociety/bilge/releases/tag/v0.2.0"
 
 
 def client_answering(status: int, body: object = None) -> httpx.Client:
@@ -112,10 +112,10 @@ def test_a_damaged_record_means_checking_again(tmp_path, content: str) -> None:
     ("page", "accepted"),
     [
         (PAGE, True),
-        ("https://github.com/coderssociety/bilge-desktop/releases/../../evil/repo", False),
-        ("https://github.com/coderssociety/bilge-desktop/releases/%2e%2e/%2e%2e/evil", False),
-        ("https://github.com/coderssociety/bilge-desktop/releases/tag/v1/..", False),
-        ("http://github.com/coderssociety/bilge-desktop/releases/tag/v1", False),
+        ("https://github.com/coderssociety/bilge/releases/../../evil/repo", False),
+        ("https://github.com/coderssociety/bilge/releases/%2e%2e/%2e%2e/evil", False),
+        ("https://github.com/coderssociety/bilge/releases/tag/v1/..", False),
+        ("http://github.com/coderssociety/bilge/releases/tag/v1", False),
     ],
 )
 def test_only_this_projects_release_pages_are_opened(page: str, accepted: bool) -> None:

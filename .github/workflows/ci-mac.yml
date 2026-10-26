@@ -1,9 +1,11 @@
-name: CI
+name: CI (Mac)
 
 on:
   push:
     branches: [main]
+    paths: ["mac/**", "bench/**", ".github/workflows/ci-mac.yml"]
   pull_request:
+    paths: ["mac/**", "bench/**", ".github/workflows/ci-mac.yml"]
 
 permissions:
   contents: read
@@ -15,10 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: swift test
-        working-directory: Packages/AsistanKit
+        working-directory: mac/Packages/AsistanKit
 
   app:
     runs-on: xcode-27
+    defaults:
+      run:
+        working-directory: mac
     steps:
       - uses: actions/checkout@v4
       - run: brew install xcodegen
