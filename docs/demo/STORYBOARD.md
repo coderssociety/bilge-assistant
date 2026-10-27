@@ -8,7 +8,7 @@ and it answers out loud. Then the reasons to pick it: made for Turkish, private 
 - **README loop** (`readme-en`, `readme-tr`): visitors of the GitHub page who scroll past the first screenshot.
   Silent, captioned, loops; 24.4 s, 1280×720, also as a 960 px GIF.
 - **Social cut** (`social-en`, `social-tr`, `social-tr-vertical`): people who don't know Bilge yet, on X, LinkedIn,
-  YouTube, Reels and Shorts. With voice and burned-in captions; 52 s (EN) and 56 s (TR), 1920×1080 and 1080×1920.
+  YouTube, Reels and Shorts. With voice and burned-in captions; 53 s, 1920×1080 and 1080×1920.
 - **Posters** (`poster-en.png`, `poster-tr.png`): the thumbnail/first frame, 1280×720.
 
 ## Rules
@@ -26,22 +26,24 @@ and it answers out loud. Then the reasons to pick it: made for Turkish, private 
 
 | # | Scene | README loop | Social EN | Social TR | Real asset |
 |---|---|---|---|---|---|
-| 1 | Confirm (hook) | 0.0–6.8 | 0.0–11.1 | 0.0–11.9 | `mac/docs/images/en/hud-confirm.png`, `mac/docs/images/hud-confirm.png` (card cropped) |
-| 2 | Asking first | — | 11.1–15.9 | 11.9–17.2 | type and icons only |
-| 3 | Answer | 6.8–11.2 | 15.9–26.7 | 17.2–30.1 | `desktop/docs/images/hud-answer.png`, `desktop/docs/images/tr/hud-answer.png` |
-| 4 | Made for Turkish | 11.2–15.0 | 26.7–35.4 | 30.1–39.4 | type and icons only |
-| 5 | Private by default | 15.0–18.6 | 35.4–43.1 | 39.4–46.2 | type and icons only |
-| 6 | Three systems | 18.6–21.3 | 43.1–47.9 | 46.2–51.5 | `mac/docs/images/{en/,}onboarding.png` (window cropped), `desktop/docs/images/{,tr/}setup.png` |
-| 7 | End card | 21.3–24.4 | 47.9–52.1 | 51.5–55.7 | `mac/docs/images/logo.svg` |
+| 1 | Confirm (hook) | 0.0–6.8 | 0.0–10.9 | 0.0–11.7 | `mac/docs/images/en/hud-confirm.png`, `mac/docs/images/hud-confirm.png` (card cropped) |
+| 2 | Asking first | — | 10.9–16.8 | 11.7–17.0 | type and icons only |
+| 3 | Answer | 6.8–11.2 | 16.8–27.6 | 17.0–29.7 | `desktop/docs/images/hud-answer.png`, `desktop/docs/images/tr/hud-answer.png` |
+| 4 | Made for Turkish | 11.2–15.0 | 27.6–36.4 | 29.7–37.4 | type and icons only |
+| 5 | Private by default | 15.0–18.6 | 36.4–43.5 | 37.4–43.8 | type and icons only |
+| 6 | Three systems | 18.6–21.3 | 43.5–48.7 | 43.8–48.8 | `mac/docs/images/{en/,}onboarding.png` (window cropped), `desktop/docs/images/{,tr/}setup.png` |
+| 7 | End card | 21.3–24.4 | 48.7–52.9 | 48.8–53.0 | `mac/docs/images/logo.svg` |
 
 The README loop fades the end card out in its last 0.45 s, so it restarts on the empty first frame.
 
 ## Captions and voice
 
-Every line is spoken by Supertonic-3, generated on this Mac through FluidAudio. User lines use the male voice M1
-(chosen over M2, whose delivery was flatter) and are typed out in the caption as they are heard. Bilge's lines use
-F1, Bilge's own default voice. Each clip is loudness-normalised before mixing, so the two voices sit at a similar
-level. Lines marked *narration* are Bilge speaking about itself; every claim in them is in the README.
+Bilge's replies are spoken by Supertonic-3 F1, Bilge's own default voice, generated on this Mac through FluidAudio.
+Everything else (the user's lines and the narration) is a Microsoft neural voice fetched with edge-tts: Emel
+(`tr-TR-EmelNeural`) in Turkish and Andrew (`en-US-AndrewMultilingualNeural`) in English; the local voices
+(macOS `say`, Supertonic-3 M1) sounded robotic there. User lines are typed out in the caption as they are heard;
+narration captions carry no speaker label. Each clip is loudness-normalised before mixing, so the voices sit at a
+similar level. Every claim in the narration is in the README.
 The README loop uses only the captions marked “loop”.
 
 ### 1. Confirm (hook)
@@ -63,7 +65,7 @@ The README loop uses only the captions marked “loop”.
   kapısı ve alarm.
 - Footer: Sending needs an explicit “yes”, “confirm” or “send”. / Göndermek açık bir “evet”, “onaylıyorum” ya da
   “gönder” ister.
-- Bilge (narration): Anything I can't undo waits for your yes. / Geri alınamayan her iş, senin evetini bekler.
+- Narration: Anything Bilge can't undo waits for your yes. / Geri alınamayan her iş, senin evetini bekler.
 
 ### 3. Answer
 
@@ -79,7 +81,7 @@ The README loop uses only the captions marked “loop”.
 - Cards: “when is maghrib” Prayer times · “recent earthquakes” AFAD · Kandilli · “when does Beşiktaş play” Süper Lig ·
   “BIST 100” Borsa İstanbul / “akşam ezanı ne zaman” Namaz vakitleri · “son depremler” AFAD · Kandilli ·
   “Beşiktaş ne zaman oynuyor” Süper Lig · “BIST 100” Borsa İstanbul.
-- Bilge (narration, social): Made for Turkish: prayer times, earthquake alerts from AFAD, Süper Lig and Borsa
+- Narration (social): Made for Turkish: prayer times, earthquake alerts from AFAD, Süper Lig and Borsa
   İstanbul. / Türkçe için yapıldı: namaz vakitleri, AFAD deprem uyarıları, Süper Lig ve Borsa İstanbul.
 
 ### 5. Private by default
@@ -89,14 +91,14 @@ The README loop uses only the captions marked “loop”.
 - Cards: Speech recognition · Language model · Voice, each “on your computer” / Konuşma tanıma · Dil modeli · Ses,
   each “bilgisayarında”.
 - Footer: No account · No subscription · No recording kept / Hesap yok · Abonelik yok · Ses kaydı saklanmaz.
-- Bilge (narration, social): Speech recognition, the language model and the voice can all run on your computer. /
+- Narration (social): Speech recognition, the language model and the voice can all run on your computer. /
   Konuşma tanıma, dil modeli ve ses tamamen bilgisayarında çalışabilir.
 
 ### 6. Three systems
 
 - Kicker / headline: MAC · WINDOWS · LINUX · One assistant, three systems. / Üç sistemde aynı asistan.
 - Labels under the setup windows: Mac · Windows and Linux / Mac · Windows ve Linux.
-- Bilge (narration, social): Free and open source, for Mac, Windows and Linux. / Ücretsiz ve açık kaynak; Mac,
+- Narration (social): Free and open source, for Mac, Windows and Linux. / Ücretsiz ve açık kaynak; Mac,
   Windows ve Linux için.
 
 ### 7. End card
