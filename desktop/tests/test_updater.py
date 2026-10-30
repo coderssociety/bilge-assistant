@@ -8,8 +8,8 @@ import pytest
 from bilge import updater
 from bilge.update import Release
 
-BASE = "https://github.com/coderssociety/bilge-assistant/releases/download/v0.6.0/"
-PAGE = "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.6.0"
+BASE = "https://github.com/serdarvaran/bilge-assistant/releases/download/v0.6.0/"
+PAGE = "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.6.0"
 
 
 def release(*names: str) -> Release:

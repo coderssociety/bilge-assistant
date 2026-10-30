@@ -7,9 +7,9 @@ Linux app in `desktop/` (Python). They share the Turkish and English command set
 
 ## Ways to help
 
-- **Report a bug** with the [bug form](https://github.com/coderssociety/bilge-assistant/issues/new?template=bug_report.yml):
+- **Report a bug** with the [bug form](https://github.com/serdarvaran/bilge-assistant/issues/new?template=bug_report.yml):
   what you said, what Bilge heard and did, and your system.
-- **Suggest a feature** with the [feature form](https://github.com/coderssociety/bilge-assistant/issues/new?template=feature_request.yml).
+- **Suggest a feature** with the [feature form](https://github.com/serdarvaran/bilge-assistant/issues/new?template=feature_request.yml).
 - **Add phrasings.** A Turkish or English sentence Bilge misunderstands is a valuable report: it becomes a test case.
 - **Translate or improve the READMEs**, and fix a typo anywhere.
 - **Code:** issues labelled `good first issue` are a good start.

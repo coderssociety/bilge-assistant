@@ -5,7 +5,7 @@ Bilge acts on your computer and reads mail, pages and documents, so security rep
 ## Reporting a vulnerability
 
 Please **don't open a public issue**. Use GitHub's private reporting instead:
-[Report a vulnerability](https://github.com/coderssociety/bilge-assistant/security/advisories/new). Include what an
+[Report a vulnerability](https://github.com/serdarvaran/bilge-assistant/security/advisories/new). Include what an
 attacker could do, the steps or the text that triggers it (for example a web page or an e-mail that makes Bilge act),
 and the app and version.
 

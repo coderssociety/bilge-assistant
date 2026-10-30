@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Download%20for%20Windows%20%26%20Linux&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Windows and Linux"></a>
+  <a href="https://github.com/serdarvaran/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/serdarvaran/bilge-assistant?label=Download%20for%20Windows%20%26%20Linux&style=for-the-badge&color=2A2E7A" alt="Download Bilge for Windows and Linux"></a>
   <br>
   <sub>Free and open source · Windows 10/11 installer · Linux AppImage for x86_64 and arm64 ·
   <a href="../mac/README.md">on a Mac? →</a></sub>

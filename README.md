@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=Download&style=for-the-badge&color=2A2E7A" alt="Download Bilge"></a>
+  <a href="https://github.com/serdarvaran/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/serdarvaran/bilge-assistant?label=Download&style=for-the-badge&color=2A2E7A" alt="Download Bilge"></a>
   <br>
   <sub>Free and open source · Mac, Windows and Linux · no account, no subscription</sub>
 </p>
@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest">
+  <a href="https://github.com/serdarvaran/bilge-assistant/releases/latest">
     <img src="docs/demo/readme-en.gif" width="860" alt="Bilge demo: “Bilge, add a dentist appointment tomorrow at ten”. Bilge asks before adding it, then answers out loud">
   </a>
 </p>
@@ -76,7 +76,7 @@ the internet is used only for what you ask for, such as the weather or a song, a
 
 ## Download and install
 
-Every release has all three, under [Releases](https://github.com/coderssociety/bilge-assistant/releases/latest):
+Every release has all three, under [Releases](https://github.com/serdarvaran/bilge-assistant/releases/latest):
 
 | System | File | Needs |
 |---|---|---|
@@ -333,7 +333,7 @@ and the AppImages in Docker, published together as one draft release.
 
 ## Contributing
 
-Bug reports, ideas and pull requests are welcome in [Issues](https://github.com/coderssociety/bilge-assistant/issues);
+Bug reports, ideas and pull requests are welcome in [Issues](https://github.com/serdarvaran/bilge-assistant/issues);
 a sentence Bilge misunderstands is a valuable report. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to build, test
 and propose a change, and [SECURITY.md](SECURITY.md) how to report a vulnerability privately. If Bilge is useful to
 you, a ⭐ helps others find it.

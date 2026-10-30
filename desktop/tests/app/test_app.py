@@ -377,7 +377,7 @@ def test_a_newer_release_is_offered_in_the_menu(qapp):
     notified = []
     tray.notify = notified.append
     assert not tray.update.isVisible()
-    release = Release("0.2.0", "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.2.0")
+    release = Release("0.2.0", "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.2.0")
     tray.show_update(release, announce=True, installable=False)
     tray.show_update(release, announce=False, installable=False)
     assert tray.update.isVisible() and "0.2.0" in tray.update.text()
@@ -394,7 +394,7 @@ def test_an_installable_release_is_offered_as_update_and_restart(qapp):
     requested = []
     tray.install_requested.connect(lambda: requested.append(True))
     tray.show_update(
-        Release("0.6.0", "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.6.0"), True, True
+        Release("0.6.0", "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.6.0"), True, True
     )
     assert tray.install.isVisible() and "0.6.0" in tray.install.text()
     tray.install.trigger()

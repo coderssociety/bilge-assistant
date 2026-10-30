@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/coderssociety/bilge-assistant?label=%C4%B0ndir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi indir"></a>
+  <a href="https://github.com/serdarvaran/bilge-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/serdarvaran/bilge-assistant?label=%C4%B0ndir&style=for-the-badge&color=2A2E7A" alt="Bilge'yi indir"></a>
   <br>
   <sub>Ücretsiz ve açık kaynak · Mac, Windows ve Linux · hesap ve abonelik yok</sub>
 </p>
@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/coderssociety/bilge-assistant/releases/latest">
+  <a href="https://github.com/serdarvaran/bilge-assistant/releases/latest">
     <img src="docs/demo/readme-tr.gif" width="860" alt="Bilge demosu: “Bilge, yarın saat onda diş hekimi randevusu ekle”. Bilge eklemeden önce sorar, sonra sesle cevap verir">
   </a>
 </p>
@@ -74,7 +74,7 @@ bekler. Konuşma tanıma, dil modeli ve ses tamamen bilgisayarında çalışabil
 
 ## İndir ve kur
 
-Her sürümde üçü de var, [Sürümler](https://github.com/coderssociety/bilge-assistant/releases/latest) sayfasında:
+Her sürümde üçü de var, [Sürümler](https://github.com/serdarvaran/bilge-assistant/releases/latest) sayfasında:
 
 | Sistem | Dosya | Gerekenler |
 |---|---|---|
@@ -329,7 +329,7 @@ AppImage'lar Docker'da derlenir ve tek bir taslak sürümde birlikte yayımlanı
 
 ## Katkı
 
-Hata bildirimleri, fikirler ve pull request'ler [Issues](https://github.com/coderssociety/bilge-assistant/issues)
+Hata bildirimleri, fikirler ve pull request'ler [Issues](https://github.com/serdarvaran/bilge-assistant/issues)
 sayfasında memnuniyetle karşılanır; Bilge'nin yanlış anladığı bir cümle bile değerli bir bildirimdir. Derleme, test ve
 değişiklik önerme [CONTRIBUTING.md](CONTRIBUTING.md) dosyasında, güvenlik açığını gizlice bildirme
 [SECURITY.md](SECURITY.md) dosyasında anlatılıyor. Bilge işine yaradıysa bir ⭐ başkalarının da bulmasına yardım eder.

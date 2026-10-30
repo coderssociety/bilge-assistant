@@ -4,7 +4,7 @@ import Testing
 
 @Suite("Release check")
 struct ReleaseCheckTests {
-    private let page = "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.3.0"
+    private let page = "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.3.0"
 
     @Test("versions compare", arguments: [
         ("v0.3.0", "0.2.0", true), ("0.2.1", "0.2.0", true), ("v0.3.0", "0.3.0-rc1", true), ("v0.2.0", "0.2.0", false),
@@ -23,9 +23,9 @@ struct ReleaseCheckTests {
 
     @Test("keeps the release's own files and finds the Mac package and the checksums")
     func readsTheFiles() throws {
-        let base = "https://github.com/coderssociety/bilge-assistant/releases/download/v0.6.0/"
+        let base = "https://github.com/serdarvaran/bilge-assistant/releases/download/v0.6.0/"
         let data = Data("""
-        {"tag_name": "v0.6.0", "html_url": "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.6.0", "assets": [
+        {"tag_name": "v0.6.0", "html_url": "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.6.0", "assets": [
           {"name": "Bilge-0.6.0.dmg", "browser_download_url": "\(base)Bilge-0.6.0.dmg"},
           {"name": "SHA256SUMS", "browser_download_url": "\(base)SHA256SUMS"},
           {"name": "Bilge-Setup-0.6.0.exe", "browser_download_url": "https://example.com/Bilge-Setup-0.6.0.exe"}
@@ -39,16 +39,16 @@ struct ReleaseCheckTests {
 
     @Test("a release remembered before files were kept still decodes")
     func oldRecord() throws {
-        let old = Data(#"{"version": "0.5.0", "page": "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.5.0"}"#.utf8)
+        let old = Data(#"{"version": "0.5.0", "page": "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.5.0"}"#.utf8)
         let release = try JSONDecoder().decode(ReleaseCheck.Release.self, from: old)
         #expect(release.assets.isEmpty && release.macPackage == nil)
     }
 
     @Test("only this project's downloads pass", arguments: [
-        ("https://github.com/coderssociety/bilge-assistant/releases/download/v0.6.0/Bilge-0.6.0.dmg", true),
-        ("https://github.com/coderssociety/bilge-assistant/releases/download/../../evil/x.dmg", false),
-        ("https://github.com/coderssociety/other/releases/download/v1/x.dmg", false),
-        ("http://github.com/coderssociety/bilge-assistant/releases/download/v1/x.dmg", false),
+        ("https://github.com/serdarvaran/bilge-assistant/releases/download/v0.6.0/Bilge-0.6.0.dmg", true),
+        ("https://github.com/serdarvaran/bilge-assistant/releases/download/../../evil/x.dmg", false),
+        ("https://github.com/serdarvaran/other/releases/download/v1/x.dmg", false),
+        ("http://github.com/serdarvaran/bilge-assistant/releases/download/v1/x.dmg", false),
         ("https://objects.githubusercontent.com/x.dmg", false),
     ])
     func projectDownloads(url: String, accepted: Bool) {
@@ -72,12 +72,12 @@ struct ReleaseCheckTests {
     }
 
     @Test("only this project's release pages pass", arguments: [
-        ("https://github.com/coderssociety/bilge-assistant/releases/tag/v0.3.0", true),
-        ("https://github.com/coderssociety/bilge-assistant/releases/../../evil/repo", false),
-        ("https://github.com/coderssociety/bilge-assistant/releases/%2e%2e/%2e%2e/evil", false),
-        ("https://github.com.evil.example/coderssociety/bilge-assistant/releases/x", false),
-        ("http://github.com/coderssociety/bilge-assistant/releases/tag/v1", false),
-        ("https://user@github.com/coderssociety/bilge-assistant/releases/tag/v1", false),
+        ("https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.3.0", true),
+        ("https://github.com/serdarvaran/bilge-assistant/releases/../../evil/repo", false),
+        ("https://github.com/serdarvaran/bilge-assistant/releases/%2e%2e/%2e%2e/evil", false),
+        ("https://github.com.evil.example/serdarvaran/bilge-assistant/releases/x", false),
+        ("http://github.com/serdarvaran/bilge-assistant/releases/tag/v1", false),
+        ("https://user@github.com/serdarvaran/bilge-assistant/releases/tag/v1", false),
     ])
     func projectPages(page: String, accepted: Bool) {
         #expect(ReleaseCheck.isProjectPage(URL(string: page)!) == accepted)

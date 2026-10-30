@@ -17,7 +17,7 @@ from packaging.version import InvalidVersion, Version
 
 log = logging.getLogger(__name__)
 
-REPOSITORY = "coderssociety/bilge-assistant"
+REPOSITORY = "serdarvaran/bilge-assistant"
 LATEST_URL = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 RELEASE_PAGES = f"https://github.com/{REPOSITORY}/releases/"
 DOWNLOADS = f"https://github.com/{REPOSITORY}/releases/download/"

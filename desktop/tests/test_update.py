@@ -5,7 +5,7 @@ import pytest
 
 from bilge import update
 
-PAGE = "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.2.0"
+PAGE = "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.2.0"
 
 
 def client_answering(status: int, body: object = None) -> httpx.Client:
@@ -112,10 +112,10 @@ def test_a_damaged_record_means_checking_again(tmp_path, content: str) -> None:
     ("page", "accepted"),
     [
         (PAGE, True),
-        ("https://github.com/coderssociety/bilge-assistant/releases/../../evil/repo", False),
-        ("https://github.com/coderssociety/bilge-assistant/releases/%2e%2e/%2e%2e/evil", False),
-        ("https://github.com/coderssociety/bilge-assistant/releases/tag/v1/..", False),
-        ("http://github.com/coderssociety/bilge-assistant/releases/tag/v1", False),
+        ("https://github.com/serdarvaran/bilge-assistant/releases/../../evil/repo", False),
+        ("https://github.com/serdarvaran/bilge-assistant/releases/%2e%2e/%2e%2e/evil", False),
+        ("https://github.com/serdarvaran/bilge-assistant/releases/tag/v1/..", False),
+        ("http://github.com/serdarvaran/bilge-assistant/releases/tag/v1", False),
     ],
 )
 def test_only_this_projects_release_pages_are_opened(page: str, accepted: bool) -> None:
@@ -125,7 +125,7 @@ def test_only_this_projects_release_pages_are_opened(page: str, accepted: bool) 
 def test_the_update_window_is_remembered_per_version_without_losing_the_check(tmp_path) -> None:
     record = update.CheckRecord(tmp_path / "update.json")
     now = datetime(2026, 10, 26, tzinfo=UTC)
-    newer = update.Release("0.7.0", "https://github.com/coderssociety/bilge-assistant/releases/tag/v0.7.0")
+    newer = update.Release("0.7.0", "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.7.0")
     record.record(now, newer)
     assert record.announced() is None
     record.mark_announced("0.7.0")
