@@ -393,9 +393,7 @@ def test_an_installable_release_is_offered_as_update_and_restart(qapp):
     tray.notify = lambda message: None
     requested = []
     tray.install_requested.connect(lambda: requested.append(True))
-    tray.show_update(
-        Release("0.6.0", "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.6.0"), True, True
-    )
+    tray.show_update(Release("0.6.0", "https://github.com/serdarvaran/bilge-assistant/releases/tag/v0.6.0"), True, True)
     assert tray.install.isVisible() and "0.6.0" in tray.install.text()
     tray.install.trigger()
     assert requested == [True]
